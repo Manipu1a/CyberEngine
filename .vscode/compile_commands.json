@@ -1,0 +1,6 @@
+[
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/O2", "/fp:fast", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EABase", "/DNDEBUG", "/Fobuild\\.objs\\Engine\\windows\\x64\\release\\Engine\\src\\main.cpp.obj", "Engine\\src\\main.cpp"],
+  "file": "Engine\\src\\main.cpp"
+}]

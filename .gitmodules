@@ -1,0 +1,3 @@
+[submodule "thirdparty/EASTL"]
+	path = thirdparty/EASTL
+	url = https://github.com/Manipu1a/EASTL.git
