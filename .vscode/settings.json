@@ -84,6 +84,10 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
-    }
+        "xutility": "cpp",
+        "mimalloc.h": "c",
+        "WINDOW.C": "cpp",
+        "WIN32_WINDOW.C": "cpp"
+    },
+    "cmake.configureOnOpen": true
 }
