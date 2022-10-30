@@ -3,7 +3,7 @@
 #include "cepch.h"
 #include "Core/Core.h"
 #include "Events/Event.h"
-
+#include <windows.h>
 namespace Cyber
 {
     struct RectDesc
@@ -16,11 +16,10 @@ namespace Cyber
 
     struct WindowDesc
     {
-        eastl::string title;
+        eastl::wstring title;
         void* window;
-        #if WINDOWS_WINDOW
-        HINSTANCE instance = nullptr;
-        #endif
+        HWND hWnd;
+        HINSTANCE hInstance = nullptr;
         RectDesc windowedRect;
         RectDesc fullscreenRect;
         RectDesc clientRect;
@@ -36,13 +35,14 @@ namespace Cyber
 
         bool mCursorHidden;
 
-        WindowDesc(const eastl::string& title = "Cyber Engine",\
+        WindowDesc(eastl::wstring title,
                     uint32_t width = 1280, 
                     uint32_t height = 720)
                     :title(title), mWndW(width), mWndH(height)
                     {
                     }
 
+        WindowDesc() {}
     };
 
 
@@ -62,6 +62,6 @@ namespace Cyber
         
         virtual void setEventCallback(const EventCallbackFn& callback) = 0;
 
-        static Scope<Cyber::Window> createWindow(const WindowDesc& desc = WindowDesc());
+        static Scope<Cyber::Window> createWindow(const WindowDesc& desc);
     };
 }

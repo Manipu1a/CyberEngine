@@ -2,6 +2,7 @@
 #include <Module/Log/Log.h>
 #include <glfw/glfw3.h>
 #include <glfw/glfw3native.h>
+#include "InputSystem/InputListener.h"
 
 namespace Cyber
 {
@@ -15,13 +16,9 @@ namespace Cyber
         
     }
 
-    void InputSystem::initInputSystem()
+    void InputSystem::initInputSystem(void* window)
     {
         manager = CreateScope<gainput::InputManager>();
-
-        #if defined(_WINDOWS)
-		    manager->SetWindowsInstance(window->handle.window);
-        #endif
         mouseId = manager->CreateDevice<gainput::InputDeviceMouse>();
         keyboradId = manager->CreateDevice<gainput::InputDeviceKeyboard>();
         padId = manager->CreateDevice<gainput::InputDevicePad>();
@@ -31,19 +28,23 @@ namespace Cyber
         map->MapFloat(Button::MouseX, mouseId, gainput::MouseAxisX);
         map->MapFloat(Button::MouseY, mouseId, gainput::MouseAxisY);
         map->MapFloat(Button::ButtonConfirm, mouseId, gainput::PadButtonA);
+
+        DeviceInputListener buttonListener(*manager.get(), 1);
+        manager->AddListener(&buttonListener);
     }
 
     void InputSystem::updateInputSystem(void* window)
     {
         gainput::InputDeviceKeyboard* keyborad = (gainput::InputDeviceKeyboard*)manager->GetDevice(keyboradId);
-        if(keyborad)
+
+        if(keyborad && keyborad->IsTextInputEnabled())
         {
             uint32_t count;
             auto type = keyborad->GetType();
             char nextChar = keyborad->GetNextCharacter();
             if(count)
             {
-                CB_CORE_INFO("keyborad: {0}, {1}", nextChar, count);
+                //CB_CORE_INFO("keyborad: {0}, {1}", nextChar, count);
             }
         }
         

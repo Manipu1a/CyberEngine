@@ -9,7 +9,8 @@ defs_list = {}
 links_list = {}
 generator_list = {}
 
-
+add_defines("UNICODE", "_UNICODE")
+add_defines("_WINDOWS")
 includes("xmake/thirdparty.lua")
 includes("Engine/xmake.lua")
 --

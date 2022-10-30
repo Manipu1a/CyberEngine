@@ -4,12 +4,12 @@
 #include <glfw/glfw3.h>
 namespace Cyber
 {
-    Application::Application(const Cyber::WindowDesc& desc)
+    Application::Application(Cyber::WindowDesc& desc)
     {
         mWindow = Cyber::Window::createWindow(desc);
         mWindow->setEventCallback(CB_BIND_EVENT_FN(Application::onEvent));
         mInputSystem = CreateScope<InputSystem>();
-        mInputSystem->initInputSystem();
+        mInputSystem->initInputSystem(mWindow->getNativeWindow());
     }
 
     Application::~Application()

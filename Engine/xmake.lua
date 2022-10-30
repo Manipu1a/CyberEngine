@@ -14,7 +14,7 @@ add_files("$(projectdir)/Engine/src/Platform/*.cpp")
 add_files("$(projectdir)/Engine/src/Module/Log/*.cpp")
 add_files("$(projectdir)/Engine/src/Module/InputSystem/*.cpp")
 set_pcheader("$(projectdir)/Engine/include/cepch.h")
-add_defines( "GLFW_EXPOSE_NATIVE_WIN32")
+add_defines( "GLFW_EXPOSE_NATIVE_WIN32","CB_ENABLE_ASSERTS")
 add_deps("GLFW", {public = true})
 add_deps("Gainput", {public = true})
 if (is_os("windows")) then 

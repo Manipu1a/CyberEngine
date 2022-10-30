@@ -9,7 +9,7 @@ namespace Cyber
     class Application
     {
     public:
-        Application(const Cyber::WindowDesc& desc);
+        Application(Cyber::WindowDesc& desc);
         virtual ~Application();
 
         inline static Application& getApp() { return *sInstance; }

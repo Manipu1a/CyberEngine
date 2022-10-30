@@ -20,9 +20,11 @@
 #endif
 
 #ifdef CB_ENABLE_ASSERTS
-    #define CB_ASSERTS(X, ...) { if(!(x)) {CB_ERROR("")} }
+    #define CB_ASSERTS(x, ...) { if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();} }
+    #define CB_CORE_ASSERTS(x, ...) { if(!(x)) {CB_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}}
 #else
-
+    #define CB_ASSERTS(x, ...)
+    #define CB_CORE_ASSERTS(x, ...)
 #endif
 
 #define CB_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)

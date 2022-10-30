@@ -22,17 +22,14 @@ namespace Cyber
         inline virtual void* getNativeWindow() const {return mWindow;}
     private:
         void* mWindow;
-        #if WINDOWS_WINDOW
-        HINSTANCE mInstance = nullptr;
-        #endif
+
         struct WindowData
         {
-            eastl::string mTitle;
-            uint32_t mWidth, mHeight;
-
+            WindowDesc mWindowDesc;
             EventCallbackFn mEventCallback;
         };
 
         WindowData mData;
+
     };
 }

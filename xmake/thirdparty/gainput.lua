@@ -5,7 +5,7 @@ table.insert(include_dir_list, gainput_includes_dir)
 target("Gainput")
 set_kind("static")
 add_includedirs(gainput_includes_dir)
---add_defines("GAINPUT_LIB_DYNAMIC","_WINDOWS", "gainput_EXPORTS" ,"WIN32")
+add_defines("GAINPUT_LIB_DYNAMIC","_WINDOWS", "gainput_EXPORTS" ,"WIN32")
 add_files(gainput_src_dir.."gainput.cpp",
 gainput_src_dir.."/GainputAllocator.cpp",
 gainput_src_dir.."/gestures/GainputButtonStickGesture.cpp",
