@@ -76,101 +76,231 @@
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc.c.obj", "thirdparty\\mimalloc\\alloc.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc.c.obj", "thirdparty\\mimalloc\\alloc.c"],
   "file": "thirdparty\\mimalloc\\alloc.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc-aligned.c.obj", "thirdparty\\mimalloc\\alloc-aligned.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc-aligned.c.obj", "thirdparty\\mimalloc\\alloc-aligned.c"],
   "file": "thirdparty\\mimalloc\\alloc-aligned.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc-posix.c.obj", "thirdparty\\mimalloc\\alloc-posix.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\alloc-posix.c.obj", "thirdparty\\mimalloc\\alloc-posix.c"],
   "file": "thirdparty\\mimalloc\\alloc-posix.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\stats.c.obj", "thirdparty\\mimalloc\\stats.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\stats.c.obj", "thirdparty\\mimalloc\\stats.c"],
   "file": "thirdparty\\mimalloc\\stats.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\random.c.obj", "thirdparty\\mimalloc\\random.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\random.c.obj", "thirdparty\\mimalloc\\random.c"],
   "file": "thirdparty\\mimalloc\\random.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\os.c.obj", "thirdparty\\mimalloc\\os.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\os.c.obj", "thirdparty\\mimalloc\\os.c"],
   "file": "thirdparty\\mimalloc\\os.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\bitmap.c.obj", "thirdparty\\mimalloc\\bitmap.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\bitmap.c.obj", "thirdparty\\mimalloc\\bitmap.c"],
   "file": "thirdparty\\mimalloc\\bitmap.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\arena.c.obj", "thirdparty\\mimalloc\\arena.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\arena.c.obj", "thirdparty\\mimalloc\\arena.c"],
   "file": "thirdparty\\mimalloc\\arena.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\segment-cache.c.obj", "thirdparty\\mimalloc\\segment-cache.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\segment-cache.c.obj", "thirdparty\\mimalloc\\segment-cache.c"],
   "file": "thirdparty\\mimalloc\\segment-cache.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\segment.c.obj", "thirdparty\\mimalloc\\segment.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\segment.c.obj", "thirdparty\\mimalloc\\segment.c"],
   "file": "thirdparty\\mimalloc\\segment.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\page.c.obj", "thirdparty\\mimalloc\\page.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\page.c.obj", "thirdparty\\mimalloc\\page.c"],
   "file": "thirdparty\\mimalloc\\page.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\heap.c.obj", "thirdparty\\mimalloc\\heap.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\heap.c.obj", "thirdparty\\mimalloc\\heap.c"],
   "file": "thirdparty\\mimalloc\\heap.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\options.c.obj", "thirdparty\\mimalloc\\options.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\options.c.obj", "thirdparty\\mimalloc\\options.c"],
   "file": "thirdparty\\mimalloc\\options.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\init.c.obj", "thirdparty\\mimalloc\\init.c"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\mimalloc\\init.c.obj", "thirdparty\\mimalloc\\init.c"],
   "file": "thirdparty\\mimalloc\\init.c"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\eastl.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\eastl.cpp"],
   "file": "thirdparty\\EASTL\\EASTL\\eastl.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\main.cpp.obj", "Engine\\src\\main.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\main.cpp.obj", "Engine\\src\\main.cpp"],
   "file": "Engine\\src\\main.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Core\\Application.cpp.obj", "Engine\\src\\Core\\Application.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Core\\Application.cpp.obj", "Engine\\src\\Core\\Application.cpp"],
   "file": "Engine\\src\\Core\\Application.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Core\\Window.cpp.obj", "Engine\\src\\Core\\Window.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Core\\Window.cpp.obj", "Engine\\src\\Core\\Window.cpp"],
   "file": "Engine\\src\\Core\\Window.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Platform\\WindowsWindow.cpp.obj", "Engine\\src\\Platform\\WindowsWindow.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Platform\\WindowsWindow.cpp.obj", "Engine\\src\\Platform\\WindowsWindow.cpp"],
   "file": "Engine\\src\\Platform\\WindowsWindow.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Module\\Log\\Log.cpp.obj", "Engine\\src\\Module\\Log\\Log.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Module\\Log\\Log.cpp.obj", "Engine\\src\\Module\\Log\\Log.cpp"],
   "file": "Engine\\src\\Module\\Log\\Log.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Engine.pdb", "/Od", "/std:c++17", "/Id:\\project\\CyberEngine\\Engine\\include", "/Id:\\project\\CyberEngine\\Engine\\include\\Module", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\GLFW\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DGLFW_EXPOSE_NATIVE_WIN32", "/Fobuild\\.objs\\Engine\\windows\\x64\\debug\\Engine\\src\\Module\\InputSystem\\InputSystem.cpp.obj", "Engine\\src\\Module\\InputSystem\\InputSystem.cpp"],
+  "file": "Engine\\src\\Module\\InputSystem\\InputSystem.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/EHsc", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\Gainput.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/Fobuild\\.objs\\Gainput\\windows\\x64\\debug\\thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp"
 }]

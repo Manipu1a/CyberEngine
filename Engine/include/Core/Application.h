@@ -2,6 +2,7 @@
 #include "Core/Core.h"
 #include "Window.h"
 #include "Events/ApplicationEvent.h"
+#include "InputSystem/InputSystem.h"
 
 namespace Cyber
 {
@@ -20,6 +21,7 @@ namespace Cyber
         bool onWindowClose(WindowCloseEvent& e);
     private:
         Scope<Window> mWindow;
+        Scope<InputSystem> mInputSystem;
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;

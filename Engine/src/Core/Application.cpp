@@ -8,6 +8,8 @@ namespace Cyber
     {
         mWindow = Cyber::Window::createWindow(desc);
         mWindow->setEventCallback(CB_BIND_EVENT_FN(Application::onEvent));
+        mInputSystem = CreateScope<InputSystem>();
+        mInputSystem->initInputSystem();
     }
 
     Application::~Application()
@@ -25,6 +27,7 @@ namespace Cyber
 
             //spdlog::info("Time: {0}", timestep);
 
+            mInputSystem->updateInputSystem(mWindow->getNativeWindow());
             mWindow->onUpdate(timestep);
         }
     }
