@@ -80,6 +80,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     desc.mWndW = 1280;
     desc.mWndH = 720;
     desc.hInstance = hInstance;
+    desc.cmdShow = nCmdShow;
     Cyber::Application app(desc);
     app.Run();
 

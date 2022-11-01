@@ -3,7 +3,7 @@
 #include "Window.h"
 #include "Events/ApplicationEvent.h"
 #include "InputSystem/InputSystem.h"
-
+#include <windows.h>
 namespace Cyber
 {
     class Application
@@ -16,6 +16,8 @@ namespace Cyber
         void Run();
 
         void onEvent(Event& e);
+
+        LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     private:
         bool onWindowClose(WindowCloseEvent& e);

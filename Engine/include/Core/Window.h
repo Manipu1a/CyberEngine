@@ -17,9 +17,9 @@ namespace Cyber
     struct WindowDesc
     {
         eastl::wstring title;
-        void* window;
         HWND hWnd;
         HINSTANCE hInstance = nullptr;
+        int cmdShow;
         RectDesc windowedRect;
         RectDesc fullscreenRect;
         RectDesc clientRect;

@@ -87,7 +87,17 @@
         "xutility": "cpp",
         "mimalloc.h": "c",
         "WINDOW.C": "cpp",
-        "WIN32_WINDOW.C": "cpp"
+        "WIN32_WINDOW.C": "cpp",
+        "*.rh": "cpp"
     },
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "C_Cpp.codeAnalysis.runAutomatically": false,
+    "C_Cpp.intelliSenseEngine": "Disabled",
+    "C_Cpp.formatting": "Disabled",
+    "clangd.arguments": [
+        "--background-index",
+        "--compile-commands-dir=.vscode",
+        "--header-insertion=never",
+        "--completion-style=detailed"
+    ]
 }

@@ -1,8 +1,8 @@
 #include "Platform/WindowsWindow.h"
 #include "Events/ApplicationEvent.h"
 #include <Module/Log/Log.h>
+#include "Core/Application.h"
 
-#include <windows.h>
 namespace Cyber
 {
 
@@ -11,23 +11,9 @@ namespace Cyber
 
 	}
 
-    LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
-	    PAINTSTRUCT ps;
-	    HDC hdc;
-
-	    switch (message)
-	    {
-		    case WM_DESTROY:
-		    	PostQuitMessage(0);
-		    	//doExit = true;
-		    	break;
-		    default:
-		    	return DefWindowProc(hWnd, message, wParam, lParam);
-		    	break;
-	}
-
-	    return 0;
+        return Application::getApp().MsgProc(hwnd, msg, wParam, lParam);
     }
 
     WindowsWindow::WindowsWindow(const Cyber::WindowDesc& desc)
@@ -38,29 +24,6 @@ namespace Cyber
     void WindowsWindow::initWindow(const Cyber::WindowDesc& desc)
     {
         mData.mWindowDesc = desc;
-
-        //mData.mTitle = eastl::move(desc.title);
-       // mData.mWidth = desc.mWndW;
-        //mData.mHeight = desc.mWndH;
-
-        /*
-        glfwInit();
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        mWindow = glfwCreateWindow(mData.mWidth, mData.mHeight,"Cyber Engine", NULL, NULL);
-        GLFWwindow* glfwWindow = (GLFWwindow*)mWindow;
-
-        glfwSetWindowUserPointer(glfwWindow, &mData);
-
-        glfwSetWindowCloseCallback(glfwWindow, [](GLFWwindow* window)
-        {
-            WindowData& data = *(WindowData*)glfwGetWindowUserPointer(window);
-            Cyber::WindowCloseEvent event;
-            data.mEventCallback(event);
-        });
-
-        glfwSetFramebufferSizeCallback(glfwWindow, framebufferResizeCallback);
-        */
 
         WNDCLASSEX wcex;
         wcex.cbSize = sizeof(WNDCLASSEX);
@@ -100,19 +63,23 @@ namespace Cyber
             CB_CORE_ASSERTS(false, "Call to CreateWindow failed!{0}", GetLastError());
         }
 
-        ShowWindow(mData.mWindowDesc.hWnd, 1);
+        ShowWindow(mData.mWindowDesc.hWnd, mData.mWindowDesc.cmdShow);
 	    UpdateWindow(mData.mWindowDesc.hWnd);
     }
     
     void WindowsWindow::onUpdate(float deltaTime)
     {
-		//glfwPollEvents();
+        MSG msg;
+        while (PeekMessage(&msg, mData.mWindowDesc.hWnd,  0, 0, PM_REMOVE)) 
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
     }
 
     void WindowsWindow::onClose()
     {
-        //glfwDestroyWindow((GLFWwindow*)mWindow);
-        //glfwTerminate();
+        
     }
 
     uint32_t WindowsWindow::getWidth() const
