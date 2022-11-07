@@ -33,3 +33,4 @@
 
 .xmake/*
 build/*
+.vscode/*

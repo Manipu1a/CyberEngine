@@ -19,7 +19,7 @@ namespace Cyber
 
         ~InputSystem();
 
-        void initInputSystem(void* window);
+        void initInputSystem();
         void updateInputSystem(void* window);
     private:
         Scope<gainput::InputManager> manager;

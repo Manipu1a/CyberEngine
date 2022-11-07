@@ -74,7 +74,14 @@ int WINAPI WinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
     
+    
+    AllocConsole();
+    FILE* stream;
+    freopen_s(&stream, "CON", "r", stdin);
+    freopen_s(&stream, "CON", "w", stdin);
+    SetConsoleTitle(L"Console");
     Cyber::Log::initLog();
+
     Cyber::WindowDesc desc;
     desc.title = L"Cyber";
     desc.mWndW = 1280;
@@ -84,5 +91,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
     Cyber::Application app(desc);
     app.Run();
 
+    FreeConsole();
     return 1;
 }

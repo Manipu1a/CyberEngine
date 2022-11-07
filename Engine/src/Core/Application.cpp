@@ -11,7 +11,7 @@ namespace Cyber
         mWindow = Cyber::Window::createWindow(desc);
         mWindow->setEventCallback(CB_BIND_EVENT_FN(Application::onEvent));
         mInputSystem = CreateScope<InputSystem>();
-        mInputSystem->initInputSystem(mWindow->getNativeWindow());
+        mInputSystem->initInputSystem();
 
         if(sInstance == nullptr)
         {
@@ -41,8 +41,8 @@ namespace Cyber
 
     void Application::onEvent(Event& e)
     {
-        EventDispatcher dispatcher(e);
-        dispatcher.Dispatch<WindowCloseEvent>(CB_BIND_EVENT_FN(Application::onWindowClose));
+        //EventDispatcher dispatcher(e);
+        //dispatcher.Dispatch<WindowCloseEvent>(CB_BIND_EVENT_FN(Application::onWindowClose));
     }
 
     bool Application::onWindowClose(WindowCloseEvent& e)

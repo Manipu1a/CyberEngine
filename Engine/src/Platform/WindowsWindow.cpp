@@ -65,16 +65,20 @@ namespace Cyber
 
         ShowWindow(mData.mWindowDesc.hWnd, mData.mWindowDesc.cmdShow);
 	    UpdateWindow(mData.mWindowDesc.hWnd);
+
+
     }
     
     void WindowsWindow::onUpdate(float deltaTime)
     {
+        /*
         MSG msg;
         while (PeekMessage(&msg, mData.mWindowDesc.hWnd,  0, 0, PM_REMOVE)) 
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
+        */
     }
 
     void WindowsWindow::onClose()
