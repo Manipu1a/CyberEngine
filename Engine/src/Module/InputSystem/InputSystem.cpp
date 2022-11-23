@@ -18,10 +18,11 @@ namespace Cyber
 
     void InputSystem::initInputSystem()
     {
+        /*
         manager = CreateScope<gainput::InputManager>();
         mouseId = manager->CreateDevice<gainput::InputDeviceMouse>();
-        keyboradId = manager->CreateDevice<gainput::InputDeviceKeyboard>();
         padId = manager->CreateDevice<gainput::InputDevicePad>();
+        keyboradId = manager->CreateDevice<gainput::InputDeviceKeyboard>();
         map = CreateScope<gainput::InputMap>(*manager.get());
         map->MapBool(Button::ButtonMenu, keyboradId, gainput::KeyQ);
         map->MapBool(Button::ButtonConfirm, mouseId, gainput::MouseButtonLeft);
@@ -32,32 +33,269 @@ namespace Cyber
         //DeviceInputListener buttonListener(*manager.get(), 1);
         //manager->AddListener(&buttonListener);
         manager->SetDisplaySize(1280,720);
+        */
+
+        mInputCaptured = false;
+        mDefaultCapture = true;
+        pDeviceTypes.resize(MAX_INPUT_GAMEPADS + 4);
+        mControls.resize(MAX_DEVICES);
+
+        // Create input manager
+        pInputManager = CreateScope<gainput::InputManager>();
+        pInputManager->SetDisplaySize(1280,720);
+        // Create all necessary devices
+        mMouseDeviceID = pInputManager->CreateDevice<gainput::InputDeviceMouse>();
+        mKeyboardDeviceID = pInputManager->CreateDevice<gainput::InputDeviceKeyboard>();
+        // Assign device types
+        pDeviceTypes[mMouseDeviceID] = InputDeviceType::INPUT_DEVICE_MOUSE;
+        pDeviceTypes[mKeyboardDeviceID] = InputDeviceType::INPUT_DEVICE_KEYBOARD;
+
+        mControls[mKeyboardDeviceID].resize(gainput::KeyCount_);
+        mControls[mMouseDeviceID].resize(gainput::MouseButtonCount_);
+
+        mInputActionMappingIdToDesc.resize(MAX_DEVICES);
+        mInputActionMappingIdToDesc[mMouseDeviceID].resize(MAX_INPUT_ACTIONS);
+        mInputActionMappingIdToDesc[mKeyboardDeviceID].resize(MAX_INPUT_ACTIONS);
+
+        pInputManager->AddListener(this);
+
+        //Global text inputaction
+        mGlobalTextInputControl.pUserData = this;
+        mGlobalTextInputControl.pFunction = [](InputActionContext* ctx)
+        {
+            CB_CORE_INFO("Text Input:{0}", ctx->mActionId);
+            return true;
+        };
+
+        for(uint32_t i = 0u; i < (uint32_t)KeyboardMouseInputActions::DUMP_PROFILE_DATA; ++i)
+        {
+            InputActionDesc actionDesc = {i, KeyChecker};
+            addInputAction(actionDesc);
+        }
+
+        gainput::InputDeviceKeyboard* keyboard = (gainput::InputDeviceKeyboard*)pInputManager->GetDevice(mKeyboardDeviceID);
+        keyboard->SetTextInputEnabled(true);
     }
 
     void InputSystem::updateInputSystem(void* window)
     {
-        manager->Update();
+        pInputManager->Update();
         MSG msg;
         HWND hWnd = (HWND)window;
         
+        gainput::InputDeviceKeyboard* keyboard = (gainput::InputDeviceKeyboard*)pInputManager->GetDevice(mKeyboardDeviceID);
+
+        if(keyboard)
+        {
+            uint32_t count = 0;
+            char pText = keyboard->GetNextCharacter();
+            if(pText)
+            {
+                CB_CORE_INFO("Text Input:{0}", pText);
+            }
+        }
+
 		while (PeekMessage(&msg, hWnd,  0, 0, PM_REMOVE)) 
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-\
 			// Forward any input messages to Gainput
-			manager->HandleMessage(msg);
+			pInputManager->HandleMessage(msg);
 		}
-        
-        if(map->GetFloatDelta(Button::MouseX) != 0.0f || map->GetFloatDelta(Button::MouseY) != 0.0f)
+
+    }
+    void InputSystem::addDefaultActionMappings()
+    {
+       
+        eastl::vector<ActionMappingDesc> actionMappingsArr = {
+            
+        };
+
+        AddActionMappings(actionMappingsArr, actionMappingsArr.size(), InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
+    }
+
+    void InputSystem::addInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget)
+    {
+        CB_ASSERTS(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
+        AddInputAction(pDesc, actionMappingTarget);
+    }
+
+    void InputSystem::AddActionMappings(const eastl::vector<ActionMappingDesc> actionMappings, const uint32_t numActions, const InputActionMappingDeviceTarget actionMappingTarget)
+    {
+        // Ensure there isn't too many actions than we can fit in memory
+        CB_ASSERTS(numActions < MAX_INPUT_ACTIONS, "Too many actions!");
+
+        // First need to reset mappings
+        mButtonControlPerformQueue.clear();
+        mFloatDeltaControlCancelQueue.clear();
+
+        for(uint32_t i = 0;i < numActions;++i)
         {
-            //CB_CORE_INFO("Mouse: {0}, {1}", map->GetFloat(Button::MouseX), map->GetFloat(Button::MouseY));
+            const ActionMappingDesc& pActionMappingDesc = actionMappings[i];
+            CB_CHECK(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
+
+
+            CB_ASSERTS(pActionMappingDesc.mActionId < MAX_INPUT_ACTIONS, "mActionId is greater than MAX_INPUT_ACTIONS");
+
+            gainput::DeviceId deviceId = ~0u;
+
+            switch (pActionMappingDesc.mActionMappingDeviceTarget)
+            {
+            case InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_CONTROLLER:
+            {
+                deviceId = pGamepadDeviceIDs[pActionMappingDesc.mUserId];
+                break;
+            }
+            case InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD:
+            {
+                deviceId = mKeyboardDeviceID;
+                break;
+            }
+            case InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_MOUSE:
+            {
+                deviceId = mMouseDeviceID;
+                break;
+            }
+            case InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_TOUCH:
+            {
+                deviceId = mTouchDeviceID;
+                break;
+            }
+            default:
+            {
+                CB_ASSERTS(0, "Can't match device type!");
+            }
+            }
+
+            CB_CHECK(deviceId != ~0u);
+
+            switch (pActionMappingDesc.mActionMappingType)
+            {
+            case InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL:
+            case InputActionMappingType::INPUT_ACTION_MAPPING_COMPOSITE:
+            case InputActionMappingType::INPUT_ACTION_MAPPING_COMBO:
+            case InputActionMappingType::INPUT_ACTION_MAPPING_TOUCH_GESTURE:
+            case InputActionMappingType::INPUT_ACTION_MAPPING_TOUCH_VIRTUAL_JOYSTICK:
+            {
+                CB_CHECK(mInputActionMappingIdToDesc[deviceId][pActionMappingDesc.mActionId].mActionMappingDeviceTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
+                mInputActionMappingIdToDesc[deviceId][pActionMappingDesc.mActionId] = pActionMappingDesc;
+                // Register an action for UI action mappings so that the app can intercept them via the global action (GLOBAL_INPUT_ACTION_ANY_BUTTON_ACTION)
+                if(pActionMappingDesc.mActionId > 0)
+                {
+                    // Ensure the type is INPUT_ACTION_MAPPING_NORMAL
+                    CB_ASSERTS(pActionMappingDesc.mActionMappingType == InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL, "Action mapping type isn't INPUT_ACTION_MAPPING_NORMAL");
+
+                    InputActionDesc actionDesc;
+                    actionDesc.mActionId = pActionMappingDesc.mActionId;
+                    actionDesc.mUserId = pActionMappingDesc.mUserId;
+                    AddInputAction(actionDesc, pActionMappingDesc.mActionMappingDeviceTarget);
+                }
+            }
+            default:
+            {
+                CB_ASSERTS(0,"Can't match action mapping type!");
+            }
+            }
+
+
+        }
+    }
+
+    void InputSystem::AddInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget)
+    {
+        CB_ASSERTS(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
+
+        //keyboard action
+        if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD || actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
+        {
+            const ActionMappingDesc& pActionMappingDesc = mInputActionMappingIdToDesc[mKeyboardDeviceID][pDesc.mActionId];
+            if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD)
+            {
+                CB_ASSERTS(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
+            }
+
+            if(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
+                CreateActionForActionMapping(pActionMappingDesc, pDesc);
         }
 
-        if(map->GetBoolWasDown(ButtonMenu))
+        //mouse action
+        if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_MOUSE || actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
         {
-            CB_CORE_INFO("ButtonMenu");
-        }
+            const ActionMappingDesc& pActionMappingDesc = mInputActionMappingIdToDesc[mMouseDeviceID][pDesc.mActionId];
+            if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_MOUSE)
+            {
+                CB_ASSERTS(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
+            }
 
+            if(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
+                CreateActionForActionMapping(pActionMappingDesc, pDesc);
+        }
+    }
+
+    void InputSystem::CreateActionForActionMapping(const ActionMappingDesc& pActionMappingDesc, const InputActionDesc& pActionDesc)
+    {
+        switch (pActionMappingDesc.mActionMappingDeviceTarget)
+        {
+            case InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD:
+            {
+                switch (pActionMappingDesc.mActionMappingType) 
+                {
+                    case InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL:
+                    {
+                        IControl* pControl = AllocateControl<IControl>(mKeyboardDeviceID);
+                        CB_ASSERTS(pControl, "Allocate failed!");
+
+                        pControl->mType = InputControlType::CONTROL_BUTTON;
+                        pControl->mAction = pActionDesc;
+                        mControls[mKeyboardDeviceID][pActionMappingDesc.mDeviceButtons[0]].push_back(*pControl);
+                        break;
+                    }
+                    case InputActionMappingType::INPUT_ACTION_MAPPING_COMPOSITE:
+                    {
+                        CompositeControl* pControl = AllocateControl<CompositeControl>(mKeyboardDeviceID);
+                        CB_ASSERTS(pControl, "Allocate failed!");
+
+                        memset((void*)pControl, 0, sizeof(*pControl));
+                        pControl->mComposite = 4;
+                        pControl->mControls[0] = pActionMappingDesc.mDeviceButtons[0];
+                        pControl->mControls[1] = pActionMappingDesc.mDeviceButtons[1];
+                        pControl->mControls[2] = pActionMappingDesc.mDeviceButtons[2];
+                        pControl->mControls[3] = pActionMappingDesc.mDeviceButtons[3];
+                        pControl->mType = InputControlType::CONTROL_COMPOSITE;
+                        pControl->mAction = pActionDesc;
+                        for(uint32_t i = 0;i < pControl->mComposite;++i)
+                        {
+                            mControls[mKeyboardDeviceID][pControl->mControls[i]].push_back(*pControl);
+                        }
+                        break;
+                    }
+                    case InputActionMappingType::INPUT_ACTION_MAPPING_COMBO:
+                    {
+                        ComboControl* pControl = AllocateControl<ComboControl>(mKeyboardDeviceID);
+                        CB_ASSERTS(pControl, "Allocate failed!");
+
+                        pControl->mType = InputControlType::COMTROL_COMBO;
+                        pControl->mAction = pActionDesc;
+                        pControl->mPressButton = pActionMappingDesc.mDeviceButtons[0];
+                        pControl->mTriggerButton = pActionMappingDesc.mDeviceButtons[1];
+                        mControls[mKeyboardDeviceID][pActionMappingDesc.mDeviceButtons[0]].push_back(*pControl);
+                        mControls[mKeyboardDeviceID][pActionMappingDesc.mDeviceButtons[1]].push_back(*pControl);
+                        break;
+                    }
+                    default:
+                        CB_ASSERTS(false, "Can't match InputActionMappingType!");
+                }
+                break;
+            }
+        }
+    }
+
+    bool InputSystem::KeyChecker(InputActionContext* ctx)
+    {
+        const uint32_t actionId = ctx->mActionId;
+
+        CB_CORE_INFO("Inputaction{%d}", actionId);
+
+        return true;
     }
 }
