@@ -179,7 +179,7 @@ namespace Cyber
             wchar_t* pText;
         };
         DirectX::XMFLOAT2* pPosition = nullptr;
-        const bool* pCaptured = nullptr;
+        bool pCaptured = false;
         float mScrollValue = 0.f;
         uint32_t mActionId = UINT_MAX;
         uint8_t mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_ENDED;
@@ -337,7 +337,9 @@ namespace Cyber
         void updateInputSystem(void* window);
         void addInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget = InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
         void addDefaultActionMappings();
+        virtual bool OnDeviceButtonBool(gainput::DeviceId device, gainput::DeviceButtonId deviceButton, bool oldValue, bool newValue) override;
     private:
+        bool IsPointerType(gainput::DeviceId device) const;
         void AddActionMappings(const eastl::vector<ActionMappingDesc> actionMappings, const uint32_t numActions, const InputActionMappingDeviceTarget actionMappingTarget);
         void AddInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget);
         void CreateActionForActionMapping(const ActionMappingDesc& pActionMappingDesc, const InputActionDesc& pActionDesc);

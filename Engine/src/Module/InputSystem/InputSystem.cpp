@@ -91,7 +91,7 @@ namespace Cyber
             char pText = keyboard->GetNextCharacter();
             if(pText)
             {
-                CB_CORE_INFO("Text Input:{0}", pText);
+                //CB_CORE_INFO("Text Input:{0}", pText);
             }
         }
 
@@ -288,6 +288,198 @@ namespace Cyber
                 break;
             }
         }
+    }
+
+    bool InputSystem::OnDeviceButtonBool(gainput::DeviceId deviceId, gainput::DeviceButtonId deviceButton, bool oldValue, bool newValue)
+    {
+        if(oldValue == newValue)
+            return false;
+
+        const gainput::InputDevice* device = pInputManager->GetDevice(deviceId);
+		char buttonName[64] = "";
+		device->GetButtonName(deviceButton, buttonName, 64);
+        CB_CORE_INFO("Device:{0} button:{1}", deviceId, buttonName);
+
+        if(mControls[deviceId].size() > 0)
+        {
+            InputActionContext ctx = {};
+            ctx.mDeviceType = (uint8_t)pDeviceTypes[deviceId];
+            ctx.pCaptured = IsPointerType(deviceId) ? mInputCaptured : mDefaultCapture;
+
+            if(IsPointerType(deviceId))
+            {
+                gainput::InputDeviceMouse* pMouse = (gainput::InputDeviceMouse*)pInputManager->GetDevice(mMouseDeviceID);
+                mMousePosition[0] = pMouse->GetFloat(gainput::MouseAxisX);
+                mMousePosition[1] = pMouse->GetFloat(gainput::MouseAxisY);
+                ctx.pPosition = &mMousePosition;
+                ctx.mScrollValue = pMouse->GetFloat(gainput::MouseButtonMiddle);                
+            }
+
+            bool executeNext = true;
+
+            for(uint32_t i = 0;i < mControls[deviceId][deviceButton].size(); ++i)
+            {
+                IControl& control = mControls[deviceId][deviceButton][i];
+                if(!executeNext)
+                    return true;
+
+                const InputControlType type = control.mType;
+                const InputActionDesc& pDesc = control.mAction;
+                InputActionContext ctx = {};
+                ctx.pUserData = pDesc.pUserData;
+                ctx.mActionId = pDesc.mActionId;
+
+                switch (type)
+                {
+                case InputControlType::CONTROL_BUTTON:
+                {
+                    ctx.mBool = newValue;
+                    if(newValue && !oldValue)
+                    {
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_STARTED;
+                        if(pDesc.pFunction)
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        if(mGlobalAnyButtonAction.pFunction)
+                            mGlobalAnyButtonAction.pFunction(&ctx);
+
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_UPDATED;
+                        if(pDesc.pFunction)
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        if(mGlobalAnyButtonAction.pFunction)
+                            mGlobalAnyButtonAction.pFunction(&ctx);
+                    }
+                    else if(oldValue && !newValue)
+                    {
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_CANCELED;
+                        if(pDesc.pFunction)
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        if(mGlobalAnyButtonAction.pFunction)
+                            mGlobalAnyButtonAction.pFunction(&ctx);
+                    }
+                    break;
+                }
+                case InputControlType::CONTROL_COMPOSITE:
+                {
+                    CompositeControl* pControl = (CompositeControl*)(&control);
+                    uint32_t index = 0;
+                    for(; index < pControl->mComposite; ++index)
+                        if(deviceButton == pControl->mControls[index])
+                            break;
+
+                    const uint32_t axis = (index > 1) ? 1 : 0;
+                    if(newValue)
+                    {
+                        pControl->mPressedVal[index] = 1;
+                        pControl->mValue[axis] = (float)pControl->mPressedVal[axis * 2 + 0];
+                    }
+
+                    if(pControl->mComposite == 2)
+                    {
+                        ctx.mFloat = pControl->mValue[axis];
+                    }
+                    else 
+                    {
+                        if(!pControl->mValue[0] && !pControl->mValue[1])
+                            ctx.mFloat2 = DirectX::XMFLOAT2(0.0f, 0.0f);
+                        else
+                            ctx.mFloat2 = pControl->mValue;
+                    }
+
+                    // Action Started
+                    if(!pControl->mStarted && !oldValue && newValue)
+                    {
+                        pControl->mStarted = 1;
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_STARTED;
+                        if(pDesc.pFunction)
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                    }
+                    // Action Performed
+                    if(pControl->mStarted && newValue && !pControl->mPerformed[index])
+                    {
+                        pControl->mPerformed[index] = 1;
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_UPDATED;
+                        if(pDesc.pFunction)
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                    }
+                    // Action Canceled
+                    if(oldValue && !newValue)
+                    {
+                        pControl->mPerformed[index] = 0;
+                        pControl->mPressedVal[index] = 0;
+                        bool allReleased = true;
+                        for(uint8_t i = 0;i < pControl->mComposite;++i)
+                        {
+                            if(pControl->mPerformed[i])
+                            {
+                                allReleased = false;
+                                break;
+                            }
+                        }
+
+                        if(allReleased)
+                        {
+                            pControl->mValue = DirectX::XMFLOAT2(0.0f, 0.0f);
+                            pControl->mStarted = 0;
+                            ctx.mFloat2 = pControl->mValue;
+                            ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_CANCELED;
+                            if(pDesc.pFunction)
+                                executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        }
+                        else if(pDesc.pFunction)
+                        {
+                            ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_UPDATED;
+                            pControl->mValue[axis] = pControl->mPressedVal[axis * 2 + 0] - pControl->mPressedVal[axis * 2 + 1];
+                            ctx.mFloat2 = pControl->mValue;
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        }
+                    }
+                    break;
+                }
+                case InputControlType::CONTROL_FLOAT:
+                {
+                    if(!oldValue && newValue)
+                    {
+                        CB_CHECK(deviceButton == gainput::MouseButtonWheelUp || deviceButton == gainput::MouseButtonWheelDown);
+
+                        FloatControl* pControl = (FloatControl*)(&control);
+                        ctx.mFloat2[1] = deviceButton == gainput::MouseButtonWheelUp ? 1.0f : -1.0f;
+                        if(pDesc.pFunction)
+                        {
+                            ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_UPDATED;
+                            executeNext = pDesc.pFunction(&ctx) && executeNext;
+                        }
+
+                        FloatControlSet val = {pControl};
+                        mFloatDeltaControlCancelQueue.push_back(val);
+                    }
+                    break;
+                }
+                case InputControlType::COMTROL_COMBO:
+                {
+                    ComboControl* pControl = (ComboControl*)(&control);
+                    if(deviceButton == pControl->mPressButton)
+                    {
+                        pControl->mPressed = newValue;
+                    }
+                    else if(pControl->mPressed && oldValue && !newValue && pDesc.pFunction)
+                    {
+                        ctx.mBool = true;
+                        ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_UPDATED;
+                        pDesc.pFunction(&ctx);
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+        }
+		return false;
+    }
+
+    bool InputSystem::IsPointerType(gainput::DeviceId device) const
+    {
+        return (device == mMouseDeviceID);
     }
 
     bool InputSystem::KeyChecker(InputActionContext* ctx)

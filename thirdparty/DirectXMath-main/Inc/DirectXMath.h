@@ -597,7 +597,8 @@ namespace DirectX
 
         constexpr XMFLOAT2(float _x, float _y) noexcept : x(_x), y(_y) {}
         explicit XMFLOAT2(_In_reads_(2) const float* pArray)  noexcept : x(pArray[0]), y(pArray[1]) {}
-
+        
+        float& operator[] (uint32_t index) { return index == 0 ? x : y;}
 #if (__cplusplus >= 202002L)
         bool operator == (const XMFLOAT2&) const = default;
         auto operator <=> (const XMFLOAT2&) const = default;
