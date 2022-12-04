@@ -1,10 +1,10 @@
 gainput_includes_dir = "$(projectdir)/thirdparty/gainput/lib/include"
 gainput_src_dir = "$(projectdir)/thirdparty/gainput/lib/source/gainput"
-table.insert(include_dir_list, gainput_includes_dir)
+--table.insert(include_dir_list, gainput_includes_dir)
 
 target("Gainput")
 set_kind("static")
-add_includedirs(gainput_includes_dir)
+add_includedirs(gainput_includes_dir, {public = true})
 add_defines("GAINPUT_LIB_DYNAMIC","_WINDOWS", "gainput_EXPORTS" ,"WIN32")
 add_files(gainput_src_dir.."gainput.cpp",
 gainput_src_dir.."/GainputAllocator.cpp",

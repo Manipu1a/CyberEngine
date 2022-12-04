@@ -5,7 +5,7 @@ table.insert(include_dir_list, glfw_includes_dir)
 target("GLFW")
 set_kind("static")
 add_defines("_GLFW_WIN32")
-add_includedirs(glfw_includes_dir)
+add_includedirs(glfw_includes_dir, {public=true})
 add_files(glfw_src_dir.."/context.c",
         glfw_src_dir.."/init.c",
         glfw_src_dir.."/input.c",

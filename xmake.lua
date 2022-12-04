@@ -1,6 +1,5 @@
-set_project("Cyber")
+set_project("CyberEngine")
 add_rules("mode.debug", "mode.release", "mode.releasedbg")
-
 
 include_dir_list = {"include"}
 source_list = {}
@@ -13,6 +12,11 @@ add_defines("UNICODE", "_UNICODE")
 add_defines("_WINDOWS")
 includes("xmake/thirdparty.lua")
 includes("Engine/xmake.lua")
+includes("samples/xmake.lua")
+
+if (is_os("windows")) then 
+    add_links("advapi32","gdi32","user32", "Shell32",{public = true})
+end
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --
