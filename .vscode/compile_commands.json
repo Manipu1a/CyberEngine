@@ -1,58 +1,28 @@
 [
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberInputSystem.pdb", "/Od", "/IEngine\\Modules\\InputSystem\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberInputSystem\\windows\\x64\\debug\\Engine\\Modules\\InputSystem\\src\\InputListener.cpp.obj", "Engine\\Modules\\InputSystem\\src\\InputListener.cpp"],
-  "file": "Engine\\Modules\\InputSystem\\src\\InputListener.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberInputSystem.pdb", "/Od", "/IEngine\\Modules\\InputSystem\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberInputSystem\\windows\\x64\\debug\\Engine\\Modules\\InputSystem\\src\\InputSystem.cpp.obj", "Engine\\Modules\\InputSystem\\src\\InputSystem.cpp"],
-  "file": "Engine\\Modules\\InputSystem\\src\\InputSystem.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\eastl.cpp"],
-  "file": "thirdparty\\EASTL\\EASTL\\eastl.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp.obj", "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"],
-  "file": "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\source\\red_black_tree.cpp.obj", "thirdparty\\EASTL\\source\\red_black_tree.cpp"],
-  "file": "thirdparty\\EASTL\\source\\red_black_tree.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.GameRuntime.pdb", "/Od", "/Isamples\\application\\game\\modules\\game_runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\InputSystem\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\GameRuntime\\windows\\x64\\debug\\samples\\application\\game\\modules\\game_runtime\\src\\GameApplication.cpp.obj", "samples\\application\\game\\modules\\game_runtime\\src\\GameApplication.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.GameRuntime.pdb", "/Od", "/Isamples\\application\\game\\modules\\game_runtime\\include", "/IEngine\\Modules\\InputSystem\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\GameRuntime\\windows\\x64\\debug\\samples\\application\\game\\modules\\game_runtime\\src\\GameApplication.cpp.obj", "samples\\application\\game\\modules\\game_runtime\\src\\GameApplication.cpp"],
   "file": "samples\\application\\game\\modules\\game_runtime\\src\\GameApplication.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Game.pdb", "/Od", "/std:c++17", "/Isamples\\application\\game\\modules\\game_runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\InputSystem\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\Game\\windows\\x64\\debug\\samples\\application\\game\\src\\main.cpp.obj", "samples\\application\\game\\src\\main.cpp"],
-  "file": "samples\\application\\game\\src\\main.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberLog.pdb", "/Od", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberLog\\windows\\x64\\debug\\Engine\\Modules\\Log\\src\\Log.cpp.obj", "Engine\\Modules\\Log\\src\\Log.cpp"],
-  "file": "Engine\\Modules\\Log\\src\\Log.cpp"
-},
-{
-  "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\core\\Application.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Application.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\core\\Application.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Application.cpp"],
   "file": "Engine\\Modules\\runtime\\src\\core\\Application.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\core\\Window.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Window.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\core\\Window.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Window.cpp"],
   "file": "Engine\\Modules\\runtime\\src\\core\\Window.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
-  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp.obj", "Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp"],
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp.obj", "Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp"],
   "file": "Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberRuntime.pdb", "/Od", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\debug\\Engine\\Modules\\runtime\\src\\rhi\\rhi.cpp.obj", "Engine\\Modules\\runtime\\src\\rhi\\rhi.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\rhi\\rhi.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
@@ -123,6 +93,41 @@
   "directory": "d:\\project\\CyberEngine",
   "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\mimalloc.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\debug\\thirdparty\\mimalloc\\init.c.obj", "thirdparty\\mimalloc\\init.c"],
   "file": "thirdparty\\mimalloc\\init.c"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberLog.pdb", "/Od", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberLog\\windows\\x64\\debug\\Engine\\Modules\\Log\\src\\Log.cpp.obj", "Engine\\Modules\\Log\\src\\Log.cpp"],
+  "file": "Engine\\Modules\\Log\\src\\Log.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.Game.pdb", "/Od", "/std:c++17", "/Isamples\\application\\game\\modules\\game_runtime\\include", "/IEngine\\Modules\\InputSystem\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\Game\\windows\\x64\\debug\\samples\\application\\game\\src\\main.cpp.obj", "samples\\application\\game\\src\\main.cpp"],
+  "file": "samples\\application\\game\\src\\main.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\eastl.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\eastl.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp.obj", "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\EASTL.pdb", "/Od", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\EASTL\\windows\\x64\\debug\\thirdparty\\EASTL\\source\\red_black_tree.cpp.obj", "thirdparty\\EASTL\\source\\red_black_tree.cpp"],
+  "file": "thirdparty\\EASTL\\source\\red_black_tree.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberInputSystem.pdb", "/Od", "/IEngine\\Modules\\InputSystem\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberInputSystem\\windows\\x64\\debug\\Engine\\Modules\\InputSystem\\src\\InputListener.cpp.obj", "Engine\\Modules\\InputSystem\\src\\InputListener.cpp"],
+  "file": "Engine\\Modules\\InputSystem\\src\\InputListener.cpp"
+},
+{
+  "directory": "d:\\project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/Zi", "/FS", "/Fdbuild\\windows\\x64\\debug\\compile.CyberInputSystem.pdb", "/Od", "/IEngine\\Modules\\InputSystem\\include", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\Memory\\include", "/IEngine\\Modules\\Events\\include", "/Id:\\project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/IEngine\\include", "/Id:\\project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/IEngine\\Modules\\Log\\include", "/Id:\\project\\CyberEngine\\thirdparty\\EASTL", "/Id:\\project\\CyberEngine\\thirdparty\\mimalloc\\include", "/Id:\\project\\CyberEngine\\thirdparty\\spdlog", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/EHsc", "/Fobuild\\.objs\\CyberInputSystem\\windows\\x64\\debug\\Engine\\Modules\\InputSystem\\src\\InputSystem.cpp.obj", "Engine\\Modules\\InputSystem\\src\\InputSystem.cpp"],
+  "file": "Engine\\Modules\\InputSystem\\src\\InputSystem.cpp"
 },
 {
   "directory": "d:\\project\\CyberEngine",
