@@ -2,6 +2,7 @@
 
 #include <mimalloc.h>
 #include <mimalloc-new-delete.h>
+#include <EASTL/internal/function.h>
 
 namespace Cyber
 {
@@ -9,7 +10,7 @@ namespace Cyber
 template<typename T, typename... Args>
 static T* cb_placement_new(void* ptr, Args&&... args)
 {
-    return mi_new (ptr) T(eastl::forward<Args>(args)...);
+    return new (ptr) T(eastl::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>

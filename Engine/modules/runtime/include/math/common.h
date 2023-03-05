@@ -12,5 +12,6 @@ namespace Cyber
     static inline uint64_t round_up_64(uint64_t value, uint64_t multiple) { return (((value + multiple - 1) / multiple) * multiple);}
 
     static inline uint32_t round_down(uint32_t value, uint32_t multiple) { return value - value % multiple; }
-    static inline uint64_t round_down_64(uint64_t value, uint64_t multiple) { return value - value % multiple; } 
+    static inline uint64_t round_down_64(uint64_t value, uint64_t multiple) { return value - value % multiple; }
+     
 }

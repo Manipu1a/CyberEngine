@@ -5,13 +5,15 @@
 #endif
 
 #ifdef CB_ENABLE_ASSERTS
-    #define CB_CHECK(x) if(!(x)) {__debugbreak();}
-    #define CB_ASSERTS(x, ...) if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}
-    #define CB_CORE_ASSERTS(x, ...) { if(!(x)) {CB_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}}
+    #define cyber_check(x) if(!(x)) {__debugbreak();}
+    #define cyber_assert(x, ...) if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}
+    #define cyber_warn(x, ...) CB_WARN("Warn: {0}", __VA_ARGS__)
+    #define cyber_core_assert(x, ...) { if(!(x)) {CB_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}}
 #else
-    #define CB_CHECK(x)
-    #define CB_ASSERTS(x, ...)
-    #define CB_CORE_ASSERTS(x, ...)
+    #define cyber_check(x)
+    #define cyber_assert(x, ...)
+    #define cyber_warn(x, ...)
+    #define cyber_core_assert(x, ...)
 #endif
 
 #if defined(_WINDOWS)

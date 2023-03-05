@@ -1,5 +1,4 @@
 #include "rhi/backend/d3d12/rhi_d3d12.h"
-#include "CyberMemory/Memory.h"
 #include "d3d12_utils.h"
 #include "CyberLog/Log.h"
 #include "math/common.h"
@@ -28,13 +27,153 @@ namespace Cyber
 
     }
 
-    Texture2DRHIRef RHI_D3D12::rhi_create_texture(const Renderer& pRenderer, const TextureCreationDesc& pDesc)
+    void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc)
+    {
+        RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(pAdapter.get());
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pAdapter->pInstance.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        
+        dxDevice->pAdapter = pAdapter;
+
+        if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&dxDevice->pDxDevice))))
+        {
+            cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
+        }
+
+        // Create Requested Queues
+        dxDevice->pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cb_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
+
+        for(uint32_t i = 0u; i < deviceDesc.mQueueGroupCount;i++)
+        {
+            const auto& queueGroup = deviceDesc.mQueueGroupsDesc[i];
+            const auto type = queueGroup.mQueueType;
+
+            dxDevice->mCommandQueueCounts[type] = queueGroup.mQueueCount;
+            dxDevice->mCommandQueues[type] = (ID3D12CommandQueue*)cb_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
+
+            for(uint32_t j = 0u; j < queueGroup.mQueueCount; j++)
+            {
+                DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
+                switch(type)
+                {
+                    case RHI_QUEUE_TYPE_GRAPHICS:
+                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+                        break;
+                    case RHI_QUEUE_TYPE_COMPUTE:
+                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+                        break;
+                    case RHI_QUEUE_TYPE_TRANSFER:
+                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+                        break;
+                    default:
+                        cyber_assert(false, "[D3D12 Fatal]: Create D3D12CommandQueue Failed!");
+                        break;
+                }
+            }
+        }
+
+        // Create D3D12MA Allocator
+        D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dxDevice);
+        cyber_assert(dxDevice->pResourceAllocator == nullptr, "DMA Allocator Must be Created!");
+        // Create Descriptor Heaps
+        for(uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+        {
+            D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+            desc.Flags = gCpuDescriptorHeapProerties[i].mFlags;
+            desc.NodeMask = 0;
+            desc.NumDescriptors = gCpuDescriptorHeapProerties[i].mMaxDescriptors;
+            desc.Type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
+#ifdef _DEBUG
+
+#endif
+            dxDevice->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cb_malloc(sizeof(RHIDescriptorHeap_D3D12));
+            D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mCPUDescriptorHeaps[i]);
+        }
+
+        // Allocate NULL Descriptors
+        {
+            dxDevice->pNullDescriptors->Sampler = D3D12_DESCRIPTOR_ID_NONE;
+            D3D12_SAMPLER_DESC samplerDesc = {};
+            samplerDesc.AddressU = samplerDesc.AddressV = samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+            dxDevice->pNullDescriptors->Sampler = D3D12Util_ConsumeDescriptorHandles(dxDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER], 1).mCpu;
+            dxDevice->pDxDevice->CreateSampler(&samplerDesc, dxDevice->pNullDescriptors->Sampler);
+
+            D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+            srvDesc.Format = DXGI_FORMAT_R8_UINT;
+            srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+            uavDesc.Format = DXGI_FORMAT_R8_UINT;
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D]);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D]);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_3D]);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_3D]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D_ARRAY]);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D_ARRAY]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D_ARRAY]);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D_ARRAY]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS_ARRAY]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE_ARRAY]);
+
+            srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+            uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->BufferSRV);
+            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->BufferUAV);
+            D3D12Util_CreateCBV(dxDevice, NULL, &dxDevice->pNullDescriptors->BufferCBV);
+        }
+
+        // Pipeline cache
+        D3D12_FEATURE_DATA_SHADER_CACHE feature = {};
+        HRESULT result = dxDevice->pDxDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_CACHE, &feature, sizeof(feature));
+        if(SUCCEEDED(result))
+        {
+            result = E_NOTIMPL;
+            if(feature.SupportFlags & D3D12_SHADER_CACHE_SUPPORT_LIBRARY)
+            {
+                ID3D12Device1* device1 = NULL;
+                result = dxDevice->pDxDevice->QueryInterface(IID_ARGS(&device1));
+                if(SUCCEEDED(result))
+                {
+                    result = device1->CreatePipelineLibrary(dxDevice->pPSOCacheData, 0, IID_ARGS(&dxDevice->pPipelineLibrary));
+                }
+                SAFE_RELEASE(device1);
+            }
+        }
+    }
+
+    Texture2DRHIRef RHI_D3D12::rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& pDesc)
     {
         //RHID3D12Texture* pTexture = (RHID3D12Texture*)cb_calloc_memalign(1, alignof(RHID3D12Texture), sizeof(RHID3D12Texture));
-        RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pRenderer.mDevice.get());
+        RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
 
         Ref<RHITexture2D_D3D12> pTexture = CreateRef<RHITexture2D_D3D12>();
-        CB_ASSERTS(pTexture != nullptr, "rhi texture create failed!");
+        cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         D3D12_RESOURCE_DESC desc = {};
 
@@ -195,13 +334,44 @@ namespace Cyber
         return pTexture;
     }
 
-    BufferRHIRef RHI_D3D12::rhi_create_buffer(const Renderer& pRenderer, const BufferCreateDesc& pDesc)
+    void RHI_D3D12::rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc)
     {
-        RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pRenderer.mDevice.get());
-        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(pRenderer.mAdapter.get());
+        RHIInstance_D3D12* dxDevice = static_cast<RHIInstance_D3D12*>(pInstance.get());
+        // Initialize driver
+        D3D12Util_InitializeEnvironment(dxDevice);
+        // Enable Debug Layer
+        D3D12Util_Optionalenable_debug_layer(dxDevice, instanceDesc);
 
+        UINT flags = 0;
+        if(instanceDesc.mEnableDebugLayer)
+            flags = DXGI_CREATE_FACTORY_DEBUG;
+        
+        if(SUCCEEDED(CreateDXGIFactory2(flags, IID_PPV_ARGS(&dxDevice->pDXGIFactory))))
+        {
+            uint32_t gpuCount = 0;
+            bool foundSoftwareAdapter = false;
+            D3D12Util_QueryAllAdapters(dxDevice, gpuCount, foundSoftwareAdapter);
+            // If the only adapter we found is a software adapter, log error message for QA 
+            if(!gpuCount && foundSoftwareAdapter)
+            {
+                cyber_assert(false, "The only avaliable GPU has DXGI_ADAPTER_FLAG_SOFTWARE. Early exiting");
+                return;
+            }
+        }
+        else 
+        {
+            cyber_assert(false, "[D3D12 Fatal]: Create DXGIFactory2 Failed!]");
+        }
+    }
+
+
+    BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
+    {
+        RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(pDevice->pAdapter.get());
+        //RHIRenderer_D3D12* DxRenderer = static_cast<RHIRenderer_D3D12*>(pRenderer.get());
+        
         Ref<RHIBuffer_D3D12> pBuffer = CreateRef<RHIBuffer_D3D12>();
-        pBuffer->mDescriptors = D3D12_DESCRIPTOR_ID_NONE;
 
         uint64_t allocationSize = pDesc.mSize;
         // Align the buffer size to multiples of the dynamic uniform buffer minimum size
@@ -289,7 +459,108 @@ namespace Cyber
             CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", pDesc.pName ? pDesc.pName : "", allocationSize, pDesc.mFormat);
         }
         
+        if(pDesc.mMemoryUsage != RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY && pDesc.mFlags & RHI_BCF_PERSISTENT_MAP_BIT)
+            pBuffer->pDxResource->Map(0, NULL, &pBuffer->pCpuMappedAddress);
         
+        pBuffer->mDxGpuAddress = pBuffer->pDxResource->GetGPUVirtualAddress();
+        
+        // Create Descriptors
+        if(!(pDesc.mFlags & RHI_BCF_NO_DESCRIPTOR_VIEW_CREATION))
+        {
+            RHIDescriptorHeap_D3D12* pHeap = DxDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+            uint32_t handleCount = ((pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
+                                    ((pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
+                                    ((pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
+            pBuffer->mDxDescriptorHandles = D3D12Util_ConsumeDescriptorHandles(pHeap, handleCount).mCpu;
+
+            // Create CBV
+            if(pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            {
+                pBuffer->mSrvDescriptorOffset = 1;
+
+                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+                cbvDesc.BufferLocation = pBuffer->mDxGpuAddress;
+                cbvDesc.SizeInBytes = (UINT)allocationSize;
+                D3D12Util_CreateCBV(DxDevice, &cbvDesc, &pBuffer->mDxDescriptorHandles);
+            }
+
+            // Create SRV
+            if(pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_BUFFER)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE srv = {pBuffer->mDxDescriptorHandles.ptr + pBuffer->mSrvDescriptorOffset};
+                pBuffer->mUavDescriptorOffset = pBuffer->mSrvDescriptorOffset + pHeap->mDescriptorSize * 1;
+
+                D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+                srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+                srvDesc.Buffer.FirstElement = pDesc.mFirstElement;
+                srvDesc.Buffer.NumElements = (UINT)pDesc.mElementCount;
+                srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+                srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(pDesc.mFormat);
+                if(RHI_DESCRIPTOR_TYPE_BUFFER_RAW == (pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_BUFFER_RAW))
+                {
+                    if(pDesc.mFormat != RHI_FORMAT_UNDEFINED)
+                    {
+                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                    }
+                    srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                    srvDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
+                }
+                // Cannot create a typed StructuredBuffer
+                if(srvDesc.Format != DXGI_FORMAT_UNKNOWN)
+                {
+                    srvDesc.Buffer.StructureByteStride = 0;
+                }
+
+                D3D12Util_CreateSRV(DxDevice, pBuffer->pDxResource, &srvDesc, &srv);
+            }
+
+            // Create UAV
+            if(pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_RW_BUFFER)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE uav = {pBuffer->mDxDescriptorHandles.ptr + pBuffer->mUavDescriptorOffset};
+
+                D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+                uavDesc.Buffer.FirstElement = pDesc.mFirstElement;
+                uavDesc.Buffer.NumElements = (UINT)pDesc.mElementCount;
+                uavDesc.Buffer.StructureByteStride = (UINT)pDesc.mStructStride;
+                uavDesc.Buffer.CounterOffsetInBytes = 0;
+                uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+                if(RHI_DESCRIPTOR_TYPE_RW_BUFFER_RAW == (pDesc.mDescriptors & RHI_DESCRIPTOR_TYPE_RW_BUFFER_RAW))
+                {
+                    if(pDesc.mFormat != RHI_FORMAT_UNDEFINED)
+                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                    uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                    uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
+                }
+                else if(pDesc.mFormat != RHI_FORMAT_UNDEFINED)
+                {
+                    uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(pDesc.mFormat);
+                    D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
+                    HRESULT hr = DxDevice->pDeviceImpl->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+                    if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
+                        !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
+                    {
+                        CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)pDesc.mFormat);
+                        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                // Cannot create a typed RWStructuredBuffer
+                if(uavDesc.Format != DXGI_FORMAT_UNKNOWN)
+                {
+                    uavDesc.Buffer.StructureByteStride = 0;
+                }
+
+                ID3D12Resource* pCounterResource = pDesc.pCounterBuffer ? static_cast<RHIBuffer_D3D12*>(pDesc.pCounterBuffer)->pDxResource : nullptr;
+                D3D12Util_CreateUAV(DxDevice, pBuffer->pDxResource, pCounterResource, &uavDesc, &uav);
+            }
+        }
+
+        pBuffer->mSize = (uint32_t)pDesc.mSize;
+        pBuffer->mMemoryUsage = pDesc.mMemoryUsage;
+        pBuffer->mDescriptors = pDesc.mDescriptors;
         return pBuffer;
     }
 }

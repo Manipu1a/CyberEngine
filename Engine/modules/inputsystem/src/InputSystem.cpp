@@ -114,14 +114,14 @@ namespace Cyber
 
     void InputSystem::addInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget)
     {
-        CB_ASSERTS(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
+        cyber_assert(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
         AddInputAction(pDesc, actionMappingTarget);
     }
 
     void InputSystem::AddActionMappings(const eastl::vector<ActionMappingDesc> actionMappings, const uint32_t numActions, const InputActionMappingDeviceTarget actionMappingTarget)
     {
         // Ensure there isn't too many actions than we can fit in memory
-        CB_ASSERTS(numActions < MAX_INPUT_ACTIONS, "Too many actions!");
+        cyber_assert(numActions < MAX_INPUT_ACTIONS, "Too many actions!");
 
         // First need to reset mappings
         mButtonControlPerformQueue.clear();
@@ -130,10 +130,9 @@ namespace Cyber
         for(uint32_t i = 0;i < numActions;++i)
         {
             const ActionMappingDesc& pActionMappingDesc = actionMappings[i];
-            CB_CHECK(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
+            cyber_check(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
 
-
-            CB_ASSERTS(pActionMappingDesc.mActionId < MAX_INPUT_ACTIONS, "mActionId is greater than MAX_INPUT_ACTIONS");
+            cyber_assert(pActionMappingDesc.mActionId < MAX_INPUT_ACTIONS, "mActionId is greater than MAX_INPUT_ACTIONS");
 
             gainput::DeviceId deviceId = ~0u;
 
@@ -161,11 +160,11 @@ namespace Cyber
             }
             default:
             {
-                CB_ASSERTS(0, "Can't match device type!");
+                cyber_assert(0, "Can't match device type!");
             }
             }
 
-            CB_CHECK(deviceId != ~0u);
+            cyber_check(deviceId != ~0u);
 
             switch (pActionMappingDesc.mActionMappingType)
             {
@@ -175,13 +174,13 @@ namespace Cyber
             case InputActionMappingType::INPUT_ACTION_MAPPING_TOUCH_GESTURE:
             case InputActionMappingType::INPUT_ACTION_MAPPING_TOUCH_VIRTUAL_JOYSTICK:
             {
-                CB_CHECK(mInputActionMappingIdToDesc[deviceId][pActionMappingDesc.mActionId].mActionMappingDeviceTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
+                cyber_check(mInputActionMappingIdToDesc[deviceId][pActionMappingDesc.mActionId].mActionMappingDeviceTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL);
                 mInputActionMappingIdToDesc[deviceId][pActionMappingDesc.mActionId] = pActionMappingDesc;
                 // Register an action for UI action mappings so that the app can intercept them via the global action (GLOBAL_INPUT_ACTION_ANY_BUTTON_ACTION)
                 if(pActionMappingDesc.mActionId > 0)
                 {
                     // Ensure the type is INPUT_ACTION_MAPPING_NORMAL
-                    CB_ASSERTS(pActionMappingDesc.mActionMappingType == InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL, "Action mapping type isn't INPUT_ACTION_MAPPING_NORMAL");
+                    cyber_assert(pActionMappingDesc.mActionMappingType == InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL, "Action mapping type isn't INPUT_ACTION_MAPPING_NORMAL");
 
                     InputActionDesc actionDesc;
                     actionDesc.mActionId = pActionMappingDesc.mActionId;
@@ -191,7 +190,7 @@ namespace Cyber
             }
             default:
             {
-                CB_ASSERTS(0,"Can't match action mapping type!");
+                cyber_assert(0,"Can't match action mapping type!");
             }
             }
 
@@ -201,7 +200,7 @@ namespace Cyber
 
     void InputSystem::AddInputAction(const InputActionDesc& pDesc, const InputActionMappingDeviceTarget actionMappingTarget)
     {
-        CB_ASSERTS(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
+        cyber_assert(pDesc.mActionId < MAX_INPUT_ACTIONS, "Input action greater than MAX!");
 
         //keyboard action
         if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD || actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
@@ -209,7 +208,7 @@ namespace Cyber
             const ActionMappingDesc& pActionMappingDesc = mInputActionMappingIdToDesc[mKeyboardDeviceID][pDesc.mActionId];
             if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_KEYBOARD)
             {
-                CB_ASSERTS(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
+                cyber_assert(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
             }
 
             if(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
@@ -222,7 +221,7 @@ namespace Cyber
             const ActionMappingDesc& pActionMappingDesc = mInputActionMappingIdToDesc[mMouseDeviceID][pDesc.mActionId];
             if(actionMappingTarget == InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_MOUSE)
             {
-                CB_ASSERTS(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
+                cyber_assert(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL, "mActionMappingDeviceTarget is INPUT_ACTION_MAPPING_TARGET_ALL");
             }
 
             if(pActionMappingDesc.mActionMappingDeviceTarget != InputActionMappingDeviceTarget::INPUT_ACTION_MAPPING_TARGET_ALL)
@@ -241,7 +240,7 @@ namespace Cyber
                     case InputActionMappingType::INPUT_ACTION_MAPPING_NORMAL:
                     {
                         IControl* pControl = AllocateControl<IControl>(mKeyboardDeviceID);
-                        CB_ASSERTS(pControl, "Allocate failed!");
+                        cyber_assert(pControl, "Allocate failed!");
 
                         pControl->mType = InputControlType::CONTROL_BUTTON;
                         pControl->mAction = pActionDesc;
@@ -251,7 +250,7 @@ namespace Cyber
                     case InputActionMappingType::INPUT_ACTION_MAPPING_COMPOSITE:
                     {
                         CompositeControl* pControl = AllocateControl<CompositeControl>(mKeyboardDeviceID);
-                        CB_ASSERTS(pControl, "Allocate failed!");
+                        cyber_assert(pControl, "Allocate failed!");
 
                         memset((void*)pControl, 0, sizeof(*pControl));
                         pControl->mComposite = 4;
@@ -270,7 +269,7 @@ namespace Cyber
                     case InputActionMappingType::INPUT_ACTION_MAPPING_COMBO:
                     {
                         ComboControl* pControl = AllocateControl<ComboControl>(mKeyboardDeviceID);
-                        CB_ASSERTS(pControl, "Allocate failed!");
+                        cyber_assert(pControl, "Allocate failed!");
 
                         pControl->mType = InputControlType::COMTROL_COMBO;
                         pControl->mAction = pActionDesc;
@@ -281,7 +280,7 @@ namespace Cyber
                         break;
                     }
                     default:
-                        CB_ASSERTS(false, "Can't match InputActionMappingType!");
+                        cyber_assert(false, "Can't match InputActionMappingType!");
                 }
                 break;
             }
@@ -437,7 +436,7 @@ namespace Cyber
                 {
                     if(!oldValue && newValue)
                     {
-                        CB_CHECK(deviceButton == gainput::MouseButtonWheelUp || deviceButton == gainput::MouseButtonWheelDown);
+                        cyber_check(deviceButton == gainput::MouseButtonWheelUp || deviceButton == gainput::MouseButtonWheelDown);
 
                         FloatControl* pControl = (FloatControl*)(&control);
                         ctx.mFloat2[1] = deviceButton == gainput::MouseButtonWheelUp ? 1.0f : -1.0f;

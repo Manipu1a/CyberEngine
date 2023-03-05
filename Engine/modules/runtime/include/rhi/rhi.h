@@ -1,30 +1,37 @@
 #pragma once
 #include "cyber_rhi_config.h"
+#include "flags.h"
+#include <EASTL/vector.h>
 #include "core/Core.h"
 
 namespace Cyber
 {
+    #define RHI_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
+    
     struct RHITexture;
     typedef Ref<RHITexture> TextureRHIRef;
     struct RHITexture2D;
     typedef Ref<RHITexture2D> Texture2DRHIRef;
     struct RHIBuffer;
     typedef Ref<RHIBuffer> BufferRHIRef;
+    struct RHIQueue;
+    typedef Ref<RHIQueue> QueueRHIRef;
 
-    enum ERHIBackend
+    typedef enum ERHIBackend
     {
         RHI_BACKEND_D3D12,
         RHI_BACKEND_VULKAN,
         RHI_BACKEND_METAL
-    };
+    } ERHIBackend;
 
-    enum ERHIQueueType
+    typedef enum ERHIQueueType
     {
         RHI_QUEUE_TYPE_GRAPHICS = 0,
-        RHI_QUEUE_TYPE_TRANSFER,
-        RHI_QUEUE_TYPE_COMPUTE,
-        MAX_QUEUE_TYPE
-    };
+        RHI_QUEUE_TYPE_COMPUTE = 1,
+        RHI_QUEUE_TYPE_TRANSFER = 2,
+        RHI_QUEUE_TYPE_COUNT,
+        MAX_QUEUE_TYPE_MAX_ENUM_BIT = 0x7FFFFFFF
+    } ERHIQueueType;
 
     enum ERHIQueueFlag 
     {
@@ -492,9 +499,6 @@ namespace Cyber
 
     struct CYBER_RHI_API RHITexture
     {
-        RHITexture();
-        virtual ~RHITexture();
-
         uint32_t mWidth;
         uint32_t mHeight;
         uint32_t mDepth;
@@ -551,17 +555,37 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIBuffer
     {
+        /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
+        void* pCpuMappedAddress;
         uint64_t mSize : 32;
         uint64_t mDescriptors : 20;
         uint64_t mMemoryUsage : 3;
         uint64_t mNodeIndex : 4;
     };
 
-    class CYBER_RHI_API RHIDevice
+    struct CYBER_RHI_API RHIInstanceCreateDesc
     {
-    public:
+        ERHIBackend mBackend;
+        bool mEnableDebugLayer;
+        bool mEnableGpuBasedValidation;
+        bool mEnableSetName;
     };
-    
+
+    // Objects
+    class CYBER_RHI_API RHIInstance
+    {
+        ERHIBackend mBackend;
+        ERHINvAPI_Status mNvAPIStatus;
+        ERHIAGSReturenCode mAgsStatus;
+        bool mEnableSetName;
+    };
+    /// Device Group
+    struct CYBER_RHI_API QueueGroupDesc
+    {
+        ERHIQueueType mQueueType;
+        uint32_t mQueueCount;
+    };
+
     struct CYBER_RHI_API RHIAdapterDetail
     {
         uint32_t mUniformBufferAlignment;
@@ -577,22 +601,93 @@ namespace Cyber
         bool mIsUma : 1;
         bool mIsVirtual : 1;
         bool mIsCpu : 1;
-
     };
 
     class CYBER_RHI_API RHIAdapter
     {
     public:
-        RHIAdapterDetail mAdapterDetail;
-
+        Cyber::Ref<RHIInstance> pInstance;
     };
 
-    class CYBER_RHI_API Renderer
+    struct CYBER_RHI_API DeviceCreateDesc
+    {
+        bool bDisablePipelineCache;
+        eastl::vector<QueueGroupDesc> mQueueGroupsDesc;
+        uint32_t mQueueGroupCount;
+    };
+
+    class CYBER_RHI_API RHIDevice
     {
     public:
+        Cyber::Ref<RHIAdapter> pAdapter;
+    };
 
-        Cyber::Scope<RHIDevice> mDevice;
-        Cyber::Scope<RHIAdapter> mAdapter;
+    class CYBER_RHI_API RHIFence
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+    };
+
+    class CYBER_RHI_API RHISemaphore
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+    };
+
+    class CYBER_RHI_API RHIQueue
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+    };
+
+    class CYBER_RHI_API RHICommandPool
+    {
+    public:
+        Cyber::Ref<RHIQueue> pQueue;
+    };
+
+    class CYBER_RHI_API RHICommandBuffer
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+        Cyber::Ref<RHICommandPool> pPool;
+        ERHIPipelineType mCurrentDispatch;
+    };
+
+    class CYBER_RHI_API RHIQueryPool
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+        uint32_t mCount;
+    };
+
+    struct CYBER_RHI_API RHIQueueSubmitDesc
+    {
+        Ref<RHICommandBuffer> pCmds;
+        RHIFence mSignalFence;
+        RHISemaphore* pWaitSemaphores;
+        RHISemaphore* pSignalSemaphores;
+        uint32_t mCmdsCount;
+        uint32_t mWaitSemaphoreCount;
+        uint32_t mSignalSemaphoreCount;
+    };
+
+    struct CYBER_RHI_API RHIQueueGroupDesc
+    {
+        ERHIQueueType mQueueType;
+        uint32_t mQueueCount;
+    };
+
+    struct CYBER_RHI_API RHIQueuePresentDesc
+    {
+        
+    };
+
+    class CYBER_RHI_API RHIRenderer
+    {
+    public:
+        Cyber::Scope<RHIDevice> pDevice;
+        Cyber::Scope<RHIAdapter> pAdapter;
     };
 
     class CYBER_RHI_API RHI
@@ -600,18 +695,50 @@ namespace Cyber
     public:
         static void createRHI(ERHIBackend backend);
         static RHI gloablRHI;
-
-    public:
-        virtual Texture2DRHIRef rhi_create_texture(const Renderer& pRenderer, const TextureCreationDesc& pDesc) {}
-        virtual void rhi_remove_texture();
         
-        virtual BufferRHIRef rhi_create_buffer(const Renderer& pRenderer, const BufferCreateDesc& pDesc) {}
-        virtual void rhi_remove_buffer();
-        virtual void rhi_map_buffer();
+    public:
+        // Instance APIs
+        virtual void rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc) {}
 
-        virtual void rhi_create_rendertarget();
+        // Device APIS
+        virtual void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc) {}
+
+        // API Object APIs
+        virtual RHIFence rhi_create_fence(Ref<RHIDevice> pDevice) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_fence!");
+            return RHIFence();
+        };
+        virtual void rhi_wait_fences(const RHIFence* pFences, uint32_t fenceCount) {}
+        virtual void rhi_query_fence_statis(Ref<RHIFence> pFence) {}
+
+        // Queue APIs
+        virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
+        { 
+            cyber_core_assert(false, "Empty implement rhi_get_queue!");
+            return CreateRef<RHIQueue>();
+        }
+        //virtual void rhi_submit_queue(Ref<RHIQueue> pQueue, const )
+
+        // Resource APIs
+        virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_texture!");
+            return CreateRef<RHITexture2D>();
+        }
+        virtual void rhi_remove_texture() {}
+        
+        virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_texture!");
+            return CreateRef<RHIBuffer>();
+        }
+
+        virtual void rhi_remove_buffer() {}
+        virtual void rhi_map_buffer() {}
+
+        virtual void rhi_create_rendertarget() {}
     };
-
 
     #define RHI_SINGLE_GPU_NODE_COUNT 1
     #define RHI_SINGLE_GPU_NODE_MASK 1

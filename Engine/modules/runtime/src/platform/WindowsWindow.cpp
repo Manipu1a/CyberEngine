@@ -68,7 +68,7 @@ namespace Cyber
         if(!mData.mWindowDesc.hWnd)
         {
             HRESULT hr = HRESULT_FROM_WIN32( GetLastError() );
-            CB_CORE_ASSERTS(false, "Call to CreateWindow failed!{0}", GetLastError());
+            cyber_core_assert(false, "Call to CreateWindow failed!{0}", GetLastError());
         }
 
         ShowWindow(mData.mWindowDesc.hWnd, mData.mWindowDesc.cmdShow);
