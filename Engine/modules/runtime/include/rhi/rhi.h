@@ -692,10 +692,18 @@ namespace Cyber
 
     class CYBER_RHI_API RHI
     {
+
     public:
         static void createRHI(ERHIBackend backend);
-        static RHI gloablRHI;
-        
+        inline static RHI& GetRHIContext()
+        {
+            cyber_assert(globalRHI, "RHI has not been initialized!");
+            return *gloablRHI;
+        }
+
+    protected:
+        static RHI* gloablRHI;
+
     public:
         // Instance APIs
         virtual void rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc) {}
