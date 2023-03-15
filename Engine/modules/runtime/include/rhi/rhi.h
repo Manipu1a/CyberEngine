@@ -16,6 +16,10 @@ namespace Cyber
     typedef Ref<RHIBuffer> BufferRHIRef;
     struct RHIQueue;
     typedef Ref<RHIQueue> QueueRHIRef;
+    struct RHIFence;
+    typedef Ref<RHIFence> FenceRHIRef;
+    struct RHIInstance;
+    typedef Ref<RHIInstance> InstanceRHIRef;
 
     typedef enum ERHIBackend
     {
@@ -706,19 +710,23 @@ namespace Cyber
 
     public:
         // Instance APIs
-        virtual void rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc) {}
+        virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_instance!");
+            return CreateRef<RHIInstance>();
+        }
 
         // Device APIS
         virtual void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc) {}
 
         // API Object APIs
-        virtual RHIFence rhi_create_fence(Ref<RHIDevice> pDevice) 
+        virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
-            return RHIFence();
+            return CreateRef<RHIFence>();
         };
         virtual void rhi_wait_fences(const RHIFence* pFences, uint32_t fenceCount) {}
-        virtual void rhi_query_fence_statis(Ref<RHIFence> pFence) {}
+        virtual void rhi_query_fence_status(Ref<RHIFence> pFence) {}
 
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 

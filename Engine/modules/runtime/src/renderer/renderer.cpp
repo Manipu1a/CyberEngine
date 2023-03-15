@@ -212,23 +212,8 @@ namespace Cyber
         deviceDesc.mQueueGroupCount = 0;
         deviceDesc.bDisablePipelineCache = false;
         RHI::GetRHIContext().rhi_create_device(pRHIDevice, pRHIAdapter, deviceDesc);
-        
 
-        CreateDXGIFactory1(IID_PPV_ARGS(&mdxgiFactory));
-
-        // Try to create hardware device
-        HRESULT hardwareResult = D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&md3dDevice));
-        
-        // Fallback to WARP device
-        if(!SUCCEEDED(hardwareResult))
-        {
-            IDXGIAdapter* pWarpAdapter;
-            mdxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&pWarpAdapter));
-
-            D3D12CreateDevice(pWarpAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&md3dDevice));
-        }
-
-        md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&mFence));
+        pRHIFence = RHI::GetRHIContext().rhi_create_fence(pRHIDevice);
 
         mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);

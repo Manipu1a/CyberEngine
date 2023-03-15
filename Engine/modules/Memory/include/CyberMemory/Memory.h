@@ -6,18 +6,17 @@
 
 namespace Cyber
 {
-    
 template<typename T, typename... Args>
-static T* cb_placement_new(void* ptr, Args&&... args)
+static T* cyber_placement_new(void* ptr, Args&&... args)
 {
     return new (ptr) T(eastl::forward<Args>(args)...);
 }
 
 template<typename T, typename... Args>
-static T* cb_new_internal(Args&&... args)
+static T* cyber_new(Args&&... args)
 {
     void* ptr = mi_malloc_aligned(alignof(T), sizeof(T));
-    return cb_placement_new<T>(ptr, eastl::forward<Args>(args)...);
+    return cyber_placement_new<T>(ptr, eastl::forward<Args>(args)...);
 }
 
 #ifndef cb_malloc

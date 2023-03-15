@@ -1,7 +1,11 @@
 #include "rhi/backend/d3d12/rhi_d3d12.h"
+#include "EASTL/EABase/eabase.h"
+#include "EASTL/vector.h"
 #include "d3d12_utils.h"
 #include "CyberLog/Log.h"
 #include "math/common.h"
+#include <combaseapi.h>
+#include <synchapi.h>
 
 namespace Cyber
 {
@@ -48,8 +52,8 @@ namespace Cyber
             const auto& queueGroup = deviceDesc.mQueueGroupsDesc[i];
             const auto type = queueGroup.mQueueType;
 
-            dxDevice->mCommandQueueCounts[type] = queueGroup.mQueueCount;
-            dxDevice->mCommandQueues[type] = (ID3D12CommandQueue*)cb_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
+            dxDevice->pCommandQueueCounts[type] = queueGroup.mQueueCount;
+            dxDevice->ppCommandQueues[type] = (ID3D12CommandQueue*)cb_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
 
             for(uint32_t j = 0u; j < queueGroup.mQueueCount; j++)
             {
@@ -334,13 +338,15 @@ namespace Cyber
         return pTexture;
     }
 
-    void RHI_D3D12::rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc)
+    InstanceRHIRef RHI_D3D12::rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc)
     {
-        RHIInstance_D3D12* dxDevice = static_cast<RHIInstance_D3D12*>(pInstance.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+
+        RHIInstance_D3D12* dxInstance = cyber_new<RHIInstance_D3D12>();
         // Initialize driver
-        D3D12Util_InitializeEnvironment(dxDevice);
+        D3D12Util_InitializeEnvironment(dxInstance);
         // Enable Debug Layer
-        D3D12Util_Optionalenable_debug_layer(dxDevice, instanceDesc);
+        D3D12Util_Optionalenable_debug_layer(dxInstance, instanceDesc);
 
         UINT flags = 0;
         if(instanceDesc.mEnableDebugLayer)
@@ -350,20 +356,43 @@ namespace Cyber
         {
             uint32_t gpuCount = 0;
             bool foundSoftwareAdapter = false;
-            D3D12Util_QueryAllAdapters(dxDevice, gpuCount, foundSoftwareAdapter);
+            D3D12Util_QueryAllAdapters(dxInstance, gpuCount, foundSoftwareAdapter);
             // If the only adapter we found is a software adapter, log error message for QA 
             if(!gpuCount && foundSoftwareAdapter)
             {
                 cyber_assert(false, "The only avaliable GPU has DXGI_ADAPTER_FLAG_SOFTWARE. Early exiting");
-                return;
+                return nullptr;
             }
         }
         else 
         {
             cyber_assert(false, "[D3D12 Fatal]: Create DXGIFactory2 Failed!]");
         }
+
+        return CreateRef<RHIInstance_D3D12>(dxInstance);
     }
 
+    FenceRHIRef RHI_D3D12::rhi_create_fence(Ref<RHIDevice> pDevice)
+    {
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        RHIFence_D3D12* dxFence = cyber_new<RHIFence_D3D12>();
+        cyber_assert(dxFence, "Fence create failed!");
+        
+        CHECK_HRESULT(dxDevice->pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->pDxFence)));
+        dxFence->mFenceValue = 1;
+
+        dxFence->pDxWaitIdleFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+        return CreateRef<RHIFence_D3D12>(dxFence);
+    }
+
+    QueueRHIRef RHI_D3D12::rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index)
+    {
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
+        dxQueue->pCommandQueue = dxDevice->ppCommandQueues[type];
+        dxQueue->pFence = rhi_create_fence(pDevice);
+        return CreateRef<RHIQueue_D3D12>(dxQueue);
+    }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
     {

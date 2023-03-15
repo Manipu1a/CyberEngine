@@ -2,6 +2,8 @@
 #include "rhi/rhi.h"
 #include "EASTL/map.h"
 #include "EASTL/vector.h"
+#include <d3d12.h>
+#include <stdint.h>
 
 namespace Cyber
 {
@@ -102,8 +104,8 @@ namespace Cyber
         eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mSamplerHeaps;
         eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCbvSrvUavHeaps;
         struct RHIEmptyDescriptors_D3D12* pNullDescriptors;
-        eastl::map<ERHIQueueType, ID3D12CommandQueue*> mCommandQueues;
-        eastl::map<ERHIQueueType, uint32_t> mCommandQueueCounts;
+        eastl::map<ERHIQueueType, ID3D12CommandQueue*> ppCommandQueues;
+        eastl::map<ERHIQueueType, uint32_t> pCommandQueueCounts;
         IDXGIFactory6* pDXGIFactory;
         IDXGIAdapter4* pDxActiveGPU;
         ID3D12Device* pDxDevice;
@@ -148,6 +150,10 @@ namespace Cyber
     {
     public:
         Cyber::Ref<RHIDevice> pDevice;
+        ID3D12Fence* pDxFence;
+        HANDLE pDxWaitIdleFenceEvent;
+        uint64_t mFenceValue;
+        uint64_t mPadA;
     };
 
     class RHISemaphore_D3D12 : public RHISemaphore
@@ -160,6 +166,8 @@ namespace Cyber
     {
     public:
         Cyber::Ref<RHIDevice> pDevice;
+        ID3D12CommandQueue* pCommandQueue;
+        Cyber::Ref<RHIFence> pFence;
     };
 
     class RHICommandPool_D3D12: public RHICommandPool
@@ -192,8 +200,11 @@ namespace Cyber
         // Device APIs
         virtual void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc) override;
         // API Object APIs
+        virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) override;
+        // Queue APIs
+        virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;
 
-        virtual void rhi_create_instance(Ref<RHIInstance> pInstance, const RHIInstanceCreateDesc& instanceDesc) override;
+        virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
     };

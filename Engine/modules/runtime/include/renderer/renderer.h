@@ -94,7 +94,8 @@ namespace Cyber
         ///-------------------------------------
         Ref<RHIDevice> pRHIDevice = nullptr;
         Ref<RHIAdapter> pRHIAdapter = nullptr;
-
+        Ref<RHIFence> pRHIFence = nullptr;
+        
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;
