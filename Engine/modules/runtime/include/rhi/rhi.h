@@ -8,18 +8,23 @@ namespace Cyber
 {
     #define RHI_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
     
+    typedef uint32_t RHIQueueIndex;
     struct RHITexture;
     typedef Ref<RHITexture> TextureRHIRef;
     struct RHITexture2D;
     typedef Ref<RHITexture2D> Texture2DRHIRef;
     struct RHIBuffer;
     typedef Ref<RHIBuffer> BufferRHIRef;
-    struct RHIQueue;
-    typedef Ref<RHIQueue> QueueRHIRef;
     struct RHIFence;
     typedef Ref<RHIFence> FenceRHIRef;
     struct RHIInstance;
     typedef Ref<RHIInstance> InstanceRHIRef;
+    struct RHICommandPool;
+    struct RHIQueue;
+    typedef Ref<RHIQueue> QueueRHIRef;
+    typedef Ref<RHICommandPool> CommandPoolRef;
+    struct RHICommandBuffer;
+    typedef Ref<RHICommandBuffer> CommandBufferRef;
 
     typedef enum ERHIBackend
     {
@@ -642,6 +647,8 @@ namespace Cyber
     {
     public:
         Cyber::Ref<RHIDevice> pDevice;
+        ERHIQueueType type;
+        RHIQueueIndex index;
     };
 
     class CYBER_RHI_API RHICommandPool
@@ -663,6 +670,16 @@ namespace Cyber
     public:
         Cyber::Ref<RHIDevice> pDevice;
         uint32_t mCount;
+    };
+
+    struct CYBER_RHI_API CommandPoolCreateDesc
+    {
+        uint32_t ___nothing_and_useless__;
+    };
+
+    struct CYBER_RHI_API CommandBufferCreateDesc
+    {
+        bool is_secondary : 1;
     };
 
     struct CYBER_RHI_API RHIQueueSubmitDesc
@@ -733,6 +750,19 @@ namespace Cyber
         { 
             cyber_core_assert(false, "Empty implement rhi_get_queue!");
             return CreateRef<RHIQueue>();
+        }
+
+        // Command APIs
+        virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_command_pool!");
+            return CreateRef<RHICommandPool>();
+        }
+
+        virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_command_buffer!");
+            return CreateRef<RHICommandBuffer>();
         }
         //virtual void rhi_submit_queue(Ref<RHIQueue> pQueue, const )
 

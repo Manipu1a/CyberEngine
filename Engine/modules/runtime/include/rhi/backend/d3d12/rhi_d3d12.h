@@ -173,7 +173,7 @@ namespace Cyber
     class RHICommandPool_D3D12: public RHICommandPool
     {
     public:
-        Cyber::Ref<RHIQueue> pQueue;
+        struct ID3D12CommandAllocator* pDxCmdAlloc;
     };
 
     class RHICommandBuffer_D3D12: public RHICommandBuffer
@@ -182,6 +182,8 @@ namespace Cyber
         Cyber::Ref<RHIDevice> pDevice;
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
+        ID3D12GraphicsCommandList* pDxCmdList;
+        
     };
 
     class RHIQueryPool_D3D12: public RHIQueryPool
@@ -203,6 +205,8 @@ namespace Cyber
         virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) override;
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;
+        virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc) override;
+        virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;

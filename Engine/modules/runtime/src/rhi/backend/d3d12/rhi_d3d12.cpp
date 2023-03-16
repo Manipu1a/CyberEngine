@@ -394,6 +394,41 @@ namespace Cyber
         return CreateRef<RHIQueue_D3D12>(dxQueue);
     }
 
+    // Command Objects
+    void allocate_transient_command_allocator(RHICommandPool_D3D12* commandPool, Ref<RHIQueue> queue)
+    {
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(queue->pDevice.get());
+
+        D3D12_COMMAND_LIST_TYPE type = queue->type == RHI_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
+                            (queue->type == RHI_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
+
+        bool res = SUCCEEDED(dxDevice->pDxDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&commandPool->pDxCmdAlloc)));
+        if(!res)
+        {
+            cyber_assert(false, "command allocator create failed!");
+        }
+    }
+
+    CommandPoolRef RHI_D3D12::rhi_create_command_pool(Ref<RHIQueue> queue, const CommandPoolCreateDesc& commandPoolDesc)
+    {
+        RHICommandPool_D3D12* dxCommandPool = cyber_new<RHICommandPool_D3D12>();
+        allocate_transient_command_allocator(dxCommandPool, queue);
+        return CreateRef<RHICommandPool_D3D12>(dxCommandPool);
+    }
+
+    CommandBufferRef RHI_D3D12::rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) 
+    {
+        RHICommandBuffer_D3D12* dxCommandBuffer = cyber_new<RHICommandBuffer_D3D12>();
+        RHICommandPool_D3D12* dxPool = static_cast<RHICommandPool_D3D12*>(pPool.get());
+        RHIQueue_D3D12* dxQueue = static_cast<RHIQueue_D3D12*>(dxPool->pQueue.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(dxQueue->pDevice.get());
+
+        // set command pool of new command
+        dxCommandBuffer;
+        dxCommandBuffer->pPool = pPool;
+
+    }
+
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());

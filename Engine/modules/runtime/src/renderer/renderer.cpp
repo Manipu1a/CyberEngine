@@ -233,6 +233,7 @@ namespace Cyber
 #ifdef _DEBUG
         LogAdapters();
 #endif
+
         CreateCommandObjects();
         CreateSwapChain();
         CreateRtvAndDsvDescriptorHeaps();
@@ -242,6 +243,7 @@ namespace Cyber
 
     void Renderer::CreateCommandObjects()
     {
+        
         D3D12_COMMAND_QUEUE_DESC queueDesc = {};
         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
