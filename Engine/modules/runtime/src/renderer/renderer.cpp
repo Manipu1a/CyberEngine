@@ -243,20 +243,9 @@ namespace Cyber
 
     void Renderer::CreateCommandObjects()
     {
-        
-        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        md3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue));
-
-        md3dDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&mDirectCmdListAlloc));
-
-        md3dDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, mDirectCmdListAlloc, nullptr, IID_PPV_ARGS(&mCommandList));
-
-        // Start off in a closed state. This is because the first time we refer
-        // to the command list we will Reset it, and it needs to be closed before
-        // calling Reset.
-        mCommandList->Close();
+        pQueue = RHI::GetRHIContext().rhi_get_queue(pRHIDevice, RHI_QUEUE_TYPE_GRAPHICS, 1);
+        pCmdPool = RHI::GetRHIContext().rhi_create_command_pool(pQueue, CommandPoolCreateDesc());
+        pCmdBuffer = RHI::GetRHIContext().rhi_create_command_buffer(pCmdPool, CommandBufferCreateDesc());
     }
 
     void Renderer::CreateSwapChain()

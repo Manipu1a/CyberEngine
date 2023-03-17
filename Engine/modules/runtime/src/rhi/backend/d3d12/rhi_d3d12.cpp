@@ -399,8 +399,8 @@ namespace Cyber
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(queue->pDevice.get());
 
-        D3D12_COMMAND_LIST_TYPE type = queue->type == RHI_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
-                            (queue->type == RHI_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
+        D3D12_COMMAND_LIST_TYPE type = queue->mType == RHI_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
+                            (queue->mType == RHI_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
 
         bool res = SUCCEEDED(dxDevice->pDxDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&commandPool->pDxCmdAlloc)));
         if(!res)
@@ -424,9 +424,22 @@ namespace Cyber
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(dxQueue->pDevice.get());
 
         // set command pool of new command
-        dxCommandBuffer;
-        dxCommandBuffer->pPool = pPool;
+        dxCommandBuffer->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
+        dxCommandBuffer->mType = dxQueue->mType;
 
+        dxCommandBuffer->pBoundHeaps[0] = dxDevice->mCbvSrvUavHeaps[dxCommandBuffer->mNodeIndex];
+        dxCommandBuffer->pBoundHeaps[1] = dxDevice->mSamplerHeaps[dxCommandBuffer->mNodeIndex];
+        dxCommandBuffer->pCmdPool = pPool;
+
+        uint32_t nodeMask = dxCommandBuffer->mNodeIndex;
+        ID3D12PipelineState* initialState = nullptr;
+        CHECK_HRESULT(dxDevice->pDxDevice->CreateCommandList(nodeMask,gDx12CmdTypeTranslator[dxCommandBuffer->mType] , 
+                dxPool->pDxCmdAlloc, initialState, IID_PPV_ARGS(&dxCommandBuffer->pDxCmdList)));
+        
+        // Command lists are add in the recording state, but there is nothing
+        // to record yet. The main loop expects it to be closed, so close it now.
+        CHECK_HRESULT(dxCommandBuffer->pDxCmdList->Close());
+        return CreateRef<RHICommandBuffer_D3D12>(dxCommandBuffer);
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)

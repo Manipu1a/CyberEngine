@@ -179,11 +179,17 @@ namespace Cyber
     class RHICommandBuffer_D3D12: public RHICommandBuffer
     {
     public:
-        Cyber::Ref<RHIDevice> pDevice;
-        Cyber::Ref<RHICommandPool> pPool;
-        ERHIPipelineType mCurrentDispatch;
         ID3D12GraphicsCommandList* pDxCmdList;
-        
+        // Cached in beginCmd to avoid fetching them during rendering
+        struct RHIDescriptorHeap_D3D12* pBoundHeaps[2];
+        D3D12_GPU_DESCRIPTOR_HANDLE mBoundHeapStartHandles[2];
+        // Command buffer state
+        const ID3D12RootSignature* pBoundRootSignature;
+        uint32_t mType;
+        uint32_t mNodeIndex;
+        Cyber::Ref<RHICommandPool> pCmdPool;
+        Cyber::Ref<RHIDevice> pDevice;
+        ERHIPipelineType mCurrentDispatch;
     };
 
     class RHIQueryPool_D3D12: public RHIQueryPool

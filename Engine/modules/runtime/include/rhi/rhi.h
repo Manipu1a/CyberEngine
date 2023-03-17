@@ -647,8 +647,8 @@ namespace Cyber
     {
     public:
         Cyber::Ref<RHIDevice> pDevice;
-        ERHIQueueType type;
-        RHIQueueIndex index;
+        ERHIQueueType mType;
+        RHIQueueIndex mIdex;
     };
 
     class CYBER_RHI_API RHICommandPool
