@@ -5,6 +5,13 @@
 #include "CyberLog/Log.h"
 #include "math/common.h"
 #include <combaseapi.h>
+#include <d3d12.h>
+#include <dxgi.h>
+#include <dxgi1_2.h>
+#include <dxgi1_5.h>
+#include <intsafe.h>
+#include <malloc.h>
+#include <stdint.h>
 #include <synchapi.h>
 
 namespace Cyber
@@ -441,6 +448,103 @@ namespace Cyber
         CHECK_HRESULT(dxCommandBuffer->pDxCmdList->Close());
         return CreateRef<RHICommandBuffer_D3D12>(dxCommandBuffer);
     }
+    
+    SwapChainRef RHI_D3D12::rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& desc)
+    {
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        const uint32_t buffer_count = desc.mImageCount;
+        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cb_calloc(1, sizeof(RHISwapChain_D3D12) + desc.mImageCount * sizeof(RHITexture));
+        dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
+
+        DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
+        chinDesc.Width = desc.mWidth;
+        chinDesc.Height = desc.mHeight;
+        chinDesc.Format = DXGIUtil_TranslatePixelFormat(desc.mFormat);
+        chinDesc.Stereo = false;
+        chinDesc.SampleDesc.Count = 1;
+        chinDesc.SampleDesc.Quality = 0;
+        chinDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        chinDesc.BufferCount = buffer_count;
+        chinDesc.Scaling = DXGI_SCALING_STRETCH;
+        chinDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        chinDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+        chinDesc.Flags = 0;
+        BOOL allowTearing = FALSE;
+        dxInstance->pDXGIFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+        chinDesc.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+        dxSwapChain->mFlags |= (!desc.mEnableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+
+        IDXGISwapChain1* swapchain;
+
+        HWND hwnd = (HWND)desc.mWindowHandle.window;
+
+        RHIQueue_D3D12* queue = nullptr;
+        if(desc.mPresentQueue)
+        {
+            queue = static_cast<RHIQueue_D3D12*>(desc.mPresentQueue.get());
+        }
+        else 
+        {
+            queue = static_cast<RHIQueue_D3D12*>(rhi_get_queue(pDevice, RHI_QUEUE_TYPE_GRAPHICS, 0).get());
+        }
+
+        auto bCreated = SUCCEEDED(dxInstance->pDXGIFactory->CreateSwapChainForHwnd(queue->pCommandQueue, hwnd, &chinDesc, NULL, NULL, &swapchain));
+        cyber_assert(bCreated, "Failed to try to create swapchain! An existed swapchain might be destroyed!");
+
+        bCreated = SUCCEEDED(dxInstance->pDXGIFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
+        cyber_assert(bCreated, "Failed to try to associate swapchain with window!");
+
+        auto bQueryChain3 = SUCCEEDED(swapchain->QueryInterface(IID_PPV_ARGS(&dxSwapChain->pDxSwapChain)));
+        cyber_assert(bQueryChain3, "Failed to query IDXGISwapChain3 from created swapchain!");
+
+        SAFE_RELEASE(swapchain);
+        // Get swapchain images
+        ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
+        for(uint32_t i = 0; i < buffer_count; ++i)
+        {
+            CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
+        }
+
+        RHITexture_D3D12* Ts = (RHITexture_D3D12*)(dxSwapChain + 1);
+        for(uint32_t i = 0; i < buffer_count; i++)
+        {
+            Ts[i].pDxResource = backbuffers[i];
+            Ts[i].pDxAllocation = nullptr;
+            Ts[i].mIsCube = false;
+            Ts[i].mArraySize = 0;
+            Ts[i].mFormat = desc.mFormat;
+            Ts[i].mAspectMask = 1;
+            Ts[i].mDepth = 1;
+            Ts[i].mWidth = desc.mWidth;
+            Ts[i].mHeight = desc.mHeight;
+            Ts[i].mMipLevels = 1;
+            Ts[i].mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
+            Ts[i].mOwnsImage = false;
+            Ts[i].mNativeHandle = Ts[i].pDxResource;
+        }
+        dxSwapChain->mBackBuffers = CreateRef<RHITexture*>(Ts);
+        dxSwapChain->mBufferCount = buffer_count;
+        return CreateRef<RHISwapChain>(dxSwapChain);
+    }
+    
+    // for example 
+    RootSignatureRHIRef RHI_D3D12::rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
+    {
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        RHIRootSignature_D3D12* dxRootSignature = cyber_new<RHIRootSignature_D3D12>();
+
+        // Pick root parameters from desc data
+        ERHIShaderStages shaderStages = 0;
+        for(uint32_t i = 0; i < rootSigDesc.mShaderCount; ++i)
+        {
+            RHIPipelineShaderCreateDesc* shader_desc = rootSigDesc.pShaderDescs + i;
+            shaderStages |= shader_desc->mStage;
+        }
+
+        // Pick shader reflection data
+        
+    }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
     {
@@ -479,7 +583,7 @@ namespace Cyber
 
         // Adjust for padding
         uint64_t padded_size = 0;
-        DxDevice->pDeviceImpl->GetCopyableFootprints(&desc, 0, 1, 0, NULL, NULL, NULL, &padded_size);
+        DxDevice->pDxDevice->GetCopyableFootprints(&desc, 0, 1, 0, NULL, NULL, NULL, &padded_size);
         allocationSize = (uint64_t)padded_size;
         // Buffer is 1D
         desc.Width = padded_size;
@@ -527,7 +631,7 @@ namespace Cyber
             heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
             heapProps.VisibleNodeMask = RHI_SINGLE_GPU_NODE_MASK;
             heapProps.CreationNodeMask = RHI_SINGLE_GPU_NODE_MASK;
-            CHECK_HRESULT(DxDevice->pDeviceImpl->CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, NULL, IID_ARGS(&pBuffer->pDxResource)));
+            CHECK_HRESULT(DxDevice->pDxDevice->CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, NULL, IID_ARGS(&pBuffer->pDxResource)));
             CB_CORE_TRACE("[D3D12] Create Committed Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", pDesc.pName ? pDesc.pName : "", allocationSize, pDesc.mFormat);
         }
         else
@@ -616,7 +720,7 @@ namespace Cyber
                 {
                     uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(pDesc.mFormat);
                     D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
-                    HRESULT hr = DxDevice->pDeviceImpl->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+                    HRESULT hr = DxDevice->pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
                     if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
                         !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
                     {

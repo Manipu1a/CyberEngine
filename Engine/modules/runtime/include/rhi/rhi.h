@@ -1,8 +1,11 @@
 #pragma once
+#include "EASTL/EABase/eabase.h"
 #include "cyber_rhi_config.h"
 #include "flags.h"
 #include <EASTL/vector.h>
+#include <stdint.h>
 #include "core/Core.h"
+#include "core/Window.h"
 
 namespace Cyber
 {
@@ -25,6 +28,10 @@ namespace Cyber
     typedef Ref<RHICommandPool> CommandPoolRef;
     struct RHICommandBuffer;
     typedef Ref<RHICommandBuffer> CommandBufferRef;
+    struct RHISwapChain;
+    typedef Ref<RHISwapChain> SwapChainRef;
+    struct RHIRootSignature;
+    typedef Ref<RHIRootSignature> RootSignatureRHIRef;
 
     typedef enum ERHIBackend
     {
@@ -479,6 +486,107 @@ namespace Cyber
     };
     typedef uint32_t RHIBufferCreationFlags;
 
+    typedef enum ERHIScanlineOrdering
+    {
+        RHI_SCANLINE_ORDER_UNSPECIFIED = 0,
+        RHI_SCANLINE_ORDER_PROGRESSIVE = 1,
+        RHI_SCANLINE_ORDER_UPPER_FIELD_FIRST = 2,
+        RHI_SCANLINE_ORDER_LOWER_FIELD_FIRST = 3,
+    } ERHIScanlineOrdering;
+
+    class CYBER_RHI_API RHIAdapter
+    {
+    public:
+        Cyber::Ref<RHIInstance> pInstance;
+    };
+
+    class CYBER_RHI_API RHIDevice
+    {
+    public:
+        Cyber::Ref<RHIAdapter> pAdapter;
+    };
+
+    class CYBER_RHI_API RHIFence
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+    };
+
+    class CYBER_RHI_API RHISemaphore
+    {
+    public:
+        Cyber::Ref<RHIDevice> pDevice;
+    };
+
+
+    /// Shaders
+    struct CYBER_RHI_API RHIShaderResource
+    {
+        const char8_t* pName;
+        uint64_t mNameHash;
+        ERHIResourceType mType;
+        ERHITextureDimension mDim;
+        uint32_t mSet;
+        uint32_t mBinding;
+        uint32_t mSize;
+        uint32_t mOffset;
+        ERHIShaderStage mStages;
+    };
+
+    struct CYBER_RHI_API RHIShaderVariable
+    {
+        // Variable name 
+        const char* pNmae;
+        // parents resource index
+        uint32_t parent_index;
+
+    };
+
+    struct CYBER_RHI_API RHIParameterTable
+    {
+        // This should be stored here because shader could be destroyed after RS creation
+        RHIShaderResource* pResources;
+        uint32_t mResourcesCount;
+        uint32_t mSetIndex;
+    };
+
+    struct RHIRootSignaturePool
+    {
+        Ref<RHIDevice> pDevice;
+        ERHIPipelineType mPipelineType;
+    };
+
+    struct CYBER_RHI_API RHIRootSignature
+    {
+        Ref<RHIDevice> pDevice;
+        RHIParameterTable* pParamTables;
+        uint32_t mTableCount;
+        RHIShaderResource* pPushConstants;
+        uint32_t mPushConstantCount;
+        RHIShaderResource* pStaticSamplers;
+        uint32_t pStaticSamplerCount;
+        ERHIPipelineType mPipelineType;
+        Ref<RHIRootSignaturePool> pPool;
+        Ref<RHIRootSignature> pPoolSig;
+    };
+
+    /// Shader Reflection
+    struct CYBER_RHI_API RHIShaderReflection
+    {
+        const char8_t* mEntryName;
+        ERHIShaderStage mStage;
+        
+    };
+
+    struct CYBER_RHI_API RHISHaderLibrary
+    {
+        Ref<RHIDevice> pDevice;
+        char8_t* pName;
+        RHIShaderReflection* pEntryReflections;
+        uint32_t mEntrysCount;
+    };
+
+
     /// Texture group
     struct CYBER_RHI_API TextureCreationDesc
     {
@@ -513,6 +621,16 @@ namespace Cyber
         uint32_t mDepth;
         uint32_t mArraySize;
         uint32_t mMipLevels;
+        uint32_t mFormat;
+
+        /// Flags specifying which aspects (COLOR,DEPTH,STENCIL) are included in the pVkImageView
+        uint32_t mAspectMask;
+        uint32_t mNodeIndex;
+        uint32_t mIsCube;
+        uint32_t mIsDedicated;
+
+        uint32_t mOwnsImage;
+        
         void* mNativeHandle;
     };
 
@@ -612,35 +730,12 @@ namespace Cyber
         bool mIsCpu : 1;
     };
 
-    class CYBER_RHI_API RHIAdapter
-    {
-    public:
-        Cyber::Ref<RHIInstance> pInstance;
-    };
 
     struct CYBER_RHI_API DeviceCreateDesc
     {
         bool bDisablePipelineCache;
         eastl::vector<QueueGroupDesc> mQueueGroupsDesc;
         uint32_t mQueueGroupCount;
-    };
-
-    class CYBER_RHI_API RHIDevice
-    {
-    public:
-        Cyber::Ref<RHIAdapter> pAdapter;
-    };
-
-    class CYBER_RHI_API RHIFence
-    {
-    public:
-        Cyber::Ref<RHIDevice> pDevice;
-    };
-
-    class CYBER_RHI_API RHISemaphore
-    {
-    public:
-        Cyber::Ref<RHIDevice> pDevice;
     };
 
     class CYBER_RHI_API RHIQueue
@@ -672,6 +767,13 @@ namespace Cyber
         uint32_t mCount;
     };
 
+    class CYBER_RHI_API RHISwapChain
+    {
+    public:
+        Ref<RHITexture*> mBackBuffers;
+        uint32_t mBufferCount;
+    };
+
     struct CYBER_RHI_API CommandPoolCreateDesc
     {
         uint32_t ___nothing_and_useless__;
@@ -701,6 +803,42 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueuePresentDesc
     {
+        
+    };
+
+    struct CYBER_RHI_API RHISwapChainCreateDesc
+    {
+        /// Window handle
+        Cyber::WindowHandle mWindowHandle;
+        /// Present Queues
+        Ref<RHIQueue> mPresentQueue;
+        /// Present Queues Count
+        uint32_t mPresentQueueCount;
+        /// Number of backbuffers in the swapchain
+        uint32_t mImageCount;
+        /// Width of the swapchain
+        uint32_t mWidth;
+        /// Height of the swapchain 
+        uint32_t mHeight;
+        /// Format of the swapchain
+        ERHIFormat mFormat;
+        /// Set whether swapchain will be presented using vsync
+        bool mEnableVsync;
+        /// We can toogle to using FLIP model if app desires
+        bool mUseFlipSwapEffect;
+    };
+
+    struct CYBER_RHI_API RHIPipelineShaderCreateDesc
+    {
+        Ref<RHISHaderLibrary> pLibrary;
+        const char8_t* pEntry;
+        ERHIShaderStage mStage;
+    };
+
+    struct CYBER_RHI_API RHIRootSignatureCreateDesc
+    {
+        struct RHIPipelineShaderCreateDesc* pShaderDescs;
+        uint32_t mShaderCount;
         
     };
 
@@ -745,6 +883,11 @@ namespace Cyber
         virtual void rhi_wait_fences(const RHIFence* pFences, uint32_t fenceCount) {}
         virtual void rhi_query_fence_status(Ref<RHIFence> pFence) {}
 
+        virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
+            return CreateRef<RHISwapChain>();
+        }
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
         { 
@@ -765,6 +908,13 @@ namespace Cyber
             return CreateRef<RHICommandBuffer>();
         }
         //virtual void rhi_submit_queue(Ref<RHIQueue> pQueue, const )
+
+        /// RootSignature
+        virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_root_signature!");
+            return CreateRef<RHIRootSignature>();
+        }
 
         // Resource APIs
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 

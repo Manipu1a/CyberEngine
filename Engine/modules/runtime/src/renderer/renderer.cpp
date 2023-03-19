@@ -250,27 +250,9 @@ namespace Cyber
 
     void Renderer::CreateSwapChain()
     {
-        // Release the previous swapchain we will be recreating
-        mSwapChain->Release();
+        RHISwapChainCreateDesc swapchainDesc;
 
-        DXGI_SWAP_CHAIN_DESC sd;
-        sd.BufferDesc.Width = mClientWidth;
-        sd.BufferDesc.Height = mClientHeight;
-        sd.BufferDesc.RefreshRate.Numerator = 60;
-        sd.BufferDesc.RefreshRate.Denominator = 1;
-        sd.BufferDesc.Format = mBackBufferFormat;
-        sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-        sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-        sd.SampleDesc.Count = 1;
-        sd.SampleDesc.Quality = 0;
-        sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        sd.BufferCount = SwapChainBufferCount;
-        sd.Windowed = true;
-        sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-        sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-
-        // Note: Swap chain used queue to perform flush.
-        mdxgiFactory->CreateSwapChain(mCommandQueue, &sd, &mSwapChain);
+        pSwapChain = RHI::GetRHIContext().rhi_create_swap_chain(pRHIDevice, swapchainDesc);
     }
 
     void Renderer::FlushCommandQueue()

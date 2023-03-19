@@ -98,7 +98,8 @@ namespace Cyber
         Ref<RHIQueue> pQueue = nullptr;
         Ref<RHICommandPool> pCmdPool = nullptr;
         Ref<RHICommandBuffer> pCmdBuffer = nullptr;
-
+        Ref<RHISwapChain> pSwapChain = nullptr;
+        
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;

@@ -3,6 +3,7 @@
 #include "EASTL/map.h"
 #include "EASTL/vector.h"
 #include <d3d12.h>
+#include <dxgi1_4.h>
 #include <stdint.h>
 
 namespace Cyber
@@ -22,6 +23,12 @@ namespace Cyber
                 p_var = NULL;       \
             }
     #endif
+
+    struct RHITexture_D3D12 : public RHITexture
+    {
+        ID3D12Resource* pDxResource;
+        D3D12MA::Allocation* pDxAllocation;
+    };
 
     struct RHITexture2D_D3D12 : public RHITexture2D
     {
@@ -96,7 +103,6 @@ namespace Cyber
         HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
         HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
 
-        ID3D12Device* pDeviceImpl;
         class D3D12MA::Allocator* pResourceAllocator;
 
         // API specific descriptor heap and memory allocator
@@ -195,8 +201,24 @@ namespace Cyber
     class RHIQueryPool_D3D12: public RHIQueryPool
     {
     public:
-        Cyber::Ref<RHIDevice> pDevice;
         uint32_t mCount;
+    };
+
+    class RHISwapChain_D3D12 : public RHISwapChain 
+    {
+    public:
+        IDXGISwapChain3* pDxSwapChain;
+        uint32_t mDxSyncInterval : 3;
+        uint32_t mFlags : 10;
+        uint32_t mImageCount : 3;
+        uint32_t mEnableVsync : 1;
+    };
+
+    struct RHIRootSignature_D3D12 : public RHIRootSignature
+    {
+        ID3D12RootSignature* pDxRootSignature;
+        D3D12_ROOT_PARAMETER1 mRootConstantParam;
+        uint32_t mRootParamIndex;
     };
 
     class RHI_D3D12 : public RHI
@@ -209,10 +231,13 @@ namespace Cyber
         virtual void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc) override;
         // API Object APIs
         virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) override;
+        virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc) override;
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;
         virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc) override;
         virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) override;
+
+        virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
 
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;

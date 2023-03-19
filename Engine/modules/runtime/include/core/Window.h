@@ -14,10 +14,16 @@ namespace Cyber
         int32_t bottom;
     };
 
+
+    struct CYBER_RUNTIME_API WindowHandle
+    {
+        void* window;       //hWnd
+    };
+
     struct CYBER_RUNTIME_API WindowDesc
     {
         eastl::wstring title;
-        HWND hWnd;
+        WindowHandle handle;
         HINSTANCE hInstance = nullptr;
         int cmdShow;
         RectDesc windowedRect;

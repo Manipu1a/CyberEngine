@@ -2,6 +2,7 @@
 #include "CyberEvents/ApplicationEvent.h"
 #include "CyberLog/Log.h"
 #include "core/Application.h"
+#include <windef.h>
 
 namespace Cyber
 {
@@ -53,7 +54,7 @@ namespace Cyber
             return;
         }
 
-    	mData.mWindowDesc.hWnd = CreateWindow(
+    	mData.mWindowDesc.handle.window = CreateWindow(
 			L"MainWnd",
 			L"win32app",
 			WS_OVERLAPPEDWINDOW,
@@ -65,16 +66,14 @@ namespace Cyber
 			0
 			);
 
-        if(!mData.mWindowDesc.hWnd)
+        if(!mData.mWindowDesc.handle.window)
         {
             HRESULT hr = HRESULT_FROM_WIN32( GetLastError() );
             cyber_core_assert(false, "Call to CreateWindow failed!{0}", GetLastError());
         }
 
-        ShowWindow(mData.mWindowDesc.hWnd, mData.mWindowDesc.cmdShow);
-	    UpdateWindow(mData.mWindowDesc.hWnd);
-
-
+        ShowWindow(*(HWND*)mData.mWindowDesc.handle.window, mData.mWindowDesc.cmdShow);
+	    UpdateWindow(*(HWND*)mData.mWindowDesc.handle.window);
     }
     
     void WindowsWindow::onUpdate(float deltaTime)

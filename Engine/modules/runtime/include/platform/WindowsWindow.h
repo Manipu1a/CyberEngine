@@ -18,7 +18,7 @@ namespace Cyber
         void initWindow(const Cyber::WindowDesc& desc);
         void initRHI();
         
-        inline virtual void* getNativeWindow() const {return mData.mWindowDesc.hWnd;}
+        inline virtual void* getNativeWindow() const {return mData.mWindowDesc.handle.window;}
     private:
     
     private:
