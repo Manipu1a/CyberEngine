@@ -1,6 +1,7 @@
 #include "d3d12_utils.h"
 #include "../src/rhi/common/common_utils.h"
 #include "platform/configure.h"
+#include <winnt.h>
 namespace Cyber
 {
     void D3D12Util_InitializeEnvironment(Ref<RHIInstance> pInst)
@@ -153,6 +154,11 @@ namespace Cyber
         {
             cyber_assert(false, "DMA Allocator Create Failed!");
         }
+
+    }
+
+    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHISHaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
+    {
 
     }
 }

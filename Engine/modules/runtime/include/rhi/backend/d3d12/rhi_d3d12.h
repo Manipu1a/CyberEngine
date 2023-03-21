@@ -221,6 +221,11 @@ namespace Cyber
         uint32_t mRootParamIndex;
     };
 
+    struct RHISHaderLibrary_D3D12 : public RHISHaderLibrary
+    {
+        
+    };
+
     class RHI_D3D12 : public RHI
     {
     public:
@@ -242,6 +247,8 @@ namespace Cyber
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
+
+        virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc* desc) override;
     };
 
     static const D3D_FEATURE_LEVEL d3d_feature_levels[] = 

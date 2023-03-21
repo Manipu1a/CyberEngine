@@ -744,4 +744,9 @@ namespace Cyber
         pBuffer->mDescriptors = pDesc.mDescriptors;
         return pBuffer;
     }
+
+    ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc* desc)
+    {
+        
+    }
 }

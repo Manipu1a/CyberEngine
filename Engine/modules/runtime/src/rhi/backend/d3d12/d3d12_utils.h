@@ -425,4 +425,6 @@ namespace Cyber
     void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
 
     void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice);
+
+    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHISHaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
 }

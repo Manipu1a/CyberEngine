@@ -32,6 +32,8 @@ namespace Cyber
     typedef Ref<RHISwapChain> SwapChainRef;
     struct RHIRootSignature;
     typedef Ref<RHIRootSignature> RootSignatureRHIRef;
+    struct RHISHaderLibrary;
+    typedef Ref<RHISHaderLibrary> ShaderLibraryRHIRef;
 
     typedef enum ERHIBackend
     {
@@ -571,11 +573,32 @@ namespace Cyber
     };
 
     /// Shader Reflection
+    struct CYBER_RHI_API RHIVertexInput
+    {
+        // resource name
+        const char* name;
+        // The size of the attribute
+        uint32_t size;
+        // name size
+        uint32_t name_size; 
+    };
+
     struct CYBER_RHI_API RHIShaderReflection
     {
-        const char8_t* mEntryName;
-        ERHIShaderStage mStage;
-        
+        const char* entry_point;
+        char* name_pool;
+        RHIVertexInput* vertex_inputs;
+        RHIShaderResource* shader_resources;
+        ERHIShaderStage shader_stage;
+        uint32_t name_pool_size;
+        uint32_t vertex_input_count;
+        uint32_t shader_resource_count;
+        uint32_t variable_count;
+
+        // Thread group size for compute shader
+        uint32_t num_threads_per_group;
+        // number of tessellation control point
+        uint32_t num_control_point;
     };
 
     struct CYBER_RHI_API RHISHaderLibrary
@@ -585,7 +608,6 @@ namespace Cyber
         RHIShaderReflection* pEntryReflections;
         uint32_t mEntrysCount;
     };
-
 
     /// Texture group
     struct CYBER_RHI_API TextureCreationDesc
@@ -842,6 +864,14 @@ namespace Cyber
         
     };
 
+    struct CYBER_RHI_API RHIShaderLibraryCreateDesc
+    {
+        const char8_t* name;
+        const uint32_t* code;
+        uint32_t code_size;
+        ERHIShaderStage stage;
+    };
+
     class CYBER_RHI_API RHIRenderer
     {
     public:
@@ -934,6 +964,13 @@ namespace Cyber
         virtual void rhi_map_buffer() {}
 
         virtual void rhi_create_rendertarget() {}
+
+        // Shader
+        virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc* desc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_shader_library!");
+            return CreateRef<RHISHaderLibrary>();
+        }
     };
 
     #define RHI_SINGLE_GPU_NODE_COUNT 1
