@@ -1,5 +1,6 @@
 #pragma once
 #include "rhi/rhi.h"
+#include "core/Core.h"
 #include "rhi/backend/d3d12/rhi_d3d12.h"
 #include "CyberMemory/Memory.h"
 
@@ -296,6 +297,14 @@ namespace Cyber
         return ret;
     }
 
+    #if !defined (XBOX) && defined (_WIN32)
+    #include <dxcapi.h>
+
+    void D3D12Util_LoadDxcDLL();
+    void D3D12Util_UnloadDxcDLL();
+    DxcCreateInstanceProc D3D12Util_GetDxcCreateInstanceProc();
+    #endif
+
     static DescriptorHandle D3D12Util_ConsumeDescriptorHandles(RHIDescriptorHeap_D3D12* pHeap, uint32_t descriptorCount)
     {
         if(pHeap->mUsedDescriptors + descriptorCount > pHeap->mDesc.NumDescriptors)
@@ -378,6 +387,7 @@ namespace Cyber
         };
         return ret;
     }
+
 
     void D3D12Util_InitializeEnvironment(RHIInstance* pInst);
 

@@ -524,15 +524,15 @@ namespace Cyber
     /// Shaders
     struct CYBER_RHI_API RHIShaderResource
     {
-        const char8_t* pName;
-        uint64_t mNameHash;
-        ERHIResourceType mType;
-        ERHITextureDimension mDim;
-        uint32_t mSet;
-        uint32_t mBinding;
-        uint32_t mSize;
-        uint32_t mOffset;
-        ERHIShaderStage mStages;
+        const char8_t* name;
+        uint64_t name_hash;
+        ERHIResourceType type;
+        ERHITextureDimension dimension;
+        uint32_t set;
+        uint32_t binding;
+        uint32_t size;
+        uint32_t offset;
+        ERHIShaderStage stages;
     };
 
     struct CYBER_RHI_API RHIShaderVariable
@@ -577,15 +577,13 @@ namespace Cyber
     {
         // resource name
         const char* name;
-        // The size of the attribute
-        uint32_t size;
-        // name size
-        uint32_t name_size; 
+        const char8_t* semantics;
+        ERHIFormat format;
     };
 
     struct CYBER_RHI_API RHIShaderReflection
     {
-        const char* entry_point;
+        const char* entry_name;
         char* name_pool;
         RHIVertexInput* vertex_inputs;
         RHIShaderResource* shader_resources;
@@ -599,14 +597,15 @@ namespace Cyber
         uint32_t num_threads_per_group;
         // number of tessellation control point
         uint32_t num_control_point;
+        uint32_t thread_group_sizes[3];
     };
 
-    struct CYBER_RHI_API RHISHaderLibrary
+    struct CYBER_RHI_API RHIShaderLibrary
     {
         Ref<RHIDevice> pDevice;
         char8_t* pName;
-        RHIShaderReflection* pEntryReflections;
-        uint32_t mEntrysCount;
+        RHIShaderReflection* entry_reflections;
+        uint32_t entry_count;
     };
 
     /// Texture group

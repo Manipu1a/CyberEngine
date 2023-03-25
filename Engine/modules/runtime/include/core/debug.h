@@ -23,8 +23,7 @@
         HRESULT hres = (exp);                                                           \
         if(!SUCCEEDED(hres))                                                            \
         {                                                                               \
-            CB_ERROR("[0]: FAILED with HRESULT: [1]", #exp, (uint32_t)hres);            \
-            assert(false);                                                              \
+            cyber_assert(false, "[0]: FAILED with HRESULT: [1]", #exp, (uint32_t)hres); \
         }                                                                               \
     } while (0)
 #endif

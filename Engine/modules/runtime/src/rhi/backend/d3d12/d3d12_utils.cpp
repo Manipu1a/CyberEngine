@@ -2,8 +2,50 @@
 #include "../src/rhi/common/common_utils.h"
 #include "platform/configure.h"
 #include <winnt.h>
+#include <dxcapi.h>
+#include <d3d12shader.h>
+#include "cyber_runtime.config.h"
+
 namespace Cyber
 {
+    #if !defined (XBOX) && defined (_WIN32)
+    struct RHIUtil_DXCLoader
+    {
+        static void Load()
+        {
+            dxcLibrary = LoadLibrary(L"dxcompiler.dll");
+            pDxcCreateInstance = (void*)::GetProcAddress((HMODULE)dxcLibrary, "DxcCreateInstance");
+        }
+        static void Unload()
+        {
+            pDxcCreateInstance = nullptr;
+            ::FreeLibrary(dxcLibrary);
+        }
+
+        static DxcCreateInstanceProc Get()
+        {
+            return (DxcCreateInstanceProc)pDxcCreateInstance;
+        }
+        static HMODULE dxcLibrary;
+        static void* pDxcCreateInstance;
+    };
+    void* RHIUtil_DXCLoader::pDxcCreateInstance = nullptr;
+    HMODULE RHIUtil_DXCLoader::dxcLibrary = nullptr;
+
+    void D3D12Util_LoadDxcDLL()
+    {
+        RHIUtil_DXCLoader::Load();
+    }
+    void D3D12Util_UnloadDxcDLL()
+    {
+        RHIUtil_DXCLoader::Unload();
+    }
+    DxcCreateInstanceProc D3D12Util_GetDxcCreateInstanceProc()
+    {
+        return RHIUtil_DXCLoader::Get();
+    }
+    #endif
+
     void D3D12Util_InitializeEnvironment(Ref<RHIInstance> pInst)
     {
 
@@ -154,11 +196,168 @@ namespace Cyber
         {
             cyber_assert(false, "DMA Allocator Create Failed!");
         }
-
     }
 
-    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHISHaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
-    {
+    // Shader Reflection
+    const char8_t* D3DShaderEntryName = "D3D12";
+    static ERHIResourceType gD3D12_TO_DESCRIPTOR[] = {
+        RHI_RESOURCE_TYPE_UNIFORM_BUFFER,   // D3D_SIT_CBUFFER
+        RHI_RESOURCE_TYPE_BUFFER,           // D3D_SIT_TBUFFER
+        RHI_RESOURCE_TYPE_TEXTURE,          // D3D_SIT_TEXTURE
+        RHI_RESOURCE_TYPE_SAMPLER,          // D3D_SIT_SAMPLER
+        RHI_RESOURCE_TYPE_RW_TEXTURE,       // D3D_SIT_UAV_RWTYPED
+        RHI_RESOURCE_TYPE_BUFFER,           // D3D_SIT_STRUCTURED
+        RHI_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_RWSTRUCTURED
+        RHI_RESOURCE_TYPE_BUFFER,           // D3D_SIT_BYTEADDRESS
+        RHI_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_RWBYTEADDRESS
+        RHI_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_APPEND_STRUCTURED
+        RHI_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_CONSUME_STRUCTURED
+        RHI_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER
+        RHI_RESOURCE_TYPE_RAY_TRACING,     // D3D_SIT_RTACCELERATIONSTRUCTURE
+    };
 
+    static ERHITextureDimension gD3D12_TO_TEXTURE_DIM[D3D_SRV_DIMENSION_BUFFEREX + 1] = {
+        RHI_TEX_DIMENSION_UNDEFINED,        // D3D_SRV_DIMENSION_UNKNOWN
+        RHI_TEX_DIMENSION_UNDEFINED,        // D3D_SRV_DIMENSION_BUFFER
+        RHI_TEX_DIMENSION_1D,               // D3D_SRV_DIMENSION_TEXTURE1D
+        RHI_TEX_DIMENSION_1D_ARRAY,         // D3D_SRV_DIMENSION_TEXTURE1DARRAY
+        RHI_TEX_DIMENSION_2D,               // D3D_SRV_DIMENSION_TEXTURE2D
+        RHI_TEX_DIMENSION_2D_ARRAY,         // D3D_SRV_DIMENSION_TEXTURE2DARRAY
+        RHI_TEX_DIMENSION_2DMS,             // D3D_SRV_DIMENSION_TEXTURE2DMS
+        RHI_TEX_DIMENSION_2DMS_ARRAY,       // D3D_SRV_DIMENSION_TEXTURE2DMSARRAY
+        RHI_TEX_DIMENSION_3D,               // D3D_SRV_DIMENSION_TEXTURE3D
+        RHI_TEX_DIMENSION_CUBE,             // D3D_SRV_DIMENSION_TEXTURECUBE
+        RHI_TEX_DIMENSION_CUBE_ARRAY,      // D3D_SRV_DIMENSION_TEXTURECUBEARRAY
+        RHI_TEX_DIMENSION_UNDEFINED,       // D3D_SRV_DIMENSION_BUFFEREX
+    };
+
+    static ERHIFormat gD3D12_TO_VERTEX_FORMAT[] = {
+        RHI_FORMAT_UNDEFINED,
+        RHI_FORMAT_R32_UINT,
+        RHI_FORMAT_R32_SINT,
+        RHI_FORMAT_R32_SFLOAT,
+
+        RHI_FORMAT_R32G32_UINT,
+        RHI_FORMAT_R32G32_SINT,
+        RHI_FORMAT_R32G32_SFLOAT,
+
+        RHI_FORMAT_R32G32B32_UINT,
+        RHI_FORMAT_R32G32B32_SINT,
+        RHI_FORMAT_R32G32B32_SFLOAT,
+
+        RHI_FORMAT_R32G32B32A32_UINT,
+        RHI_FORMAT_R32G32B32A32_SINT,
+        RHI_FORMAT_R32G32B32A32_SFLOAT,
+    };
+
+    FORCEINLINE void D3D12Util_ReflectionRecordShaderResource(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc,RHIShaderLibrary_D3D12* library)
+    {
+        // Get the number of bound resources
+        library->entry_count = 1;
+        library->entry_reflections = (RHIShaderReflection*)cb_calloc(library->entry_count, sizeof(RHIShaderReflection));
+        RHIShaderReflection* reflection = library->entry_reflections;
+        reflection->entry_name = D3DShaderEntryName;
+        reflection->shader_resource_count = shaderDesc.BoundResources;
+        reflection->shader_resources = (RHIShaderResource*)cb_calloc(shaderDesc.BoundResources, sizeof(RHIShaderResource));
+
+        // Count string sizes of the bound resources for the name pool
+        for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
+        {
+            D3D12_SHADER_INPUT_BIND_DESC bindDesc;
+            d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
+            const size_t source_len = strlen(bindDesc.Name);
+            reflection->shader_resources[i].name = (char8_t*)cb_malloc(sizeof(char8_t) * (source_len + 1));
+            reflection->shader_resources[i].name_hash = rhi_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
+            // We are very sure it's windows platform
+            strcpy_s((char8_t*)reflection->shader_resources[i].name, source_len + 1, bindDesc.Name);
+            reflection->shader_resources[i].type = gD3D12_TO_DESCRIPTOR[bindDesc.Type];
+            reflection->shader_resources[i].set = bindDesc.Space;
+            reflection->shader_resources[i].binding = bindDesc.BindPoint;
+            reflection->shader_resources[i].size = bindDesc.BindCount;
+            reflection->shader_resources[i].stages = stage;
+            reflection->shader_resources[i].dimension = gD3D12_TO_TEXTURE_DIM[bindDesc.Dimension];
+            if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)
+            {
+                ID3D12ShaderReflectionConstantBuffer* buffer = d3d12Reflection->GetConstantBufferByName(bindDesc.Name);
+                cyber_assert(buffer, "D3D12 reflection failed : CBV not found!");
+                D3D12_SHADER_BUFFER_DESC bufferDesc;
+                buffer->GetDesc(&bufferDesc);
+                reflection->shader_resources[i].size = bufferDesc.Size;
+            }
+            // RWTyped is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for RWBuffer here
+            if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
+            {
+                reflection->shader_resources[i].type = RHI_RESOURCE_TYPE_RW_BUFFER;
+            }
+            // Buffer<> is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for Buffer<> here
+            if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
+            {
+                reflection->shader_resources[i].type = RHI_RESOURCE_TYPE_BUFFER;
+            }
+        }
+    }
+
+    FORCEINLINE void D3D12Util_CollectShaderReflectionData(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, RHIShaderLibrary_D3D12* library)
+    {
+        D3D12_SHADER_DESC shaderDesc;
+        d3d12Reflection->GetDesc(&shaderDesc);
+        D3D12Util_ReflectionRecordShaderResource(d3d12Reflection, stage, shaderDesc, library);
+        RHIShaderReflection* reflection = library->entry_reflections;
+        reflection->shader_stage = stage;
+
+        // Collect vertex inputs
+        if(stage == RHI_SHADER_STAGE_VERT)
+        {
+            reflection->vertex_input_count = shaderDesc.InputParameters;
+            reflection->vertex_inputs = (RHIVertexInput*)cb_calloc(reflection->vertex_input_count, sizeof(RHIVertexInput));
+            // Count the string sizes of the vertex inputs for the name pool
+            for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
+            {
+                D3D12_SIGNATURE_PARAMETER_DESC paramDesc;
+                d3d12Reflection->GetInputParameterDesc(i, &paramDesc);
+                // Get the length of the semantic name
+                bool hasParamIndex = paramDesc.SemanticIndex > 0 || !strcmp(paramDesc.SemanticName, "TEXCOORD");
+                uint32_t source_len = (uint32_t)strlen(paramDesc.SemanticName) + (hasParamIndex ? 1 : 0);
+
+                reflection->vertex_inputs[i].name = (char8_t*)cb_malloc(sizeof(char8_t) * (source_len+1));
+                if(hasParamIndex)
+                    sprintf((char8_t*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
+                else
+                    sprintf((char8_t*)reflection->vertex_inputs[i].name, "%s", paramDesc.SemanticName);
+                const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
+                reflection->vertex_inputs[i].format = gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)];
+            }
+        }
+        else if(stage == RHI_SHADER_STAGE_COMPUTE)
+        {
+            d3d12Reflection->GetThreadGroupSize(
+                &reflection->thread_group_sizes[0], 
+                &reflection->thread_group_sizes[1], 
+                &reflection->thread_group_sizes[2]);
+        }
+    }
+
+    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
+    {
+        ID3D12ShaderReflection* d3d12Reflection = nullptr;
+#define DXIL_FOURCC(ch0, ch1, ch2, ch3) \
+        ((uint32_t)(uint8_t)(ch0) | (uint32_t)(uint8_t)(ch1) << 8 | (uint32_t)(uint8_t)(ch2) << 16 | (uint32_t)(uint8_t)(ch3) << 24)
+
+        IDxcContainerReflection* pReflection;
+        UINT32 shaderIdx;
+        auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
+        cyber_assert(procDxcCreateInstance, "Failed to get dxc proc!");
+        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
+        pReflection->Load(library->shader_blob);
+        pReflection->FindFirstPartKind(DXIL_FOURCC('D','X','I','L'), &shaderIdx);
+
+        CHECK_HRESULT(pReflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&d3d12Reflection)));
+        if(d3d12Reflection)
+        {
+            D3D12Util_CollectShaderReflectionData(d3d12Reflection, desc.stage, library);
+        }
+
+        pReflection->Release();
+        d3d12Reflection->Release();
     }
 }

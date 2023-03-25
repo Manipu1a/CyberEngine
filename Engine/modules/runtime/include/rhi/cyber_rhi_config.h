@@ -1,4 +1,5 @@
 #pragma once
+#include "platform/configure.h"
 
 #ifndef CYBER_RHI_EXPORT
     #if defined (_MSC_VER)
@@ -17,3 +18,12 @@
 #else
 
 #endif
+
+#if UINTPTR_MAX == UINT32_MAX
+    #define RHI_NAME_HASH_SEED 1610612741
+#else
+    #define RHI_NAME_HASH_SEED 8053064571610612741
+#endif
+
+#define rhi_hash(buffer, size, seed) cyber_hash(buffer, size, seed)
+#define rhi_name_hash(buffer, size) cyber_name_hash(buffer, size, RHI_NAME_HASH_SEED)

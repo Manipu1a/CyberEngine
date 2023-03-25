@@ -221,9 +221,9 @@ namespace Cyber
         uint32_t mRootParamIndex;
     };
 
-    struct RHISHaderLibrary_D3D12 : public RHISHaderLibrary
+    struct RHIShaderLibrary_D3D12 : public RHIShaderLibrary
     {
-        
+        struct IDxcBlobEncoding* shader_blob;
     };
 
     class RHI_D3D12 : public RHI
