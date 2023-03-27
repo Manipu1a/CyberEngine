@@ -14,3 +14,11 @@
     #endif
         #define DEFINE_ALIGNED(def, a) __attribute__((aligned(a))) def
 #endif
+
+#ifdef __cplusplus
+#define CYBER_EXTERN_C extern "C"
+#define CYBER_CONSTEXPR constexpr
+#else
+#define CYBER_EXTERN_C
+#define CYBER_CONSTEXPR
+#endif

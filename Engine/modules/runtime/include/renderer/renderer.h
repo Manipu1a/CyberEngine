@@ -83,6 +83,10 @@ namespace Cyber
         void BuildPSO();
 
         void Draw();
+
+    public:
+        Ref<RHIDevice> GetDevice() { return pRHIDevice; }
+        
     protected:
         HINSTANCE mhAppInst = nullptr;
         IDXGIFactory4* mdxgiFactory;

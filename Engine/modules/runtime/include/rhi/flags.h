@@ -137,3 +137,16 @@ typedef enum ERHIShaderStage
 } ERHIShaderStage;
 
 typedef uint32_t ERHIShaderStages;
+
+typedef enum ERHIShaderTarget
+{
+#if defined (DIRECT3D11)
+    shader_target_5_0,
+#endif
+    shader_target_5_1,
+    shader_target_6_0,
+    shader_target_6_1,
+    shader_target_6_2,
+    shader_target_6_3,
+    shader_target_6_4,
+} ERHIShaderTarget;

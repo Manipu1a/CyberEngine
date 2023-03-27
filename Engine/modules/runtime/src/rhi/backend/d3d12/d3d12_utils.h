@@ -397,6 +397,12 @@ namespace Cyber
 
     void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* instance, uint32_t& count, bool& foundSoftwareAdapter);
 
+    void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
+
+    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice);
+
+    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
+    
     static void D3D12Util_CreateCBV(RHIDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
@@ -432,9 +438,4 @@ namespace Cyber
         pDevice->pDxDevice->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
-
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice);
-
-    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHISHaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
 }

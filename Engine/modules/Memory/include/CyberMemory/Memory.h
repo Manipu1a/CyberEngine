@@ -6,6 +6,10 @@
 
 namespace Cyber
 {
+#define CYBER_KB (1024)
+#define CYBER_MB (CYBER_KB * 1024)
+#define CYBER_GB (CYBER_MB * 1024)
+
 template<typename T, typename... Args>
 static T* cyber_placement_new(void* ptr, Args&&... args)
 {

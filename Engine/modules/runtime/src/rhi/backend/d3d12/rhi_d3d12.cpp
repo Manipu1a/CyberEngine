@@ -3,6 +3,7 @@
 #include "EASTL/vector.h"
 #include "d3d12_utils.h"
 #include "CyberLog/Log.h"
+#include "dxcapi.h"
 #include "math/common.h"
 #include <combaseapi.h>
 #include <d3d12.h>
@@ -745,8 +746,30 @@ namespace Cyber
         return pBuffer;
     }
 
-    ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc* desc)
+    ShaderLibraryRHIRef RHI_D3D12::rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
     {
-        
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device.get());
+        RHIShaderLibrary_D3D12* pLibrary = cyber_new<RHIShaderLibrary_D3D12>();
+        IDxcLibrary* pDxcLibrary;
+        auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
+        if(!procDxcCreateInstance)
+        {
+            CB_CORE_ERROR("Cannot find dxc.dll");
+            return nullptr;
+        }
+
+        procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pDxcLibrary));
+        if(!pDxcLibrary)
+        {
+            CB_CORE_ERROR("Cannot create dxc library");
+            return nullptr;
+        }
+        pDxcLibrary->CreateBlobWithEncodingOnHeapCopy(desc.code, (uint32_t)desc.code_size, DXC_CP_ACP, &pLibrary->shader_blob);
+        pLibrary->pDevice = device;
+        // Reflect shader
+        D3D12Util_InitializeShaderReflection(dxDevice->pDxDevice, pLibrary, desc);
+
+        pDxcLibrary->Release();
+        return CreateRef<RHIShaderLibrary>(pLibrary);
     }
 }

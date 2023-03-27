@@ -1,5 +1,6 @@
 #pragma once
 #include "platform/configure.h"
+#include "utils/hash.h"
 
 #ifndef CYBER_RHI_EXPORT
     #if defined (_MSC_VER)
@@ -26,4 +27,4 @@
 #endif
 
 #define rhi_hash(buffer, size, seed) cyber_hash(buffer, size, seed)
-#define rhi_name_hash(buffer, size) cyber_name_hash(buffer, size, RHI_NAME_HASH_SEED)
+#define rhi_name_hash(buffer, size) cyber_hash(buffer, size, RHI_NAME_HASH_SEED)

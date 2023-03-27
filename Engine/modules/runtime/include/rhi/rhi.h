@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include "core/Core.h"
 #include "core/Window.h"
+#include "../../Memory/include/CyberMemory/Memory.h"
 
 namespace Cyber
 {
@@ -32,8 +33,8 @@ namespace Cyber
     typedef Ref<RHISwapChain> SwapChainRef;
     struct RHIRootSignature;
     typedef Ref<RHIRootSignature> RootSignatureRHIRef;
-    struct RHISHaderLibrary;
-    typedef Ref<RHISHaderLibrary> ShaderLibraryRHIRef;
+    struct RHIShaderLibrary;
+    typedef Ref<RHIShaderLibrary> ShaderLibraryRHIRef;
 
     typedef enum ERHIBackend
     {
@@ -520,7 +521,6 @@ namespace Cyber
         Cyber::Ref<RHIDevice> pDevice;
     };
 
-
     /// Shaders
     struct CYBER_RHI_API RHIShaderResource
     {
@@ -541,7 +541,11 @@ namespace Cyber
         const char* pNmae;
         // parents resource index
         uint32_t parent_index;
-
+    };
+    struct CYBER_RHI_API ShaderMacro
+    {
+        const char* definition;
+        const char* value;
     };
 
     struct CYBER_RHI_API RHIParameterTable
@@ -573,12 +577,27 @@ namespace Cyber
     };
 
     /// Shader Reflection
+    struct CYBER_RHI_API ShaderConstant
+    {
+        const void* value;
+        uint32_t index;
+        uint32_t size;
+    };
+
     struct CYBER_RHI_API RHIVertexInput
     {
         // resource name
         const char* name;
         const char8_t* semantics;
         ERHIFormat format;
+    };
+    
+    struct CYBER_RHI_API ShaderByteCodeBuffer 
+    {
+        static CYBER_CONSTEXPR const uint32_t stack_size = 128u * CYBER_KB;
+        // Stack memory, no need to deallocate it. Used first, if a shader if too big we allocate heap mempry
+        void* stack_memory;
+        uint32_t stack_used;
     };
 
     struct CYBER_RHI_API RHIShaderReflection
@@ -751,7 +770,6 @@ namespace Cyber
         bool mIsCpu : 1;
     };
 
-
     struct CYBER_RHI_API DeviceCreateDesc
     {
         bool bDisablePipelineCache;
@@ -851,7 +869,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIPipelineShaderCreateDesc
     {
-        Ref<RHISHaderLibrary> pLibrary;
+        Ref<RHIShaderLibrary> pLibrary;
         const char8_t* pEntry;
         ERHIShaderStage mStage;
     };
@@ -866,7 +884,7 @@ namespace Cyber
     struct CYBER_RHI_API RHIShaderLibraryCreateDesc
     {
         const char8_t* name;
-        const uint32_t* code;
+        const void* code;
         uint32_t code_size;
         ERHIShaderStage stage;
     };
@@ -965,10 +983,10 @@ namespace Cyber
         virtual void rhi_create_rendertarget() {}
 
         // Shader
-        virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc* desc)
+        virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_shader_library!");
-            return CreateRef<RHISHaderLibrary>();
+            return CreateRef<RHIShaderLibrary>();
         }
     };
 
