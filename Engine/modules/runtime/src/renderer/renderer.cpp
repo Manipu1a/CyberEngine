@@ -25,6 +25,7 @@
 #include <winerror.h>
 #include <wingdi.h>
 #include <winnt.h>
+#include "resource/resource_loader.h"
 
 namespace Cyber
 {
@@ -552,6 +553,44 @@ namespace Cyber
         psoDesc.SampleDesc.Quality = 0;
         psoDesc.DSVFormat = mDepthStencilFormat;
         md3dDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&mPSO));
+    }
+
+    void Renderer::create_render_pipeline()
+    {
+        // create shader
+        ResourceLoader::ShaderLoadDesc vs_load_desc = {};
+        vs_load_desc.target = shader_target_6_0;
+        vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+            .file_name = "",
+            .stage = RHI_SHADER_STAGE_VERT,
+            .entry_point_name = "main",
+        };
+        Ref<RHIShaderLibrary> vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
+
+        ResourceLoader::ShaderLoadDesc ps_load_desc = {};
+        ps_load_desc.target = shader_target_6_0;
+        ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+            .file_name = "",
+            .stage = RHI_SHADER_STAGE_FRAG,
+            .entry_point_name = "main",
+        };
+        Ref<RHIShaderLibrary> ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
+
+        // create render pipeline
+        RHIPipelineShaderCreateDesc pipeline_shader_create_desc[2];
+        pipeline_shader_create_desc[0].stage = RHI_SHADER_STAGE_VERT;
+        pipeline_shader_create_desc[0].library = vs_shader;
+        pipeline_shader_create_desc[0].entry = "main";
+        pipeline_shader_create_desc[1].stage = RHI_SHADER_STAGE_FRAG;
+        pipeline_shader_create_desc[1].library = ps_shader;
+        pipeline_shader_create_desc[1].entry = "main";
+        
+        RHIRootSignatureCreateDesc root_signature_create_desc = {
+          .shaders = pipeline_shader_create_desc,
+          .shader_count = 2,
+        };
+        Ref<RHIRootSignature> root_signature = RHI::GetRHIContext().rhi_create_root_signature(pRHIDevice, root_signature_create_desc);
+        
     }
 
     void Renderer::Draw()

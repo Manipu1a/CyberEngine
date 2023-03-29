@@ -869,15 +869,15 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIPipelineShaderCreateDesc
     {
-        Ref<RHIShaderLibrary> pLibrary;
-        const char8_t* pEntry;
-        ERHIShaderStage mStage;
+        Ref<RHIShaderLibrary> library;
+        const char8_t* entry;
+        ERHIShaderStage stage;
     };
 
     struct CYBER_RHI_API RHIRootSignatureCreateDesc
     {
-        struct RHIPipelineShaderCreateDesc* pShaderDescs;
-        uint32_t mShaderCount;
+        struct RHIPipelineShaderCreateDesc* shaders;
+        uint32_t shader_count;
         
     };
 

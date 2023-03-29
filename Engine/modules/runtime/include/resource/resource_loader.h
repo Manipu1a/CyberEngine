@@ -8,13 +8,14 @@ namespace Cyber
 {
     namespace ResourceLoader
     {
-        typedef enum EShaderStageLoadFlags
+        typedef enum EShaderStageLoadFlag
         {
             SHADER_STAGE_LOAD_FLAG_NONE = 0,
             SHADER_STAGE_LOAD_FLAG_ENABLE_PS_PRIMITIVEID = 1 << 0,
             SHADER_STAGE_LOAD_FLAG_ENABLE_VR_MULTIVIEW = 1 << 1,
-        } ShaderStageLoadFlags;
-
+        } ShaderStageLoadFlag;
+        typedef uint32_t EShaderStageLoadFlags;
+        
         struct ShaderStageLoadDesc
         {
             const char* file_name;
@@ -27,7 +28,7 @@ namespace Cyber
 
         struct ShaderLoadDesc
         {
-            ShaderStageLoadDesc stages[RHI_SHADER_STAGE_COUNT];
+            ShaderStageLoadDesc stage_load_desc;
             ERHIShaderTarget target;
             const ShaderConstant* pConstants;
             uint32_t constant_count;

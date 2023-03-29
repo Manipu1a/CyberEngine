@@ -61,22 +61,21 @@ namespace Cyber
             EShaderStageLoadFlags combinedFlags = SHADER_STAGE_LOAD_FLAG_NONE;
 
             ShaderByteCodeBuffer shaderByteCodeBuffer = {};
-            for(uint32_t i = 0;i < RHI_SHADER_STAGE_COUNT; ++i)
             {
-                if(desc.stages[i].file_name && desc.stages[i].file_name[0] != '\0')
+                if(desc.stage_load_desc.file_name && desc.stage_load_desc.file_name[0] != '\0')
                 {
-                    const char* fileName = desc.stages[i].file_name;
+                    const char* fileName = desc.stage_load_desc.file_name;
 
-                    combinedFlags |= desc.stages[i].flags;
+                    combinedFlags |= desc.stage_load_desc.flags;
 
-                    uint32_t macroCount = desc.stages[i].macro_count;
+                    uint32_t macroCount = desc.stage_load_desc.macro_count;
                     ShaderMacro* macros = (ShaderMacro*)cb_calloc(macroCount, sizeof(ShaderMacro));
                     for(uint32_t marcoIdx = 0; marcoIdx < macroCount; ++marcoIdx)
                     {
-                        macros[marcoIdx] = desc.stages[i].macros[marcoIdx];
+                        macros[marcoIdx] = desc.stage_load_desc.macros[marcoIdx];
                     }
 
-                    load_shader_stage_byte_code(desc.target, desc.stages[i], macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
+                    load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
                     ShaderLibraryRHIRef shaderLibrary = RHI::GetRHIContext().rhi_create_shader_library(renderer.GetDevice(), libraryDesc);
                     if(shaderLibrary)

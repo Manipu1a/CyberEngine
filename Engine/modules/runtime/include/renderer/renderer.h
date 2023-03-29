@@ -82,6 +82,8 @@ namespace Cyber
         void BuildBoxGeometry();
         void BuildPSO();
 
+        void create_render_pipeline();
+        
         void Draw();
 
     public:
