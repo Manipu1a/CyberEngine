@@ -537,10 +537,10 @@ namespace Cyber
 
         // Pick root parameters from desc data
         ERHIShaderStages shaderStages = 0;
-        for(uint32_t i = 0; i < rootSigDesc.mShaderCount; ++i)
+        for(uint32_t i = 0; i < rootSigDesc.shader_count; ++i)
         {
-            RHIPipelineShaderCreateDesc* shader_desc = rootSigDesc.pShaderDescs + i;
-            shaderStages |= shader_desc->mStage;
+            RHIPipelineShaderCreateDesc* shader_desc = rootSigDesc.shaders + i;
+            shaderStages |= shader_desc->stage;
         }
 
         // Pick shader reflection data

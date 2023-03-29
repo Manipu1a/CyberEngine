@@ -561,7 +561,7 @@ namespace Cyber
         ResourceLoader::ShaderLoadDesc vs_load_desc = {};
         vs_load_desc.target = shader_target_6_0;
         vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = "",
+            .file_name = "",read_shader_bytes
             .stage = RHI_SHADER_STAGE_VERT,
             .entry_point_name = "main",
         };

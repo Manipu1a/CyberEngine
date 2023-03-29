@@ -564,16 +564,16 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRootSignature
     {
-        Ref<RHIDevice> pDevice;
-        RHIParameterTable* pParamTables;
-        uint32_t mTableCount;
-        RHIShaderResource* pPushConstants;
-        uint32_t mPushConstantCount;
-        RHIShaderResource* pStaticSamplers;
-        uint32_t pStaticSamplerCount;
-        ERHIPipelineType mPipelineType;
-        Ref<RHIRootSignaturePool> pPool;
-        Ref<RHIRootSignature> pPoolSig;
+        Ref<RHIDevice> device;
+        RHIParameterTable* praameter_tables;
+        uint32_t table_count;
+        RHIShaderResource* push_constants;
+        uint32_t push_constant_count;
+        RHIShaderResource* static_samplers;
+        uint32_t static_sampler_count;
+        ERHIPipelineType pipeline_type;
+        Ref<RHIRootSignaturePool> pool;
+        Ref<RHIRootSignature> pool_next;
     };
 
     /// Shader Reflection
