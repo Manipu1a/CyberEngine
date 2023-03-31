@@ -532,7 +532,7 @@ namespace Cyber
         uint32_t binding;
         uint32_t size;
         uint32_t offset;
-        ERHIShaderStage stages;
+        ERHIShaderStages stages;
     };
 
     struct CYBER_RHI_API RHIShaderVariable
@@ -680,6 +680,11 @@ namespace Cyber
     };
 
     struct RHITexture3D : public RHITexture
+    {
+
+    };
+    
+    struct CYBER_RHI_API RHISampler 
     {
 
     };
@@ -878,7 +883,12 @@ namespace Cyber
     {
         struct RHIPipelineShaderCreateDesc* shaders;
         uint32_t shader_count;
-        
+        const RHISampler* static_samplers;
+        const char8_t* const* static_sampler_names;
+        uint32_t static_sampler_count;
+        const char8_t* const* push_constant_names;
+        uint32_t push_constant_count;
+        Ref<RHIRootSignaturePool> pool;
     };
 
     struct CYBER_RHI_API RHIShaderLibraryCreateDesc
