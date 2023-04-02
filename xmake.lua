@@ -17,6 +17,8 @@ includes("samples/xmake.lua")
 if (is_os("windows")) then 
     add_links("advapi32","gdi32","user32", "Shell32",{public = true})
 end
+
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

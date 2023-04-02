@@ -1,7 +1,6 @@
 #pragma once
 #include "rhi/rhi.h"
 #include "EASTL/map.h"
-#include "EASTL/vector.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <stdint.h>

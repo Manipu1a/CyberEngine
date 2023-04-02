@@ -3,7 +3,7 @@
 #include "core/Core.h"
 #include "platform/WindowsWindow.h"
 #include "CyberLog/Log.h"
-#include "CyberMemory/Memory.h"
+#include "platform/memory.h"
 #include "GameRuntime/GameApplication.h"
 
 /*

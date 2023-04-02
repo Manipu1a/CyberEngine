@@ -94,9 +94,13 @@
     "C_Cpp.codeAnalysis.runAutomatically": false,
     "C_Cpp.intelliSenseEngine": "Disabled",
     "C_Cpp.formatting": "Disabled",
+    "C_Cpp.autoAddFileAssociations": false,
+    "C_Cpp.autocompleteAddParentheses": false,
+    "C_Cpp.autocomplete": "Disabled",
+    "C_Cpp.errorSquiggles": "Disabled",
     "clangd.arguments": [
-        "--background-index",
         "--compile-commands-dir=.vscode",
+        "--background-index",
         "--header-insertion=never",
         "--completion-style=detailed"
     ]

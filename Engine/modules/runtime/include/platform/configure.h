@@ -22,3 +22,16 @@
 #define CYBER_EXTERN_C
 #define CYBER_CONSTEXPR
 #endif
+
+
+#ifdef __cplusplus
+#define CYBER_NOEXCEPT noexcept
+#else
+#define CYBER_NOEXCEPT
+#endif
+
+#ifdef __cplusplus
+#define RUNTIME_EXTERN_C extern "C"
+#else
+#define RUNTIME_EXTERN_C
+#endif

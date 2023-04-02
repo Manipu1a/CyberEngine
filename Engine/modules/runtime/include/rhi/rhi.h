@@ -1,12 +1,10 @@
 #pragma once
-#include "EASTL/EABase/eabase.h"
 #include "cyber_rhi_config.h"
 #include "flags.h"
 #include <EASTL/vector.h>
 #include <stdint.h>
 #include "core/Core.h"
 #include "core/Window.h"
-#include "../../Memory/include/CyberMemory/Memory.h"
 
 namespace Cyber
 {
@@ -551,9 +549,9 @@ namespace Cyber
     struct CYBER_RHI_API RHIParameterTable
     {
         // This should be stored here because shader could be destroyed after RS creation
-        RHIShaderResource* pResources;
-        uint32_t mResourcesCount;
-        uint32_t mSetIndex;
+        RHIShaderResource* resources;
+        uint32_t resource_count;
+        uint32_t set_index;
     };
 
     struct RHIRootSignaturePool
@@ -594,7 +592,7 @@ namespace Cyber
     
     struct CYBER_RHI_API ShaderByteCodeBuffer 
     {
-        static CYBER_CONSTEXPR const uint32_t stack_size = 128u * CYBER_KB;
+        static CYBER_CONSTEXPR const uint32_t stack_size = 128u * 1024;
         // Stack memory, no need to deallocate it. Used first, if a shader if too big we allocate heap mempry
         void* stack_memory;
         uint32_t stack_used;
@@ -897,13 +895,6 @@ namespace Cyber
         const void* code;
         uint32_t code_size;
         ERHIShaderStage stage;
-    };
-
-    class CYBER_RHI_API RHIRenderer
-    {
-    public:
-        Cyber::Scope<RHIDevice> pDevice;
-        Cyber::Scope<RHIAdapter> pAdapter;
     };
 
     class CYBER_RHI_API RHI

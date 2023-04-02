@@ -2,7 +2,6 @@ target("GameRuntime")
     set_kind("shared")
     add_deps("CyberRuntime", {public=true})
     add_deps("CyberInputSystem", {public=true})
-    add_deps("CyberMemory", {public=true})
     add_includedirs("modules/game_runtime/include", {public=true})
     add_files("modules/game_runtime/src/*.cpp")
 

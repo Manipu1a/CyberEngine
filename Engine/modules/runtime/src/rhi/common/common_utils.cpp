@@ -1,7 +1,10 @@
 #include "common_utils.h"
+#include "rhi/rhi.h"
 #include "EASTL/vector.h"
 #include <stdint.h>
 #include <string.h>
+#include "containers/btree.h"
+#include <EASTL/sort.h>
 
 namespace Cyber 
 {
@@ -116,7 +119,79 @@ namespace Cyber
         }
 
         // Merge root constants
-        
-
+        Cyber::btree_set<uint32_t> valid_sets;
+        eastl::vector<RHIShaderResource> rst_resources;
+        rst_resources.reserve(all_resources.size());
+        for(auto& shader_resource : all_resources)
+        {
+            bool coincided = false;
+            for(auto& rst_resource : rst_resources)
+            {
+                if( rst_resource.set == shader_resource.set &&
+                    rst_resource.binding == shader_resource.binding &&
+                    rst_resource.type == shader_resource.type)
+                {
+                    rst_resource.stages |= shader_resource.stages;
+                    coincided = true;
+                }
+            }
+            if(!coincided)
+            {
+                valid_sets.insert(shader_resource.set);
+                rst_resources.emplace_back(shader_resource);
+            }
+        }
+        eastl::stable_sort(rst_resources.begin(), rst_resources.end(), [](const RHIShaderResource& lhs, const RHIShaderResource& rhs){
+            if(lhs.set == rhs.set)
+                return lhs.binding < rhs.binding;
+            return lhs.set < rhs.set;
+        });
+        // Slice
+        rootSignature->table_count = (uint32_t)valid_sets.size();
+        rootSignature->praameter_tables = (RHIParameterTable*)cyber_calloc( rootSignature->table_count,sizeof(RHIParameterTable));
+        uint32_t table_index = 0;
+        for(auto&& set_index : valid_sets)
+        {
+            RHIParameterTable& table = rootSignature->praameter_tables[table_index];
+            table.set_index = set_index;
+            table.resource_count = 0;
+            // 计算每个set的资源数量
+            for(auto& rst_resource : rst_resources)
+            {
+                if(rst_resource.set == set_index)
+                    ++table.resource_count;
+            }
+            table.resources = (RHIShaderResource*)cyber_calloc(table.resource_count, sizeof(RHIShaderResource));
+            // 将参数按照set分组存入table
+            uint32_t slot_index = 0;
+            for(auto&& rst_resource : rst_resources)
+            {
+                if(rst_resource.set == set_index)
+                {
+                    table.resources[slot_index] = rst_resource;
+                    ++slot_index;
+                }
+            }
+            ++table_index;
+        }
+        // push constants
+        rootSignature->push_constant_count = (uint32_t)all_push_constants.size();
+        rootSignature->push_constants = (RHIShaderResource*)cyber_calloc(rootSignature->push_constant_count, sizeof(RHIShaderResource));
+        for(uint32_t i = 0; i < rootSignature->push_constant_count; ++i)
+        {
+            rootSignature->push_constants[i] = all_push_constants[i];
+        }
+        // static samplers
+        eastl::stable_sort(all_static_samplers.begin(), all_static_samplers.end(), [](const RHIShaderResource& lhs, const RHIShaderResource& rhs){
+            if(lhs.set == rhs.set)
+                return lhs.binding < rhs.binding;
+            return lhs.set < rhs.set;
+        });
+        rootSignature->static_sampler_count = (uint32_t)all_static_samplers.size();
+        rootSignature->static_samplers = (RHIShaderResource*)cyber_calloc(rootSignature->static_sampler_count, sizeof(RHIShaderResource));
+        for(uint32_t i = 0; i < rootSignature->static_sampler_count; ++i)
+        {
+            rootSignature->static_samplers[i] = all_static_samplers[i];
+        }
     }
 }

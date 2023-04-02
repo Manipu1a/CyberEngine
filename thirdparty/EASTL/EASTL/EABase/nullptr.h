@@ -6,7 +6,7 @@
 
 
 #include "eabase.h"
-#include "EABase/eahave.h"
+#include "../EABase/eahave.h"
 
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)

@@ -11,9 +11,13 @@
 #include <dxgi1_2.h>
 #include <dxgi1_5.h>
 #include <intsafe.h>
-#include <malloc.h>
 #include <stdint.h>
 #include <synchapi.h>
+#include "platform/memory.h"
+
+#pragma comment(lib, "d3d12.lib")
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
 
 namespace Cyber
 {
@@ -21,12 +25,12 @@ namespace Cyber
 
     HRESULT RHIDevice_D3D12::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)
     {
-        return pDeviceImpl->CheckFeatureSupport(pFeature, pFeatureSupportData, pFeatureSupportDataSize);
+        return pDxDevice->CheckFeatureSupport(pFeature, pFeatureSupportData, pFeatureSupportDataSize);
     }
 
     HRESULT RHIDevice_D3D12::hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource)
     {
-        return pDeviceImpl->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
+        return pDxDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
     }
 
     RHI_D3D12::RHI_D3D12()
@@ -39,7 +43,7 @@ namespace Cyber
 
     }
 
-    void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc)
+    void RHI_D3D12::rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc)
     {
         RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(pAdapter.get());
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pAdapter->pInstance.get());
@@ -53,7 +57,7 @@ namespace Cyber
         }
 
         // Create Requested Queues
-        dxDevice->pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cb_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
+        dxDevice->pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
 
         for(uint32_t i = 0u; i < deviceDesc.mQueueGroupCount;i++)
         {
@@ -61,7 +65,7 @@ namespace Cyber
             const auto type = queueGroup.mQueueType;
 
             dxDevice->pCommandQueueCounts[type] = queueGroup.mQueueCount;
-            dxDevice->ppCommandQueues[type] = (ID3D12CommandQueue*)cb_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
+            dxDevice->ppCommandQueues[type] = (ID3D12CommandQueue*)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
 
             for(uint32_t j = 0u; j < queueGroup.mQueueCount; j++)
             {
@@ -98,7 +102,7 @@ namespace Cyber
 #ifdef _DEBUG
 
 #endif
-            dxDevice->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cb_malloc(sizeof(RHIDescriptorHeap_D3D12));
+            dxDevice->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
             D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mCPUDescriptorHeaps[i]);
         }
 
@@ -181,7 +185,6 @@ namespace Cyber
 
     Texture2DRHIRef RHI_D3D12::rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& pDesc)
     {
-        //RHID3D12Texture* pTexture = (RHID3D12Texture*)cb_calloc_memalign(1, alignof(RHID3D12Texture), sizeof(RHID3D12Texture));
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
 
         Ref<RHITexture2D_D3D12> pTexture = CreateRef<RHITexture2D_D3D12>();
@@ -350,11 +353,11 @@ namespace Cyber
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
 
-        RHIInstance_D3D12* dxInstance = cyber_new<RHIInstance_D3D12>();
+        Ref<RHIInstance_D3D12> instanceRef = CreateRef<RHIInstance_D3D12>();
         // Initialize driver
-        D3D12Util_InitializeEnvironment(dxInstance);
+        D3D12Util_InitializeEnvironment(instanceRef.get());
         // Enable Debug Layer
-        D3D12Util_Optionalenable_debug_layer(dxInstance, instanceDesc);
+        D3D12Util_Optionalenable_debug_layer(instanceRef.get(), instanceDesc);
 
         UINT flags = 0;
         if(instanceDesc.mEnableDebugLayer)
@@ -364,7 +367,7 @@ namespace Cyber
         {
             uint32_t gpuCount = 0;
             bool foundSoftwareAdapter = false;
-            D3D12Util_QueryAllAdapters(dxInstance, gpuCount, foundSoftwareAdapter);
+            D3D12Util_QueryAllAdapters(instanceRef, gpuCount, foundSoftwareAdapter);
             // If the only adapter we found is a software adapter, log error message for QA 
             if(!gpuCount && foundSoftwareAdapter)
             {
@@ -377,7 +380,7 @@ namespace Cyber
             cyber_assert(false, "[D3D12 Fatal]: Create DXGIFactory2 Failed!]");
         }
 
-        return CreateRef<RHIInstance_D3D12>(dxInstance);
+        return instanceRef;
     }
 
     FenceRHIRef RHI_D3D12::rhi_create_fence(Ref<RHIDevice> pDevice)
@@ -390,7 +393,7 @@ namespace Cyber
         dxFence->mFenceValue = 1;
 
         dxFence->pDxWaitIdleFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-        return CreateRef<RHIFence_D3D12>(dxFence);
+        return CreateRef<RHIFence_D3D12>(*dxFence);
     }
 
     QueueRHIRef RHI_D3D12::rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index)
@@ -399,7 +402,7 @@ namespace Cyber
         RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
         dxQueue->pCommandQueue = dxDevice->ppCommandQueues[type];
         dxQueue->pFence = rhi_create_fence(pDevice);
-        return CreateRef<RHIQueue_D3D12>(dxQueue);
+        return CreateRef<RHIQueue_D3D12>(*dxQueue);
     }
 
     // Command Objects
@@ -421,7 +424,7 @@ namespace Cyber
     {
         RHICommandPool_D3D12* dxCommandPool = cyber_new<RHICommandPool_D3D12>();
         allocate_transient_command_allocator(dxCommandPool, queue);
-        return CreateRef<RHICommandPool_D3D12>(dxCommandPool);
+        return CreateRef<RHICommandPool_D3D12>(*dxCommandPool);
     }
 
     CommandBufferRef RHI_D3D12::rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) 
@@ -447,7 +450,7 @@ namespace Cyber
         // Command lists are add in the recording state, but there is nothing
         // to record yet. The main loop expects it to be closed, so close it now.
         CHECK_HRESULT(dxCommandBuffer->pDxCmdList->Close());
-        return CreateRef<RHICommandBuffer_D3D12>(dxCommandBuffer);
+        return CreateRef<RHICommandBuffer_D3D12>(*dxCommandBuffer);
     }
     
     SwapChainRef RHI_D3D12::rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& desc)
@@ -455,7 +458,7 @@ namespace Cyber
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance.get());
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
         const uint32_t buffer_count = desc.mImageCount;
-        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cb_calloc(1, sizeof(RHISwapChain_D3D12) + desc.mImageCount * sizeof(RHITexture));
+        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12) + desc.mImageCount * sizeof(RHITexture));
         dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
@@ -526,7 +529,7 @@ namespace Cyber
         }
         dxSwapChain->mBackBuffers = CreateRef<RHITexture*>(Ts);
         dxSwapChain->mBufferCount = buffer_count;
-        return CreateRef<RHISwapChain>(dxSwapChain);
+        return CreateRef<RHISwapChain>(*dxSwapChain);
     }
     
     // for example 
@@ -545,13 +548,13 @@ namespace Cyber
 
         // Pick shader reflection data
         
+        return CreateRef<RHIRootSignature>(*dxRootSignature);
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
         RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(pDevice->pAdapter.get());
-        //RHIRenderer_D3D12* DxRenderer = static_cast<RHIRenderer_D3D12*>(pRenderer.get());
         
         Ref<RHIBuffer_D3D12> pBuffer = CreateRef<RHIBuffer_D3D12>();
 
@@ -770,6 +773,6 @@ namespace Cyber
         D3D12Util_InitializeShaderReflection(dxDevice->pDxDevice, pLibrary, desc);
 
         pDxcLibrary->Release();
-        return CreateRef<RHIShaderLibrary>(pLibrary);
+        return CreateRef<RHIShaderLibrary>(*pLibrary);
     }
 }

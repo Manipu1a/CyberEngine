@@ -1,10 +1,13 @@
 #include "d3d12_utils.h"
-#include "../src/rhi/common/common_utils.h"
-#include "platform/configure.h"
-#include <winnt.h>
+//#include "platform/configure.h"
+//#include <winnt.h>
+#include <d3d12.h>
 #include <dxcapi.h>
 #include <d3d12shader.h>
-#include "cyber_runtime.config.h"
+#include "platform/memory.h"
+
+//#include "cyber_runtime.config.h"
+//#include "../../common/common_utils.h"
 
 namespace Cyber
 {
@@ -29,6 +32,7 @@ namespace Cyber
         static HMODULE dxcLibrary;
         static void* pDxcCreateInstance;
     };
+
     void* RHIUtil_DXCLoader::pDxcCreateInstance = nullptr;
     HMODULE RHIUtil_DXCLoader::dxcLibrary = nullptr;
 
@@ -46,12 +50,95 @@ namespace Cyber
     }
     #endif
 
-    void D3D12Util_InitializeEnvironment(Ref<RHIInstance> pInst)
+    DescriptorHandle D3D12Util_ConsumeDescriptorHandles(RHIDescriptorHeap_D3D12* pHeap, uint32_t descriptorCount)
+    {
+        if(pHeap->mUsedDescriptors + descriptorCount > pHeap->mDesc.NumDescriptors)
+        {
+        #ifdef CYBER_THREAD_SAFETY
+        #endif
+            if((pHeap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
+            {
+                uint32_t currentOffset = pHeap->mUsedDescriptors;
+                D3D12_DESCRIPTOR_HEAP_DESC desc = pHeap->mDesc;
+                while(pHeap->mUsedDescriptors + descriptorCount > desc.NumDescriptors)
+                {
+                    desc.NumDescriptors <<= 1;
+                }
+                ID3D12Device* pDevice = pHeap->pDevice;
+                SAFE_RELEASE(pHeap->pCurrentHeap);
+                pDevice->CreateDescriptorHeap(&desc, IID_ARGS(&pHeap->pCurrentHeap));
+                pHeap->mDesc = desc;
+                pHeap->mStartHandle.mCpu = pHeap->pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
+                pHeap->mStartHandle.mGpu = pHeap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+
+                uint32_t* rangeSized = (uint32_t*)cyber_malloc(pHeap->mUsedDescriptors * sizeof(uint32_t));
+            #ifdef CYBER_THREAD_SAFETY
+            #else
+                uint32_t usedDescriptors = pHeap->mUsedDescriptors;
+            #endif
+
+                for(uint32_t i = 0;i < pHeap->mUsedDescriptors; ++i)
+                    rangeSized[i] = 1;
+                //copy new heap to pHeap
+                //TODO: copy shader-visible heap may slow
+                pDevice->CopyDescriptors(
+                    1, &pHeap->mStartHandle.mCpu, &usedDescriptors, pHeap->mUsedDescriptors, pHeap->pHandles, rangeSized, pHeap->mDesc.Type);
+                D3D12_CPU_DESCRIPTOR_HANDLE* pNewHandles = 
+                    (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(pHeap->mDesc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+                memcpy(pNewHandles, pHeap->pHandles, pHeap->mUsedDescriptors * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+                cyber_free(pHeap->pHandles);
+                pHeap->pHandles = pNewHandles;
+            }
+            else if(pHeap->mFreeList.size() >= descriptorCount)
+            {
+                if(descriptorCount == 1)
+                {
+                    DescriptorHandle ret = pHeap->mFreeList.back();
+                    pHeap->mFreeList.pop_back();
+                    return ret;
+                }
+
+                // search for continuous free items in the list
+                uint32_t freeCount = 1;
+                for(size_t i = pHeap->mFreeList.size() - 1; i > 0; --i)
+                {
+                    size_t index = i - 1;
+                    DescriptorHandle mDescHandle = pHeap->mFreeList[index];
+                    if(mDescHandle.mCpu.ptr + pHeap->mDescriptorSize == pHeap->mFreeList[i].mCpu.ptr)
+                    {
+                        ++freeCount;
+                    }
+                    else 
+                    {
+                        freeCount = 1;
+                    }
+
+                    if(freeCount == descriptorCount)
+                    {
+                        pHeap->mFreeList.erase(pHeap->mFreeList.begin() + index, pHeap->mFreeList.begin() + index + descriptorCount);
+                        return mDescHandle;
+                    }
+                }
+            }
+        }
+        #ifdef CYBER_THREAD_SAFETY
+        #else
+            uint32_t usedDescriptors = pHeap->mUsedDescriptors = pHeap->mUsedDescriptors + descriptorCount;
+        #endif
+        cyber_check(usedDescriptors + descriptorCount <= pHeap->mDesc.NumDescriptors);
+        DescriptorHandle ret = {
+            {pHeap->mStartHandle.mCpu.ptr + usedDescriptors * pHeap->mDescriptorSize},
+            {pHeap->mStartHandle.mGpu.ptr + usedDescriptors * pHeap->mDescriptorSize},
+        };
+        return ret;
+    }
+
+    void D3D12Util_InitializeEnvironment(RHIInstance* pInst)
     {
 
     }
 
-    void D3D12Util_DeInitializeEnvironment(Ref<RHIInstance> pInst)
+    void D3D12Util_DeInitializeEnvironment(RHIInstance* pInst)
     {
         
     }
@@ -80,7 +167,7 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* pInstance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
+    void D3D12Util_QueryAllAdapters(Ref<RHIInstance_D3D12> pInstance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
     {
         cyber_assert(pInstance->pAdapters == nullptr, "getProperGpuCount should be called only once!");
         cyber_assert(pInstance->mAdaptersCount == 0, "getProperGpuCount should be called only once!");
@@ -88,7 +175,6 @@ namespace Cyber
         IDXGIAdapter* _adapter = nullptr;
         eastl::vector<IDXGIAdapter4*> dxgi_adapters;
         eastl::vector<D3D_FEATURE_LEVEL> adapter_levels;
-        Ref<RHIInstance_D3D12> instanceRef = CreateRef<RHIInstance_D3D12>(pInstance);
 
         for(UINT i = 0; pInstance->pDXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&_adapter));i++)
         {
@@ -130,7 +216,7 @@ namespace Cyber
         }
 
         pCount = pInstance->mAdaptersCount;
-        pInstance->pAdapters = (RHIAdapter_D3D12*)cb_malloc(sizeof(RHIAdapter_D3D12) * pInstance->mAdaptersCount);
+        pInstance->pAdapters = (RHIAdapter_D3D12*)cyber_malloc(sizeof(RHIAdapter_D3D12) * pInstance->mAdaptersCount);
        
         for(uint32_t i = 0;i < pCount; i++)
         {
@@ -138,20 +224,20 @@ namespace Cyber
             // Device Objects
             adapter.pDxActiveGPU = dxgi_adapters[i];
             adapter.mFeatureLevel = adapter_levels[i];
-            adapter.pInstance = instanceRef;
+            adapter.pInstance = pInstance;
         }
     }
 
     void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap)
     {
         uint32_t numDesciptors = pDesc.NumDescriptors;
-        RHIDescriptorHeap_D3D12* pHeap = (RHIDescriptorHeap_D3D12*)cb_calloc(1, sizeof(*pHeap));
+        RHIDescriptorHeap_D3D12* pHeap = (RHIDescriptorHeap_D3D12*)cyber_calloc(1, sizeof(*pHeap));
         // TODO thread safety
 
         pHeap->pDevice = pDevice;
 
         // Keep 32 aligned for easy remove
-        numDesciptors = cyber_round_up(numDesciptors, 32);
+        //numDesciptors = cyber_round_up(numDesciptors, 32);
 
         D3D12_DESCRIPTOR_HEAP_DESC Desc = pDesc;
         Desc.NumDescriptors = numDesciptors;
@@ -170,7 +256,7 @@ namespace Cyber
         pHeap->mDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(pHeap->mDesc.Type);
         if(Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
         {
-            pHeap->pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cb_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+            pHeap->pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
         }
 
         *ppDescHeap = pHeap;
@@ -185,10 +271,10 @@ namespace Cyber
 
         D3D12MA::ALLOCATION_CALLBACKS allocationCallbacks = {};
         allocationCallbacks.pAllocate = [](size_t size, size_t alignment, void*){
-            return cb_memalign(size, alignment);
+            return cyber_memalign(size, alignment);
         };
         allocationCallbacks.pFree = [](void* ptr, void*){
-            cb_free(ptr);
+            cyber_free(ptr);
         };
         desc.pAllocationCallbacks = &allocationCallbacks;
         desc.Flags |= D3D12MA::ALLOCATOR_FLAG_MSAA_TEXTURES_ALWAYS_COMMITTED;
@@ -254,11 +340,11 @@ namespace Cyber
     {
         // Get the number of bound resources
         library->entry_count = 1;
-        library->entry_reflections = (RHIShaderReflection*)cb_calloc(library->entry_count, sizeof(RHIShaderReflection));
+        library->entry_reflections = (RHIShaderReflection*)cyber_calloc(library->entry_count, sizeof(RHIShaderReflection));
         RHIShaderReflection* reflection = library->entry_reflections;
         reflection->entry_name = D3DShaderEntryName;
         reflection->shader_resource_count = shaderDesc.BoundResources;
-        reflection->shader_resources = (RHIShaderResource*)cb_calloc(shaderDesc.BoundResources, sizeof(RHIShaderResource));
+        reflection->shader_resources = (RHIShaderResource*)cyber_calloc(shaderDesc.BoundResources, sizeof(RHIShaderResource));
 
         // Count string sizes of the bound resources for the name pool
         for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -266,7 +352,7 @@ namespace Cyber
             D3D12_SHADER_INPUT_BIND_DESC bindDesc;
             d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
             const size_t source_len = strlen(bindDesc.Name);
-            reflection->shader_resources[i].name = (char8_t*)cb_malloc(sizeof(char8_t) * (source_len + 1));
+            reflection->shader_resources[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1));
             reflection->shader_resources[i].name_hash = rhi_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
             
             // We are very sure it's windows platform
@@ -310,7 +396,7 @@ namespace Cyber
         if(stage == RHI_SHADER_STAGE_VERT)
         {
             reflection->vertex_input_count = shaderDesc.InputParameters;
-            reflection->vertex_inputs = (RHIVertexInput*)cb_calloc(reflection->vertex_input_count, sizeof(RHIVertexInput));
+            reflection->vertex_inputs = (RHIVertexInput*)cyber_calloc(reflection->vertex_input_count, sizeof(RHIVertexInput));
             // Count the string sizes of the vertex inputs for the name pool
             for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
             {
@@ -320,7 +406,7 @@ namespace Cyber
                 bool hasParamIndex = paramDesc.SemanticIndex > 0 || !strcmp(paramDesc.SemanticName, "TEXCOORD");
                 uint32_t source_len = (uint32_t)strlen(paramDesc.SemanticName) + (hasParamIndex ? 1 : 0);
 
-                reflection->vertex_inputs[i].name = (char8_t*)cb_malloc(sizeof(char8_t) * (source_len+1));
+                reflection->vertex_inputs[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1));
                 if(hasParamIndex)
                     sprintf((char8_t*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
                 else
@@ -360,5 +446,40 @@ namespace Cyber
 
         pReflection->Release();
         d3d12Reflection->Release();
+    }
+
+    void D3D12Util_CreateCBV(RHIDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    {
+        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
+        pDevice->pDxDevice->CreateConstantBufferView(pCbvDesc, *pHandle);
+    }
+
+    void D3D12Util_CreateSRV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    {
+        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
+        pDevice->pDxDevice->CreateShaderResourceView(pResource, pSrvDesc, *pHandle);
+    }
+
+    void D3D12Util_CreateUAV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    {
+        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
+        pDevice->pDxDevice->CreateUnorderedAccessView(pResource, pCounterResource, pUavDesc, *pHandle);
+    }
+
+    void D3D12Util_CreateRTV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    {
+        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV], 1).mCpu;
+        pDevice->pDxDevice->CreateRenderTargetView(pResource, pRtvDesc, *pHandle);
+    }
+
+    void D3D12Util_CreateDSV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    {
+        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV], 1).mCpu;
+        pDevice->pDxDevice->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
     }
 }
