@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <synchapi.h>
 #include "platform/memory.h"
+#include "../../common/common_utils.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -536,7 +537,7 @@ namespace Cyber
     RootSignatureRHIRef RHI_D3D12::rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
-        RHIRootSignature_D3D12* dxRootSignature = cyber_new<RHIRootSignature_D3D12>();
+        Ref<RHIRootSignature_D3D12> dxRootSignature = CreateRef<RHIRootSignature_D3D12>();
 
         // Pick root parameters from desc data
         ERHIShaderStages shaderStages = 0;
@@ -547,8 +548,123 @@ namespace Cyber
         }
 
         // Pick shader reflection data
+        rhi_util_init_root_signature_tables(dxRootSignature.get(), rootSigDesc);
+        // rs pool allocation
+
+        // Fill resource slots
+        const uint32_t tableCount = dxRootSignature->parameter_table_count;
+        uint32_t descRangeCount = 0;
+        for(uint32_t i = 0;i < tableCount; ++i)
+        {
+            descRangeCount += dxRootSignature->parameter_tables[i].resource_count;
+        }
+        D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->push_constant_count, sizeof(D3D12_ROOT_PARAMETER1));
+        D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
+        // Create descriptor table parameter
+        uint32_t valid_root_tables = 0;
+        for(uint32_t i_set = 0; i_set < tableCount; ++i_set)
+        {
+            RHIParameterTable* paramTable = dxRootSignature->parameter_tables + i_set;
+            D3D12_ROOT_PARAMETER1 rootParam = rootParams[valid_root_tables];
+            rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+            ERHIShaderStages visStages = RHI_SHADER_STAGE_NONE;
+            uint32_t i_range = 0;
+            const D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
+            for(uint32_t i_register = 0; i_register < paramTable->resource_count; ++i_register)
+            {
+                RHIShaderResource* resourceSlot = paramTable->resources + i_register;
+                visStages |= resourceSlot->stages;
+                D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
+                descRange->RangeType = D3D12Util_ResourceTypeToDescriptorRangeType(resourceSlot->type);
+                descRange->NumDescriptors = (resourceSlot->type != RHI_RESOURCE_TYPE_UNIFORM_BUFFER) ? resourceSlot->size : 1;
+                descRange->BaseShaderRegister = resourceSlot->binding;
+                descRange->RegisterSpace = resourceSlot->set;
+                descRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+                descRange->Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
+                rootParam.DescriptorTable.NumDescriptorRanges++;
+                i_range++;
+            }
+            if(visStages != 0)
+            {
+                rootParam.ShaderVisibility = D3D12Util_TranslateShaderStage(visStages);
+                rootParam.DescriptorTable.pDescriptorRanges = descRange;
+                valid_root_tables++;
+            }
+        }
+        // Create push constant parameter
+        cyber_assert(dxRootSignature.push_constant_count <= 1, "Only support one push constant range");
+        if(dxRootSignature->push_constant_count > 0)
+        {
+            auto& pushConstant = dxRootSignature->push_constants;
+            dxRootSignature->root_constant_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+            dxRootSignature->root_constant_parameter.ShaderVisibility = D3D12Util_TranslateShaderStage(pushConstant->stages);
+            dxRootSignature->root_constant_parameter.Constants.Num32BitValues = pushConstant->size / sizeof(uint32_t);
+            dxRootSignature->root_constant_parameter.Constants.ShaderRegister = pushConstant->binding;
+            dxRootSignature->root_constant_parameter.Constants.RegisterSpace = pushConstant->set;
+        }
+        // Create static sampler parameter
+        uint32_t staticSamplerCount = rootSigDesc.static_sampler_count;
+        D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
+        if(staticSamplerCount > 0)
+        {
+            staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(staticSamplerCount, sizeof(D3D12_STATIC_SAMPLER_DESC));
+            for(uint32_t i = 0;i < dxRootSignature->static_sampler_count; ++i)
+            {
+                auto& rst_slot = dxRootSignature->static_samplers[i];
+                for(uint32_t j = 0; j < rootSigDesc.static_sampler_count; ++j)
+                {
+                    auto input_slot = (RHISampler_D3D12*)rootSigDesc.static_samplers[i];
+                    if(strcmp(rst_slot.name, rootSigDesc.static_sampler_names[j]) == 0)
+                    {
+                        D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->dxSamplerDesc;
+                        staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
+                        staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
+                        staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
+                        staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
+                        staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
+                        staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
+                        staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
+                        staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
+                        staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
+                        staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+
+                        RHIShaderResource* samplerResource = &rst_slot;
+                        staticSamplerDescs[i].ShaderRegister = samplerResource->binding;
+                        staticSamplerDescs[i].RegisterSpace = samplerResource->set;
+                        staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->stages);
+                    }
+                }
+            }
+        }
+        bool useInputLayout = shaderStages & RHI_SHADER_STAGE_VERT; // VertexStage uses input layout
+        // Fill RS flags
+        D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+        if(useInputLayout)
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+        }
+        if(!(shaderStages & RHI_SHADER_STAGE_VERT))
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
+        }
+        if(!(shaderStages & RHI_SHADER_STAGE_HULL))
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
+        }
+        if(!(shaderStages & RHI_SHADER_STAGE_DOMAIN))
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
+        }
+        if(!(shaderStages & RHI_SHADER_STAGE_GEOM))
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+        }
+        if(!(shaderStages & RHI_SHADER_STAGE_FRAG))
+        {
+            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+        }
         
-        return CreateRef<RHIRootSignature>(*dxRootSignature);
+        return dxRootSignature;
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)

@@ -215,11 +215,16 @@ namespace Cyber
 
     struct RHIRootSignature_D3D12 : public RHIRootSignature
     {
-        ID3D12RootSignature* pDxRootSignature;
-        D3D12_ROOT_PARAMETER1 mRootConstantParam;
-        uint32_t mRootParamIndex;
+        ID3D12RootSignature* dxRootSignature;
+        D3D12_ROOT_PARAMETER1 root_constant_parameter;
+        uint32_t root_parameter_index;
     };
 
+    struct RHISampler_D3D12 : public RHISampler
+    {
+        D3D12_SAMPLER_DESC dxSamplerDesc;
+    };
+    
     struct RHIShaderLibrary_D3D12 : public RHIShaderLibrary
     {
         struct IDxcBlobEncoding* shader_blob;

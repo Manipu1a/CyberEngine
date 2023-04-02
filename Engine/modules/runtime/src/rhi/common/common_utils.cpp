@@ -194,4 +194,56 @@ namespace Cyber
             rootSignature->static_samplers[i] = all_static_samplers[i];
         }
     }
+
+    void rhi_util_free_root_signature_tables(struct RHIRootSignature* rootSignature)
+    {
+        // free resources
+        if(rootSignature->praameter_tables)
+        {
+            for(uint32_t i = 0; i < rootSignature->table_count; ++i)
+            {
+                RHIParameterTable& table = rootSignature->praameter_tables[i];
+                if(table.resources)
+                {
+                    for(uint32_t binding = 0; binding < table.resource_count; ++binding)
+                    {
+                        RHIShaderResource& binding_to_free = table.resources[binding];
+                        if(binding_to_free.name != nullptr)
+                        {
+                            cyber_free((char8_t*)binding_to_free.name);
+                        }
+                    }
+                    cyber_free(table.resources);
+                }
+            }
+            cyber_free(rootSignature->praameter_tables);
+        }
+        // free constant
+        if(rootSignature->push_constants)
+        {
+            for(uint32_t i = 0;i < rootSignature->push_constant_count; ++i)
+            {
+                RHIShaderResource& binding_to_free = rootSignature->push_constants[i];
+                if(binding_to_free.name != nullptr)
+                {
+                    cyber_free((char8_t*)binding_to_free.name);
+                }
+            }
+            cyber_free(rootSignature->push_constants);
+        }
+        // free static samplers
+        if(rootSignature->static_samplers)
+        {
+            for(uint32_t i = 0;i < rootSignature->static_sampler_count; ++i)
+            {
+                RHIShaderResource& binding_to_free = rootSignature->static_samplers[i];
+                if(binding_to_free.name != nullptr)
+                {
+                    cyber_free((char8_t*)binding_to_free.name);
+                }
+            }
+            cyber_free(rootSignature->static_samplers);
+        }
+
+    }
 }

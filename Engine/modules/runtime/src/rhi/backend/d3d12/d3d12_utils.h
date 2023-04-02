@@ -294,6 +294,69 @@ namespace Cyber
         return ret;
     }
 
+    static D3D12_DESCRIPTOR_RANGE_TYPE D3D12Util_ResourceTypeToDescriptorRangeType(ERHIResourceType type)
+    {
+        switch (type)
+        {
+        case RHI_RESOURCE_TYPE_UNIFORM_BUFFER:
+        case RHI_RESOURCE_TYPE_PUSH_CONTANT:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+        case RHI_RESOURCE_TYPE_RW_BUFFER:
+        case RHI_RESOURCE_TYPE_RW_TEXTURE:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+        case RHI_RESOURCE_TYPE_SAMPLER:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+        case RHI_RESOURCE_TYPE_RAY_TRACING:
+        case RHI_RESOURCE_TYPE_TEXTURE:
+        case RHI_RESOURCE_TYPE_BUFFER:
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        default:
+            cyber_assert(false, "Invalid DescriptorInfo Type");
+            return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+        }
+    }
+
+    static D3D12_SHADER_VISIBILITY D3D12Util_TranslateShaderStage(ERHIShaderStages stages)
+    {
+        D3D12_SHADER_VISIBILITY res = D3D12_SHADER_VISIBILITY_ALL;
+        uint32_t stageCount = 0;
+        if(stages == RHI_SHADER_STAGE_COMPUTE)
+        {
+            return D3D12_SHADER_VISIBILITY_ALL;
+        }
+        if(stages = RHI_SHADER_STAGE_RAYTRACING)
+        {
+            return D3D12_SHADER_VISIBILITY_ALL;
+        }
+        if(stages & RHI_SHADER_STAGE_VERT)
+        {
+            res = D3D12_SHADER_VISIBILITY_VERTEX;
+            stageCount++;
+        }
+        if(stages & RHI_SHADER_STAGE_GEOM)
+        {
+            res = D3D12_SHADER_VISIBILITY_GEOMETRY;
+            stageCount++;
+        }
+        if(stages & RHI_SHADER_STAGE_HULL)
+        {
+            res = D3D12_SHADER_VISIBILITY_HULL;
+            stageCount++;
+        }
+        if(stages & RHI_SHADER_STAGE_DOMAIN)
+        {
+            res = D3D12_SHADER_VISIBILITY_DOMAIN;
+            stageCount++;
+        }
+        if(stages & RHI_SHADER_STAGE_FRAG)
+        {
+            res = D3D12_SHADER_VISIBILITY_PIXEL;
+            stageCount++;
+        }
+        cyber_assert(stageCount > 0, "Invalid Shader Stage");
+        return stageCount > 1 ? D3D12_SHADER_VISIBILITY_ALL : res;
+    }
+
     #if !defined (XBOX) && defined (_WIN32)
     #include <dxcapi.h>
 

@@ -563,8 +563,8 @@ namespace Cyber
     struct CYBER_RHI_API RHIRootSignature
     {
         Ref<RHIDevice> device;
-        RHIParameterTable* praameter_tables;
-        uint32_t table_count;
+        RHIParameterTable* parameter_tables;
+        uint32_t parameter_table_count;
         RHIShaderResource* push_constants;
         uint32_t push_constant_count;
         RHIShaderResource* static_samplers;
@@ -881,7 +881,7 @@ namespace Cyber
     {
         struct RHIPipelineShaderCreateDesc* shaders;
         uint32_t shader_count;
-        const RHISampler* static_samplers;
+        const RHISampler** static_samplers;
         const char8_t* const* static_sampler_names;
         uint32_t static_sampler_count;
         const char8_t* const* push_constant_names;
