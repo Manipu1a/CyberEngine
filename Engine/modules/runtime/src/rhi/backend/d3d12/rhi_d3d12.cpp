@@ -672,7 +672,7 @@ namespace Cyber
         if(resource->dimension == RHI_TEX_DIMENSION_1D_ARRAY ||
             resource->dimension == RHI_TEX_DIMENSION_2D_ARRAY ||
             resource->dimension == RHI_TEX_DIMENSION_2DMS_ARRAY ||
-            resource->dimension == RHI_TEX_DIMENSION_CUBE_ARRAY ||)
+            resource->dimension == RHI_TEX_DIMENSION_CUBE_ARRAY)
         {
             return resource->size;
         }
@@ -681,13 +681,14 @@ namespace Cyber
             return 1;
         }
     }
+
     DescriptorSetRHIRef RHI_D3D12::rhi_create_descriptor_set(Ref<RHIDevice> device, const RHIDescriptorSetCreateDesc& dSetDesc)
     {
         RHIRootSignature_D3D12* root_signature = static_cast<RHIRootSignature_D3D12*>(dSetDesc.root_signature.get());
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device.get());
-        Ref<RHIDescriptorSet_D3D12> dSet = CreateRef<RHIDescriptorSet_D3D12>();
-        dSet->root_signature = dSetDesc.root_signature;
-        dSet->set_index = dSetDesc.set_index;
+        Ref<RHIDescriptorSet_D3D12> descSet = CreateRef<RHIDescriptorSet_D3D12>();
+        descSet->root_signature = dSetDesc.root_signature;
+        descSet->set_index = dSetDesc.set_index;
 
         const uint32_t node_index = RHI_SINGLE_GPU_NODE_INDEX;
         RHIDescriptorHeap_D3D12* cbv_srv_uav_heap = dxDevice->mCbvSrvUavHeaps[node_index];
@@ -715,6 +716,62 @@ namespace Cyber
                 cbv_srv_uav_count += descriptor_count_needed(&param_table->resources[i]);
             }
         }
+
+        // cbv/srv/uav heap
+        descSet->cbv_srv_uav_handle = D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN;
+        descSet->sampler_handle = D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN;
+        if(cbv_srv_uav_count)
+        {
+            auto startHandle = D3D12Util_ConsumeDescriptorHandles(cbv_srv_uav_heap, cbv_srv_uav_count);
+            descSet->cbv_srv_uav_handle = startHandle.mGpu.ptr - cbv_srv_uav_heap->mStartHandle.mGpu.ptr;
+            descSet->cbv_srv_uav_stride = cbv_srv_uav_count * cbv_srv_uav_heap->mDescriptorSize;
+        }
+        if(sampler_count)
+        {
+            auto startHandle = D3D12Util_ConsumeDescriptorHandles(sampler_heap, sampler_count);
+            descSet->sampler_handle = startHandle.mGpu.ptr - sampler_heap->mStartHandle.mGpu.ptr;
+            descSet->sampler_stride = sampler_count * sampler_heap->mDescriptorSize;
+        }
+        // bind null handles on creation
+        if(cbv_srv_uav_count || sampler_count)
+        {
+            uint32_t cbv_srv_uav_offset = 0;
+            uint32_t sampler_offset = 0;
+            for(uint32_t i = 0; i < param_table->resource_count; ++i)
+            {
+                const auto dimension = param_table->resources[i].dimension;
+                auto src_handle = D3D12_DESCRIPTOR_ID_NONE;
+                auto src_sampler_handle = D3D12_DESCRIPTOR_ID_NONE;
+                switch (param_table->resources[i].type)
+                {
+                    case RHI_RESOURCE_TYPE_TEXTURE: src_handle = dxDevice->pNullDescriptors->TextureSRV[dimension]; break;
+                    case RHI_RESOURCE_TYPE_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferSRV; break;
+                    case RHI_RESOURCE_TYPE_RW_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferUAV; break;
+                    case RHI_RESOURCE_TYPE_UNIFORM_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferCBV; break;
+                    case RHI_RESOURCE_TYPE_SAMPLER: src_sampler_handle = dxDevice->pNullDescriptors->Sampler; break;
+                    default: break;
+                }
+
+                if(src_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
+                {
+                    for(uint32_t j = 0; j < param_table->resources[i].size; ++j)
+                    {
+                        D3D12Util_CopyDescriptorHandle(cbv_srv_uav_heap, src_handle, descSet->cbv_srv_uav_handle, cbv_srv_uav_offset);
+                        cbv_srv_uav_offset++;
+                    }
+                }
+                if(src_sampler_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
+                {
+                    for(uint32_t j = 0; j < param_table->resources[i].size; ++j)
+                    {
+                        D3D12Util_CopyDescriptorHandle(sampler_heap, src_sampler_handle, descSet->sampler_handle, sampler_offset);
+                        sampler_offset++;
+                    }
+                }
+            }
+        }
+
+        return descSet;
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)

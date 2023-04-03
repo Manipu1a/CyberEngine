@@ -133,6 +133,14 @@ namespace Cyber
         return ret;
     }
 
+    void D3D12Util_CopyDescriptorHandle(RHIDescriptorHeap_D3D12* dstHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index)
+    {
+        // fill dest heap
+        dstHeap->pHandles[(dstHandle / dstHeap->mDescriptorSize) + index] = srcHandle;
+        // copy
+        dstHeap->pDevice->CopyDescriptorsSimple(1, {dstHeap->mStartHandle.mCpu.ptr + dstHandle + (index * dstHeap->mDescriptorSize)}, srcHandle, dstHeap->mType);
+    }
+
     void D3D12Util_InitializeEnvironment(RHIInstance* pInst)
     {
 
