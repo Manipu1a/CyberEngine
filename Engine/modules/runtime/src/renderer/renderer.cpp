@@ -576,7 +576,7 @@ namespace Cyber
         };
         Ref<RHIShaderLibrary> ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
 
-        // create render pipeline
+        // create root signature
         RHIPipelineShaderCreateDesc pipeline_shader_create_desc[2];
         pipeline_shader_create_desc[0].stage = RHI_SHADER_STAGE_VERT;
         pipeline_shader_create_desc[0].library = vs_shader;
@@ -584,12 +584,12 @@ namespace Cyber
         pipeline_shader_create_desc[1].stage = RHI_SHADER_STAGE_FRAG;
         pipeline_shader_create_desc[1].library = ps_shader;
         pipeline_shader_create_desc[1].entry = "main";
-        
         RHIRootSignatureCreateDesc root_signature_create_desc = {
           .shaders = pipeline_shader_create_desc,
           .shader_count = 2,
         };
         Ref<RHIRootSignature> root_signature = RHI::GetRHIContext().rhi_create_root_signature(pRHIDevice, root_signature_create_desc);
+        // create descriptor set
         
     }
 

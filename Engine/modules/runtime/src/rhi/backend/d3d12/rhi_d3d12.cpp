@@ -550,7 +550,7 @@ namespace Cyber
         // Pick shader reflection data
         rhi_util_init_root_signature_tables(dxRootSignature.get(), rootSigDesc);
         // rs pool allocation
-
+        
         // Fill resource slots
         const uint32_t tableCount = dxRootSignature->parameter_table_count;
         uint32_t descRangeCount = 0;
@@ -665,6 +665,56 @@ namespace Cyber
         }
         
         return dxRootSignature;
+    }
+
+    uint32_t descriptor_count_needed(RHIShaderResource* resource)
+    {
+        if(resource->dimension == RHI_TEX_DIMENSION_1D_ARRAY ||
+            resource->dimension == RHI_TEX_DIMENSION_2D_ARRAY ||
+            resource->dimension == RHI_TEX_DIMENSION_2DMS_ARRAY ||
+            resource->dimension == RHI_TEX_DIMENSION_CUBE_ARRAY ||)
+        {
+            return resource->size;
+        }
+        else 
+        {
+            return 1;
+        }
+    }
+    DescriptorSetRHIRef RHI_D3D12::rhi_create_descriptor_set(Ref<RHIDevice> device, const RHIDescriptorSetCreateDesc& dSetDesc)
+    {
+        RHIRootSignature_D3D12* root_signature = static_cast<RHIRootSignature_D3D12*>(dSetDesc.root_signature.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device.get());
+        Ref<RHIDescriptorSet_D3D12> dSet = CreateRef<RHIDescriptorSet_D3D12>();
+        dSet->root_signature = dSetDesc.root_signature;
+        dSet->set_index = dSetDesc.set_index;
+
+        const uint32_t node_index = RHI_SINGLE_GPU_NODE_INDEX;
+        RHIDescriptorHeap_D3D12* cbv_srv_uav_heap = dxDevice->mCbvSrvUavHeaps[node_index];
+        RHIDescriptorHeap_D3D12* sampler_heap = dxDevice->mSamplerHeaps[node_index];
+        RHIParameterTable* param_table = &root_signature->parameter_tables[dSetDesc.set_index];
+        uint32_t cbv_srv_uav_count = 0;
+        uint32_t sampler_count = 0;
+        // collect descriptor counts
+        for(uint32_t i = 0; i < param_table->resource_count; ++i)
+        {
+            if(param_table->resources[i].type == RHI_RESOURCE_TYPE_SAMPLER)
+            {
+                sampler_count++;
+            }
+            else if(param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE || 
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_TEXTURE ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER_RAW ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER_RAW ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE_CUBE ||
+                    param_table->resources[i].type == RHI_RESOURCE_TYPE_UNIFORM_BUFFER 
+                    )
+            {
+                cbv_srv_uav_count += descriptor_count_needed(&param_table->resources[i]);
+            }
+        }
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)

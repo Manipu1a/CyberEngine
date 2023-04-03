@@ -33,6 +33,8 @@ namespace Cyber
     typedef Ref<RHIRootSignature> RootSignatureRHIRef;
     struct RHIShaderLibrary;
     typedef Ref<RHIShaderLibrary> ShaderLibraryRHIRef;
+    struct RHIDescriptorSet;
+    typedef Ref<RHIDescriptorSet> DescriptorSetRHIRef;
 
     typedef enum ERHIBackend
     {
@@ -573,6 +575,12 @@ namespace Cyber
         Ref<RHIRootSignaturePool> pool;
         Ref<RHIRootSignature> pool_next;
     };
+    
+    struct CYBER_RHI_API RHIDescriptorSet
+    {
+        Ref<RHIRootSignature> root_signature;
+        uint32_t set_index;
+    };
 
     /// Shader Reflection
     struct CYBER_RHI_API ShaderConstant
@@ -888,6 +896,12 @@ namespace Cyber
         uint32_t push_constant_count;
         Ref<RHIRootSignaturePool> pool;
     };
+    
+    struct CYBER_RHI_API RHIDescriptorSetCreateDesc
+    {
+        Ref<RHIRootSignature> root_signature;
+        uint32_t set_index;
+    };
 
     struct CYBER_RHI_API RHIShaderLibraryCreateDesc
     {
@@ -930,7 +944,6 @@ namespace Cyber
         };
         virtual void rhi_wait_fences(const RHIFence* pFences, uint32_t fenceCount) {}
         virtual void rhi_query_fence_status(Ref<RHIFence> pFence) {}
-
         virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
@@ -964,6 +977,11 @@ namespace Cyber
             return CreateRef<RHIRootSignature>();
         }
 
+        virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_descriptor_set!");
+            return CreateRef<RHIDescriptorSet>();
+        }
         // Resource APIs
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 
         {
@@ -971,7 +989,6 @@ namespace Cyber
             return CreateRef<RHITexture2D>();
         }
         virtual void rhi_remove_texture() {}
-        
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");

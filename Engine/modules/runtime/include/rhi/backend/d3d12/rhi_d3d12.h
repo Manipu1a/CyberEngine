@@ -220,6 +220,18 @@ namespace Cyber
         uint32_t root_parameter_index;
     };
 
+    struct RHIDescriptorSet_D3D12 : public RHIDescriptorSet
+    {
+        /// Start handle to cbv srv uav descriptor table
+        uint64_t cbv_srv_uav_handle;
+        /// Stride of the cbv srv uav descriptor table (number of descriptors * descriptor size)
+        uint32_t cbv_srv_uav_stride;
+        /// Start handle to sampler descriptor table
+        uint64_t sampler_handle;
+        /// Stride of the sampler descriptor table (number of descriptors * descriptor size)
+        uint32_t sampler_stride;
+    };
+
     struct RHISampler_D3D12 : public RHISampler
     {
         D3D12_SAMPLER_DESC dxSamplerDesc;
@@ -247,7 +259,8 @@ namespace Cyber
         virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
-
+        virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;
+        
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;

@@ -147,12 +147,12 @@ namespace Cyber
             return lhs.set < rhs.set;
         });
         // Slice
-        rootSignature->table_count = (uint32_t)valid_sets.size();
-        rootSignature->praameter_tables = (RHIParameterTable*)cyber_calloc( rootSignature->table_count,sizeof(RHIParameterTable));
+        rootSignature->parameter_table_count = (uint32_t)valid_sets.size();
+        rootSignature->parameter_tables = (RHIParameterTable*)cyber_calloc( rootSignature->parameter_table_count,sizeof(RHIParameterTable));
         uint32_t table_index = 0;
         for(auto&& set_index : valid_sets)
         {
-            RHIParameterTable& table = rootSignature->praameter_tables[table_index];
+            RHIParameterTable& table = rootSignature->parameter_tables[table_index];
             table.set_index = set_index;
             table.resource_count = 0;
             // 计算每个set的资源数量
@@ -198,11 +198,11 @@ namespace Cyber
     void rhi_util_free_root_signature_tables(struct RHIRootSignature* rootSignature)
     {
         // free resources
-        if(rootSignature->praameter_tables)
+        if(rootSignature->parameter_tables)
         {
-            for(uint32_t i = 0; i < rootSignature->table_count; ++i)
+            for(uint32_t i = 0; i < rootSignature->parameter_table_count; ++i)
             {
-                RHIParameterTable& table = rootSignature->praameter_tables[i];
+                RHIParameterTable& table = rootSignature->parameter_tables[i];
                 if(table.resources)
                 {
                     for(uint32_t binding = 0; binding < table.resource_count; ++binding)
@@ -216,7 +216,7 @@ namespace Cyber
                     cyber_free(table.resources);
                 }
             }
-            cyber_free(rootSignature->praameter_tables);
+            cyber_free(rootSignature->parameter_tables);
         }
         // free constant
         if(rootSignature->push_constants)
