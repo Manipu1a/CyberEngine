@@ -8,6 +8,9 @@
 
 namespace Cyber
 {
+    #define RHI_MAX_VERTEX_ATTRIBUTES 15
+    #define RHI_MAX_VERTEX_BINDINGS 15
+    #define RHI_MAX_MRT_COUNT 8u
     #define RHI_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
     
     typedef uint32_t RHIQueueIndex;
@@ -903,12 +906,91 @@ namespace Cyber
         uint32_t set_index;
     };
 
+    struct CYBER_RHI_API RHIBlendStateCreateDesc
+    {
+        /// Source blend factor per render target
+        ERHIBlendConstant src_factors[RHI_MAX_MRT_COUNT];
+        /// Destination blend factor per render target
+        ERHIBlendConstant dst_factors[RHI_MAX_MRT_COUNT];
+        /// Source blend alpha factor per render target
+        ERHIBlendConstant src_alpha_factors[RHI_MAX_MRT_COUNT];
+        /// Destination blend alpha factor per render target
+        ERHIBlendConstant dst_alpha_factors[RHI_MAX_MRT_COUNT];
+        /// Blend mode per render target
+        ERHIBlendMode blend_modes[RHI_MAX_MRT_COUNT];
+        /// Blend alpha mode per render target
+        ERHIBlendMode blend_alpha_modes[RHI_MAX_MRT_COUNT];
+        /// Color write mask per render target
+        int32_t masks[RHI_MAX_MRT_COUNT];
+        /// Enable alpha to coverage
+        bool alpha_to_coverage : 1;
+        /// Set whether each render target has an unique blend function. When false the blend function in slot 0 will be used for all render targets.
+        bool independent_blend : 1;
+    };
+
+    struct CYBER_RHI_API RHIDepthStateCreateDesc
+    {
+        bool depth_test : 1;
+        bool depth_write : 1;
+        
+    };
     struct CYBER_RHI_API RHIShaderLibraryCreateDesc
     {
         const char8_t* name;
         const void* code;
         uint32_t code_size;
         ERHIShaderStage stage;
+    };
+
+    struct CYBER_RHI_API RHIVertexAttribute 
+    {
+        char8_t semantic_name[64];
+        uint32_t array_size;
+        ERHIFormat format;
+        uint32_t binding;
+        uint32_t offset;
+        uint32_t elem_stride;
+        ERHIVertexInputRate input_rate;
+    };
+
+    struct CYBER_RHI_API RHIVertexLayout
+    {
+        uint32_t attribute_count;
+        RHIVertexAttribute attributes[RHI_MAX_VERTEX_ATTRIBUTES];
+    };
+
+    struct CYBER_RHI_API RHIRenderPipelineCreateDesc
+    {
+        Ref<RHIRootSignature> root_signature;
+        Ref<RHIShaderLibrary> vertex_shader;
+        Ref<RHIShaderLibrary> pixel_shader;
+        Ref<RHIShaderLibrary> geometry_shader;
+        Ref<RHIShaderLibrary> domain_shader;
+        Ref<RHIShaderLibrary> hull_shader;
+        Ref<RHIShaderLibrary> compute_shader;
+        Ref<RHIBlendStateCreateDesc> blend_state;
+        Ref<RHIDepthStencilState> depth_stencil_state;
+        Ref<RHIRasterizerState> rasterizer_state;
+        Ref<RHIVertexLayout> vertex_layout;
+        Ref<RHIShaderLibrary> shader_library;
+        Ref<RHIRootSignaturePool> root_signature_pool;
+        Ref<RHIShaderLibraryPool> shader_library_pool;
+        Ref<RHIVertexLayoutPool> vertex_layout_pool;
+        Ref<RHIBlendStatePool> blend_state_pool;
+        Ref<RHIDepthStencilStatePool> depth_stencil_state_pool;
+        Ref<RHIRasterizerStatePool> rasterizer_state_pool;
+        uint32_t sample_count;
+        uint32_t sample_quality;
+        uint32_t render_target_count;
+        ERHIFormat render_target_formats[8];
+        ERHIFormat depth_stencil_format;
+        uint32_t depth_stencil_read_mask;
+        uint32_t depth_stencil_write_mask;
+        ERHIDepthStencilStateFlags depth_stencil_flags;
+        ERHIBlendStateFlags blend_flags;
+        ERHIRasterizerStateFlags rasterizer_flags;
+        float blend_factor[4];
+        uint32_t stencil_ref;
     };
 
     class CYBER_RHI_API RHI
