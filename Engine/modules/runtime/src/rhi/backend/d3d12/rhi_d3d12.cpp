@@ -1,6 +1,6 @@
 #include "rhi/backend/d3d12/rhi_d3d12.h"
-#include "EASTL/EABase/eabase.h"
 #include "EASTL/vector.h"
+#include <EASTL/string_hash_map.h>
 #include "d3d12_utils.h"
 #include "CyberLog/Log.h"
 #include "dxcapi.h"
@@ -772,6 +772,242 @@ namespace Cyber
         }
 
         return descSet;
+    }
+    D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {};
+    D3D12_BLEND_DESC gDefaultBlendDesc = {};
+    D3D12_RASTERIZER_DESC gDefaultRasterizerDesc = {};
+    Ref<RHIRenderPipeline> RHI_D3D12::rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc)
+    {
+        RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        RHIRootSignature_D3D12* DxRootSignature = static_cast<RHIRootSignature_D3D12*>(pipelineDesc.root_signature.get());
+        Ref<RHIRenderPipeline_D3D12> pPipeline = CreateRef<RHIRenderPipeline_D3D12>();
+
+        // Input layout
+        DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[RHI_MAX_VERTEX_ATTRIBUTES]);
+        uint32_t input_element_count = 0;
+        if(pipelineDesc.vertex_layout)
+        {
+            eastl::string_hash_map<uint32_t> semantic_index_map;
+            for(uint32_t attrib_index = 0;attrib_index < pipelineDesc.vertex_layout->attribute_count; ++attrib_index)
+            {
+                const RHIVertexAttribute* attribute = &pipelineDesc.vertex_layout->attributes[attrib_index];
+                for(uint32_t index = 0; index < attribute->array_size; ++index)
+                {
+                    input_elements[input_element_count].SemanticName = attribute->semantic_name;
+                    if(semantic_index_map.find(attribute->semantic_name) == semantic_index_map.end())
+                    {
+                        semantic_index_map[attribute->semantic_name] = 0;
+                    }
+                    else 
+                    {
+                        semantic_index_map[attribute->semantic_name]++;
+                    }
+                    input_elements[input_element_count].SemanticIndex = semantic_index_map[attribute->semantic_name];
+                    input_elements[input_element_count].Format = DXGIUtil_TranslatePixelFormat(attribute->format);
+                    input_elements[input_element_count].InputSlot = attribute->binding;
+                    input_elements[input_element_count].AlignedByteOffset = attribute->offset + index * FormatUtil_BitSizeOfBlock(attribute->format) / 8;
+                    if(attribute->input_rate == RHI_INPUT_RATE_INSTANCE)
+                    {
+                        input_elements[input_element_count].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+                        input_elements[input_element_count].InstanceDataStepRate = 1;
+                    }
+                    else
+                    {
+                        input_elements[input_element_count].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+                        input_elements[input_element_count].InstanceDataStepRate = 0;
+                    }
+                    input_element_count++;
+                }
+            }
+        }
+        DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, input_layout_desc);
+        input_layout_desc.pInputElementDescs = input_element_count ? input_elements : nullptr;
+        input_layout_desc.NumElements = input_element_count;
+
+        // Shader stages
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, vertex_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, pixel_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, domain_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, hull_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, geometry_shader);
+        for(uint32_t i = 0; i < 5;++i)
+        {
+            ERHIShaderStage stage_mask = (ERHIShaderStage)(1 << i);
+            switch (stage_mask)
+            {
+                case RHI_SHADER_STAGE_VERT:
+                {
+                    if(pipelineDesc.vertex_shader)
+                    {
+                        RHIShaderLibrary_D3D12* vert_lib = (RHIShaderLibrary_D3D12*)pipelineDesc.vertex_shader->library.get();
+                        vertex_shader.pShaderBytecode = vert_lib->shader_blob->GetBufferPointer();
+                        vertex_shader.BytecodeLength = vert_lib->shader_blob->GetBufferSize();
+                    }
+                    break;
+                }
+                case RHI_SHADER_STAGE_FRAG:
+                {
+                    if(pipelineDesc.fragment_shader)
+                    {
+                        RHIShaderLibrary_D3D12* frag_lib = (RHIShaderLibrary_D3D12*)pipelineDesc.fragment_shader->library.get();
+                        pixel_shader.pShaderBytecode = frag_lib->shader_blob->GetBufferPointer();
+                        pixel_shader.BytecodeLength = frag_lib->shader_blob->GetBufferSize();
+                    }
+                    break;
+                }
+                case RHI_SHADER_STAGE_TESC:
+                {
+                    if(pipelineDesc.tesc_shader)
+                    {
+                        RHIShaderLibrary_D3D12* domain_lib = (RHIShaderLibrary_D3D12*)pipelineDesc.tesc_shader->library.get();
+                        hull_shader.pShaderBytecode = domain_lib->shader_blob->GetBufferPointer();
+                        hull_shader.BytecodeLength = domain_lib->shader_blob->GetBufferSize();
+                    }
+                    break;
+                }
+                case RHI_SHADER_STAGE_TESE:
+                {
+                    if(pipelineDesc.tese_shader)
+                    {
+                        RHIShaderLibrary_D3D12* hull_lib = (RHIShaderLibrary_D3D12*)pipelineDesc.tese_shader->library.get();
+                        domain_shader.pShaderBytecode = hull_lib->shader_blob->GetBufferPointer();
+                        domain_shader.BytecodeLength = hull_lib->shader_blob->GetBufferSize();
+                    }
+                    break;
+                }
+                case RHI_SHADER_STAGE_GEOM:
+                {
+                    if(pipelineDesc.geometry_shader)
+                    {
+                        RHIShaderLibrary_D3D12* geom_lib = (RHIShaderLibrary_D3D12*)pipelineDesc.geometry_shader->library.get();
+                        geometry_shader.pShaderBytecode = geom_lib->shader_blob->GetBufferPointer();
+                        geometry_shader.BytecodeLength = geom_lib->shader_blob->GetBufferSize();
+                    }
+                    break;
+                }
+                default:
+                    cyber_assert(false, "Invalid shader stage");
+                    break;
+            }
+        }
+        // Stream out
+        DECLARE_ZERO(D3D12_STREAM_OUTPUT_DESC, stream_output_desc);
+        stream_output_desc.pSODeclaration = nullptr;
+        stream_output_desc.NumEntries = 0;
+        stream_output_desc.pBufferStrides = nullptr;
+        stream_output_desc.NumStrides = 0;
+        stream_output_desc.RasterizedStream = 0;
+        // Sample
+        DECLARE_ZERO(DXGI_SAMPLE_DESC, sample_desc);
+        sample_desc.Count = (uint32_t)(pipelineDesc.sample_count ? pipelineDesc.sample_count : 1);
+        sample_desc.Quality = (uint32_t)(pipelineDesc.sample_quality);
+        DECLARE_ZERO(D3D12_CACHED_PIPELINE_STATE, cached_pso_desc);
+        cached_pso_desc.pCachedBlob = nullptr;
+        cached_pso_desc.CachedBlobSizeInBytes = 0;
+        // Fill pipeline object desc
+        DECLARE_ZERO(D3D12_GRAPHICS_PIPELINE_STATE_DESC, pso_desc);
+        pso_desc.pRootSignature = DxRootSignature->dxRootSignature;
+        // Single GPU
+        pso_desc.NodeMask = RHI_SINGLE_GPU_NODE_MASK;
+        pso_desc.VS = vertex_shader;
+        pso_desc.PS = pixel_shader;
+        pso_desc.DS = domain_shader;
+        pso_desc.HS = hull_shader;
+        pso_desc.GS = geometry_shader;
+        pso_desc.StreamOutput = stream_output_desc;
+        pso_desc.BlendState = pipelineDesc.blend_state ? D3D12Util_TranslateBlendState(pipelineDesc.blend_state.get()) : gDefaultBlendDesc;
+        pso_desc.SampleMask = UINT_MAX;
+        pso_desc.RasterizerState = pipelineDesc.rasterizer_state ? D3D12Util_TranslateRasterizerState(pipelineDesc.rasterizer_state.get()) : gDefaultRasterizerDesc;
+        // Depth stencil
+        pso_desc.DepthStencilState = pipelineDesc.depth_stencil_state ? D3D12Util_TranslateDepthStencilState(pipelineDesc.depth_stencil_state.get()) : gDefaultDepthStencilDesc;
+        pso_desc.InputLayout = input_layout_desc;
+        pso_desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
+        pso_desc.PrimitiveTopologyType = D3D12Util_TranslatePrimitiveTopologyType(pipelineDesc.prim_topology);
+        pso_desc.NumRenderTargets = (UINT)pipelineDesc.render_target_count;
+        pso_desc.DSVFormat = DXGIUtil_TranslatePixelFormat(pipelineDesc.depth_stencil_format);
+        pso_desc.SampleDesc = sample_desc;
+        pso_desc.CachedPSO = cached_pso_desc;
+        pso_desc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
+        for(uint32_t i = 0; i < pso_desc.NumRenderTargets;++i)
+        {
+            pso_desc.RTVFormats[i] = DXGIUtil_TranslatePixelFormat(pipelineDesc.color_formats[i]);
+        }
+        // Create pipeline object
+        HRESULT result = E_FAIL;
+        wchar_t pipelineName[PSO_NAME_LENGTH] = {};
+        // Cached PSO
+        size_t psoShaderHash = 0;
+        size_t psoRenderHash = 0;
+        if(DxDevice->pPipelineLibrary)
+        {
+            // Calculate graphics pso shader hash
+            if(vertex_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(vertex_shader.pShaderBytecode, vertex_shader.BytecodeLength, psoShaderHash);
+            if(pixel_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(pixel_shader.pShaderBytecode, pixel_shader.BytecodeLength, psoShaderHash);
+            if(domain_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(domain_shader.pShaderBytecode, domain_shader.BytecodeLength, psoShaderHash);
+            if(hull_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(hull_shader.pShaderBytecode, hull_shader.BytecodeLength, psoShaderHash);
+            if(geometry_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(geometry_shader.pShaderBytecode, geometry_shader.BytecodeLength, psoShaderHash);
+            // Calculate graphics pso render state hash
+            psoRenderHash = cyber_hash(&pso_desc.BlendState, sizeof(D3D12_BLEND_DESC), psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.RasterizerState, sizeof(D3D12_RASTERIZER_DESC), psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.DepthStencilState, sizeof(D3D12_DEPTH_STENCIL_DESC), psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.SampleDesc, sizeof(DXGI_SAMPLE_DESC), psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.DSVFormat, sizeof(DXGI_FORMAT), psoRenderHash);
+            psoRenderHash = cyber_hash(pso_desc.RTVFormats, sizeof(DXGI_FORMAT) * pso_desc.NumRenderTargets, psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.IBStripCutValue, sizeof(D3D12_INDEX_BUFFER_STRIP_CUT_VALUE), psoRenderHash);
+            psoRenderHash = cyber_hash(&pso_desc.Flags, sizeof(D3D12_PIPELINE_STATE_FLAGS), psoRenderHash);
+            for(uint32_t i = 0; i < pso_desc.InputLayout.NumElements; ++i)
+            {
+                psoRenderHash = cyber_hash(&pso_desc.InputLayout.pInputElementDescs[i], sizeof(D3D12_INPUT_ELEMENT_DESC), psoRenderHash);
+            }
+
+            swprintf(pipelineName, PSO_NAME_LENGTH, L"%s_S%zuR%zu", "GRAPHCISPSO", psoShaderHash, psoRenderHash);
+            result = DxDevice->pPipelineLibrary->LoadGraphicsPipeline(pipelineName, &pso_desc, IID_PPV_ARGS(&pPipeline->pDxPipelineState));
+        }
+        // Not find in cache
+        if(!SUCCEEDED(result))
+        {
+            CHECK_HRESULT(DxDevice->pDxDevice->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pPipeline->pDxPipelineState)));
+            // Pipeline cache
+            if(DxDevice->pPipelineLibrary)
+            {
+                CHECK_HRESULT(DxDevice->pPipelineLibrary->StorePipeline(pipelineName, pPipeline->pDxPipelineState));
+            }
+        }
+        D3D_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+        switch(pipelineDesc.prim_topology)
+        {
+            case RHI_PRIM_TOPO_POINT_LIST:
+                topology = D3D_PRIMITIVE_TOPOLOGY_POINTLIST;
+                break;
+            case RHI_PRIM_TOPO_LINE_LIST:
+                topology = D3D_PRIMITIVE_TOPOLOGY_LINELIST;
+                break;
+            case RHI_PRIM_TOPO_LINE_STRIP:
+                topology = D3D_PRIMITIVE_TOPOLOGY_LINESTRIP;
+                break;
+            case RHI_PRIM_TOPO_TRIANGLE_LIST:
+                topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+                break;
+            case RHI_PRIM_TOPO_TRIANGLE_STRIP:
+                topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+                break;
+            case RHI_PRIM_TOPO_PATCH_LIST:
+            {
+                cyber_assert(false, "RHI_PRIM_TOPO_PATCH_LIST not supported");
+                break;
+            }
+            default:
+                cyber_assert(false, "Invalid primitive topology");
+                break;
+        }
+        pPipeline->mPrimitiveTopologyType = topology;
+        pPipeline->pDxRootSignature = DxRootSignature->dxRootSignature;
+        return pPipeline;
     }
 
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)

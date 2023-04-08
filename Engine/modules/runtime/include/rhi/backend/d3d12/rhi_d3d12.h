@@ -232,6 +232,13 @@ namespace Cyber
         uint32_t sampler_stride;
     };
 
+    struct RHIRenderPipeline_D3D12 : public RHIRenderPipeline
+    {
+        ID3D12PipelineState* pDxPipelineState;
+        ID3D12RootSignature* pDxRootSignature;
+        D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
+    };
+
     struct RHISampler_D3D12 : public RHISampler
     {
         D3D12_SAMPLER_DESC dxSamplerDesc;
@@ -260,7 +267,7 @@ namespace Cyber
 
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;
-        
+        virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc) override;
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;

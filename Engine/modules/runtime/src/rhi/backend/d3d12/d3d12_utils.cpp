@@ -490,4 +490,95 @@ namespace Cyber
             *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV], 1).mCpu;
         pDevice->pDxDevice->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
     }
+
+    D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc)
+    {
+        int blendDescIndex = 0;
+        D3D12_BLEND_DESC ret = {};
+        ret.AlphaToCoverageEnable = (BOOL)pDesc->alpha_to_coverage;
+        ret.IndependentBlendEnable = TRUE;
+        for(int i = 0; i < RHI_MAX_MRT_COUNT;++i)
+        {
+            BOOL blendEnable = (gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]] != D3D12_BLEND_ZERO) ||
+                                (gDx12BlendConstantTranslator[pDesc->src_alpha_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_alpha_factors[blendDescIndex]] != D3D12_BLEND_ZERO);
+
+            ret.RenderTarget[i].BlendEnable = blendEnable;
+            ret.RenderTarget[i].RenderTargetWriteMask = (UINT8)pDesc->masks[blendDescIndex];
+            ret.RenderTarget[i].BlendOp = gDx12BlendOpTranlator[pDesc->blend_modes[blendDescIndex]];
+            ret.RenderTarget[i].SrcBlend = gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]];
+            ret.RenderTarget[i].DestBlend = gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]];
+            ret.RenderTarget[i].BlendOpAlpha = gDx12BlendOpTranlator[pDesc->blend_alpha_modes[blendDescIndex]];
+            ret.RenderTarget[i].SrcBlendAlpha = gDx12BlendConstantTranslator[pDesc->src_alpha_factors[blendDescIndex]];
+            ret.RenderTarget[i].DestBlendAlpha = gDx12BlendConstantTranslator[pDesc->dst_alpha_factors[blendDescIndex]];
+
+            if(pDesc->independent_blend)
+            {
+                ++blendDescIndex;
+            }
+        }
+        return ret;
+    }
+    D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RHIRasterizerStateCreateDesc* pDesc)
+    {
+        cyber_check(pDesc.fill_mode < RHI_FILL_MODE_COUNT);
+        cyber_check(pDesc.cull_mode < RHI_CULL_MODE_COUNT);
+        cyber_check(pDesc.front_face == RHI_FRONT_FACE_CCW || pDesc.front_face == RHI_FRONT_FACE_CW);
+        D3D12_RASTERIZER_DESC ret = {};
+        ret.FillMode = gDx12FillModeTranslator[pDesc->fill_mode];
+        ret.CullMode = gDx12CullModeTranslator[pDesc->cull_mode];
+        ret.FrontCounterClockwise = (pDesc->front_face == RHI_FRONT_FACE_COUNTER_CLOCKWISE);
+        ret.DepthBias = pDesc->depth_bias;
+        ret.DepthBiasClamp = 0.0f;
+        ret.SlopeScaledDepthBias = pDesc->slope_scaled_depth_bias;
+        ret.DepthClipEnable = !pDesc->enable_depth_clip;
+        ret.MultisampleEnable = pDesc->enable_multisample ? TRUE : FALSE;
+        ret.AntialiasedLineEnable = false;
+        ret.ForcedSampleCount = 0;
+        ret.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+        return ret;
+    }
+
+    D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const RHIDepthStateCreateDesc* pDesc)
+    {
+        cyber_check(pDesc->depth_func < RHI_CMP_FUNC_COUNT);
+        cyber_check(pDesc->stencil_func < RHI_CMP_FUNC_COUNT);
+        cyber_check(pDesc->stecil_front_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_pass_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_depth_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_pass_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_depth_fail_op < RHI_STENCIL_OP_COUNT);
+
+        D3D12_DEPTH_STENCIL_DESC ret = {};
+        ret.DepthEnable = pDesc->depth_test ? TRUE : FALSE;
+        ret.DepthWriteMask = pDesc->depth_write ? D3D12_DEPTH_WRITE_MASK_ALL : D3D12_DEPTH_WRITE_MASK_ZERO;
+        ret.DepthFunc = gDx12ComparisonFuncTranslator[pDesc->depth_func];
+        ret.StencilEnable = pDesc->stencil_test ? TRUE : FALSE;
+        ret.StencilReadMask = pDesc->stencil_read_mask;
+        ret.StencilWriteMask = pDesc->stencil_write_mask;
+        ret.FrontFace.StencilFunc = gDx12ComparisonFuncTranslator[pDesc->stencil_front_func];
+        ret.FrontFace.StencilFailOp = gDx12StencilOpTranslator[pDesc->stencil_front_fail_op];
+        ret.FrontFace.StencilDepthFailOp = gDx12StencilOpTranslator[pDesc->stencil_front_depth_fail_op];
+        ret.FrontFace.StencilPassOp = gDx12StencilOpTranslator[pDesc->stencil_front_pass_op];
+        ret.BackFace.StencilFunc = gDx12ComparisonFuncTranslator[pDesc->stencil_back_func];
+        ret.BackFace.StencilFailOp = gDx12StencilOpTranslator[pDesc->stencil_back_fail_op];
+        ret.BackFace.StencilDepthFailOp = gDx12StencilOpTranslator[pDesc->stencil_back_depth_fail_op];
+        ret.BackFace.StencilPassOp = gDx12StencilOpTranslator[pDesc->stencil_back_pass_op];
+        return ret;
+    }
+
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(ERHIPrimitiveTopology topology)
+    {
+        switch(topology)
+        {
+            case RHI_PRIM_TOPO_POINT_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+            case RHI_PRIM_TOPO_LINE_LIST:
+            case RHI_PRIM_TOPO_LINE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+            case RHI_PRIM_TOPO_TRIANGLE_LIST:
+            case RHI_PRIM_TOPO_TRIANGLE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+            case RHI_PRIM_TOPO_PATCH_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+        }
+        cyber_check(false);
+        return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
+    }
 }

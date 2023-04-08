@@ -357,6 +357,68 @@ namespace Cyber
         return stageCount > 1 ? D3D12_SHADER_VISIBILITY_ALL : res;
     }
 
+    static const D3D12_BLEND_OP gDx12BlendOpTranlator[RHI_BLEND_MODE_COUNT] = 
+    {
+        D3D12_BLEND_OP_ADD,
+        D3D12_BLEND_OP_SUBTRACT,
+        D3D12_BLEND_OP_REV_SUBTRACT,
+        D3D12_BLEND_OP_MIN,
+        D3D12_BLEND_OP_MAX,
+    };
+
+    static const D3D12_BLEND gDx12BlendConstantTranslator[RHI_BLEND_CONST_COUNT] = 
+    {
+        D3D12_BLEND_ZERO,
+        D3D12_BLEND_ONE,
+        D3D12_BLEND_SRC_COLOR,
+        D3D12_BLEND_INV_SRC_COLOR,
+        D3D12_BLEND_DEST_COLOR,
+        D3D12_BLEND_INV_DEST_COLOR,
+        D3D12_BLEND_SRC_ALPHA,
+        D3D12_BLEND_INV_SRC_ALPHA,
+        D3D12_BLEND_DEST_ALPHA,
+        D3D12_BLEND_INV_DEST_ALPHA,
+        D3D12_BLEND_SRC_ALPHA_SAT,
+        D3D12_BLEND_BLEND_FACTOR,
+        D3D12_BLEND_INV_BLEND_FACTOR,
+    };
+    static const D3D12_STENCIL_OP gDx12StencilOpTranslator[RHI_STENCIL_OP_COUNT] = 
+    {
+        D3D12_STENCIL_OP_KEEP,
+        D3D12_STENCIL_OP_ZERO,
+        D3D12_STENCIL_OP_REPLACE,
+        D3D12_STENCIL_OP_INVERT,
+        D3D12_STENCIL_OP_INCR,
+        D3D12_STENCIL_OP_DECR,
+        D3D12_STENCIL_OP_INCR_SAT,
+        D3D12_STENCIL_OP_DECR_SAT,
+    };
+
+    static const D3D12_CULL_MODE gDx12CullModeTranslator[RHI_CULL_MODE_COUNT] = 
+    {
+        D3D12_CULL_MODE_NONE,
+        D3D12_CULL_MODE_FRONT,
+        D3D12_CULL_MODE_BACK,
+    };
+
+    static const D3D12_FILL_MODE gDx12FillModeTranslator[RHI_FILL_MODE_COUNT] = 
+    {
+        D3D12_FILL_MODE_SOLID,
+        D3D12_FILL_MODE_WIREFRAME,
+    };
+
+    static const D3D12_COMPARISON_FUNC gDx12ComparisonFuncTranslator[RHI_CMP_COUNT] = 
+    {
+        D3D12_COMPARISON_FUNC_NEVER,
+        D3D12_COMPARISON_FUNC_LESS,
+        D3D12_COMPARISON_FUNC_EQUAL,
+        D3D12_COMPARISON_FUNC_LESS_EQUAL,
+        D3D12_COMPARISON_FUNC_GREATER,
+        D3D12_COMPARISON_FUNC_NOT_EQUAL,
+        D3D12_COMPARISON_FUNC_GREATER_EQUAL,
+        D3D12_COMPARISON_FUNC_ALWAYS,
+    };
+
     #if !defined (XBOX) && defined (_WIN32)
     #include <dxcapi.h>
 
@@ -391,4 +453,12 @@ namespace Cyber
     void D3D12Util_CreateRTV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
     void D3D12Util_CreateDSV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+
+    D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc);
+
+    D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RHIRasterizerStateCreateDesc* pDesc);
+
+    D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const RHIDepthStateCreateDesc* pDesc);
+
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(ERHIPrimitiveTopology topology);
 }

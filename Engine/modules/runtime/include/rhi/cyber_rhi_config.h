@@ -26,5 +26,7 @@
     #define RHI_NAME_HASH_SEED 8053064571610612741
 #endif
 
+#define PSO_NAME_LENGTH 160
+
 #define rhi_hash(buffer, size, seed) cyber_hash(buffer, size, seed)
 #define rhi_name_hash(buffer, size) cyber_hash(buffer, size, RHI_NAME_HASH_SEED)
