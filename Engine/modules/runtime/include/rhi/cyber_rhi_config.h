@@ -26,6 +26,13 @@
     #define RHI_NAME_HASH_SEED 8053064571610612741
 #endif
 
+#ifndef rhi_max
+    #define rhi_max(a, b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef rhi_min
+    #define rhi_min(a, b) (((a) < (b)) ? (a) : (b))
+#endif
 #define PSO_NAME_LENGTH 160
 
 #define rhi_hash(buffer, size, seed) cyber_hash(buffer, size, seed)

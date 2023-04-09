@@ -1010,6 +1010,135 @@ namespace Cyber
         return pPipeline;
     }
 
+    void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateData, uint32_t count)
+    {
+        RHIDescriptorSet_D3D12* dxSet = static_cast<RHIDescriptorSet_D3D12*>(set);
+        const RHIRootSignature_D3D12* dxRootSignature = static_cast<const RHIRootSignature_D3D12*>(set->root_signature.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(set->root_signature->device.get());
+        RHIParameterTable* paramTable = &dxRootSignature->parameter_tables[set->set_index];
+        const uint32_t nodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
+        RHIDescriptorHeap_D3D12* pCbvSrvUavHeap = dxDevice->mCbvSrvUavHeaps[nodeIndex];
+        RHIDescriptorHeap_D3D12* pSamplerHeap = dxDevice->mSamplerHeaps[nodeIndex];
+        for(uint32_t i = 0;i < count; i++)
+        {
+            // Descriptor Info
+            const RHIDescriptorData* pParam = updateData + i;
+            RHIShaderResource* resData = nullptr;
+            uint32_t heapOffset = 0;
+            if(pParam->name != nullptr)
+            {
+                size_t argNameHash = rhi_name_hash(pParam->name, strlen(pParam->name));
+                for(uint32_t j = 0;j < paramTable->resource_count; ++j)
+                {
+                    if(paramTable->resources[j].name_hash == argNameHash)
+                    {
+                        resData = &paramTable->resources[j];
+                        break;
+                    }
+                    heapOffset += descriptor_count_needed(&paramTable->resources[j]);
+                }
+            }
+            else
+            {
+                for(uint32_t j = 0; j < paramTable->resource_count; ++j)
+                {
+                    if(paramTable->resources[j].type == pParam->binding_type && 
+                        paramTable->resources[j].binding == pParam->binding)
+                    {
+                        resData = &paramTable->resources[j];
+                        break;
+                    }
+                    heapOffset += descriptor_count_needed(&paramTable->resources[j]);
+                }
+            }
+            // Update info
+            const uint32_t arrayCount = rhi_max(1u,pParam->count);
+            switch(resData->type)
+            {
+                case RHI_RESOURCE_TYPE_SAMPLER:
+                {
+                    cyber_assert(pParam->samplers, "Binding Null Sampler");
+                    RHISampler_D3D12** Samplers = (RHISampler_D3D12**)pParam->samplers;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->samplers[arr], "Binding Null Sampler");
+                        D3D12Util_CopyDescriptorHandle(pSamplerHeap, {Samplers[arr]->mDxHandle.ptr}, 
+                        dxSet->sampler_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                case RHI_RESOURCE_TYPE_TEXTURE:
+                case RHI_RESOURCE_TYPE_TEXTURE_CUBE:
+                {
+                    cyber_assert(pParam->textures, "Binding Null Texture");
+                    RHITextureView_D3D12** Textures = (RHITextureView_D3D12**)pParam->textures;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->textures[arr], "Binding Null Texture");
+                        D3D12Util_CopyDescriptorHandle(pCbvSrvUavHeap, {Textures[arr]->mDxDescriptorHandles.ptr + Textures[arr]->mSrvDescriptorOffset}, 
+                        dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                case RHI_RESOURCE_TYPE_BUFFER:
+                case RHI_RESOURCE_TYPE_BUFFER_RAW:
+                {
+                    cyber_assert(pParam->buffers, "Binding Null Buffer");
+                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
+                        D3D12Util_CopyDescriptorHandle(pCbvSrvUavHeap, {Buffers[arr]->mDxDescriptorHandles.ptr + Buffers[arr]->mSrvDescriptorOffset}, 
+                        dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                case RHI_RESOURCE_TYPE_UNIFORM_BUFFER:
+                {
+                    cyber_assert(pParam->buffers, "Binding Null Buffer");
+                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
+                        D3D12Util_CopyDescriptorHandle(pCbvSrvUavHeap, {Buffers[arr]->mDxDescriptorHandles.ptr}, 
+                        dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                case RHI_RESOURCE_TYPE_RW_TEXTURE:
+                {
+                    cyber_assert(pParam->textures, "Binding Null Texture");
+                    RHITextureView_D3D12** Textures = (RHITextureView_D3D12**)pParam->textures;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->textures[arr], "Binding Null Texture");
+                        D3D12Util_CopyDescriptorHandle(pCbvSrvUavHeap, {Textures[arr]->mDxDescriptorHandles.ptr + Textures[arr]->mUavDescriptorOffset}, 
+                        dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                case RHI_RESOURCE_TYPE_RW_BUFFER:
+                case RHI_RESOURCE_TYPE_RW_BUFFER_RAW:
+                {
+                    cyber_assert(pParam->buffers, "Binding Null Buffer");
+                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                    {
+                        cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
+                        D3D12Util_CopyDescriptorHandle(pCbvSrvUavHeap, {Buffers[arr]->mDxDescriptorHandles.ptr + Buffers[arr]->mUavDescriptorOffset}, 
+                        dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                    }
+                }
+                break;
+                default:
+                {
+                    cyber_assert(false, "Invalid Resource Type");
+                    break;
+                }
+            }
+        }
+    }
+
     BufferRHIRef RHI_D3D12::rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());

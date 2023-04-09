@@ -36,6 +36,17 @@ namespace Cyber
         D3D12MA::Allocation* pDxAllocation;
     };
 
+    struct RHITextureView_D3D12 : public RHITextureView
+    {
+        D3D12_CPU_DESCRIPTOR_HANDLE mDxDescriptorHandles;
+        /// Offset from mDxDescriptors for srv descriptor handle
+        uint8_t mSrvDescriptorOffset;
+        /// Offset from mDxDescriptors for uav descriptor handle
+        uint8_t mUavDescriptorOffset;
+        /// Offset from mDxDescriptors for rtv descriptor handle
+        D3D12_CPU_DESCRIPTOR_HANDLE mRtvDescriptorHandle;
+    };
+
     struct RHIBuffer_D3D12 : public RHIBuffer
     {
         /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress
@@ -241,7 +252,10 @@ namespace Cyber
 
     struct RHISampler_D3D12 : public RHISampler
     {
+        /// Description for creating the sampler descriptor for this sampler
         D3D12_SAMPLER_DESC dxSamplerDesc;
+        /// Descriptor handle of the Sampler in a CPU visible descriptor heap
+        D3D12_CPU_DESCRIPTOR_HANDLE mDxHandle;
     };
     
     struct RHIShaderLibrary_D3D12 : public RHIShaderLibrary
@@ -267,6 +281,8 @@ namespace Cyber
 
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;
+        virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count) override;
+
         virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc) override;
         virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;

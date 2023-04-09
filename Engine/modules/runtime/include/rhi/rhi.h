@@ -203,6 +203,46 @@ namespace Cyber
         uint32_t entry_count;
     };
 
+    struct CYBER_RHI_API RHIDescriptorData
+    {
+        // Update Via shader reflection
+        const char8_t* name;
+        // Update Via binding slot
+        uint32_t binding;
+        ERHIResourceType binding_type;
+        union
+        {
+            struct
+            {
+                /// Offset to bind the buffer descriptor
+                const uint64_t* offsets;
+                const uint64_t* sizes;
+            } buffers_params;
+            struct
+            {
+                uint32_t uav_mip_slice;
+                bool blend_mip_chain;
+            } uav_params;
+            bool enable_stencil_resource;
+        };
+        union
+        {
+            const void** ptrs;
+            /// Array of texture descriptors (srv and uav textures)
+            struct RHITextureView** textures;
+            /// Array of sampler descriptors
+            struct RHISampler** samplers;
+            /// Array of buffer descriptors (srv uav and cbv buffers)
+            struct RHIBuffer** buffers;
+            /// Array of pipeline descriptors
+            RHIRenderPipeline** render_pipelines;
+
+            /// DescriptorSet buffer extraction
+            RHIDescriptorSet** descriptor_sets;
+        };
+        uint32_t count;
+    };
+
     /// Texture group
     struct CYBER_RHI_API TextureCreationDesc
     {
@@ -228,6 +268,20 @@ namespace Cyber
         ERHIFormat mFormat;
         /// What state will the texture get created in
         ERHIResourceState mStartState;
+    };
+
+    struct CYBER_RHI_API RHITextureViewCreate
+    {
+        const char8_t* name;
+        Ref<RHITexture> texture;
+        ERHIFormat format;
+        ERHITextureViewUsages usages;
+        ERHITextureViewAspect aspects;
+        ERHITextureDimension dimension;
+        uint32_t base_array_layer;
+        uint32_t array_layer_count;
+        uint32_t base_mip_level;
+        uint32_t mip_level_count;
     };
 
     struct CYBER_RHI_API RHITexture
@@ -260,6 +314,11 @@ namespace Cyber
 
     };
     
+    struct RHITextureView
+    {
+        RHITextureViewCreate create_info;
+    };
+
     struct CYBER_RHI_API RHISampler 
     {
 
@@ -644,7 +703,10 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_descriptor_set!");
             return CreateRef<RHIDescriptorSet>();
         }
-
+        virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count)
+        {
+            cyber_core_assert(false, "Empty implement rhi_update_descriptor_set!");
+        }
         virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_render_pipeline!");
@@ -680,5 +742,4 @@ namespace Cyber
     #define RHI_SINGLE_GPU_NODE_COUNT 1
     #define RHI_SINGLE_GPU_NODE_MASK 1
     #define RHI_SINGLE_GPU_NODE_INDEX 0
-
 }

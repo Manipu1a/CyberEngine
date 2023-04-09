@@ -792,6 +792,24 @@ typedef enum ERHIResourceType
     RHI_RESOURCE_TYPE_MAX_ENUM_BIT = 0x7FFFFFFF
 } ERHIResourceType;
 
+typedef enum ERHITextureViewUsage
+{
+    RHI_TVU_SRV = 0x01,
+    RHI_TVU_RTV_DSV = 0x02,
+    RHI_TVU_UAV = 0x04,
+    RHI_TVU_MAX_ENUM_BIT = 0x7FFFFFFF
+} ERHITextureViewUsage;
+typedef uint32_t ERHITextureViewUsages;
+
+typedef enum ERHITextureViewAspect
+{
+    RHI_TVA_COLOR = 0x01,
+    RHI_TVA_DEPTH = 0x02,
+    RHI_TVA_STENCIL = 0x04,
+    RHI_TVA_MAX_ENUM_BIT = 0x7FFFFFFF
+} ERHITextureViewAspect;
+typedef uint32_t ERHITextureViewAspects;
+
 // Same value as Vulkan Enumeration Bits.
 typedef enum ERHIShaderStage
 {
