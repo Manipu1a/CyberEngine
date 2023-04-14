@@ -35,6 +35,11 @@ namespace Cyber
         DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4;
     };
 
+    struct CYBER_RUNTIME_API RendererDesc
+    {
+        ERHIBackend backend;
+    };
+
     class Renderer
     {
     protected:
@@ -52,6 +57,10 @@ namespace Cyber
 
         virtual bool Initialize();
         virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    public:
+        virtual void initialize(class Application* app, const RendererDesc& desc);
+        void create_gfx_objects(class Application* app);
+        void create_render_pipeline();
     protected:
         virtual void CreateRtvAndDsvDescriptorHeaps();
         virtual void OnResize();
@@ -81,9 +90,6 @@ namespace Cyber
         void BuildShadersAndInputLayout();
         void BuildBoxGeometry();
         void BuildPSO();
-
-        void create_render_pipeline();
-        
         void Draw();
 
     public:
@@ -99,13 +105,15 @@ namespace Cyber
 
         ///-------------------------------------
         Ref<RHIDevice> pRHIDevice = nullptr;
+        Ref<RHIInstance> instance = nullptr;
         Ref<RHIAdapter> pRHIAdapter = nullptr;
         Ref<RHIFence> pRHIFence = nullptr;
         Ref<RHIQueue> pQueue = nullptr;
         Ref<RHICommandPool> pCmdPool = nullptr;
         Ref<RHICommandBuffer> pCmdBuffer = nullptr;
         Ref<RHISwapChain> pSwapChain = nullptr;
-        
+        Ref<RHISurface> surface = nullptr;
+
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;

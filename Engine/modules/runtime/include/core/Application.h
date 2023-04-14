@@ -8,11 +8,12 @@ namespace Cyber
     class CYBER_RUNTIME_API Application
     {
     public:
-        Application(Cyber::WindowDesc& desc);
+        Application();
         virtual ~Application();
 
         static Application& getApp();
         virtual void Run() {}
+        virtual Ref<Window> getWindow() { return nullptr; }
 
         virtual void onEvent(Event& e) {}
     private:

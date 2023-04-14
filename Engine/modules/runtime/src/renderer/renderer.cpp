@@ -26,6 +26,7 @@
 #include <wingdi.h>
 #include <winnt.h>
 #include "resource/resource_loader.h"
+#include "core/Application.h"
 
 namespace Cyber
 {
@@ -84,6 +85,62 @@ namespace Cyber
         mCommandList->Reset(mDirectCmdListAlloc, nullptr);
 
         return true;
+    }
+
+    void Renderer::initialize(class Application* app, const RendererDesc& desc)
+    {
+        RHI::createRHI(desc.backend);
+        create_gfx_objects(app);
+        create_render_pipeline();
+    }
+
+    void Renderer::create_gfx_objects(class Application* app)
+    {
+        // Create instance
+        DECLARE_ZERO(RHIInstanceCreateDesc, instance_desc);
+        instance_desc.enable_debug_layer = false;
+        instance_desc.enable_gpu_based_validation = false;
+        instance_desc.enable_set_name = true;
+        instance = RHI::GetRHIContext().rhi_create_instance(instance_desc);
+
+        // Filter adapters
+        uint32_t adapter_count = 0;
+        RHI::GetRHIContext().rhi_enum_adapters(instance, nullptr, &adapter_count);
+        RHIAdapter adapters[64];
+        RHI::GetRHIContext().rhi_enum_adapters(instance, adapters, &adapter_count);
+        pRHIAdapter = CreateRef<RHIAdapter>(adapters[0]);
+
+        // Create device
+        DECLARE_ZERO(RHIQueueGroupDesc, queue_group_desc);
+        queue_group_desc.queue_count = 1;
+        queue_group_desc.queue_type = RHI_QUEUE_TYPE_GRAPHICS;
+        DECLARE_ZERO(RHIDeviceCreateDesc, device_desc);
+        device_desc.queue_group_count = 1;
+        device_desc.queue_groups = { queue_group_desc };
+        pRHIDevice = RHI::GetRHIContext().rhi_create_device(pRHIAdapter, device_desc);
+        pQueue = RHI::GetRHIContext().rhi_get_queue(pRHIDevice, RHI_QUEUE_TYPE_GRAPHICS, 0);
+        pRHIFence = RHI::GetRHIContext().rhi_create_fence(pRHIDevice);
+
+        // Create swapchain
+    #if defined (_WIN32) || defined (_WIN64)
+        surface = RHI::GetRHIContext().rhi_surface_from_hwnd(pRHIDevice, app->getWindow().getNativeWindow());
+    #elif defined(_APPLE_)
+    #endif
+        DECLARE_ZERO(RHISwapChainCreateDesc, chain_desc);
+        chain_desc.surface = surface;
+        chain_desc.mWidth = app->getWindow()->getWidth();
+        chain_desc.mHeight = app->getWindow()->getHeight();
+        chain_desc.mFormat = RHI_FORMAT_R8G8B8A8_UNORM;
+        chain_desc.mImageCount = 3;
+        chain_desc.mPresentQueue = pQueue;
+        chain_desc.mPresentQueueCount = 1;
+        chain_desc.mEnableVsync = true;
+        pSwapChain = RHI::GetRHIContext().rhi_create_swap_chain(pRHIDevice, chain_desc);
+    }
+    
+    void Renderer::create_render_pipeline()
+    {
+
     }
 
     LRESULT Renderer::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)

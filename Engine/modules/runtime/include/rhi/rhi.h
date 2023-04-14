@@ -62,6 +62,11 @@ namespace Cyber
         };
     };
     
+    struct CYBER_RHI_API RHISurface
+    {
+
+    };
+
     class CYBER_RHI_API RHIAdapter
     {
     public:
@@ -372,10 +377,9 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIInstanceCreateDesc
     {
-        ERHIBackend mBackend;
-        bool mEnableDebugLayer;
-        bool mEnableGpuBasedValidation;
-        bool mEnableSetName;
+        bool enable_debug_layer;
+        bool enable_gpu_based_validation;
+        bool enable_set_name;
     };
 
     // Objects
@@ -387,10 +391,10 @@ namespace Cyber
         bool mEnableSetName;
     };
     /// Device Group
-    struct CYBER_RHI_API QueueGroupDesc
+    struct CYBER_RHI_API RHIQueueGroupDesc
     {
-        ERHIQueueType mQueueType;
-        uint32_t mQueueCount;
+        ERHIQueueType queue_type;
+        uint32_t queue_count;
     };
 
     struct CYBER_RHI_API RHIAdapterDetail
@@ -410,11 +414,11 @@ namespace Cyber
         bool mIsCpu : 1;
     };
 
-    struct CYBER_RHI_API DeviceCreateDesc
+    struct CYBER_RHI_API RHIDeviceCreateDesc
     {
         bool bDisablePipelineCache;
-        eastl::vector<QueueGroupDesc> mQueueGroupsDesc;
-        uint32_t mQueueGroupCount;
+        eastl::vector<RHIQueueGroupDesc> queue_groups;
+        uint32_t queue_group_count;
     };
 
     class CYBER_RHI_API RHIQueue
@@ -474,12 +478,6 @@ namespace Cyber
         uint32_t mSignalSemaphoreCount;
     };
 
-    struct CYBER_RHI_API RHIQueueGroupDesc
-    {
-        ERHIQueueType mQueueType;
-        uint32_t mQueueCount;
-    };
-
     struct CYBER_RHI_API RHIQueuePresentDesc
     {
         
@@ -487,8 +485,6 @@ namespace Cyber
 
     struct CYBER_RHI_API RHISwapChainCreateDesc
     {
-        /// Window handle
-        Cyber::WindowHandle mWindowHandle;
         /// Present Queues
         Ref<RHIQueue> mPresentQueue;
         /// Present Queues Count
@@ -501,6 +497,8 @@ namespace Cyber
         uint32_t mHeight;
         /// Format of the swapchain
         ERHIFormat mFormat;
+        /// Surface
+        Ref<RHISurface> surface;
         /// Set whether swapchain will be presented using vsync
         bool mEnableVsync;
         /// We can toogle to using FLIP model if app desires
@@ -648,16 +646,25 @@ namespace Cyber
 
     public:
         // Instance APIs
-        virtual InstanceRHIRef rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc) 
+        virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_instance!");
             return CreateRef<RHIInstance>();
         }
 
         // Device APIS
-        virtual void rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc) {}
+        virtual Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_device!");
+            return CreateRef<RHIDevice>();
+        }
 
         // API Object APIs
+        virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
+        {
+            cyber_core_assert(false, "Empty implement rhi_surface_from_hwnd!");
+            return CreateRef<RHISurface>();
+        }
         virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
@@ -669,6 +676,10 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
             return CreateRef<RHISwapChain>();
+        }
+        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
+        {
+            cyber_core_assert(false, "Empty implement rhi_enum_adapters!");
         }
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 

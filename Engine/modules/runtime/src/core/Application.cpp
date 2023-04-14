@@ -4,7 +4,7 @@ namespace Cyber
 {
     Application* Application::sInstance = nullptr;
 
-    Application::Application(Cyber::WindowDesc& desc)
+    Application::Application()
     {
         if(sInstance == nullptr)
             sInstance = this;
@@ -12,7 +12,7 @@ namespace Cyber
 
     Application::~Application()
     {
-
+        
     }
 
     Application& Application::getApp()

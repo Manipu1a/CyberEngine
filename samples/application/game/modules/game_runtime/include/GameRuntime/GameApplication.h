@@ -9,20 +9,27 @@
 
 namespace Cyber
 {
+    class Renderer;
+    
     class CYBER_GAME_API GameApplication : public Cyber::Application
     {
     public:
-        GameApplication(Cyber::WindowDesc& desc);
+        GameApplication();
         virtual ~GameApplication();
 
-        virtual void Run();
-
+        virtual void initialize(Cyber::WindowDesc& desc);
+        virtual void Run() override;
         virtual void onEvent(Event& e);
+
+        virtual Ref<Window> getWindow() override { return mWindow; }
+
     private:
+        void create_window(Cyber::WindowDesc& desc);
         bool onWindowClose(WindowCloseEvent& e);
     private:
-        Scope<Window> mWindow;
-        Scope<InputSystem> mInputSystem;
+        Ref<Window> mWindow;
+        Ref<InputSystem> mInputSystem;
+        Scope<Renderer> renderer;
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;

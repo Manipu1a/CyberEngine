@@ -44,31 +44,31 @@ namespace Cyber
 
     }
 
-    void RHI_D3D12::rhi_create_device(Ref<RHIDevice> pDevice, Ref<RHIAdapter> pAdapter, const DeviceCreateDesc& deviceDesc)
+    Ref<RHIDevice> RHI_D3D12::rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc)
     {
         RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(pAdapter.get());
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pAdapter->pInstance.get());
-        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
+        Ref<RHIDevice_D3D12> dx_device_ref = CreateRef<RHIDevice_D3D12>();
         
-        dxDevice->pAdapter = pAdapter;
+        dx_device_ref->pAdapter = pAdapter;
 
-        if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&dxDevice->pDxDevice))))
+        if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&dx_device_ref->pDxDevice))))
         {
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
         }
 
         // Create Requested Queues
-        dxDevice->pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
+        dx_device_ref->pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
 
-        for(uint32_t i = 0u; i < deviceDesc.mQueueGroupCount;i++)
+        for(uint32_t i = 0u; i < deviceDesc.queue_group_count;i++)
         {
-            const auto& queueGroup = deviceDesc.mQueueGroupsDesc[i];
-            const auto type = queueGroup.mQueueType;
+            const auto& queueGroup = deviceDesc.queue_groups[i];
+            const auto type = queueGroup.queue_type;
 
-            dxDevice->pCommandQueueCounts[type] = queueGroup.mQueueCount;
-            dxDevice->ppCommandQueues[type] = (ID3D12CommandQueue*)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.mQueueCount);
+            dx_device_ref->pCommandQueueCounts[type] = queueGroup.queue_count;
+            dx_device_ref->ppCommandQueues[type] = (ID3D12CommandQueue*)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.queue_count);
 
-            for(uint32_t j = 0u; j < queueGroup.mQueueCount; j++)
+            for(uint32_t j = 0u; j < queueGroup.queue_count; j++)
             {
                 DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
                 switch(type)
@@ -90,7 +90,7 @@ namespace Cyber
         }
 
         // Create D3D12MA Allocator
-        D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dxDevice);
+        D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dx_device_ref.get());
         cyber_assert(dxDevice->pResourceAllocator == nullptr, "DMA Allocator Must be Created!");
         // Create Descriptor Heaps
         for(uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
@@ -103,17 +103,17 @@ namespace Cyber
 #ifdef _DEBUG
 
 #endif
-            dxDevice->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
-            D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mCPUDescriptorHeaps[i]);
+            dx_device_ref->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
+            D3D12Util_CreateDescriptorHeap(dx_device_ref->pDxDevice, desc, &dx_device_ref->mCPUDescriptorHeaps[i]);
         }
 
         // Allocate NULL Descriptors
         {
-            dxDevice->pNullDescriptors->Sampler = D3D12_DESCRIPTOR_ID_NONE;
+            dx_device_ref->pNullDescriptors->Sampler = D3D12_DESCRIPTOR_ID_NONE;
             D3D12_SAMPLER_DESC samplerDesc = {};
             samplerDesc.AddressU = samplerDesc.AddressV = samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-            dxDevice->pNullDescriptors->Sampler = D3D12Util_ConsumeDescriptorHandles(dxDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER], 1).mCpu;
-            dxDevice->pDxDevice->CreateSampler(&samplerDesc, dxDevice->pNullDescriptors->Sampler);
+            dx_device_ref->pNullDescriptors->Sampler = D3D12Util_ConsumeDescriptorHandles(dx_device_ref->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER], 1).mCpu;
+            dx_device_ref->pDxDevice->CreateSampler(&samplerDesc, dx_device_ref->pNullDescriptors->Sampler);
 
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
             srvDesc.Format = DXGI_FORMAT_R8_UINT;
@@ -123,65 +123,67 @@ namespace Cyber
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D]);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D]);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_3D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_3D]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_3D]);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_3D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D_ARRAY]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D_ARRAY]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D_ARRAY]);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D_ARRAY]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D_ARRAY]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D_ARRAY]);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS_ARRAY]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE_ARRAY]);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &dxDevice->pNullDescriptors->BufferSRV);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &dxDevice->pNullDescriptors->BufferUAV);
-            D3D12Util_CreateCBV(dxDevice, NULL, &dxDevice->pNullDescriptors->BufferCBV);
+            D3D12Util_CreateSRV(dx_device_ref.get(), NULL, &srvDesc, &dx_device_ref->pNullDescriptors->BufferSRV);
+            D3D12Util_CreateUAV(dx_device_ref.get(), NULL, NULL, &uavDesc, &dx_device_ref->pNullDescriptors->BufferUAV);
+            D3D12Util_CreateCBV(dx_device_ref.get(), NULL, &dx_device_ref->pNullDescriptors->BufferCBV);
         }
 
         // Pipeline cache
         D3D12_FEATURE_DATA_SHADER_CACHE feature = {};
-        HRESULT result = dxDevice->pDxDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_CACHE, &feature, sizeof(feature));
+        HRESULT result = dx_device_ref->pDxDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_CACHE, &feature, sizeof(feature));
         if(SUCCEEDED(result))
         {
             result = E_NOTIMPL;
             if(feature.SupportFlags & D3D12_SHADER_CACHE_SUPPORT_LIBRARY)
             {
                 ID3D12Device1* device1 = NULL;
-                result = dxDevice->pDxDevice->QueryInterface(IID_ARGS(&device1));
+                result = dx_device_ref->pDxDevice->QueryInterface(IID_ARGS(&device1));
                 if(SUCCEEDED(result))
                 {
-                    result = device1->CreatePipelineLibrary(dxDevice->pPSOCacheData, 0, IID_ARGS(&dxDevice->pPipelineLibrary));
+                    result = device1->CreatePipelineLibrary(dx_device_ref->pPSOCacheData, 0, IID_ARGS(&dx_device_ref->pPipelineLibrary));
                 }
                 SAFE_RELEASE(device1);
             }
         }
+
+        return dx_device_ref;
     }
 
     Texture2DRHIRef RHI_D3D12::rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& pDesc)
@@ -350,10 +352,8 @@ namespace Cyber
         return pTexture;
     }
 
-    InstanceRHIRef RHI_D3D12::rhi_create_instance(Ref<RHIDevice> pDevice, const RHIInstanceCreateDesc& instanceDesc)
+    InstanceRHIRef RHI_D3D12::rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc)
     {
-        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
-
         Ref<RHIInstance_D3D12> instanceRef = CreateRef<RHIInstance_D3D12>();
         // Initialize driver
         D3D12Util_InitializeEnvironment(instanceRef.get());
@@ -361,10 +361,10 @@ namespace Cyber
         D3D12Util_Optionalenable_debug_layer(instanceRef.get(), instanceDesc);
 
         UINT flags = 0;
-        if(instanceDesc.mEnableDebugLayer)
+        if(instanceDesc.enable_debug_layer)
             flags = DXGI_CREATE_FACTORY_DEBUG;
         
-        if(SUCCEEDED(CreateDXGIFactory2(flags, IID_PPV_ARGS(&dxDevice->pDXGIFactory))))
+        if(SUCCEEDED(CreateDXGIFactory2(flags, IID_PPV_ARGS(&instanceRef->pDXGIFactory))))
         {
             uint32_t gpuCount = 0;
             bool foundSoftwareAdapter = false;
@@ -382,6 +382,13 @@ namespace Cyber
         }
 
         return instanceRef;
+    }
+
+    Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND window)
+    {
+        Ref<RHISurface> surface = CreateRef<RHISurface>();
+        surface.reset((RHISurface*)(&window));
+        return surface;
     }
 
     FenceRHIRef RHI_D3D12::rhi_create_fence(Ref<RHIDevice> pDevice)
@@ -482,7 +489,7 @@ namespace Cyber
 
         IDXGISwapChain1* swapchain;
 
-        HWND hwnd = (HWND)desc.mWindowHandle.window;
+        HWND hwnd = *(HWND*)desc.surface.get();
 
         RHIQueue_D3D12* queue = nullptr;
         if(desc.mPresentQueue)
@@ -533,6 +540,24 @@ namespace Cyber
         return CreateRef<RHISwapChain>(*dxSwapChain);
     }
     
+    void RHI_D3D12::rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
+    {
+        cyber_assert(instance, "fatal: Invalid instance!");
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(instance.get());
+        *adapterCount = dxInstance->mAdaptersCount;
+        if(!adapters)
+        {
+            return;
+        }
+        else
+        {
+            for(uint32_t i = 0; i < dxInstance->mAdaptersCount; ++i)
+            {
+                adapters[i] = dxInstance->pAdapters[i];
+            }
+        }
+    }
+
     // for example 
     RootSignatureRHIRef RHI_D3D12::rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
     {

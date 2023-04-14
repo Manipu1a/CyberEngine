@@ -54,7 +54,7 @@ namespace Cyber
             return;
         }
 
-    	mData.mWindowDesc.handle.window = CreateWindow(
+    	mData.mWindowDesc.handle = CreateWindow(
 			L"MainWnd",
 			L"win32app",
 			WS_OVERLAPPEDWINDOW,
@@ -66,14 +66,14 @@ namespace Cyber
 			0
 			);
 
-        if(!mData.mWindowDesc.handle.window)
+        if(!mData.mWindowDesc.handle)
         {
             HRESULT hr = HRESULT_FROM_WIN32( GetLastError() );
             cyber_core_assert(false, "Call to CreateWindow failed!{0}", GetLastError());
         }
 
-        ShowWindow(*(HWND*)mData.mWindowDesc.handle.window, mData.mWindowDesc.cmdShow);
-	    UpdateWindow(*(HWND*)mData.mWindowDesc.handle.window);
+        ShowWindow(mData.mWindowDesc.handle, mData.mWindowDesc.cmdShow);
+	    UpdateWindow(mData.mWindowDesc.handle);
     }
     
     void WindowsWindow::onUpdate(float deltaTime)

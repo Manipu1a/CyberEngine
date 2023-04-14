@@ -14,16 +14,10 @@ namespace Cyber
         int32_t bottom;
     };
 
-
-    struct CYBER_RUNTIME_API WindowHandle
-    {
-        void* window;       //hWnd
-    };
-
     struct CYBER_RUNTIME_API WindowDesc
     {
         eastl::wstring title;
-        WindowHandle handle;
+        HWND handle;
         HINSTANCE hInstance = nullptr;
         int cmdShow;
         RectDesc windowedRect;
@@ -64,10 +58,10 @@ namespace Cyber
         virtual uint32_t getWidth() const = 0;
         virtual uint32_t getHeight() const = 0;
 
-		virtual void* getNativeWindow() const = 0;
+		virtual HWND getNativeWindow() const = 0;
         
         virtual void setEventCallback(const EventCallbackFn& callback) = 0;
 
-        static Scope<Cyber::Window> createWindow(const WindowDesc& desc);
+        static Ref<Cyber::Window> createWindow(const WindowDesc& desc);
     };
 }
