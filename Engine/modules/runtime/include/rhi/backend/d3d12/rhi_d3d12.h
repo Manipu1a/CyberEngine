@@ -44,7 +44,7 @@ namespace Cyber
         /// Offset from mDxDescriptors for uav descriptor handle
         uint8_t mUavDescriptorOffset;
         /// Offset from mDxDescriptors for rtv descriptor handle
-        D3D12_CPU_DESCRIPTOR_HANDLE mRtvDescriptorHandle;
+        D3D12_CPU_DESCRIPTOR_HANDLE mRtvDsvDescriptorHandle;
     };
 
     struct RHIBuffer_D3D12 : public RHIBuffer
@@ -287,6 +287,8 @@ namespace Cyber
 
         virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc) override;
         virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
+
+        virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
 

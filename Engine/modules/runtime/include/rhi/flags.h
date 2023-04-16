@@ -638,6 +638,22 @@ static FORCEINLINE uint32_t FormatUtil_BitSizeOfBlock(ERHIFormat fmt)
     }
 }
 
+static FORCEINLINE bool FormatUtil_IsDepthStencilFormat(ERHIFormat const fmt)
+{
+    switch (fmt)
+    {
+        case RHI_FORMAT_D24_UNORM_S8_UINT:
+        case RHI_FORMAT_D32_SFLOAT_S8_UINT:
+        case RHI_FORMAT_D32_SFLOAT:
+        case RHI_FORMAT_X8_D24_UNORM:
+        case RHI_FORMAT_D16_UNORM:
+        case RHI_FORMAT_D16_UNORM_S8_UINT:
+            return true;
+        default:
+            return false;
+    }
+}
+
 typedef enum ERHIChannelBit
 {
     RHI_CHANNEL_INVALID = 0,

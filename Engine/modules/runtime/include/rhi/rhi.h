@@ -275,7 +275,7 @@ namespace Cyber
         ERHIResourceState mStartState;
     };
 
-    struct CYBER_RHI_API RHITextureViewCreate
+    struct CYBER_RHI_API RHITextureViewCreateDesc
     {
         const char8_t* name;
         Ref<RHITexture> texture;
@@ -321,7 +321,7 @@ namespace Cyber
     
     struct RHITextureView
     {
-        RHITextureViewCreate create_info;
+        RHITextureViewCreateDesc create_info;
     };
 
     struct CYBER_RHI_API RHISampler 
@@ -453,7 +453,7 @@ namespace Cyber
     class CYBER_RHI_API RHISwapChain
     {
     public:
-        Ref<RHITexture*> mBackBuffers;
+        Ref<RHITexture>* mBackBuffers;
         uint32_t mBufferCount;
     };
 
@@ -514,7 +514,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRootSignatureCreateDesc
     {
-        struct RHIPipelineShaderCreateDesc* shaders;
+        Ref<RHIPipelineShaderCreateDesc>* shaders;
         uint32_t shader_count;
         const RHISampler** static_samplers;
         const char8_t* const* static_sampler_names;
@@ -665,7 +665,7 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_surface_from_hwnd!");
             return CreateRef<RHISurface>();
         }
-        virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) 
+        virtual Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
             return CreateRef<RHIFence>();
@@ -725,6 +725,12 @@ namespace Cyber
         }
 
         // Resource APIs
+        virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_create_texture_view!");
+            return CreateRef<RHITextureView>();
+        }
+        
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");

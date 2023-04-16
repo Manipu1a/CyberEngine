@@ -104,6 +104,9 @@ namespace Cyber
         UINT64 mCurrentFence = 0;
 
         ///-------------------------------------
+        static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+        static const uint32_t BACK_BUFFER_COUNT = 3;
+
         Ref<RHIDevice> pRHIDevice = nullptr;
         Ref<RHIInstance> instance = nullptr;
         Ref<RHIAdapter> pRHIAdapter = nullptr;
@@ -113,7 +116,12 @@ namespace Cyber
         Ref<RHICommandBuffer> pCmdBuffer = nullptr;
         Ref<RHISwapChain> pSwapChain = nullptr;
         Ref<RHISurface> surface = nullptr;
-
+        Ref<RHIFence> present_swmaphore = nullptr;
+        Ref<RHICommandPool> pools[MAX_FRAMES_IN_FLIGHT];
+        Ref<RHICommandBuffer> cmds[MAX_FRAMES_IN_FLIGHT];
+        Ref<RHIFence> exec_fences[MAX_FRAMES_IN_FLIGHT];
+        Ref<RHITextureView> views[BACK_BUFFER_COUNT];
+        
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;
