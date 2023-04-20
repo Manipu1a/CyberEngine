@@ -208,8 +208,7 @@ namespace Cyber
         uint32_t mType;
         uint32_t mNodeIndex;
         Cyber::Ref<RHICommandPool> pCmdPool;
-        Cyber::Ref<RHIDevice> pDevice;
-        ERHIPipelineType mCurrentDispatch;
+        D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS mSubResolveResource[RHI_MAX_MRT_COUNT];
     };
 
     class RHIQueryPool_D3D12: public RHIQueryPool
@@ -295,6 +294,8 @@ namespace Cyber
 
         virtual void rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer) override;
         virtual void rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer) override;
+        virtual void rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIRenderPassDesc& beginRenderPassDesc) override;
+        virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> pCommandBuffer) override;
 
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;

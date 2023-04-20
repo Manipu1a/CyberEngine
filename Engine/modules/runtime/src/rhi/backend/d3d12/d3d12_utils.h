@@ -3,6 +3,8 @@
 
 namespace Cyber
 {
+    #define CALC_SUBRESOURCE_INDEX(MipSlice, ArraySlice, PlaneSlice, MipLevels, ArraySize) (MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize)
+
     struct DescriptorHeapProperties
     {
         uint32_t mMaxDescriptors;
@@ -382,6 +384,18 @@ namespace Cyber
         D3D12_BLEND_BLEND_FACTOR,
         D3D12_BLEND_INV_BLEND_FACTOR,
     };
+
+    static const D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE gDx12PassBeginOpTranslator[RHI_LOAD_ACTION_COUNT] = {
+        D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD,
+        D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE,
+        D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR,
+    };
+
+    static const D3D12_RENDER_PASS_ENDING_ACCESS_TYPE gDx12PassEndOpTranslator[RHI_STORE_ACTION_COUNT] = {
+        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE,
+        D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD,
+    };
+
     static const D3D12_STENCIL_OP gDx12StencilOpTranslator[RHI_STENCIL_OP_COUNT] = 
     {
         D3D12_STENCIL_OP_KEEP,

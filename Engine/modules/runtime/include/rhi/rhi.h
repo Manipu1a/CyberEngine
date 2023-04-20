@@ -545,10 +545,26 @@ namespace Cyber
         RHIClearValue clear_value;
     };
 
+    struct CYBER_RHI_API RHIDepthStencilAttachment
+    {
+        Ref<RHITextureView> view;
+        ERHILoadAction depth_load_action;
+        ERHIStoreAction depth_store_action;
+        float clear_depth;
+        uint8_t write_depth;
+        ERHILoadAction stencil_load_action;
+        ERHIStoreAction stencil_store_action;
+        uint32_t clear_stencil;
+        uint8_t write_stencil;
+    };
+
     struct CYBER_RHI_API RHIRenderPassDesc
     {
         const char8_t* name;
         ERHITextureSampleCount sample_count;
+        const RHIColorAttachment* color_attachments;
+        const RHIDepthStencilAttachment* depth_stencil_attachment;
+        uint32_t render_target_count;
     };
 
     struct CYBER_RHI_API RHIBlendStateCreateDesc
@@ -821,7 +837,7 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_cmd_end!");
         }
 
-        virtual void rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIBeginRenderPassDesc& beginRenderPassDesc)
+        virtual void rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIRenderPassDesc& beginRenderPassDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin_renderpass!");
         }
