@@ -444,6 +444,10 @@ namespace Cyber
 
     void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
     
+    void D3D12Util_FreeShaderReflection(RHIShaderLibrary_D3D12* library);
+    
+    void D3D12Util_SignalFence(RHIQueue_D3D12* queue, ID3D12Fence* fence, uint64_t fenceValue);
+
     void D3D12Util_CreateCBV(RHIDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
     void D3D12Util_CreateSRV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);

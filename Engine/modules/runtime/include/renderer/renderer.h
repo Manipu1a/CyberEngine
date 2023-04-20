@@ -61,6 +61,8 @@ namespace Cyber
         virtual void initialize(class Application* app, const RendererDesc& desc);
         void create_gfx_objects(class Application* app);
         void create_render_pipeline();
+
+        virtual void raster_draw();
     protected:
         virtual void CreateRtvAndDsvDescriptorHeaps();
         virtual void OnResize();

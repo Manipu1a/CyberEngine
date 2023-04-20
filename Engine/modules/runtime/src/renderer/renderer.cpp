@@ -676,8 +676,13 @@ namespace Cyber
             .color_formats = &views[0]->create_info.format
         };
         Ref<RHIRenderPipeline> render_pipeline = RHI::GetRHIContext().rhi_create_render_pipeline(pRHIDevice, rp_desc);
-        RHI::GetRHIContext().rhi_free_shader_pipeline(vs_shader);
-        RHI::GetRHIContext().rhi_free_shader_pipeline(ps_shader);
+        RHI::GetRHIContext().rhi_free_shader_library(vs_shader);
+        RHI::GetRHIContext().rhi_free_shader_library(ps_shader);
+    }
+
+    void Renderer::raster_draw()
+    {
+        
     }
 
     void Renderer::Draw()

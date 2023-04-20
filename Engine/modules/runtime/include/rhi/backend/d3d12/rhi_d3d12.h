@@ -172,10 +172,14 @@ namespace Cyber
         uint64_t mPadA;
     };
 
+    /// DirectX12 does not have a concept of a semaphore. We emulate it using a fence.
     class RHISemaphore_D3D12 : public RHISemaphore
     {
     public:
-        Cyber::Ref<RHIDevice> pDevice;
+        ID3D12Fence* dx_fence;
+        HANDLE dx_wait_idle_fence_event;
+        uint64_t fence_value;
+        uint64_t pad_a;
     };
 
     class RHIQueue_D3D12: public RHIQueue
@@ -274,12 +278,23 @@ namespace Cyber
         // API Object APIs
         virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd) override;
         virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) override;
+        virtual void rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount) override;
+        virtual void rhi_free_fence(Ref<RHIFence> fence) override;
+        virtual ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence) override;
         virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc) override;
         virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount) override;
+        virtual uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc) override;
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;
+        virtual void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc) override;
         virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc) override;
+        virtual void rhi_reset_command_pool(Ref<RHICommandPool> pPool) override;
+        virtual void rhi_free_command_pool(Ref<RHICommandPool> pPool) override;
         virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) override;
+        virtual void rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer) override;
+
+        virtual void rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer) override;
+        virtual void rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer) override;
 
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;
@@ -293,6 +308,8 @@ namespace Cyber
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
 
         virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc) override;
+        virtual void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary) override;
+
     };
 
     static const D3D_FEATURE_LEVEL d3d_feature_levels[] = 

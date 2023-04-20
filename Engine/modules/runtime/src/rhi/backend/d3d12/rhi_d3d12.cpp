@@ -691,6 +691,40 @@ namespace Cyber
         return CreateRef<RHIFence_D3D12>(*dxFence);
     }
 
+    ERHIFenceStatus RHI_D3D12::rhi_query_fence_status(Ref<RHIFence> fence)
+    {
+        RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fence.get());
+        uint64_t fenceValue = dxFence->pDxFence->GetCompletedValue();
+        if(fenceValue < dxFence->mFenceValue)
+            return RHI_FENCE_STATUS_INCOMPLETE;
+        else 
+            return RHI_FENCE_STATUS_COMPLETE;
+    }
+
+    void RHI_D3D12::rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount)
+    {
+        for(uint32_t i = 0; i < fenceCount; ++i)
+        {
+            ERHIFenceStatus fence_status = rhi_query_fence_status(fences[i]);
+            RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fences[i].get());
+            uint64_t fence_value = dxFence->mFenceValue;
+            if(fence_status == RHI_FENCE_STATUS_INCOMPLETE)
+            {
+                dxFence->pDxFence->SetEventOnCompletion(fence_value, dxFence->pDxWaitIdleFenceEvent);
+                WaitForSingleObject(dxFence->pDxWaitIdleFenceEvent, INFINITE);
+            }
+        }
+    }
+
+    void rhi_free_fence(Ref<RHIFence> fence)
+    {
+        RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fence.get());
+        SAFE_RELEASE(dxFence->pDxFence);
+        CloseHandle(dxFence->pDxWaitIdleFenceEvent);
+        cyber_assert(fence.use_count() == 1, "Fence free failed!");
+        fence.reset();
+    }
+
     QueueRHIRef RHI_D3D12::rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index)
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
@@ -699,7 +733,41 @@ namespace Cyber
         dxQueue->pFence = rhi_create_fence(pDevice);
         return CreateRef<RHIQueue_D3D12>(*dxQueue);
     }
+    void RHI_D3D12::rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
+    {
+        uint32_t cmd_count = submitDesc.mCmdsCount;
+        RHIQueue_D3D12* dx_queue = static_cast<RHIQueue_D3D12*>(queue.get());
+        RHIFence_D3D12* dx_fence = static_cast<RHIFence_D3D12*>(submitDesc.mSignalFence.get());
 
+        cyber_check(submitDesc.mCmdsCounht > 0);
+        cyber_check(submitDesc.pCmds);
+
+        ID3D12CommandList** cmds = (ID3D12CommandList**)cyber_malloc(sizeof(ID3D12CommandList*) * cmd_count);
+        for(uint32_t i = 0; i < cmd_count; i++)
+        {
+            RHICommandBuffer_D3D12* dx_cmd = static_cast<RHICommandBuffer_D3D12*>(submitDesc.pCmds[i].get());
+            cmds[i] = dx_cmd->pDxCmdList;
+        }
+        // Wait semaphores
+        for(uint32_t i = 0; i < submitDesc.mWaitSemaphoreCount; i++)
+        {
+            RHISemaphore_D3D12* dx_semaphore = static_cast<RHISemaphore_D3D12*>(submitDesc.pWaitSemaphores[i].get());
+            dx_queue->pCommandQueue->Wait(dx_semaphore->dx_fence, dx_semaphore->fence_value - 1);
+        }
+        // Execute
+        dx_queue->pCommandQueue->ExecuteCommandLists(cmd_count, cmds);
+        // Signal fences
+        if(dx_fence)
+        {
+            D3D12Util_SignalFence(dx_queue, dx_fence->pDxFence, dx_fence->mFenceValue++);
+        }
+        // Signal semaphores
+        for(uint32_t i = 0; i < submitDesc.mSignalSemaphoreCount; i++)
+        {
+            RHISemaphore_D3D12* dx_semaphore = static_cast<RHISemaphore_D3D12*>(submitDesc.pSignalSemaphores[i].get());
+            D3D12Util_SignalFence(dx_queue, dx_semaphore->dx_fence, dx_semaphore->fence_value++);
+        }
+    }
     // Command Objects
     void allocate_transient_command_allocator(RHICommandPool_D3D12* commandPool, Ref<RHIQueue> queue)
     {
@@ -720,6 +788,18 @@ namespace Cyber
         RHICommandPool_D3D12* dxCommandPool = cyber_new<RHICommandPool_D3D12>();
         allocate_transient_command_allocator(dxCommandPool, queue);
         return CreateRef<RHICommandPool_D3D12>(*dxCommandPool);
+    }
+    void RHI_D3D12::rhi_reset_command_pool(Ref<RHICommandPool> pPool)
+    {
+        RHICommandPool_D3D12* dxPool = static_cast<RHICommandPool_D3D12*>(pPool.get());
+        dxPool->pDxCmdAlloc->Reset();
+    }
+    void RHI_D3D12::rhi_free_command_pool(Ref<RHICommandPool> pPool)
+    {
+        RHICommandPool_D3D12* dxPool = static_cast<RHICommandPool_D3D12*>(pPool.get());
+        SAFE_RELEASE(dxPool->pDxCmdAlloc);
+        cyber_assert(pPool.use_count() == 1, "Command pool free failed!");
+        pPool.reset();
     }
 
     CommandBufferRef RHI_D3D12::rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc) 
@@ -747,6 +827,44 @@ namespace Cyber
         CHECK_HRESULT(dxCommandBuffer->pDxCmdList->Close());
         return CreateRef<RHICommandBuffer_D3D12>(*dxCommandBuffer);
     }
+
+    void RHI_D3D12::rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer)
+    {
+        RHICommandBuffer_D3D12* dxCommandBuffer = static_cast<RHICommandBuffer_D3D12*>(pCommandBuffer.get());
+        SAFE_RELEASE(dxCommandBuffer->pDxCmdList);
+        cyber_assert(pCommandBuffer.use_count() == 1, "Command buffer free failed!");
+        pCommandBuffer.reset();
+    }
+
+    void RHI_D3D12::rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer)
+    {
+        RHICommandBuffer_D3D12* cmd = static_cast<RHICommandBuffer_D3D12*>(pCommandBuffer.get());
+        RHICommandPool_D3D12* pool = static_cast<RHICommandPool_D3D12*>(cmd->pCmdPool.get());
+        CHECK_HRESULT(cmd->pDxCmdList->Reset(pool->pDxCmdAlloc, nullptr));
+
+        // Reset the descriptor heaps
+        if(cmd->mType != RHI_QUEUE_TYPE_TRANSFER)
+        {
+            ID3D12DescriptorHeap* heaps[] = {
+                cmd->pBoundHeaps[0]->pCurrentHeap,
+                cmd->pBoundHeaps[1]->pCurrentHeap
+            };
+            cmd->pDxCmdList->SetDescriptorHeaps(2, heaps);
+
+            cmd->mBoundHeapStartHandles[0] = cmd->pBoundHeaps[0]->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+            cmd->mBoundHeapStartHandles[1] = cmd->pBoundHeaps[1]->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+        }
+        // Reset CPU side data
+        cmd->pBoundRootSignature = nullptr;
+    }
+
+    void RHI_D3D12::rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer)
+    {
+        RHICommandBuffer_D3D12* cmd = static_cast<RHICommandBuffer_D3D12*>(pCommandBuffer.get());
+        cyber_check(cmd.pDxCmdList);
+        CHECK_HRESULT(cmd->pDxCmdList->Close());
+    }
+
     
     SwapChainRef RHI_D3D12::rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& desc)
     {
@@ -845,6 +963,13 @@ namespace Cyber
                 adapters[i] = dxInstance->pAdapters[i];
             }
         }
+    }
+
+    uint32_t RHI_D3D12::rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc)
+    {
+        RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(pSwapChain.get());
+        // On PC AquireNext is always true
+        return dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
     }
 
     // for example 
@@ -1677,4 +1802,18 @@ namespace Cyber
         pDxcLibrary->Release();
         return CreateRef<RHIShaderLibrary>(*pLibrary);
     }
+
+    void RHI_D3D12::rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary)
+    {
+        RHIShaderLibrary_D3D12* dx_shader_library = static_cast<RHIShaderLibrary_D3D12*>(shaderLibrary.get());
+        D3D12Util_FreeShaderReflection(dx_shader_library);
+        if(dx_shader_library->shader_blob != nullptr)
+        {
+            dx_shader_library->shader_blob->Release();
+        }
+        cyber_delete(dx_shader_library);
+        // ?
+        shaderLibrary.reset();
+    }
+
 }

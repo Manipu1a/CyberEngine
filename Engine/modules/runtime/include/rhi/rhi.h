@@ -46,7 +46,7 @@ namespace Cyber
         RHI_BACKEND_METAL
     } ERHIBackend;
 
-    union ClearValue
+    union RHIClearValue
     {
         struct
         {
@@ -252,7 +252,7 @@ namespace Cyber
     struct CYBER_RHI_API TextureCreationDesc
     {
         /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
-        ClearValue mClearValue;
+        RHIClearValue mClearValue;
         /// Pointer to native texture handle if the texture does not own underlying resource
         void* mNativeHandle;
         /// Debug name used in gpu profile
@@ -469,10 +469,10 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueueSubmitDesc
     {
-        Ref<RHICommandBuffer> pCmds;
-        RHIFence mSignalFence;
-        RHISemaphore* pWaitSemaphores;
-        RHISemaphore* pSignalSemaphores;
+        Ref<RHICommandBuffer>* pCmds;
+        Ref<RHIFence> mSignalFence;
+        Ref<RHISemaphore>* pWaitSemaphores;
+        Ref<RHISemaphore>* pSignalSemaphores;
         uint32_t mCmdsCount;
         uint32_t mWaitSemaphoreCount;
         uint32_t mSignalSemaphoreCount;
@@ -505,6 +505,12 @@ namespace Cyber
         bool mUseFlipSwapEffect;
     };
 
+    struct CYBER_RHI_API RHIAcquireNextDesc
+    {
+        Ref<RHISemaphore> signal_semaphore;
+        Ref<RHIFence> fence;
+    };
+
     struct CYBER_RHI_API RHIPipelineShaderCreateDesc
     {
         Ref<RHIShaderLibrary> library;
@@ -528,6 +534,21 @@ namespace Cyber
     {
         Ref<RHIRootSignature> root_signature;
         uint32_t set_index;
+    };
+
+    struct CYBER_RHI_API RHIColorAttachment
+    {
+        Ref<RHITextureView> view;
+        Ref<RHITextureView> resolve_view;
+        ERHILoadAction load_action;
+        ERHIStoreAction store_action;
+        RHIClearValue clear_value;
+    };
+
+    struct CYBER_RHI_API RHIRenderPassDesc
+    {
+        const char8_t* name;
+        ERHITextureSampleCount sample_count;
     };
 
     struct CYBER_RHI_API RHIBlendStateCreateDesc
@@ -651,14 +672,12 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_instance!");
             return CreateRef<RHIInstance>();
         }
-
         // Device APIS
         virtual Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_device!");
             return CreateRef<RHIDevice>();
         }
-
         // API Object APIs
         virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
         {
@@ -670,8 +689,19 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
             return CreateRef<RHIFence>();
         };
-        virtual void rhi_wait_fences(const RHIFence* pFences, uint32_t fenceCount) {}
-        virtual void rhi_query_fence_status(Ref<RHIFence> pFence) {}
+        virtual void rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount)
+        {
+            cyber_core_assert(false, "Empty implement rhi_wait_fences!");
+        }
+        virtual void rhi_free_fence(Ref<RHIFence> fence)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_fence!");
+        }
+        virtual ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence)
+        {
+            cyber_core_assert(false, "Empty implement rhi_query_fence_status!");
+            return RHI_FENCE_STATUS_NOTSUBMITTED;
+        }
         virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
@@ -681,27 +711,48 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_enum_adapters!");
         }
+        virtual uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_acquire_next_image!");
+            return 0;
+        }
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
         { 
             cyber_core_assert(false, "Empty implement rhi_get_queue!");
             return CreateRef<RHIQueue>();
         }
-
+        virtual void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_submit_queue!");
+        }
+        virtual void rhi_free_queue(Ref<RHIQueue> queue)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_queue!");
+        }
         // Command APIs
         virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_command_pool!");
             return CreateRef<RHICommandPool>();
         }
-
+        virtual void rhi_reset_command_pool(Ref<RHICommandPool> pPool)
+        {
+            cyber_core_assert(false, "Empty implement rhi_reset_command_pool!");
+        }
+        virtual void rhi_free_command_pool(Ref<RHICommandPool> pPool)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_command_pool!");
+        }
         virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_command_buffer!");
             return CreateRef<RHICommandBuffer>();
         }
-        //virtual void rhi_submit_queue(Ref<RHIQueue> pQueue, const )
-
+        virtual void rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_command_buffer!");
+        }
         /// RootSignature
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
         {
@@ -754,6 +805,32 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_shader_library!");
             return CreateRef<RHIShaderLibrary>();
         }
+        virtual void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_shader_library!");
+        }
+
+        /// CMDS
+        virtual void rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_begin!");
+        }
+
+        virtual void rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_end!");
+        }
+
+        virtual void rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIBeginRenderPassDesc& beginRenderPassDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_begin_renderpass!");
+        }
+        
+        virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> pCommandBuffer)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_end_renderpass!");
+        }
+
     };
 
     #define RHI_SINGLE_GPU_NODE_COUNT 1

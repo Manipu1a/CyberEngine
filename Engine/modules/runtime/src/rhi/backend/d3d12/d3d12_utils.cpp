@@ -456,6 +456,36 @@ namespace Cyber
         d3d12Reflection->Release();
     }
 
+    void D3D12Util_FreeShaderReflection(RHIShaderLibrary_D3D12* library)
+    {
+        if(library->entry_reflections)
+        {
+            RHIShaderReflection* reflection = library->entry_reflections;
+            if(reflection->vertex_inputs)
+            {
+                for(uint32_t i = 0; i < reflection->vertex_input_count; ++i)
+                {
+                    cyber_free((void*)reflection->vertex_inputs[i].name);
+                }
+                cyber_free(reflection->vertex_inputs);
+            }
+            if(reflection->shader_resources)
+            {
+                for(uint32_t i = 0; i < reflection->shader_resource_count; ++i)
+                {
+                    cyber_free((void*)reflection->shader_resources[i].name);
+                }
+                cyber_free(reflection->shader_resources);
+            }
+            cyber_free(reflection);
+        }
+    }
+
+    void D3D12Util_SignalFence(RHIQueue_D3D12* queue, ID3D12Fence* fence, uint64_t fenceValue)
+    {
+        queue->pCommandQueue->Signal(fence, fenceValue);
+    }
+
     void D3D12Util_CreateCBV(RHIDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)

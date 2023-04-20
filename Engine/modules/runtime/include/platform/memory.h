@@ -61,6 +61,15 @@ static T* cyber_new(Args&&... args)
 #define cyber_free(ptr) _cyber_free(ptr)
 #endif
 
+template <typename T>
+void cyber_delete(T* ptr) CYBER_NOEXCEPT
+{
+    if (ptr)
+    {
+        ptr->~T();
+        _cyber_free_aligned(ptr, alignof(T));
+    }
+}
 
 template<class T>
 struct cyber_stl_allocator
