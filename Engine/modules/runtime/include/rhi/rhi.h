@@ -442,6 +442,8 @@ namespace Cyber
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
     };
+    using RHIRenderPassEncoder = RHICommandBuffer;
+    using RHIComputePassEncoder = RHICommandBuffer;
 
     class CYBER_RHI_API RHIQueryPool
     {
@@ -827,26 +829,69 @@ namespace Cyber
         }
 
         /// CMDS
-        virtual void rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer)
+        virtual void rhi_cmd_begin(Ref<RHICommandBuffer> cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin!");
         }
 
-        virtual void rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer)
+        virtual void rhi_cmd_end(Ref<RHICommandBuffer> cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_end!");
         }
-
-        virtual void rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIRenderPassDesc& beginRenderPassDesc)
+        // Render Pass
+        virtual Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin_renderpass!");
+            return cmd;
         }
-        
-        virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> pCommandBuffer)
+        virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_end_renderpass!");
         }
-
+        virtual void rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_descriptor_set!");
+        }
+        virtual void rhi_render_encoder_set_viewport(Ref<RHIRenderPassEncoder> encoder, float x, float y, float width, float height, float min_depth, float max_depth)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_set_viewport!");
+        }
+        virtual void rhi_render_encoder_set_scissor(Ref<RHIRenderPassEncoder> encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_set_scissor!");
+        }
+        virtual void rhi_render_encoder_bind_pipeline(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRenderPipeline> pipeline)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_pipeline!");
+        }
+        virtual void rhi_render_encoder_bind_vertex_buffer(Ref<RHIRenderPassEncoder> encoder, uint32_t buffer_count, Ref<RHIBuffer>* buffers,const uint32_t* strides, const uint32_t* offsets)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_vertex_buffer!");
+        }
+        virtual void rhi_render_encoder_bind_index_buffer(Ref<RHIRenderPassEncoder> encoder, Ref<RHIBuffer> buffer, uint32_t index_stride, uint64_t offset)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_index_buffer!");
+        }
+        virtual void rhi_render_encoder_push_constants(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRootSignature> rs, const char8_t* name, const void* data)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_push_constants!");
+        }
+        virtual void rhi_render_encoder_draw(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw!");
+        }
+        virtual void rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_instanced!");
+        }
+        virtual void rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_indexed!");
+        }
+        virtual void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_indexed_instanced!");
+        }
     };
 
     #define RHI_SINGLE_GPU_NODE_COUNT 1

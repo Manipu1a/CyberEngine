@@ -865,11 +865,11 @@ namespace Cyber
         CHECK_HRESULT(cmd->pDxCmdList->Close());
     }
 
-    void RHI_D3D12::rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIRenderPassDesc& beginRenderPassDesc)
+    Ref<RHIRenderPassEncoder> RHI_D3D12::rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
     {
-        RHICommandBuffer_D3D12* cmd = static_cast<RHICommandBuffer_D3D12*>(pCommandBuffer.get());
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(cmd.get());
     #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->pDxCmdList;
+        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->pDxCmdList;
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[RHI_MAX_MRT_COUNT]);
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
@@ -900,14 +900,14 @@ namespace Cyber
                 resolve.Format = clearValues[i].Format;
                 resolve.pSrcResource = tex->pDxResource;
                 resolve.pDstResource = tex_resolve->pDxResource;
-                cmd->mSubResolveResource[i].SrcRect = { 0, 0, (LONG)tex->mWidth, (LONG)tex->mHeight };
-                cmd->mSubResolveResource[i].DstX = 0;
-                cmd->mSubResolveResource[i].DstY = 0;
-                cmd->mSubResolveResource[i].SrcSubresource = 0;
-                cmd->mSubResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->mMipLevels, tex_resolve->mArraySize + 1);
+                Cmd->mSubResolveResource[i].SrcRect = { 0, 0, (LONG)tex->mWidth, (LONG)tex->mHeight };
+                Cmd->mSubResolveResource[i].DstX = 0;
+                Cmd->mSubResolveResource[i].DstY = 0;
+                Cmd->mSubResolveResource[i].SrcSubresource = 0;
+                Cmd->mSubResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->mMipLevels, tex_resolve->mArraySize + 1);
                 resolve.PreserveResolveSource = false;
                 resolve.SubresourceCount = 1;
-                resolve.pSubresourceParameters = &cmd->mSubResolveResource[i];
+                resolve.pSubresourceParameters = &Cmd->mSubResolveResource[i];
             }
             else
             {
@@ -940,15 +940,22 @@ namespace Cyber
             pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
         }
         D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
-        cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE)；
+        cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
+        return cmd;
     #endif
         cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
-        
+        return cmd;
     }
 
     void RHI_D3D12::rhi_cmd_end_render_pass(Ref<RHICommandBuffer> pCommandBuffer)
     {
-
+        RHICommandBuffer_D3D12* cmd = static_cast<RHICommandBuffer_D3D12*>(pCommandBuffer.get());
+        #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+            ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->pDxCmdList;
+            cmdList4->EndRenderPass();
+            return;
+        #endif
+        cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
     }
     
     SwapChainRef RHI_D3D12::rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& desc)
