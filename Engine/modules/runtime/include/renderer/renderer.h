@@ -59,9 +59,11 @@ namespace Cyber
         virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     public:
         virtual void initialize(class Application* app, const RendererDesc& desc);
+        virtual void finalize();
         void create_gfx_objects(class Application* app);
         void create_render_pipeline();
-
+        
+        virtual void update(float DeltaTime);
         virtual void raster_draw();
     protected:
         virtual void CreateRtvAndDsvDescriptorHeaps();
@@ -119,9 +121,6 @@ namespace Cyber
         Ref<RHISwapChain> swap_chain = nullptr;
         Ref<RHISurface> surface = nullptr;
         Ref<RHIFence> present_swmaphore = nullptr; 
-        Ref<RHICommandPool> pools[MAX_FRAMES_IN_FLIGHT];
-        Ref<RHICommandBuffer> cmds[MAX_FRAMES_IN_FLIGHT];
-        Ref<RHIFence> exec_fences[MAX_FRAMES_IN_FLIGHT];
         Ref<RHITextureView> views[BACK_BUFFER_COUNT];
         uint32_t backbuffer_index = 0;
 

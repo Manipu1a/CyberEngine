@@ -46,14 +46,6 @@ namespace Cyber
         RHI::createRHI(desc.backend);
         create_gfx_objects(app);
 
-        present_swmaphore = RHI::GetRHIContext().rhi_create_fence(device);
-        for(uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
-        {
-            pools[i] = RHI::GetRHIContext().rhi_create_command_pool(queue, CommandPoolCreateDesc());
-            CommandBufferCreateDesc cmd_buffer_desc = {.is_secondary = false};
-            cmds[i] = RHI::GetRHIContext().rhi_create_command_buffer(pools[i], cmd_buffer_desc);
-            exec_fences[i] = RHI::GetRHIContext().rhi_create_fence(device);
-        }
         // Create views
         for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
         {
@@ -69,7 +61,10 @@ namespace Cyber
         }
         create_render_pipeline();
     }
+    void Renderer::finalize()
+    {
 
+    }
     void Renderer::create_gfx_objects(class Application* app)
     {
         // Create instance
@@ -112,6 +107,11 @@ namespace Cyber
         chain_desc.mPresentQueueCount = 1;
         chain_desc.mEnableVsync = true;
         swap_chain = RHI::GetRHIContext().rhi_create_swap_chain(device, chain_desc);
+
+        present_swmaphore = RHI::GetRHIContext().rhi_create_fence(device);
+        pool = RHI::GetRHIContext().rhi_create_command_pool(queue, CommandPoolCreateDesc());
+        CommandBufferCreateDesc cmd_buffer_desc = {.is_secondary = false};
+        cmd =  RHI::GetRHIContext().rhi_create_command_buffer(pool, cmd_buffer_desc);
     }
 
     void Renderer::create_render_pipeline()
@@ -164,7 +164,10 @@ namespace Cyber
         RHI::GetRHIContext().rhi_free_shader_library(vs_shader);
         RHI::GetRHIContext().rhi_free_shader_library(ps_shader);
     }
-
+    void Renderer::update(float DeltaTime)
+    {
+        raster_draw();
+    }
     void Renderer::raster_draw()
     {
         // sync & reset
@@ -176,6 +179,6 @@ namespace Cyber
         const auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
         const auto back_buffer_view = views[backbuffer_index];
         RHI::GetRHIContext().rhi_reset_command_pool(pool);
-
+        
     }
 }
