@@ -179,6 +179,22 @@ namespace Cyber
         const auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
         const auto back_buffer_view = views[backbuffer_index];
         RHI::GetRHIContext().rhi_reset_command_pool(pool);
-        
+        // record
+        RHI::GetRHIContext().rhi_cmd_begin(cmd);
+        RHIColorAttachment screen_attachment = {
+            .view = back_buffer_view,
+            .load_action = RHI_LOAD_ACTION_CLEAR,
+            .store_action = RHI_STORE_ACTION_STORE,
+            .clear_value = fastclear_0000
+        };
+        RHIRenderPassDesc rp_desc = {
+            .render_target_count = 1,
+            .sample_count = RHI_SAMPLE_COUNT_1,
+            .color_attachments = &screen_attachment,
+            .depth_stencil_attachment = nullptr
+        };
+        RHITextureBarrier draw_barrier = {
+
+        };
     }
 }

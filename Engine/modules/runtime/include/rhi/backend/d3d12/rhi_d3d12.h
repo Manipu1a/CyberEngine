@@ -294,6 +294,8 @@ namespace Cyber
 
         virtual void rhi_cmd_begin(Ref<RHICommandBuffer> pCommandBuffer) override;
         virtual void rhi_cmd_end(Ref<RHICommandBuffer> pCommandBuffer) override;
+        virtual void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc) override;
+
         virtual Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> pCommandBuffer, const RHIRenderPassDesc& beginRenderPassDesc) override;
         virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> pCommandBuffer) override;
         virtual void rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet);
@@ -307,7 +309,6 @@ namespace Cyber
         virtual void rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance);
         virtual void rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex);
         virtual void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex);
-        
         
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;

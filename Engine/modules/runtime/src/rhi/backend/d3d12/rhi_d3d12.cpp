@@ -865,6 +865,138 @@ namespace Cyber
         CHECK_HRESULT(cmd->pDxCmdList->Close());
     }
 
+    void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(cmd.get());
+        const uint32_t barriers_count = barrierDesc.buffer_barrier_count + barrierDesc.texture_barrier_count;
+        D3D12_RESOURCE_BARRIER* barriers = (D3D12_RESOURCE_BARRIER*)alloca(sizeof(D3D12_RESOURCE_BARRIER) * barriers_count);
+        uint32_t transition_count = 0;
+        for(uint32_t i = 0; i < barrierDesc.buffer_barrier_count; ++i)
+        {
+            const RHIBufferBarrier* transition_barrier = &barrierDesc.buffer_barriers[i];
+            D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
+            RHIBuffer_D3D12* buffer = static_cast<RHIBuffer_D3D12*>(transition_barrier->buffer.get());
+            if(buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY ||
+                buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_GPU_TO_CPU ||
+                (buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_CPU_TO_GPU && buffer->mDescriptors & RHI_RESOURCE_TYPE_RW_BUFFER))
+                {
+                    if(transition_barrier->src_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS &&
+                        transition_barrier->dst_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS)
+                    {
+                            barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                            barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                            barrier->UAV.pResource = buffer->pDxResource;
+                            ++transition_count;
+                    }
+                    else 
+                    {
+                            cyber_assert(transition_barrier->src_state != transition_barrier->dst_state, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
+
+                            barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                            if(transition_barrier->d3d12.begin_only)
+                            {
+                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+                            }
+                            else if(transition_barrier->d3d12.end_only)
+                            {
+                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+                            }
+                            else
+                            {
+                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                            }
+                            barrier->Transition.pResource = buffer->pDxResource;
+                            barrier->Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                            if(transition_barrier->queue_acquire)
+                            {
+                                barrier->Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+                            }
+                            else 
+                            {
+                                barrier->Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
+                            }
+
+                            if(transition_barrier->queue_release)
+                            {
+                                barrier->Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+                            }
+                            else 
+                            {
+                                barrier->Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
+                            }
+
+                            cyber_assert(barrier->Transition.StateBefore != barrier->Transition.StateAfter, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
+                            ++transition_count;
+                    }
+                }
+        }
+
+        for(uint32_t i = 0; i < barrierDesc.texture_barrier_count; ++i)
+        {
+            const RHITextureBarrier* transition_barrier = &barrierDesc.texture_barriers[i];
+            D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
+            RHITexture_D3D12* texture = static_cast<RHITexture_D3D12*>(transition_barrier->texture.get());
+            if(transition_barrier->src_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS &&
+                transition_barrier->dst_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS)
+            {
+                barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                barrier->UAV.pResource = texture->pDxResource;
+                ++transition_count;
+            }
+            else
+            {
+                cyber_assert(transition_barrier->src_state != transition_barrier->dst_state, "D3D12 ERROR: Texture Barrier with same src and dst state!");
+
+                barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                if(transition_barrier->d3d12.begin_only)
+                {
+                    barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+                }
+                else if(transition_barrier->d3d12.end_only)
+                {
+                    barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+                }
+                barrier->Transition.pResource = texture->pDxResource;
+                barrier->Transition.Subresource = transition_barrier->subresource_barrier ?
+                                                 CALC_SUBRESOURCE_INDEX(transition_barrier->mip_level, transition_barrier->array_layer, 0, texture->mMipLevels, texture->mArraySize + 1)
+                                                : D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                if(transition_barrier->queue_acquire)
+                {
+                    barrier->Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+                }
+                else 
+                {
+                    barrier->Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
+                }
+
+                if(transition_barrier->queue_release)
+                {
+                    barrier->Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+                }
+                else 
+                {
+                    barrier->Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
+                }
+
+                if(barrier->Transition.StateBefore == D3D12_RESOURCE_STATE_COMMON && barrier->Transition.StateAfter == D3D12_RESOURCE_STATE_COMMON)
+                {
+                    if(transition_barrier->src_state == RHI_RESOURCE_STATE_PRESENT || transition_barrier->dst_state == D3D12_RESOURCE_STATE_COMMON)
+                    {
+                        continue;
+                    }
+                }
+                cyber_assert(false, "D3D12 ERROR: Texture Barrier with same src and dst state!");
+                ++transition_count;
+            }
+        }
+        if(transition_count > 0)
+        {
+            Cmd->pDxCmdList->ResourceBarrier(transition_count, barriers);
+        }
+    }
+
     void reset_root_signature(RHICommandBuffer_D3D12* cmd, ERHIPipelineType type, ID3D12RootSignature* rootSignature)
     {
         if(cmd->pBoundRootSignature != rootSignature)

@@ -46,7 +46,7 @@ namespace Cyber
         RHI_BACKEND_METAL
     } ERHIBackend;
 
-    union RHIClearValue
+    typedef union RHIClearValue
     {
         struct
         {
@@ -60,6 +60,19 @@ namespace Cyber
             float depth;
             uint32_t stencil;
         };
+    } RHIClearValue;
+    
+    static const RHIClearValue fastclear_0000 = {
+        {0.f, 0.f, 0.f, 0.f}
+    };
+    static const RHIClearValue fastclear_0001 = {
+        {0.f, 0.f, 0.f, 1.f}
+    };
+    static const RHIClearValue fastclear_1110 = {
+        {1.f, 1.f, 1.f, 0.f}
+    };
+    static const RHIClearValue fastclear_1111 = {
+        {1.f, 1.f, 1.f, 1.f}
     };
     
     struct CYBER_RHI_API RHISurface
@@ -373,6 +386,47 @@ namespace Cyber
         uint64_t mDescriptors : 20;
         uint64_t mMemoryUsage : 3;
         uint64_t mNodeIndex : 4;
+    };
+    
+    struct CYBER_RHI_API RHIBufferBarrier
+    {
+        Ref<RHIBuffer> buffer;
+        ERHIResourceState src_state;
+        ERHIResourceState dst_state;
+        uint8_t queue_acquire : 1;
+        uint8_t queue_release : 1;
+        ERHIQueueType queue_type : 5;
+        struct {
+            uint8_t begin_only : 1;
+            uint8_t end_only : 1;
+        } d3d12;
+    };
+
+    struct CYBER_RHI_API RHITextureBarrier
+    {
+        Ref<RHITexture> texture;
+        ERHIResourceState src_state;
+        ERHIResourceState dst_state;
+        uint8_t queue_acquire : 1;
+        uint8_t queue_release : 1;
+        ERHIQueueType queue_type : 5;
+        /// Specify whether following barrier targets particular subresource
+        uint8_t subresource_barrier : 1;
+        /// Following values are ignored if subresource_barrier is false
+        uint8_t mip_level : 7;
+        uint16_t array_layer;
+        struct {
+            uint8_t begin_only : 1;
+            uint8_t end_only : 1;
+        } d3d12;
+    };
+
+    struct CYBER_RHI_API RHIResourceBarrierDesc
+    {
+        const RHIBufferBarrier* buffer_barriers;
+        uint32_t buffer_barrier_count;
+        const RHITextureBarrier* texture_barriers;
+        uint32_t texture_barrier_count;
     };
 
     struct CYBER_RHI_API RHIInstanceCreateDesc
@@ -833,10 +887,13 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin!");
         }
-
         virtual void rhi_cmd_end(Ref<RHICommandBuffer> cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_end!");
+        }
+        virtual void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_cmd_resource_barrier!");
         }
         // Render Pass
         virtual Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
