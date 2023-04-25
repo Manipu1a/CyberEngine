@@ -865,6 +865,18 @@ namespace Cyber
         CHECK_HRESULT(cmd->pDxCmdList->Close());
     }
 
+    void reset_root_signature(RHICommandBuffer_D3D12* cmd, ERHIPipelineType type, ID3D12RootSignature* rootSignature)
+    {
+        if(cmd->pBoundRootSignature != rootSignature)
+        {
+            cmd->pBoundRootSignature = rootSignature;
+            if(type == RHI_PIPELINE_TYPE_GRAPHICS)
+                cmd->pDxCmdList->SetGraphicsRootSignature(nullptr);
+            else
+                cmd->pDxCmdList->SetComputeRootSignature(nullptr);
+        }
+    }
+
     Ref<RHIRenderPassEncoder> RHI_D3D12::rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
     {
         RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(cmd.get());
@@ -958,6 +970,102 @@ namespace Cyber
         cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
     }
     
+    void RHI_D3D12::rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        const RHIDescriptorSet_D3D12* Set = static_cast<const RHIDescriptorSet_D3D12*>(descriptorSet.get());
+        RHIRootSignature_D3D12* RS = static_cast<RHIRootSignature_D3D12*>(Set->root_signature.get());
+
+        cyber_check(RS);
+        reset_root_signature(Cmd, RHI_PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+        if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+        {
+            Cmd->pDxCmdList->SetGraphicsRootDescriptorTable(Set->set_index, {Cmd->mBoundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+        }
+        else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+        {
+            Cmd->pDxCmdList->SetGraphicsRootDescriptorTable(Set->set_index, {Cmd->mBoundHeapStartHandles[1].ptr + Set->sampler_handle});
+        }
+    }
+    void RHI_D3D12::rhi_render_encoder_set_viewport(Ref<RHIRenderPassEncoder> encoder, float x, float y, float width, float height, float min_depth, float max_depth)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
+        Cmd->pDxCmdList->RSSetViewports(1, &viewport);
+    }
+    void RHI_D3D12::rhi_render_encoder_set_scissor(Ref<RHIRenderPassEncoder> encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        D3D12_RECT rect;
+        rect.left = x;
+        rect.top = y;
+        rect.right = x + width;
+        rect.bottom = y + height;
+        Cmd->pDxCmdList->RSSetScissorRects(1, &rect);
+    }
+    void RHI_D3D12::rhi_render_encoder_bind_pipeline(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRenderPipeline> pipeline)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        RHIRenderPipeline_D3D12* Pipeline = static_cast<RHIRenderPipeline_D3D12*>(pipeline.get());
+        reset_root_signature(Cmd, RHI_PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
+        Cmd->pDxCmdList->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
+        Cmd->pDxCmdList->SetPipelineState(Pipeline->pDxPipelineState);
+    }
+    void RHI_D3D12::rhi_render_encoder_bind_vertex_buffer(Ref<RHIRenderPassEncoder> encoder, uint32_t buffer_count, Ref<RHIBuffer>* buffers,const uint32_t* strides, const uint32_t* offsets)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+
+        DECLARE_ZERO(D3D12_VERTEX_BUFFER_VIEW, views[RHI_MAX_VERTEX_ATTRIBUTES]);
+        for(uint32_t i = 0;i < buffer_count; ++i)
+        {
+            const RHIBuffer_D3D12* Buffer = static_cast<RHIBuffer_D3D12*>(buffers[i].get());
+            cyber_check(Buffer->mDxGpuAddress != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
+
+            views[i].BufferLocation = Buffer->mDxGpuAddress + (offsets ? offsets[i] : 0);
+            views[i].SizeInBytes = (UINT)(Buffer->mSize - (offsets ? offsets[i] : 0));
+            views[i].StrideInBytes = (UINT)strides[i];  
+        }
+        Cmd->pDxCmdList->IASetVertexBuffers(0, buffer_count, views);
+    }
+    void RHI_D3D12::rhi_render_encoder_bind_index_buffer(Ref<RHIRenderPassEncoder> encoder, Ref<RHIBuffer> buffer, uint32_t index_stride, uint64_t offset)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        const RHIBuffer_D3D12* Buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
+
+        DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
+        view.BufferLocation = Buffer->mDxGpuAddress + offset;
+        view.SizeInBytes = (UINT)(Buffer->mSize - offset);
+        view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
+        Cmd->pDxCmdList->IASetIndexBuffer(&view);
+    }
+    void RHI_D3D12::rhi_render_encoder_push_constants(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRootSignature> rs, const char8_t* name, const void* data)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        RHIRootSignature_D3D12* RS = static_cast<RHIRootSignature_D3D12*>(rs.get());
+        reset_root_signature(Cmd, RHI_PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+        Cmd->pDxCmdList->SetGraphicsRoot32BitConstants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+    }
+    void RHI_D3D12::rhi_render_encoder_draw(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)0, (UINT)first_vertex, (UINT)0);
+    }
+    void RHI_D3D12::rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
+    }
+    void RHI_D3D12::rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        Cmd->pDxCmdList->DrawIndexedInstanced((UINT)index_count, (UINT)1, (UINT)first_index, (UINT)first_vertex, (UINT)0);
+    }
+    void RHI_D3D12::rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+    {
+        RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder.get());
+        Cmd->pDxCmdList->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
+    }
+
     SwapChainRef RHI_D3D12::rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& desc)
     {
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance.get());

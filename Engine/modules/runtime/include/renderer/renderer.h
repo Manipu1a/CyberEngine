@@ -95,7 +95,7 @@ namespace Cyber
         void Draw();
 
     public:
-        Ref<RHIDevice> GetDevice() { return pRHIDevice; }
+        Ref<RHIDevice> GetDevice() { return device; }
         
     protected:
         HINSTANCE mhAppInst = nullptr;
@@ -109,21 +109,23 @@ namespace Cyber
         static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
         static const uint32_t BACK_BUFFER_COUNT = 3;
 
-        Ref<RHIDevice> pRHIDevice = nullptr;
+        Ref<RHIDevice> device = nullptr;
         Ref<RHIInstance> instance = nullptr;
-        Ref<RHIAdapter> pRHIAdapter = nullptr;
-        Ref<RHIFence> pRHIFence = nullptr;
-        Ref<RHIQueue> pQueue = nullptr;
-        Ref<RHICommandPool> pCmdPool = nullptr;
-        Ref<RHICommandBuffer> pCmdBuffer = nullptr;
-        Ref<RHISwapChain> pSwapChain = nullptr;
+        Ref<RHIAdapter> adapter = nullptr;
+        Ref<RHIFence> present_fence = nullptr;
+        Ref<RHIQueue> queue = nullptr;
+        Ref<RHICommandPool> pool = nullptr;
+        Ref<RHICommandBuffer> cmd = nullptr;
+        Ref<RHISwapChain> swap_chain = nullptr;
         Ref<RHISurface> surface = nullptr;
-        Ref<RHIFence> present_swmaphore = nullptr;
+        Ref<RHIFence> present_swmaphore = nullptr; 
         Ref<RHICommandPool> pools[MAX_FRAMES_IN_FLIGHT];
         Ref<RHICommandBuffer> cmds[MAX_FRAMES_IN_FLIGHT];
         Ref<RHIFence> exec_fences[MAX_FRAMES_IN_FLIGHT];
         Ref<RHITextureView> views[BACK_BUFFER_COUNT];
-        
+        uint32_t backbuffer_index = 0;
+
+
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;
