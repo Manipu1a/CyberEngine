@@ -186,6 +186,39 @@ namespace Cyber
         return dx_device_ref;
     }
 
+    void RHI_D3D12::rhi_free_device(Ref<RHIDevice> device)
+    {
+        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(device.get());
+        for(uint32_t i = 0; i < RHI_QUEUE_TYPE_COUNT; ++i)
+        {
+            ERHIQueueType type;
+            for(uint32_t j = 0; j < dx_device->pCommandQueueCounts[i]; ++j)
+            {
+                SAFE_RELEASE(dx_device->ppCommandQueues[i][j]);
+            }
+            cyber_free((ID3D12CommandQueue**)dx_device->ppCommandQueues[i]);
+        }
+        // Free D3D12MA Allocator
+        SAFE_RELEASE(dx_device->pResourceAllocator);
+        // Free Descriptor Heaps
+        for(uint32_t i = 0;i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
+        {
+            D3D12Util_FreeDescriptorHeap(dx_device->mCPUDescriptorHeaps[i]);
+        }
+        D3D12Util_FreeDescriptorHeap(dx_device->mCbvSrvUavHeaps[0]);
+        D3D12Util_FreeDescriptorHeap(dx_device->mSamplerHeaps[0]);
+        cyber_free_container(dx_device->mCPUDescriptorHeaps);
+        cyber_free_container(dx_device->mCbvSrvUavHeaps);
+        cyber_free_container(dx_device->mSamplerHeaps);
+        cyber_free(dx_device->pNullDescriptors);
+        // Release D3D12 Device
+        SAFE_RELEASE(dx_device->pDxDevice);
+        SAFE_RELEASE(dx_device->pPipelineLibrary);
+        if(dx_device->pPSOCacheData) cyber_free(dx_device->pPSOCacheData);
+        cyber_delete(dx_device);
+        device.reset();
+    }
+
     Ref<RHITextureView> RHI_D3D12::rhi_create_texture_view(Ref<RHIDevice> device, const RHITextureViewCreateDesc& viewDesc)
     {
         Ref<RHITextureView_D3D12> tex_view = CreateRef<RHITextureView_D3D12>();
@@ -475,7 +508,15 @@ namespace Cyber
 
     void RHI_D3D12::rhi_free_texture_view(Ref<RHITextureView> view)
     {
-        
+        RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(view.get());
+        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(tex_view->mDevice.get());
+        const auto usages = tex_view->create_info.usages;
+        const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->create_info.format);
+        if(tex_view->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+        {
+            uint32_t handleCount = ((usages & RHI_TVU_SRV) ? 1 : 0) + ((usages & RHI_TVU_UAV) ? 1 : 0);
+            
+        }
     }
 
     Texture2DRHIRef RHI_D3D12::rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& pDesc)
@@ -674,6 +715,42 @@ namespace Cyber
         }
 
         return instanceRef;
+    }
+
+    void RHI_D3D12::rhi_free_instance(Ref<RHIInstance> instance)
+    {
+        RHIInstance_D3D12* dx_instance = static_cast<RHIInstance_D3D12*>(instance.get());
+        D3D12Util_DeInitializeEnvironment(dx_instance);
+        if(dx_instance->mAdaptersCount > 0)
+        {
+            for(uint32_t i = 0;i < dx_instance->mAdaptersCount; i++)
+            {
+                SAFE_RELEASE(dx_instance->pAdapters[i].pDxActiveGPU);
+            }
+        }
+        cyber_free(dx_instance->pAdapters);
+        SAFE_RELEASE(dx_instance->pDXGIFactory);
+        if(dx_instance->pDXDebug)
+        {
+            SAFE_RELEASE(dx_instance->pDXDebug);
+        }
+        cyber_delete(dx_instance);
+        instance.reset();
+
+    #if !defined (XBOX) && defined (_WIN32)
+        D3D12Util_UnloadDxcDLL();
+    #endif
+
+    #ifdef _DEBUG
+        {
+            IDXGIDebug1* dxgiDebug = nullptr;
+            if(SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+            {
+                dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+            }
+            SAFE_RELEASE(dxgiDebug);
+        }
+    #endif
     }
 
     Ref<RHISurface> RHI_D3D12::rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND window)
@@ -1311,7 +1388,19 @@ namespace Cyber
         dxSwapChain->mBufferCount = buffer_count;
         return CreateRef<RHISwapChain>(*dxSwapChain);
     }
-    
+    void RHI_D3D12::rhi_free_swap_chain(Ref<RHISwapChain> swapchain)
+    {
+        RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain.get());
+        for(uint32_t i = 0;i < dxSwapChain->mBufferCount; ++i)
+        {
+            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBuffers[i].get());
+            SAFE_RELEASE(dxTexture->pDxResource);
+        }
+        SAFE_RELEASE(dxSwapChain->pDxSwapChain);
+        cyber_free(dxSwapChain);
+        swapchain.reset();
+    }
+
     void RHI_D3D12::rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
     {
         cyber_assert(instance, "fatal: Invalid instance!");
@@ -1812,6 +1901,13 @@ namespace Cyber
         pPipeline->mPrimitiveTopologyType = topology;
         pPipeline->pDxRootSignature = DxRootSignature->dxRootSignature;
         return pPipeline;
+    }
+
+    void RHI_D3D12::rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline)
+    {
+        RHIRenderPipeline_D3D12* pPipeline = static_cast<RHIRenderPipeline_D3D12*>(pipeline.get());
+        SAFE_RELEASE(pPipeline->pDxPipelineState);
+        cyber_free(pPipeline);
     }
 
     void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateData, uint32_t count)

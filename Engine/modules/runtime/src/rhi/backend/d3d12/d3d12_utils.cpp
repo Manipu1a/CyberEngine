@@ -132,7 +132,18 @@ namespace Cyber
         };
         return ret;
     }
+    void D3D12Util_ReturnDescriptorHandles(RHIDescriptorHeap_D3D12* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t count)
+    {
+        cyber_assert((heap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) == 0);
 
+        for(uint32_t i = 0; i < count; ++i)
+        {
+            DECLARE_ZERO(DescriptorHandle, free);
+            free.mCpu = {handle.ptr + i * heap->mDescriptorSize};
+            free.mGpu = { D3D12_GPU_VIRTUAL_ADDRESS_NULL};
+            heap->mFreeList.push_back(free);
+        }
+    }
     void D3D12Util_CopyDescriptorHandle(RHIDescriptorHeap_D3D12* dstHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index)
     {
         // fill dest heap
@@ -143,7 +154,7 @@ namespace Cyber
 
     void D3D12Util_InitializeEnvironment(RHIInstance* pInst)
     {
-
+        
     }
 
     void D3D12Util_DeInitializeEnvironment(RHIInstance* pInst)
@@ -153,23 +164,23 @@ namespace Cyber
 
     void D3D12Util_Optionalenable_debug_layer(RHIInstance_D3D12* result, const RHIInstanceCreateDesc& instanceDesc)
     {
-        if(instanceDesc.mEnableDebugLayer)
+        if(instanceDesc.enable_debug_layer)
         {
             if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&result->pDXDebug))))
             {
                 result->pDXDebug->EnableDebugLayer();
-                if(instanceDesc.mEnableGpuBasedValidation)
+                if(instanceDesc.enable_gpu_based_validation)
                 {
                     ID3D12Debug1* pDebug1 = nullptr;
                     if(SUCCEEDED(result->pDXDebug->QueryInterface(IID_PPV_ARGS(&pDebug1))))
                     {
-                        pDebug1->SetEnableGPUBasedValidation(instanceDesc.mEnableGpuBasedValidation);
+                        pDebug1->SetEnableGPUBasedValidation(instanceDesc.enable_gpu_based_validation);
                         pDebug1->Release();
                     }
                 }
             }
         }
-        else if(instanceDesc.mEnableGpuBasedValidation)
+        else if(instanceDesc.enable_gpu_based_validation)
         {
             cyber_warn("D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
         }
@@ -268,6 +279,17 @@ namespace Cyber
         }
 
         *ppDescHeap = pHeap;
+    }
+
+    void D3D12Util_FreeDescriptorHeap(struct RHIDescriptorHeap_D3D12* heap)
+    {
+        if(heap == nullptr) return;
+        SAFE_RELEASE(heap->pCurrentHeap);
+
+        heap->mFreeList.~vector();
+
+        cyber_free(heap->pHandles);
+        cyber_free(heap);
     }
 
     void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice)

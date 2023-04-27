@@ -71,6 +71,16 @@ void cyber_delete(T* ptr) CYBER_NOEXCEPT
     }
 }
 
+template <typename T>
+void cyber_free_container(T& container) CYBER_NOEXCEPT
+{
+    for (auto& it : container)
+    {
+        cyber_delete(it);
+    }
+    container.clear();
+}
+
 template<class T>
 struct cyber_stl_allocator
 {

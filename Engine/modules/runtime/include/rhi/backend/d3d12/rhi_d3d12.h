@@ -120,8 +120,8 @@ namespace Cyber
         eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mSamplerHeaps;
         eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCbvSrvUavHeaps;
         struct RHIEmptyDescriptors_D3D12* pNullDescriptors;
-        eastl::map<ERHIQueueType, ID3D12CommandQueue*> ppCommandQueues;
-        eastl::map<ERHIQueueType, uint32_t> pCommandQueueCounts;
+        eastl::map<uint32_t, ID3D12CommandQueue**> ppCommandQueues;
+        eastl::map<uint32_t, uint32_t> pCommandQueueCounts;
         IDXGIFactory6* pDXGIFactory;
         IDXGIAdapter4* pDxActiveGPU;
         ID3D12Device* pDxDevice;
@@ -274,6 +274,7 @@ namespace Cyber
     public:
         // Device APIs
         virtual Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) override;
+        virtual void rhi_free_device(Ref<RHIDevice> pDevice) override;
         // API Object APIs
         virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd) override;
         virtual FenceRHIRef rhi_create_fence(Ref<RHIDevice> pDevice) override;
@@ -281,6 +282,7 @@ namespace Cyber
         virtual void rhi_free_fence(Ref<RHIFence> fence) override;
         virtual ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence) override;
         virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc) override;
+        virtual void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain) override;
         virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount) override;
         virtual uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc) override;
         // Queue APIs
@@ -317,7 +319,9 @@ namespace Cyber
         virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count) override;
 
         virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc) override;
+        virtual void rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline) override;
         virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
+        virtual void rhi_free_instance(Ref<RHIInstance> instance) override;
 
         virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc) override;
         virtual void rhi_free_texture_view(Ref<RHITextureView> view) override;

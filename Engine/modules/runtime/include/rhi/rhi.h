@@ -747,7 +747,7 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_instance!");
             return CreateRef<RHIInstance>();
         }
-        virtual void rhi_free_instance(InstanceRHIRef pInstance) 
+        virtual void rhi_free_instance(Ref<RHIInstance> instance)
         {
             cyber_core_assert(false, "Empty implement rhi_free_instance!");
         }

@@ -442,6 +442,7 @@ namespace Cyber
     #endif
 
     DescriptorHandle D3D12Util_ConsumeDescriptorHandles(RHIDescriptorHeap_D3D12* pHeap, uint32_t descriptorCount);
+    void D3D12Util_ReturnDescriptorHandles(RHIDescriptorHeap_D3D12* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t count);
     void D3D12Util_CopyDescriptorHandle(RHIDescriptorHeap_D3D12* dstHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index);
 
     void D3D12Util_InitializeEnvironment(RHIInstance* pInst);
@@ -453,6 +454,8 @@ namespace Cyber
     void D3D12Util_QueryAllAdapters(Ref<RHIInstance_D3D12> pInstance, uint32_t& count, bool& foundSoftwareAdapter);
 
     void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
+
+    void D3D12Util_FreeDescriptorHeap(struct RHIDescriptorHeap_D3D12* heap);
 
     void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice);
 
