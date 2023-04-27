@@ -160,14 +160,16 @@ namespace Cyber
             .render_target_count = 1,
             .color_formats = &views[0]->create_info.format
         };
-        Ref<RHIRenderPipeline> render_pipeline = RHI::GetRHIContext().rhi_create_render_pipeline(device, rp_desc);
+        pipeline = RHI::GetRHIContext().rhi_create_render_pipeline(device, rp_desc);
         RHI::GetRHIContext().rhi_free_shader_library(vs_shader);
         RHI::GetRHIContext().rhi_free_shader_library(ps_shader);
     }
+
     void Renderer::update(float DeltaTime)
     {
         raster_draw();
     }
+
     void Renderer::raster_draw()
     {
         // sync & reset
@@ -194,7 +196,43 @@ namespace Cyber
             .depth_stencil_attachment = nullptr
         };
         RHITextureBarrier draw_barrier = {
-
+            .texture = back_buffer,
+            .src_state = RHI_RESOURCE_STATE_UNDEFINED,
+            .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
         };
+        RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+        RHI::GetRHIContext().rhi_cmd_resource_barrier(cmd, barrier_desc0);
+        Ref<RHIRenderPassEncoder> rp_encoder = RHI::GetRHIContext().rhi_cmd_begin_render_pass(cmd, rp_desc);
+        RHI::GetRHIContext().rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+        RHI::GetRHIContext().rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+        RHI::GetRHIContext().rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
+        RHI::GetRHIContext().rhi_render_encoder_draw(rp_encoder, 3, 0);
+
+        RHITextureBarrier present_barrier = {
+            .texture = back_buffer,
+            .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
+            .dst_state = RHI_RESOURCE_STATE_PRESENT
+        };
+        RHI::GetRHIContext().rhi_cmd_end_render_pass(cmd);
+        RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+        RHI::GetRHIContext().rhi_cmd_resource_barrier(cmd, barrier_desc1);
+        RHI::GetRHIContext().rhi_cmd_end(cmd);
+
+        // submit
+        RHIQueueSubmitDesc submit_desc = {
+            .pCmds = &cmd,
+            .mCmdsCount = 1
+        };
+        RHI::GetRHIContext().rhi_submit_queue(queue, submit_desc);
+
+        // present
+        
+        RHIQueuePresentDesc present_desc = {
+            .swap_chain = swap_chain,
+            .wait_semaphores = nullptr,
+            .wait_semaphore_count = 0,
+            .index = backbuffer_index,
+        };
+        RHI::GetRHIContext().rhi_present_queue(queue, present_desc);
     }
 }

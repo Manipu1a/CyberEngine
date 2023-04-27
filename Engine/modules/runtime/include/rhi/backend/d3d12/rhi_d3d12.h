@@ -286,6 +286,8 @@ namespace Cyber
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;
         virtual void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc) override;
+        virtual void rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc) override;
+        virtual void rhi_wait_queue_idle(Ref<RHIQueue> queue) override;
         virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc) override;
         virtual void rhi_reset_command_pool(Ref<RHICommandPool> pPool) override;
         virtual void rhi_free_command_pool(Ref<RHICommandPool> pPool) override;
@@ -318,6 +320,7 @@ namespace Cyber
         virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
 
         virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc) override;
+        virtual void rhi_free_texture_view(Ref<RHITextureView> view) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
 

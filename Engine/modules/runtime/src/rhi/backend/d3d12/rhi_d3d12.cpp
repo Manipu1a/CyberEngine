@@ -473,6 +473,11 @@ namespace Cyber
         return tex_view;
     }
 
+    void RHI_D3D12::rhi_free_texture_view(Ref<RHITextureView> view)
+    {
+        
+    }
+
     Texture2DRHIRef RHI_D3D12::rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
@@ -768,6 +773,34 @@ namespace Cyber
             D3D12Util_SignalFence(dx_queue, dx_semaphore->dx_fence, dx_semaphore->fence_value++);
         }
     }
+
+    void RHI_D3D12::rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc)
+    {
+        RHISwapChain_D3D12* dx_swapchain = static_cast<RHISwapChain_D3D12*>(presentDesc.swap_chain.get());
+        HRESULT hr =  dx_swapchain->pDxSwapChain->Present(dx_swapchain->mDxSyncInterval, dx_swapchain->mFlags);
+
+        if(FAILED(hr))
+        {
+            CB_ERROR("Present failed!");
+            #if defined(_WIN32)
+
+            #endif
+        }
+    }
+    void RHI_D3D12::rhi_wait_queue_idle(Ref<RHIQueue> queue)
+    {
+        RHIQueue_D3D12* Queue = static_cast<RHIQueue_D3D12*>(queue.get());
+        RHIFence_D3D12* Fence = static_cast<RHIFence_D3D12*>(Queue->pFence.get());
+        D3D12Util_SignalFence(Queue, Fence->pDxFence, Fence->mFenceValue++);
+
+        uint64_t fence_value = Fence->mFenceValue - 1;
+        if(Fence->pDxFence->GetCompletedValue() < fence_value)
+        {
+            Fence->pDxFence->SetEventOnCompletion(fence_value, Fence->pDxWaitIdleFenceEvent);
+            WaitForSingleObject(Fence->pDxWaitIdleFenceEvent, INFINITE);
+        }
+    }
+
     // Command Objects
     void allocate_transient_command_allocator(RHICommandPool_D3D12* commandPool, Ref<RHIQueue> queue)
     {

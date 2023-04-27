@@ -122,6 +122,7 @@ namespace Cyber
         Ref<RHISurface> surface = nullptr;
         Ref<RHIFence> present_swmaphore = nullptr; 
         Ref<RHITextureView> views[BACK_BUFFER_COUNT];
+        Ref<RHIRenderPipeline> pipeline = nullptr;
         uint32_t backbuffer_index = 0;
 
 

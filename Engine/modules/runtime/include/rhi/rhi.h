@@ -536,7 +536,10 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueuePresentDesc
     {
-        
+        Ref<RHISwapChain> swap_chain;
+        const Ref<RHISemaphore>* wait_semaphores;
+        uint32_t wait_semaphore_count;
+        uint32_t index;
     };
 
     struct CYBER_RHI_API RHISwapChainCreateDesc
@@ -744,11 +747,19 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_instance!");
             return CreateRef<RHIInstance>();
         }
+        virtual void rhi_free_instance(InstanceRHIRef pInstance) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_instance!");
+        }
         // Device APIS
         virtual Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_device!");
             return CreateRef<RHIDevice>();
+        }
+        virtual void rhi_free_device(Ref<RHIDevice> pDevice) 
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_device!");
         }
         // API Object APIs
         virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
@@ -779,6 +790,10 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
             return CreateRef<RHISwapChain>();
         }
+        virtual void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_swap_chain!");
+        }
         virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
         {
             cyber_core_assert(false, "Empty implement rhi_enum_adapters!");
@@ -797,6 +812,14 @@ namespace Cyber
         virtual void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_submit_queue!");
+        }
+        virtual void rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc)
+        {
+            cyber_core_assert(false, "Empty implement rhi_present_queue!");
+        }
+        virtual void rhi_wait_queue_idle(Ref<RHIQueue> queue)
+        {
+            cyber_core_assert(false, "Empty implement rhi_wait_queue_idle!");
         }
         virtual void rhi_free_queue(Ref<RHIQueue> queue)
         {
@@ -831,7 +854,6 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_root_signature!");
             return CreateRef<RHIRootSignature>();
         }
-
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_descriptor_set!");
@@ -846,6 +868,10 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_render_pipeline!");
             return CreateRef<RHIRenderPipeline>();
         }
+        virtual void rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_render_pipeline!");
+        }
 
         // Resource APIs
         virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc)
@@ -853,7 +879,10 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_texture_view!");
             return CreateRef<RHITextureView>();
         }
-        
+        virtual void rhi_free_texture_view(Ref<RHITextureView> view)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_texture_view!");
+        }
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");
