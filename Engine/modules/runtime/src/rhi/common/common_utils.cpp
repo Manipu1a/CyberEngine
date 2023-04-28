@@ -246,4 +246,9 @@ namespace Cyber
         }
 
     }
+
+    bool rhi_util_pool_free_signature(struct RHIRootSignaturePool* pool, struct RHIRootSignature* signature)
+    {
+        
+    }
 }

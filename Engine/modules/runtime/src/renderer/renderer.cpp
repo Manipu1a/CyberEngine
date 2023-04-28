@@ -57,13 +57,28 @@ namespace Cyber
                 .usages = RHI_TVU_RTV_DSV,
                 .array_layer_count = 1
             };
-            views[i] = RHI::GetRHIContext().rhi_create_texture_view(device, view_desc);
+            views[i] = rhi_create_texture_view(device, view_desc);
         }
         create_render_pipeline();
     }
     void Renderer::finalize()
     {
-
+        rhi_wait_queue_idle(queue);
+        rhi_wait_fences(&present_fence, 1);
+        rhi_free_fence(present_fence);
+        for(uint32_t i = 0;i < swap_chain->mBufferCount; ++i)
+        {
+            rhi_free_texture_view(views[i]);
+        }
+        rhi_free_swap_chain(swap_chain);
+        rhi_free_surface(surface);
+        rhi_free_command_buffer(cmd);
+        rhi_free_command_pool(pool);
+        rhi_free_render_pipeline(pipeline);
+        rhi_free_root_signature(root_signature);
+        rhi_free_queue(queue);
+        rhi_free_device(device);
+        rhi_free_instance(instance);
     }
     void Renderer::create_gfx_objects(class Application* app)
     {
@@ -72,13 +87,13 @@ namespace Cyber
         instance_desc.enable_debug_layer = false;
         instance_desc.enable_gpu_based_validation = false;
         instance_desc.enable_set_name = true;
-        instance = RHI::GetRHIContext().rhi_create_instance(instance_desc);
+        instance = rhi_create_instance(instance_desc);
 
         // Filter adapters
         uint32_t adapter_count = 0;
-        RHI::GetRHIContext().rhi_enum_adapters(instance, nullptr, &adapter_count);
+        rhi_enum_adapters(instance, nullptr, &adapter_count);
         RHIAdapter adapters[64];
-        RHI::GetRHIContext().rhi_enum_adapters(instance, adapters, &adapter_count);
+        rhi_enum_adapters(instance, adapters, &adapter_count);
         adapter = CreateRef<RHIAdapter>(adapters[0]);
 
         // Create device
@@ -88,13 +103,13 @@ namespace Cyber
         DECLARE_ZERO(RHIDeviceCreateDesc, device_desc);
         device_desc.queue_group_count = 1;
         device_desc.queue_groups = { queue_group_desc };
-        device = RHI::GetRHIContext().rhi_create_device(adapter, device_desc);
-        queue = RHI::GetRHIContext().rhi_get_queue(device, RHI_QUEUE_TYPE_GRAPHICS, 0);
-        present_fence = RHI::GetRHIContext().rhi_create_fence(device);
+        device = rhi_create_device(adapter, device_desc);
+        queue = rhi_get_queue(device, RHI_QUEUE_TYPE_GRAPHICS, 0);
+        present_fence = rhi_create_fence(device);
 
         // Create swapchain
     #if defined (_WIN32) || defined (_WIN64)
-        surface = RHI::GetRHIContext().rhi_surface_from_hwnd(device, app->getWindow()->getNativeWindow());
+        surface = rhi_surface_from_hwnd(device, app->getWindow()->getNativeWindow());
     #elif defined(_APPLE_)
     #endif
         DECLARE_ZERO(RHISwapChainCreateDesc, chain_desc);
@@ -106,12 +121,12 @@ namespace Cyber
         chain_desc.mPresentQueue = queue;
         chain_desc.mPresentQueueCount = 1;
         chain_desc.mEnableVsync = true;
-        swap_chain = RHI::GetRHIContext().rhi_create_swap_chain(device, chain_desc);
+        swap_chain = rhi_create_swap_chain(device, chain_desc);
 
-        present_swmaphore = RHI::GetRHIContext().rhi_create_fence(device);
-        pool = RHI::GetRHIContext().rhi_create_command_pool(queue, CommandPoolCreateDesc());
+        present_swmaphore = rhi_create_fence(device);
+        pool = rhi_create_command_pool(queue, CommandPoolCreateDesc());
         CommandBufferCreateDesc cmd_buffer_desc = {.is_secondary = false};
-        cmd =  RHI::GetRHIContext().rhi_create_command_buffer(pool, cmd_buffer_desc);
+        cmd =  rhi_create_command_buffer(pool, cmd_buffer_desc);
     }
 
     void Renderer::create_render_pipeline()
@@ -147,7 +162,7 @@ namespace Cyber
           .shaders = pipeline_shader_create_desc,
           .shader_count = 2,
         };
-        Ref<RHIRootSignature> root_signature = RHI::GetRHIContext().rhi_create_root_signature(device, root_signature_create_desc);
+        Ref<RHIRootSignature> root_signature = rhi_create_root_signature(device, root_signature_create_desc);
         // create descriptor set
         RHIVertexLayout vertex_layout = {.attribute_count = 0};
         RHIRenderPipelineCreateDesc rp_desc = 
@@ -160,9 +175,9 @@ namespace Cyber
             .render_target_count = 1,
             .color_formats = &views[0]->create_info.format
         };
-        pipeline = RHI::GetRHIContext().rhi_create_render_pipeline(device, rp_desc);
-        RHI::GetRHIContext().rhi_free_shader_library(vs_shader);
-        RHI::GetRHIContext().rhi_free_shader_library(ps_shader);
+        pipeline = rhi_create_render_pipeline(device, rp_desc);
+        rhi_free_shader_library(vs_shader);
+        rhi_free_shader_library(ps_shader);
     }
 
     void Renderer::update(float DeltaTime)
@@ -173,16 +188,16 @@ namespace Cyber
     void Renderer::raster_draw()
     {
         // sync & reset
-        RHI::GetRHIContext().rhi_wait_fences(&present_fence, 1);
+        rhi_wait_fences(&present_fence, 1);
         RHIAcquireNextDesc acquire_desc = {
             .fence = present_fence
         };
-        backbuffer_index = RHI::GetRHIContext().rhi_acquire_next_image(swap_chain, acquire_desc);
+        backbuffer_index = rhi_acquire_next_image(swap_chain, acquire_desc);
         const auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
         const auto back_buffer_view = views[backbuffer_index];
-        RHI::GetRHIContext().rhi_reset_command_pool(pool);
+        rhi_reset_command_pool(pool);
         // record
-        RHI::GetRHIContext().rhi_cmd_begin(cmd);
+        rhi_cmd_begin(cmd);
         RHIColorAttachment screen_attachment = {
             .view = back_buffer_view,
             .load_action = RHI_LOAD_ACTION_CLEAR,
@@ -201,29 +216,29 @@ namespace Cyber
             .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
         };
         RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-        RHI::GetRHIContext().rhi_cmd_resource_barrier(cmd, barrier_desc0);
-        Ref<RHIRenderPassEncoder> rp_encoder = RHI::GetRHIContext().rhi_cmd_begin_render_pass(cmd, rp_desc);
-        RHI::GetRHIContext().rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-        RHI::GetRHIContext().rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
-        RHI::GetRHIContext().rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
-        RHI::GetRHIContext().rhi_render_encoder_draw(rp_encoder, 3, 0);
+        rhi_cmd_resource_barrier(cmd, barrier_desc0);
+        Ref<RHIRenderPassEncoder> rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
+        rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+        rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+        rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
+        rhi_render_encoder_draw(rp_encoder, 3, 0);
 
         RHITextureBarrier present_barrier = {
             .texture = back_buffer,
             .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
             .dst_state = RHI_RESOURCE_STATE_PRESENT
         };
-        RHI::GetRHIContext().rhi_cmd_end_render_pass(cmd);
+        rhi_cmd_end_render_pass(cmd);
         RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-        RHI::GetRHIContext().rhi_cmd_resource_barrier(cmd, barrier_desc1);
-        RHI::GetRHIContext().rhi_cmd_end(cmd);
+        rhi_cmd_resource_barrier(cmd, barrier_desc1);
+        rhi_cmd_end(cmd);
 
         // submit
         RHIQueueSubmitDesc submit_desc = {
             .pCmds = &cmd,
             .mCmdsCount = 1
         };
-        RHI::GetRHIContext().rhi_submit_queue(queue, submit_desc);
+        rhi_submit_queue(queue, submit_desc);
 
         // present
         
@@ -233,6 +248,6 @@ namespace Cyber
             .wait_semaphore_count = 0,
             .index = backbuffer_index,
         };
-        RHI::GetRHIContext().rhi_present_queue(queue, present_desc);
+        rhi_present_queue(queue, present_desc);
     }
 }

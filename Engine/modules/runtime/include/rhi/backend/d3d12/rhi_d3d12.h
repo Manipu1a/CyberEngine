@@ -315,6 +315,7 @@ namespace Cyber
         virtual void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex);
         
         virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc) override;
+        virtual void rhi_free_root_signature(Ref<RHIRootSignature> pRootSignature) override;
         virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc) override;
         virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count) override;
 
@@ -327,6 +328,9 @@ namespace Cyber
         virtual void rhi_free_texture_view(Ref<RHITextureView> view) override;
         virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) override;
         virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) override;
+        virtual void rhi_free_buffer(Ref<RHIBuffer> buffer) override;
+        virtual void rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range) override;
+        virtual void rhi_unmap_buffer(Ref<RHIBuffer> buffer) override;
 
         virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc) override;
         virtual void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary) override;

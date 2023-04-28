@@ -1560,6 +1560,16 @@ namespace Cyber
         return dxRootSignature;
     }
 
+    void RHI_D3D12::rhi_free_root_signature(Ref<RHIRootSignature> pRootSignature)
+    {
+        RHIRootSignature_D3D12* dxRootSignature = static_cast<RHIRootSignature_D3D12*>(pRootSignature.get());
+        // [RS POOL] Free
+        if(dxRootSignature->pool)
+        {
+            RHIUTIL_
+        }
+    }
+
     uint32_t descriptor_count_needed(RHIShaderResource* resource)
     {
         if(resource->dimension == RHI_TEX_DIMENSION_1D_ARRAY ||
@@ -2235,6 +2245,45 @@ namespace Cyber
         pBuffer->mMemoryUsage = pDesc.mMemoryUsage;
         pBuffer->mDescriptors = pDesc.mDescriptors;
         return pBuffer;
+    }
+
+    void RHI_D3D12::rhi_free_buffer(Ref<RHIBuffer> buffer)
+    {
+        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
+        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(dx_buffer->device.get());
+        if(dx_buffer->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+        {
+            uint32_t handleCount = ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_UNIFORM_BUFFER) ? 1 : 0) +
+                                    ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_RW_BUFFER) ? 1 : 0) + 
+                                    ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_BUFFER) ? 1 : 0);
+            D3D12Util_ReturnDescriptorHandles(dx_device->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], dx_buffer->mDxDescriptorHandles, handleCount);
+        }
+        SAFE_RELEASE(dx_buffer->pDxAllocation);
+        SAFE_RELEASE(dx_buffer->pDxResource);
+        buffer.reset();
+    }
+
+    void RHI_D3D12::rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range)
+    {
+        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
+        cyber_assert(dx_buffer->mMemoryUsage != RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY, "Trying to map non-cpu accessible buffer");
+
+        D3D12_RANGE dxRange = {0, dx_buffer->mSize};
+        if(range)
+        {
+            dxRange.Begin += range->offset;
+            dxRange.End = dxRange.Begin + range->size;
+        }
+        CHECK_HRESULT(dx_buffer->pDxResource->Map(0, &dxRange, &dx_buffer->pCpuMappedAddress));
+    }
+
+    void RHI_D3D12::rhi_unmap_buffer(Ref<RHIBuffer> buffer)
+    {
+        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
+        cyber_assert(dx_buffer->mMemoryUsage != RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY, "Trying to map non-cpu accessible buffer");
+
+        dx_buffer->pDxResource->Unmap(0, nullptr);
+        dx_buffer->pCpuMappedAddress = nullptr;
     }
 
     ShaderLibraryRHIRef RHI_D3D12::rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
