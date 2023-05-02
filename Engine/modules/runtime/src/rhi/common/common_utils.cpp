@@ -1,5 +1,4 @@
 #include "common_utils.h"
-#include "rhi/rhi.h"
 #include "EASTL/vector.h"
 #include <stdint.h>
 #include <string.h>

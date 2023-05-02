@@ -155,8 +155,8 @@ namespace Cyber
         RHIShaderResource* static_samplers;
         uint32_t static_sampler_count;
         ERHIPipelineType pipeline_type;
-        RHIRootSignaturePool* pool;
-        RHIRootSignature* pool_next;
+        Ref<RHIRootSignaturePool> pool;
+        Ref<RHIRootSignature> pool_next;
     };
     
     struct CYBER_RHI_API RHIDescriptorSet
@@ -584,11 +584,16 @@ namespace Cyber
         ERHIShaderStage stage;
     };
 
+    struct CYBER_RHI_API RHIRootSignaturePoolCreateDesc
+    {
+        const char8_t* name;
+    };
+
     struct CYBER_RHI_API RHIRootSignatureCreateDesc
     {
         Ref<RHIPipelineShaderCreateDesc>* shaders;
         uint32_t shader_count;
-        const RHISampler** static_samplers;
+        RHISampler** static_samplers;
         const char8_t* const* static_sampler_names;
         uint32_t static_sampler_count;
         const char8_t* const* push_constant_names;
