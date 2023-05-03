@@ -335,6 +335,7 @@ namespace Cyber
     struct RHITextureView
     {
         RHITextureViewCreateDesc create_info;
+        Ref<RHIDevice> device;
     };
 
     struct CYBER_RHI_API RHISampler 
@@ -875,7 +876,7 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_create_descriptor_set!");
             return CreateRef<RHIDescriptorSet>();
         }
-        virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count)
+        virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count)
         {
             cyber_core_assert(false, "Empty implement rhi_update_descriptor_set!");
         }
@@ -1119,7 +1120,7 @@ namespace Cyber
     {
         return RHI::GetRHIContext().rhi_create_descriptor_set(device, descriptorSetDesc);
     }
-    FORCEINLINE void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData& updateDesc, uint32_t count)
+    FORCEINLINE void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count)
     {
         RHI::GetRHIContext().rhi_update_descriptor_set(set, updateDesc, count);
     }

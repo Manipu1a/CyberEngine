@@ -32,7 +32,6 @@
 #include <functional>
 #include <tuple>
 #include "phmap_bits.h"
-
 // ---------------------------------------------------------------
 // Absl forward declaration requires global scope.
 // ---------------------------------------------------------------

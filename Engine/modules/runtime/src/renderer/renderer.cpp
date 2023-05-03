@@ -30,8 +30,7 @@
 
 namespace Cyber
 {
-    Renderer::Renderer(HINSTANCE hInstance)
-        : mhAppInst(hInstance)
+    Renderer::Renderer()
     {
 
     }
@@ -61,6 +60,7 @@ namespace Cyber
         }
         create_render_pipeline();
     }
+
     void Renderer::finalize()
     {
         rhi_wait_queue_idle(queue);

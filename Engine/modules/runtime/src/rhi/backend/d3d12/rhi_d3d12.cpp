@@ -1,5 +1,6 @@
 #include "rhi/backend/d3d12/rhi_d3d12.h"
 #include "EASTL/vector.h"
+#include <EASTL/hash_map.h>
 #include <EASTL/string_hash_map.h>
 #include "d3d12_utils.h"
 #include "CyberLog/Log.h"
@@ -66,7 +67,7 @@ namespace Cyber
             const auto type = queueGroup.queue_type;
 
             dx_device_ref->pCommandQueueCounts[type] = queueGroup.queue_count;
-            dx_device_ref->ppCommandQueues[type] = (ID3D12CommandQueue*)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.queue_count);
+            dx_device_ref->ppCommandQueues[type] = (ID3D12CommandQueue**)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.queue_count);
 
             for(uint32_t j = 0u; j < queueGroup.queue_count; j++)
             {
@@ -207,9 +208,9 @@ namespace Cyber
         }
         D3D12Util_FreeDescriptorHeap(dx_device->mCbvSrvUavHeaps[0]);
         D3D12Util_FreeDescriptorHeap(dx_device->mSamplerHeaps[0]);
-        cyber_free_container(dx_device->mCPUDescriptorHeaps);
-        cyber_free_container(dx_device->mCbvSrvUavHeaps);
-        cyber_free_container(dx_device->mSamplerHeaps);
+        cyber_free_map(dx_device->mCPUDescriptorHeaps);
+        cyber_free_map(dx_device->mCbvSrvUavHeaps);
+        cyber_free_map(dx_device->mSamplerHeaps);
         cyber_free(dx_device->pNullDescriptors);
         // Release D3D12 Device
         SAFE_RELEASE(dx_device->pDxDevice);
@@ -509,7 +510,7 @@ namespace Cyber
     void RHI_D3D12::rhi_free_texture_view(Ref<RHITextureView> view)
     {
         RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(view.get());
-        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(tex_view->mDevice.get());
+        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(tex_view->device.get());
         const auto usages = tex_view->create_info.usages;
         const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->create_info.format);
         if(tex_view->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
@@ -798,7 +799,7 @@ namespace Cyber
         }
     }
 
-    void rhi_free_fence(Ref<RHIFence> fence)
+    void RHI_D3D12::rhi_free_fence(Ref<RHIFence> fence)
     {
         RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fence.get());
         SAFE_RELEASE(dxFence->pDxFence);
@@ -811,7 +812,7 @@ namespace Cyber
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice.get());
         RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
-        dxQueue->pCommandQueue = dxDevice->ppCommandQueues[type];
+        dxQueue->pCommandQueue = dxDevice->ppCommandQueues[type][index];
         dxQueue->pFence = rhi_create_fence(pDevice);
         return CreateRef<RHIQueue_D3D12>(*dxQueue);
     }
@@ -975,7 +976,7 @@ namespace Cyber
         CHECK_HRESULT(cmd->pDxCmdList->Close());
     }
 
-    void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
+    void RHI_D3D12::rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
     {
         RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(cmd.get());
         const uint32_t barriers_count = barrierDesc.buffer_barrier_count + barrierDesc.texture_barrier_count;
@@ -1436,7 +1437,7 @@ namespace Cyber
         ERHIShaderStages shaderStages = 0;
         for(uint32_t i = 0; i < rootSigDesc.shader_count; ++i)
         {
-            RHIPipelineShaderCreateDesc* shader_desc = rootSigDesc.shaders + i;
+            RHIPipelineShaderCreateDesc* shader_desc = (rootSigDesc.shaders + i)->get();
             shaderStages |= shader_desc->stage;
         }
 
@@ -1562,12 +1563,7 @@ namespace Cyber
 
     void RHI_D3D12::rhi_free_root_signature(Ref<RHIRootSignature> pRootSignature)
     {
-        RHIRootSignature_D3D12* dxRootSignature = static_cast<RHIRootSignature_D3D12*>(pRootSignature.get());
-        // [RS POOL] Free
-        if(dxRootSignature->pool)
-        {
-            RHIUTIL_
-        }
+
     }
 
     uint32_t descriptor_count_needed(RHIShaderResource* resource)
@@ -1920,7 +1916,7 @@ namespace Cyber
         cyber_free(pPipeline);
     }
 
-    void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateData, uint32_t count)
+    void RHI_D3D12::rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateData, uint32_t count)
     {
         RHIDescriptorSet_D3D12* dxSet = static_cast<RHIDescriptorSet_D3D12*>(set);
         const RHIRootSignature_D3D12* dxRootSignature = static_cast<const RHIRootSignature_D3D12*>(set->root_signature.get());
@@ -2246,46 +2242,18 @@ namespace Cyber
         pBuffer->mDescriptors = pDesc.mDescriptors;
         return pBuffer;
     }
-
     void RHI_D3D12::rhi_free_buffer(Ref<RHIBuffer> buffer)
     {
-        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
-        RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(dx_buffer->device.get());
-        if(dx_buffer->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-        {
-            uint32_t handleCount = ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_UNIFORM_BUFFER) ? 1 : 0) +
-                                    ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_RW_BUFFER) ? 1 : 0) + 
-                                    ((dx_buffer->mDescriptors & RHI_RESOURCE_TYPE_BUFFER) ? 1 : 0);
-            D3D12Util_ReturnDescriptorHandles(dx_device->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], dx_buffer->mDxDescriptorHandles, handleCount);
-        }
-        SAFE_RELEASE(dx_buffer->pDxAllocation);
-        SAFE_RELEASE(dx_buffer->pDxResource);
-        buffer.reset();
-    }
 
+    }
     void RHI_D3D12::rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range)
     {
-        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
-        cyber_assert(dx_buffer->mMemoryUsage != RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY, "Trying to map non-cpu accessible buffer");
 
-        D3D12_RANGE dxRange = {0, dx_buffer->mSize};
-        if(range)
-        {
-            dxRange.Begin += range->offset;
-            dxRange.End = dxRange.Begin + range->size;
-        }
-        CHECK_HRESULT(dx_buffer->pDxResource->Map(0, &dxRange, &dx_buffer->pCpuMappedAddress));
     }
-
     void RHI_D3D12::rhi_unmap_buffer(Ref<RHIBuffer> buffer)
     {
-        RHIBuffer_D3D12* dx_buffer = static_cast<RHIBuffer_D3D12*>(buffer.get());
-        cyber_assert(dx_buffer->mMemoryUsage != RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY, "Trying to map non-cpu accessible buffer");
 
-        dx_buffer->pDxResource->Unmap(0, nullptr);
-        dx_buffer->pCpuMappedAddress = nullptr;
     }
-
     ShaderLibraryRHIRef RHI_D3D12::rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device.get());

@@ -3,8 +3,8 @@
 
 namespace Cyber
 {
-    Scope<Cyber::Window> Window::createWindow(const WindowDesc& desc)
+    Ref<Cyber::Window> Window::createWindow(const WindowDesc& desc)
     {
-        return CreateScope<WindowsWindow>(desc);
+        return CreateRef<WindowsWindow>(desc);
     }
 }

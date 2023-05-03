@@ -76,7 +76,8 @@ int WINAPI WinMain(HINSTANCE hInstance,
     desc.mWndH = 720;
     desc.hInstance = hInstance;
     desc.cmdShow = nCmdShow;
-    Cyber::GameApplication app(desc);
+    Cyber::GameApplication app;
+    app.initialize(desc);
     app.Run();
 
     FreeConsole();

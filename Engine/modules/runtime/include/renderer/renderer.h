@@ -42,21 +42,10 @@ namespace Cyber
 
     class Renderer
     {
-    protected:
-        Renderer(HINSTANCE hInstance);
-        virtual ~Renderer();
     public:
-        HINSTANCE RendererInst() const;
-        HWND MainWnd() const;
-        float AspectRatio() const;
+        Renderer();
+        virtual ~Renderer();
 
-        bool Get4xMsaaState() const;
-        void Set4xMsaaState(bool value);
-
-        int Run();
-
-        virtual bool Initialize();
-        virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
     public:
         virtual void initialize(class Application* app, const RendererDesc& desc);
         virtual void finalize();
@@ -65,37 +54,6 @@ namespace Cyber
         
         virtual void update(float DeltaTime);
         virtual void raster_draw();
-    protected:
-        virtual void CreateRtvAndDsvDescriptorHeaps();
-        virtual void OnResize();
-        virtual void Update(float DeltaTime);
-        virtual void Draw(float DeltaTime);
-
-        bool InitMainWindow();
-        bool InitDirect3D();
-        void CreateCommandObjects();
-        void CreateSwapChain();
-
-        void FlushCommandQueue();
-
-        ID3D12Resource* CurrentBavkBuffer() const;
-        D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView() const;
-        D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView() const;
-
-        void CalculateFrameStats();
-
-        void LogAdapters();
-        void LogAdapterOutputs(IDXGIAdapter* adapter);
-        void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
-        
-        void BuildDescriptorHeaps();
-        void BuildConstantBuffers();
-        void BuildRootSignature();
-        void BuildShadersAndInputLayout();
-        void BuildBoxGeometry();
-        void BuildPSO();
-        void Draw();
-
     public:
         Ref<RHIDevice> GetDevice() { return device; }
         
@@ -124,7 +82,6 @@ namespace Cyber
         Ref<RHITextureView> views[BACK_BUFFER_COUNT];
         Ref<RHIRenderPipeline> pipeline = nullptr;
         uint32_t backbuffer_index = 0;
-
 
         ID3D12CommandQueue* mCommandQueue;
         ID3D12CommandAllocator* mDirectCmdListAlloc;

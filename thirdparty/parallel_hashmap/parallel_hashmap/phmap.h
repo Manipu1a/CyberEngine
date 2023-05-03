@@ -120,6 +120,8 @@
 #include "phmap_utils.h"
 #include "phmap_base.h"
 
+#include <EASTL/shared_ptr.h>
+
 #if PHMAP_HAVE_STD_STRING_VIEW
     #include <string_view>
 #endif
@@ -4455,6 +4457,11 @@ private:
     static const T* ToPtr(const std::shared_ptr<U>& ptr) {
         return ptr.get();
     }
+
+    template <class U>
+    static const T* ToPtr(const eastl::shared_ptr<U>& ptr) {
+        return ptr.get();
+    }
 };
 
 template <class T, class D>
@@ -4462,6 +4469,9 @@ struct HashEq<std::unique_ptr<T, D>> : HashEq<T*> {};
 
 template <class T>
 struct HashEq<std::shared_ptr<T>> : HashEq<T*> {};
+
+template <class T>
+struct HashEq<eastl::shared_ptr<T>> : HashEq<T*> {};
 
 namespace hashtable_debug_internal {
 

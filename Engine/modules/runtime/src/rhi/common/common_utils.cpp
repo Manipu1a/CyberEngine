@@ -39,12 +39,12 @@ namespace Cyber
         // Pick shader reflection data
         for(uint32_t i = 0; i < desc.shader_count; ++i)
         {
-            const RHIPipelineShaderCreateDesc& shader_desc = desc.shaders[i];
+            const RHIPipelineShaderCreateDesc* shader_desc = desc.shaders[i].get();
             // Find shader reflection data
-            for(uint32_t j = 0; j < shader_desc.library->entry_count; ++j)
+            for(uint32_t j = 0; j < shader_desc->library->entry_count; ++j)
             {
-                RHIShaderReflection& temp_entry_reflection = shader_desc.library->entry_reflections[j];
-                if(strcmp(shader_desc.entry, temp_entry_reflection.entry_name) == 0)
+                RHIShaderReflection& temp_entry_reflection = shader_desc->library->entry_reflections[j];
+                if(strcmp(shader_desc->entry, temp_entry_reflection.entry_name) == 0)
                 {
                     entery_reflection[i] = &temp_entry_reflection;
                     break;
@@ -53,7 +53,7 @@ namespace Cyber
             if(entery_reflection[i] == nullptr)
             {
                 // If we didn't find the entry point, use the first one
-                entery_reflection[i] = &shader_desc.library->entry_reflections[0];
+                entery_reflection[i] = &shader_desc->library->entry_reflections[0];
             }
         }
 
@@ -248,6 +248,6 @@ namespace Cyber
 
     bool rhi_util_pool_free_signature(struct RHIRootSignaturePool* pool, struct RHIRootSignature* signature)
     {
-        
+        return false;
     }
 }

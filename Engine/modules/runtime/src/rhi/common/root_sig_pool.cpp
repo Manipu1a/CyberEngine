@@ -23,7 +23,7 @@ namespace Cyber
         {
             return Cyber::cyber_hash(this, sizeof(RSCharacteristic), (size_t)pipeline_type);
         }
-        struct hasher{ inline size_t operator()(const RSCharacteristic& val) const { (size_t)val;}};
+        struct hasher{ inline size_t operator()(const RSCharacteristic& val) const { return (size_t)val;}};
         struct RSTResource
         {
             ERHIResourceType type;
