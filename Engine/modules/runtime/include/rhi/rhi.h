@@ -181,7 +181,7 @@ namespace Cyber
     struct CYBER_RHI_API RHIVertexInput
     {
         // resource name
-        const char* name;
+        const char8_t* name;
         const char8_t* semantics;
         ERHIFormat format;
     };
@@ -196,7 +196,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIShaderReflection
     {
-        const char* entry_name;
+        const char8_t* entry_name;
         char* name_pool;
         RHIVertexInput* vertex_inputs;
         RHIShaderResource* shader_resources;
@@ -780,6 +780,10 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_surface_from_hwnd!");
             return CreateRef<RHISurface>();
         }
+        virtual void rhi_free_surface(Ref<RHISurface> pSurface)
+        {
+            cyber_core_assert(false, "Empty implement rhi_free_surface!");
+        }
         virtual Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
@@ -1032,6 +1036,10 @@ namespace Cyber
     FORCEINLINE Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
     {
         return RHI::GetRHIContext().rhi_surface_from_hwnd(pDevice, hwnd);
+    }
+    FORCEINLINE void rhi_free_surface(Ref<RHISurface> surface)
+    {
+        RHI::GetRHIContext().rhi_free_surface(surface);
     }
     FORCEINLINE Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
     {

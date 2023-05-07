@@ -315,7 +315,7 @@ namespace Cyber
     }
 
     // Shader Reflection
-    const char8_t* D3DShaderEntryName = "D3D12";
+    const char8_t* D3DShaderEntryName = u8"D3D12";
     static ERHIResourceType gD3D12_TO_DESCRIPTOR[] = {
         RHI_RESOURCE_TYPE_UNIFORM_BUFFER,   // D3D_SIT_CBUFFER
         RHI_RESOURCE_TYPE_BUFFER,           // D3D_SIT_TBUFFER
@@ -386,7 +386,7 @@ namespace Cyber
             reflection->shader_resources[i].name_hash = rhi_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
             
             // We are very sure it's windows platform
-            strcpy_s((char8_t*)reflection->shader_resources[i].name, source_len + 1, bindDesc.Name);
+            strcpy_s((char*)reflection->shader_resources[i].name, source_len + 1, bindDesc.Name);
             reflection->shader_resources[i].type = gD3D12_TO_DESCRIPTOR[bindDesc.Type];
             reflection->shader_resources[i].set = bindDesc.Space;
             reflection->shader_resources[i].binding = bindDesc.BindPoint;
@@ -438,9 +438,9 @@ namespace Cyber
 
                 reflection->vertex_inputs[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1));
                 if(hasParamIndex)
-                    sprintf((char8_t*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
+                    sprintf((char*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
                 else
-                    sprintf((char8_t*)reflection->vertex_inputs[i].name, "%s", paramDesc.SemanticName);
+                    sprintf((char*)reflection->vertex_inputs[i].name, "%s", paramDesc.SemanticName);
                 const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
                 reflection->vertex_inputs[i].format = gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)];
             }

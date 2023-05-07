@@ -22,8 +22,9 @@
 #define CYBER_EXTERN_C
 #define CYBER_CONSTEXPR
 #endif
-
-
+#ifdef __cplusplus
+#define CYBER_UTF8(str) u8##str
+#endif
 #ifdef __cplusplus
 #define CYBER_NOEXCEPT noexcept
 #else

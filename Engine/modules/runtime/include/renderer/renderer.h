@@ -1,7 +1,5 @@
 #pragma once
 
-#include "d3d12util.h"
-#include "UploadBuffer.h"
 #include <d3d12.h>
 #include <d3dcommon.h>
 #include <dxgiformat.h>
@@ -15,6 +13,7 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 #include "rhi/rhi.h"
+#include "platform/configure.h"
 
 namespace Cyber
 {
@@ -81,6 +80,7 @@ namespace Cyber
         Ref<RHIFence> present_swmaphore = nullptr; 
         Ref<RHITextureView> views[BACK_BUFFER_COUNT];
         Ref<RHIRenderPipeline> pipeline = nullptr;
+        Ref<RHIRootSignature> root_signature = nullptr;
         uint32_t backbuffer_index = 0;
 
         ID3D12CommandQueue* mCommandQueue;
@@ -96,8 +96,6 @@ namespace Cyber
 
         ID3D12RootSignature* mRootSignature = nullptr;
         ID3D12DescriptorHeap* mCbvHeap = nullptr;
-        std::unique_ptr<UploadBuffer<ObjectConstants>> mObjectCB = nullptr;
-        std::unique_ptr<MeshGeometry> mBoxGeo = nullptr;
 
         ID3DBlob* mvsByteCode = nullptr;
         ID3DBlob* mpsByteCode = nullptr;

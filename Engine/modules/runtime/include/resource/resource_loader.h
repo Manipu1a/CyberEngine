@@ -18,11 +18,11 @@ namespace Cyber
         
         struct ShaderStageLoadDesc
         {
-            const char* file_name;
+            const char8_t* file_name;
             ERHIShaderStage stage;
             ShaderMacro* macros;
             uint32_t macro_count;
-            const char* entry_point_name;
+            const char8_t* entry_point_name;
             EShaderStageLoadFlags flags;
         };
 

@@ -13,7 +13,7 @@ namespace Cyber
             return true;
         for(uint32_t i = 0;i < desc.push_constant_count; ++i)
         {
-            if(strcmp(resource.name, desc.push_constant_names[i]) == 0)
+            if(strcmp((char*)resource.name, (char*)desc.push_constant_names[i]) == 0)
             {
                 return true;
             }
@@ -25,7 +25,7 @@ namespace Cyber
     {
         for(uint32_t i = 0; i < desc.static_sampler_count; ++i)
         {
-            if(strcmp(resource.name, desc.static_sampler_names[i]) == 0)
+            if(strcmp((char*)resource.name, (char*)desc.static_sampler_names[i]) == 0)
             {
                 return resource.type == RHI_RESOURCE_TYPE_SAMPLER;
             }
@@ -44,7 +44,7 @@ namespace Cyber
             for(uint32_t j = 0; j < shader_desc->library->entry_count; ++j)
             {
                 RHIShaderReflection& temp_entry_reflection = shader_desc->library->entry_reflections[j];
-                if(strcmp(shader_desc->entry, temp_entry_reflection.entry_name) == 0)
+                if(strcmp((char*)shader_desc->entry, (char*)temp_entry_reflection.entry_name) == 0)
                 {
                     entery_reflection[i] = &temp_entry_reflection;
                     break;

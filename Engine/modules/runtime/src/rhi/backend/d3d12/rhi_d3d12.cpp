@@ -1508,7 +1508,7 @@ namespace Cyber
                 for(uint32_t j = 0; j < rootSigDesc.static_sampler_count; ++j)
                 {
                     auto input_slot = (RHISampler_D3D12*)rootSigDesc.static_samplers[i];
-                    if(strcmp(rst_slot.name, rootSigDesc.static_sampler_names[j]) == 0)
+                    if(strcmp((char*)rst_slot.name, (char*)rootSigDesc.static_sampler_names[j]) == 0)
                     {
                         D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->dxSamplerDesc;
                         staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
@@ -1692,16 +1692,16 @@ namespace Cyber
                 const RHIVertexAttribute* attribute = &pipelineDesc.vertex_layout->attributes[attrib_index];
                 for(uint32_t index = 0; index < attribute->array_size; ++index)
                 {
-                    input_elements[input_element_count].SemanticName = attribute->semantic_name;
-                    if(semantic_index_map.find(attribute->semantic_name) == semantic_index_map.end())
+                    input_elements[input_element_count].SemanticName = (char*)attribute->semantic_name;
+                    if(semantic_index_map.find((char*)attribute->semantic_name) == semantic_index_map.end())
                     {
-                        semantic_index_map[attribute->semantic_name] = 0;
+                        semantic_index_map[(char*)attribute->semantic_name] = 0;
                     }
                     else 
                     {
-                        semantic_index_map[attribute->semantic_name]++;
+                        semantic_index_map[(char*)attribute->semantic_name]++;
                     }
-                    input_elements[input_element_count].SemanticIndex = semantic_index_map[attribute->semantic_name];
+                    input_elements[input_element_count].SemanticIndex = semantic_index_map[(char*)attribute->semantic_name];
                     input_elements[input_element_count].Format = DXGIUtil_TranslatePixelFormat(attribute->format);
                     input_elements[input_element_count].InputSlot = attribute->binding;
                     input_elements[input_element_count].AlignedByteOffset = attribute->offset + index * FormatUtil_BitSizeOfBlock(attribute->format) / 8;
@@ -1933,7 +1933,7 @@ namespace Cyber
             uint32_t heapOffset = 0;
             if(pParam->name != nullptr)
             {
-                size_t argNameHash = rhi_name_hash(pParam->name, strlen(pParam->name));
+                size_t argNameHash = rhi_name_hash(pParam->name, strlen((char*)pParam->name));
                 for(uint32_t j = 0;j < paramTable->resource_count; ++j)
                 {
                     if(paramTable->resources[j].name_hash == argNameHash)

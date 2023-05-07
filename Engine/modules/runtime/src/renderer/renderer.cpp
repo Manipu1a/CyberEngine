@@ -30,6 +30,8 @@
 
 namespace Cyber
 {
+    #define UTF8(str) u8##str
+
     Renderer::Renderer()
     {
 
@@ -50,10 +52,10 @@ namespace Cyber
         {
             RHITextureViewCreateDesc view_desc = {
                 .texture = swap_chain->mBackBuffers[i],
-                .aspects = RHI_TVA_COLOR,
-                .dimension = RHI_TEX_DIMENSION_2D,
                 .format = (ERHIFormat)swap_chain->mBackBuffers[i]->mFormat,
                 .usages = RHI_TVU_RTV_DSV,
+                .aspects = RHI_TVA_COLOR,
+                .dimension = RHI_TEX_DIMENSION_2D,
                 .array_layer_count = 1
             };
             views[i] = rhi_create_texture_view(device, view_desc);
@@ -135,18 +137,18 @@ namespace Cyber
         ResourceLoader::ShaderLoadDesc vs_load_desc = {};
         vs_load_desc.target = shader_target_6_0;
         vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = "",
+            .file_name = CYBER_UTF8(""),
             .stage = RHI_SHADER_STAGE_VERT,
-            .entry_point_name = "main",
+            .entry_point_name = CYBER_UTF8("main")
         };
         Ref<RHIShaderLibrary> vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
 
         ResourceLoader::ShaderLoadDesc ps_load_desc = {};
         ps_load_desc.target = shader_target_6_0;
         ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = "",
+            .file_name = CYBER_UTF8(""),
             .stage = RHI_SHADER_STAGE_FRAG,
-            .entry_point_name = "main",
+            .entry_point_name = CYBER_UTF8("main"),
         };
         Ref<RHIShaderLibrary> ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
 
@@ -154,26 +156,26 @@ namespace Cyber
         Ref<RHIPipelineShaderCreateDesc> pipeline_shader_create_desc[2];
         pipeline_shader_create_desc[0]->stage = RHI_SHADER_STAGE_VERT;
         pipeline_shader_create_desc[0]->library = vs_shader;
-        pipeline_shader_create_desc[0]->entry = "main";
+        pipeline_shader_create_desc[0]->entry = CYBER_UTF8("main");
         pipeline_shader_create_desc[1]->stage = RHI_SHADER_STAGE_FRAG;
         pipeline_shader_create_desc[1]->library = ps_shader;
-        pipeline_shader_create_desc[1]->entry = "main";
+        pipeline_shader_create_desc[1]->entry = CYBER_UTF8("main");
         RHIRootSignatureCreateDesc root_signature_create_desc = {
           .shaders = pipeline_shader_create_desc,
           .shader_count = 2,
         };
-        Ref<RHIRootSignature> root_signature = rhi_create_root_signature(device, root_signature_create_desc);
+        root_signature = rhi_create_root_signature(device, root_signature_create_desc);
         // create descriptor set
         RHIVertexLayout vertex_layout = {.attribute_count = 0};
         RHIRenderPipelineCreateDesc rp_desc = 
         {
             .root_signature = root_signature,
-            .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
-            .vertex_layout = &vertex_layout,
             .vertex_shader = pipeline_shader_create_desc[0],
             .fragment_shader = pipeline_shader_create_desc[1],
+            .vertex_layout = &vertex_layout,
+            .color_formats = &views[0]->create_info.format,
             .render_target_count = 1,
-            .color_formats = &views[0]->create_info.format
+            .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
         };
         pipeline = rhi_create_render_pipeline(device, rp_desc);
         rhi_free_shader_library(vs_shader);
@@ -205,10 +207,10 @@ namespace Cyber
             .clear_value = fastclear_0000
         };
         RHIRenderPassDesc rp_desc = {
-            .render_target_count = 1,
             .sample_count = RHI_SAMPLE_COUNT_1,
             .color_attachments = &screen_attachment,
-            .depth_stencil_attachment = nullptr
+            .depth_stencil_attachment = nullptr,
+            .render_target_count = 1,
         };
         RHITextureBarrier draw_barrier = {
             .texture = back_buffer,

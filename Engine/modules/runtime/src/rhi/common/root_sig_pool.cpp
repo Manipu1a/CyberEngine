@@ -55,7 +55,7 @@ namespace Cyber
     {
     public:
         RHIRootSignaturePoolImpl(const char8_t* name)
-            : name(name)
+            : name((const char*)name)
         {
 
         }
@@ -102,7 +102,7 @@ namespace Cyber
             {
                 for(uint32_t j = 0; j < desc->static_sampler_count; ++j)
                 {
-                    if(strcmp(desc->static_sampler_names[j], RSTables->static_samplers[i].name) == 0)
+                    if(strcmp((char*)desc->static_sampler_names[j], (char*)RSTables->static_samplers[i].name) == 0)
                     {
                         RSCharacteristic::StaticSampler s = {};
                         s.set = RSTables->static_samplers[i].set;
