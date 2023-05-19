@@ -5,7 +5,7 @@ namespace Cyber
 {
     RHI* RHI::gloablRHI = nullptr;
 
-   /* void RHI::createRHI(ERHIBackend backend)
+   void RHI::createRHI(ERHIBackend backend)
     {
         gloablRHI = nullptr;
         
@@ -15,5 +15,5 @@ namespace Cyber
         }
 
         cyber_assert(gloablRHI, "RHI for platform [0] initialize failed!", backend);
-    }*/
+    }
 }

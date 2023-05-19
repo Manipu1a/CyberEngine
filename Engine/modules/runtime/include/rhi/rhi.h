@@ -357,7 +357,7 @@ namespace Cyber
         /// Size of each element (in bytes) in the buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
         uint64_t mStructStride;
         /// Debug name used in gpu profile
-        const char* pName;
+        const char8_t* pName;
         uint32_t* pSharedNodeIndices;
         /// Alignment
         uint32_t mAlignment;
@@ -741,7 +741,6 @@ namespace Cyber
 
     class CYBER_RHI_API RHI
     {
-
     public:
         static void createRHI(ERHIBackend backend);
         inline static RHI& GetRHIContext()

@@ -1,11 +1,12 @@
 #include "resource/resource_loader.h"
 #include "EASTL/EABase/eabase.h"
 #include "EASTL/string.h"
-#include <corecrt_wstdio.h>
+//#include <corecrt_wstdio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <vcruntime.h>
 #include "CyberLog/Log.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -17,7 +18,7 @@ namespace Cyber
             fseek(f, 0, SEEK_END);
             *length = ftell(f);
             fseek(f, 0, SEEK_SET);
-            *bytes = (char8_t*)cb_malloc(*length);
+            *bytes = (char8_t*)cyber_malloc(*length);
             fread(*bytes, *length, 1, f);
             fclose(f);
             return true;
@@ -31,12 +32,12 @@ namespace Cyber
             const char* rendererApi = "DX12";
             eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
 
-            CB_INFO("Compiling shader in runtime: [0] -> '[1]' macroCount=[2]", "DX12", loadDesc.entry_point_name, macroCount);
+            CB_INFO("Compiling shader in runtime: DX12 -> '[0]' macroCount=[1]", (char*)loadDesc.entry_point_name, macroCount);
             load_shader_source_file(fileNameAPI.c_str(), &bytes, &length);
             libraryDesc->code = bytes;
             libraryDesc->code_size = length;
             libraryDesc->stage = loadDesc.stage;
-            libraryDesc->name = "ShaderLibrary";
+            libraryDesc->name = CYBER_UTF8("ShaderLibrary");
             eastl::string shaderDefines = "";
 
             // Apply user specified macros
@@ -64,12 +65,12 @@ namespace Cyber
             {
                 if(desc.stage_load_desc.file_name && desc.stage_load_desc.file_name[0] != '\0')
                 {
-                    const char* fileName = desc.stage_load_desc.file_name;
+                    const char8_t* fileName = desc.stage_load_desc.file_name;
 
                     combinedFlags |= desc.stage_load_desc.flags;
 
                     uint32_t macroCount = desc.stage_load_desc.macro_count;
-                    ShaderMacro* macros = (ShaderMacro*)cb_calloc(macroCount, sizeof(ShaderMacro));
+                    ShaderMacro* macros = (ShaderMacro*)cyber_calloc(macroCount, sizeof(ShaderMacro));
                     for(uint32_t marcoIdx = 0; marcoIdx < macroCount; ++marcoIdx)
                     {
                         macros[marcoIdx] = desc.stage_load_desc.macros[marcoIdx];
