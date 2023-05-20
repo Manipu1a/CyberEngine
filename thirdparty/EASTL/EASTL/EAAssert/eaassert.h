@@ -38,7 +38,7 @@
 
 #else // The user did not supply their own assert definition, so we'll use ours instead
 
-#include "EABase/eabase.h"
+#include "../EABase/eabase.h"
 #include <stdarg.h>
 
 

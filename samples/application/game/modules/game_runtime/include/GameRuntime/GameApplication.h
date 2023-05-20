@@ -7,6 +7,7 @@
 #include "CyberInputSystem/InputSystem.h"
 #include <windows.h>
 
+
 namespace Cyber
 {
     class Renderer;
@@ -28,8 +29,8 @@ namespace Cyber
         bool onWindowClose(WindowCloseEvent& e);
     private:
         Ref<Window> mWindow;
-        Ref<InputSystem> mInputSystem;
-        Scope<Renderer> renderer;
+        Ref<InputSystem> mInputSystem; 
+        //Scope<Renderer> renderer;
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;

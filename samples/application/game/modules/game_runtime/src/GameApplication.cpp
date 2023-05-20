@@ -4,7 +4,6 @@
 
 namespace Cyber
 {
-
     GameApplication::GameApplication()
     {
 
@@ -14,13 +13,14 @@ namespace Cyber
     {
 
     }
+
     void GameApplication::initialize(Cyber::WindowDesc& desc)
     {
         create_window(desc);
-        renderer = CreateScope<Renderer>();
+        //renderer = CreateScope<Renderer>();
         
-        RendererDesc renderer_desc;
-        renderer->initialize(this, renderer_desc);
+        //RendererDesc renderer_desc;
+       // renderer->initialize(this, renderer_desc);
 
         mInputSystem = CreateRef<InputSystem>();
         mInputSystem->initInputSystem();

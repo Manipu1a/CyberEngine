@@ -743,15 +743,7 @@ namespace Cyber
     {
     public:
         static void createRHI(ERHIBackend backend);
-        inline static RHI& GetRHIContext()
-        {
-            cyber_assert(globalRHI, "RHI has not been initialized!");
-            return *gloablRHI;
-        }
-
-    protected:
         static RHI* gloablRHI;
-
     public:
         // Instance APIs
         virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
@@ -1016,231 +1008,231 @@ namespace Cyber
 
     FORCEINLINE Ref<RHIInstance> rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
     {
-        return RHI::GetRHIContext().rhi_create_instance(instanceDesc);
+        return RHI::gloablRHI->rhi_create_instance(instanceDesc);
     }
     FORCEINLINE void rhi_free_instance(Ref<RHIInstance> instance)
     {
-        RHI::GetRHIContext().rhi_free_instance(instance);
+        RHI::gloablRHI->rhi_free_instance(instance);
     }
     // Device APIS
     FORCEINLINE Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
     {
-        return RHI::GetRHIContext().rhi_create_device(pAdapter, deviceDesc);
+        return RHI::gloablRHI->rhi_create_device(pAdapter, deviceDesc);
     }
     FORCEINLINE void rhi_free_device(Ref<RHIDevice> pDevice) 
     {
-        RHI::GetRHIContext().rhi_free_device(pDevice);
+        RHI::gloablRHI->rhi_free_device(pDevice);
     }
     // API Object APIs
     FORCEINLINE Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
     {
-        return RHI::GetRHIContext().rhi_surface_from_hwnd(pDevice, hwnd);
+        return RHI::gloablRHI->rhi_surface_from_hwnd(pDevice, hwnd);
     }
     FORCEINLINE void rhi_free_surface(Ref<RHISurface> surface)
     {
-        RHI::GetRHIContext().rhi_free_surface(surface);
+        RHI::gloablRHI->rhi_free_surface(surface);
     }
     FORCEINLINE Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
     {
-        return RHI::GetRHIContext().rhi_create_fence(pDevice);
+        return RHI::gloablRHI->rhi_create_fence(pDevice);
     };
     FORCEINLINE void rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount)
     {
-        RHI::GetRHIContext().rhi_wait_fences(fences, fenceCount);
+        RHI::gloablRHI->rhi_wait_fences(fences, fenceCount);
     }
     FORCEINLINE void rhi_free_fence(Ref<RHIFence> fence)
     {
-        RHI::GetRHIContext().rhi_free_fence(fence);
+        RHI::gloablRHI->rhi_free_fence(fence);
     }
     FORCEINLINE ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence)
     {
-        return RHI::GetRHIContext().rhi_query_fence_status(pFence);
+        return RHI::gloablRHI->rhi_query_fence_status(pFence);
     }
     FORCEINLINE SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
     {
-        return RHI::GetRHIContext().rhi_create_swap_chain(pDevice, swapchainDesc);
+        return RHI::gloablRHI->rhi_create_swap_chain(pDevice, swapchainDesc);
     }
     FORCEINLINE void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain)
     {
-        RHI::GetRHIContext().rhi_free_swap_chain(pSwapChain);
+        RHI::gloablRHI->rhi_free_swap_chain(pSwapChain);
     }
     FORCEINLINE void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
     {
-        RHI::GetRHIContext().rhi_enum_adapters(instance, adapters, adapterCount);
+        RHI::gloablRHI->rhi_enum_adapters(instance, adapters, adapterCount);
     }
     FORCEINLINE uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc)
     {
-        return RHI::GetRHIContext().rhi_acquire_next_image(pSwapChain, acquireDesc);
+        return RHI::gloablRHI->rhi_acquire_next_image(pSwapChain, acquireDesc);
     }
     // Queue APIs
     FORCEINLINE QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
     { 
-        return RHI::GetRHIContext().rhi_get_queue(pDevice, type, index); 
+        return RHI::gloablRHI->rhi_get_queue(pDevice, type, index); 
     }
     FORCEINLINE void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
     {
-        RHI::GetRHIContext().rhi_submit_queue(queue, submitDesc);
+        RHI::gloablRHI->rhi_submit_queue(queue, submitDesc);
     }
     FORCEINLINE void rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc)
     {
-        RHI::GetRHIContext().rhi_present_queue(queue, presentDesc);
+        RHI::gloablRHI->rhi_present_queue(queue, presentDesc);
     }
     FORCEINLINE void rhi_wait_queue_idle(Ref<RHIQueue> queue)
     {
-        RHI::GetRHIContext().rhi_wait_queue_idle(queue);
+        RHI::gloablRHI->rhi_wait_queue_idle(queue);
     }
     FORCEINLINE void rhi_free_queue(Ref<RHIQueue> queue)
     {
-        RHI::GetRHIContext().rhi_free_queue(queue);
+        RHI::gloablRHI->rhi_free_queue(queue);
     }
     // Command APIs
     FORCEINLINE CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc)
     {
-        return RHI::GetRHIContext().rhi_create_command_pool(pQueue, commandPoolDesc);
+        return RHI::gloablRHI->rhi_create_command_pool(pQueue, commandPoolDesc);
     }
     FORCEINLINE void rhi_reset_command_pool(Ref<RHICommandPool> pPool)
     {
-        RHI::GetRHIContext().rhi_reset_command_pool(pPool);
+        RHI::gloablRHI->rhi_reset_command_pool(pPool);
     }
     FORCEINLINE void rhi_free_command_pool(Ref<RHICommandPool> pPool)
     {
-        RHI::GetRHIContext().rhi_free_command_pool(pPool);
+        RHI::gloablRHI->rhi_free_command_pool(pPool);
     }
     FORCEINLINE CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc)
     {
-        return RHI::GetRHIContext().rhi_create_command_buffer(pPool, commandBufferDesc);
+        return RHI::gloablRHI->rhi_create_command_buffer(pPool, commandBufferDesc);
     }
     FORCEINLINE void rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer)
     {
-        RHI::GetRHIContext().rhi_free_command_buffer(pCommandBuffer);
+        RHI::gloablRHI->rhi_free_command_buffer(pCommandBuffer);
     }
     /// RootSignature
     FORCEINLINE RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> device, const RHIRootSignatureCreateDesc& rootSigDesc)
     {
-        return RHI::GetRHIContext().rhi_create_root_signature(device, rootSigDesc);
+        return RHI::gloablRHI->rhi_create_root_signature(device, rootSigDesc);
     }
     FORCEINLINE void rhi_free_root_signature(Ref<RHIRootSignature> rootSignature)
     {
-        RHI::GetRHIContext().rhi_free_root_signature(rootSignature);
+        RHI::gloablRHI->rhi_free_root_signature(rootSignature);
     }
     FORCEINLINE DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> device, const RHIDescriptorSetCreateDesc& descriptorSetDesc)
     {
-        return RHI::GetRHIContext().rhi_create_descriptor_set(device, descriptorSetDesc);
+        return RHI::gloablRHI->rhi_create_descriptor_set(device, descriptorSetDesc);
     }
     FORCEINLINE void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count)
     {
-        RHI::GetRHIContext().rhi_update_descriptor_set(set, updateDesc, count);
+        RHI::gloablRHI->rhi_update_descriptor_set(set, updateDesc, count);
     }
     FORCEINLINE Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> device, const RHIRenderPipelineCreateDesc& pipelineDesc)
     {
-        return RHI::GetRHIContext().rhi_create_render_pipeline(device, pipelineDesc);
+        return RHI::gloablRHI->rhi_create_render_pipeline(device, pipelineDesc);
     }
     FORCEINLINE void rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline)
     {
-        RHI::GetRHIContext().rhi_free_render_pipeline(pipeline);
+        RHI::gloablRHI->rhi_free_render_pipeline(pipeline);
     }
     // Resource APIs
     FORCEINLINE Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> device, const RHITextureViewCreateDesc& viewDesc)
     {
-        return RHI::GetRHIContext().rhi_create_texture_view(device, viewDesc);
+        return RHI::gloablRHI->rhi_create_texture_view(device, viewDesc);
     }
     FORCEINLINE void rhi_free_texture_view(Ref<RHITextureView> view)
     {
-        RHI::GetRHIContext().rhi_free_texture_view(view);
+        RHI::gloablRHI->rhi_free_texture_view(view);
     }
     FORCEINLINE Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> device, const TextureCreationDesc& textureDesc) 
     {
-        return RHI::GetRHIContext().rhi_create_texture(device, textureDesc);
+        return RHI::gloablRHI->rhi_create_texture(device, textureDesc);
     }
     FORCEINLINE BufferRHIRef rhi_create_buffer(Ref<RHIDevice> device, const BufferCreateDesc& bufferDesc) 
     {
-        return RHI::GetRHIContext().rhi_create_buffer(device, bufferDesc);
+        return RHI::gloablRHI->rhi_create_buffer(device, bufferDesc);
     }
     FORCEINLINE void rhi_free_buffer(Ref<RHIBuffer> buffer)
     {
-        RHI::GetRHIContext().rhi_free_buffer(buffer);
+        RHI::gloablRHI->rhi_free_buffer(buffer);
     }
     FORCEINLINE void rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range)
     {
-        RHI::GetRHIContext().rhi_map_buffer(buffer, range);
+        RHI::gloablRHI->rhi_map_buffer(buffer, range);
     }
     FORCEINLINE void rhi_unmap_buffer(Ref<RHIBuffer> buffer)
     {
-        RHI::GetRHIContext().rhi_unmap_buffer(buffer);
+        RHI::gloablRHI->rhi_unmap_buffer(buffer);
     }
     // Shader
     FORCEINLINE ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
     {
-        return RHI::GetRHIContext().rhi_create_shader_library(device, desc);
+        return RHI::gloablRHI->rhi_create_shader_library(device, desc);
     }
     FORCEINLINE void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary)
     {
-        RHI::GetRHIContext().rhi_free_shader_library(shaderLibrary);
+        RHI::gloablRHI->rhi_free_shader_library(shaderLibrary);
     }
     /// CMDS
     FORCEINLINE void rhi_cmd_begin(Ref<RHICommandBuffer> cmd)
     {
-        RHI::GetRHIContext().rhi_cmd_begin(cmd);
+        RHI::gloablRHI->rhi_cmd_begin(cmd);
     }
     FORCEINLINE void rhi_cmd_end(Ref<RHICommandBuffer> cmd)
     {
-        RHI::GetRHIContext().rhi_cmd_end(cmd);
+        RHI::gloablRHI->rhi_cmd_end(cmd);
     }
     FORCEINLINE void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
     {
-        RHI::GetRHIContext().rhi_cmd_resource_barrier(cmd, barrierDesc);
+        RHI::gloablRHI->rhi_cmd_resource_barrier(cmd, barrierDesc);
     }
     // Render Pass
     FORCEINLINE Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
     {
-        return RHI::GetRHIContext().rhi_cmd_begin_render_pass(cmd, beginRenderPassDesc);
+        return RHI::gloablRHI->rhi_cmd_begin_render_pass(cmd, beginRenderPassDesc);
     }
     FORCEINLINE void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> cmd)
     {
-        RHI::GetRHIContext().rhi_cmd_end_render_pass(cmd);
+        RHI::gloablRHI->rhi_cmd_end_render_pass(cmd);
     }
     FORCEINLINE void rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet)
     {
-        RHI::GetRHIContext().rhi_render_encoder_bind_descriptor_set(encoder, descriptorSet);
+        RHI::gloablRHI->rhi_render_encoder_bind_descriptor_set(encoder, descriptorSet);
     }
     FORCEINLINE void rhi_render_encoder_set_viewport(Ref<RHIRenderPassEncoder> encoder, float x, float y, float width, float height, float min_depth, float max_depth)
     {
-        RHI::GetRHIContext().rhi_render_encoder_set_viewport(encoder, x, y, width, height, min_depth, max_depth);
+        RHI::gloablRHI->rhi_render_encoder_set_viewport(encoder, x, y, width, height, min_depth, max_depth);
     }
     FORCEINLINE void rhi_render_encoder_set_scissor(Ref<RHIRenderPassEncoder> encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
     {
-        RHI::GetRHIContext().rhi_render_encoder_set_scissor(encoder, x, y, width, height);
+        RHI::gloablRHI->rhi_render_encoder_set_scissor(encoder, x, y, width, height);
     }
     FORCEINLINE void rhi_render_encoder_bind_pipeline(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRenderPipeline> pipeline)
     {
-        RHI::GetRHIContext().rhi_render_encoder_bind_pipeline(encoder, pipeline);
+        RHI::gloablRHI->rhi_render_encoder_bind_pipeline(encoder, pipeline);
     }
     FORCEINLINE void rhi_render_encoder_bind_vertex_buffer(Ref<RHIRenderPassEncoder> encoder, uint32_t buffer_count, Ref<RHIBuffer>* buffers,const uint32_t* strides, const uint32_t* offsets)
     {
-        RHI::GetRHIContext().rhi_render_encoder_bind_vertex_buffer(encoder, buffer_count, buffers, strides, offsets);
+        RHI::gloablRHI->rhi_render_encoder_bind_vertex_buffer(encoder, buffer_count, buffers, strides, offsets);
     }
     FORCEINLINE void rhi_render_encoder_bind_index_buffer(Ref<RHIRenderPassEncoder> encoder, Ref<RHIBuffer> buffer, uint32_t index_stride, uint64_t offset)
     {
-        RHI::GetRHIContext().rhi_render_encoder_bind_index_buffer(encoder, buffer, index_stride, offset);
+        RHI::gloablRHI->rhi_render_encoder_bind_index_buffer(encoder, buffer, index_stride, offset);
     }
     FORCEINLINE void rhi_render_encoder_push_constants(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRootSignature> rs, const char8_t* name, const void* data)
     {
-        RHI::GetRHIContext().rhi_render_encoder_push_constants(encoder, rs, name, data);
+        RHI::gloablRHI->rhi_render_encoder_push_constants(encoder, rs, name, data);
     }
     FORCEINLINE void rhi_render_encoder_draw(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex)
     {
-        RHI::GetRHIContext().rhi_render_encoder_draw(encoder, vertex_count, first_vertex);
+        RHI::gloablRHI->rhi_render_encoder_draw(encoder, vertex_count, first_vertex);
     }
     FORCEINLINE void rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
     {
-        RHI::GetRHIContext().rhi_render_encoder_draw_instanced(encoder, vertex_count, first_vertex, instance_count, first_instance);
+        RHI::gloablRHI->rhi_render_encoder_draw_instanced(encoder, vertex_count, first_vertex, instance_count, first_instance);
     }
     FORCEINLINE void rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
     {
-        RHI::GetRHIContext().rhi_render_encoder_draw_indexed(encoder, index_count, first_index, first_vertex);
+        RHI::gloablRHI->rhi_render_encoder_draw_indexed(encoder, index_count, first_index, first_vertex);
     }
     FORCEINLINE void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
     {
-        RHI::GetRHIContext().rhi_render_encoder_draw_indexed_instanced(encoder, index_count, first_index, instance_count, first_instance, first_vertex);
+        RHI::gloablRHI->rhi_render_encoder_draw_indexed_instanced(encoder, index_count, first_index, instance_count, first_instance, first_vertex);
     } 
 }

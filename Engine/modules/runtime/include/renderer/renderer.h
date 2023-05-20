@@ -17,33 +17,22 @@
 
 namespace Cyber
 {
-    struct Vertex
-    {
-        DirectX::XMFLOAT3 Pos;
-        DirectX::XMFLOAT4 Color;
-    };
-
-    static DirectX::XMFLOAT4X4 Identity4x4(
-       1.0f, 0.0f, 0.0f, 0.0f,
-       0.0f, 1.0f, 0.0f, 0.0f,
-       0.0f, 0.0f, 1.0f, 0.0f,
-       0.0f, 0.0f, 0.0f, 1.0f);
-
-    struct ObjectConstants
-    {
-        DirectX::XMFLOAT4X4 WorldViewProj = Identity4x4;
-    };
-
     struct CYBER_RUNTIME_API RendererDesc
     {
         ERHIBackend backend;
     };
 
-    class Renderer
+    class CYBER_RUNTIME_API Renderer
     {
     public:
-        Renderer();
-        virtual ~Renderer();
+        Renderer()
+        {
+
+        }
+        virtual ~Renderer()
+        {
+
+        }
 
     public:
         virtual void initialize(class Application* app, const RendererDesc& desc);
@@ -103,10 +92,6 @@ namespace Cyber
         std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
         ID3D12PipelineState* mPSO = nullptr;
-
-        DirectX::XMFLOAT4X4 mWorld = Identity4x4;
-        DirectX::XMFLOAT4X4 mView = Identity4x4;
-        DirectX::XMFLOAT4X4 mProj = Identity4x4;
         
         D3D12_VIEWPORT mScreenViewport;
         D3D12_RECT mScissorRect;

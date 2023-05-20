@@ -96,6 +96,7 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/initializer_list.h>
 #include <EASTL/bonus/compressed_pair.h>
+#include <EASTL/EAStdC/EASprintf.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stddef.h>             // size_t, ptrdiff_t, etc.

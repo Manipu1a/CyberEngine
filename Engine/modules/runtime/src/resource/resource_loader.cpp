@@ -32,7 +32,7 @@ namespace Cyber
             const char* rendererApi = "DX12";
             eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
 
-            CB_INFO("Compiling shader in runtime: DX12 -> '[0]' macroCount=[1]", (char*)loadDesc.entry_point_name, macroCount);
+            CB_INFO("Compiling shader in runtime: [0] -> '[1]' macroCount=[2]", "DX12", (char*)loadDesc.entry_point_name, macroCount);
             load_shader_source_file(fileNameAPI.c_str(), &bytes, &length);
             libraryDesc->code = bytes;
             libraryDesc->code_size = length;
@@ -78,7 +78,7 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    ShaderLibraryRHIRef shaderLibrary = RHI::GetRHIContext().rhi_create_shader_library(renderer.GetDevice(), libraryDesc);
+                    ShaderLibraryRHIRef shaderLibrary = rhi_create_shader_library(renderer.GetDevice(), libraryDesc);
                     if(shaderLibrary)
                     {
                         return shaderLibrary;

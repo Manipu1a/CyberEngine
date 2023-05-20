@@ -32,16 +32,6 @@ namespace Cyber
 {
     #define UTF8(str) u8##str
 
-    Renderer::Renderer()
-    {
-
-    }
-
-    Renderer::~Renderer()
-    {
-
-    }
-
     void Renderer::initialize(class Application* app, const RendererDesc& desc)
     {
         RHI::createRHI(desc.backend);

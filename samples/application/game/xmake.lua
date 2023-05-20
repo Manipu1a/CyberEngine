@@ -7,6 +7,5 @@ target("GameRuntime")
 
 target("Game")
     set_kind("binary")
-    set_languages("cxx17")
     add_deps("GameRuntime", {public = true})
     add_files("src/main.cpp")
