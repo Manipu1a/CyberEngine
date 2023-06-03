@@ -27,7 +27,7 @@
 #include <winnt.h>
 #include "resource/resource_loader.h"
 #include "core/Application.h"
-
+#include "rhi/backend/d3d12/rhi_d3d12.h"
 namespace Cyber
 {
     #define UTF8(str) u8##str
@@ -84,9 +84,10 @@ namespace Cyber
         // Filter adapters
         uint32_t adapter_count = 0;
         rhi_enum_adapters(instance, nullptr, &adapter_count);
-        RHIAdapter adapters[64];
+        RHIAdapter* adapters[64];
         rhi_enum_adapters(instance, adapters, &adapter_count);
-        adapter = CreateRef<RHIAdapter>(adapters[0]);
+        adapter.reset(adapters[0]);
+        RHIAdapter_D3D12* adapter_d3d12 = static_cast<RHIAdapter_D3D12*>(adapters[0]);
 
         // Create device
         DECLARE_ZERO(RHIQueueGroupDesc, queue_group_desc);

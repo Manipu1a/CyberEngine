@@ -152,7 +152,11 @@ namespace Cyber
     class RHIAdapter_D3D12 : public RHIAdapter
     {
     public:
-        RHIAdapter_D3D12();
+        RHIAdapter_D3D12()
+        {
+            CB_CORE_INFO("RHIAdapter_D3D12::RHIAdapter_D3D12()");
+            pInstance = nullptr;
+        }
     #if defined(XBOX)
     #elif defined(_WINDOWS)
         struct IDXGIAdapter4* pDxActiveGPU;
@@ -283,7 +287,7 @@ namespace Cyber
         virtual ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence) override;
         virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc) override;
         virtual void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain) override;
-        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount) override;
+        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount) override;
         virtual uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc) override;
         // Queue APIs
         virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) override;

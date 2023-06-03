@@ -30,7 +30,7 @@ namespace Cyber
     private:
         Ref<Window> mWindow;
         Ref<InputSystem> mInputSystem; 
-        //Scope<Renderer> renderer;
+        Scope<Renderer> renderer;
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;

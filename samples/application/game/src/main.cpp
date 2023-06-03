@@ -66,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     freopen_s(&stream, "CON", "r", stdin);
     freopen_s(&stream, "CON", "w", stdout);
     SetConsoleTitle(L"Console");
-    std::cout << "test log" << std::endl;
+    //std::cout << "test log" << std::endl;
     Cyber::Log::initLog();
     CB_CORE_INFO("initLog");
 

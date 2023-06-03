@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include "core/Core.h"
 #include "core/Window.h"
+#include "CyberLog/Log.h"
 
 namespace Cyber
 {
@@ -83,7 +84,7 @@ namespace Cyber
     class CYBER_RHI_API RHIAdapter
     {
     public:
-        Cyber::Ref<RHIInstance> pInstance;
+        Cyber::Ref<RHIInstance> pInstance = nullptr;
     };
 
     class CYBER_RHI_API RHIDevice
@@ -802,7 +803,7 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_free_swap_chain!");
         }
-        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
+        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount)
         {
             cyber_core_assert(false, "Empty implement rhi_enum_adapters!");
         }
@@ -1056,7 +1057,7 @@ namespace Cyber
     {
         RHI::gloablRHI->rhi_free_swap_chain(pSwapChain);
     }
-    FORCEINLINE void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
+    FORCEINLINE void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount)
     {
         RHI::gloablRHI->rhi_enum_adapters(instance, adapters, adapterCount);
     }

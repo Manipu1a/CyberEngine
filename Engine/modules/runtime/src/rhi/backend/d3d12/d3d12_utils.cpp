@@ -195,8 +195,12 @@ namespace Cyber
         eastl::vector<IDXGIAdapter4*> dxgi_adapters;
         eastl::vector<D3D_FEATURE_LEVEL> adapter_levels;
 
-        for(UINT i = 0; pInstance->pDXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&_adapter));i++)
+        for(UINT i = 0; i < 10;i++)
         {
+            if(!SUCCEEDED(pInstance->pDXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&_adapter))))
+            {
+                break;
+            }
             DECLARE_ZERO(DXGI_ADAPTER_DESC3, desc)
             IDXGIAdapter4* adapter = nullptr;
             _adapter->QueryInterface(IID_PPV_ARGS(&adapter));
@@ -235,8 +239,9 @@ namespace Cyber
         }
 
         pCount = pInstance->mAdaptersCount;
-        pInstance->pAdapters = (RHIAdapter_D3D12*)cyber_malloc(sizeof(RHIAdapter_D3D12) * pInstance->mAdaptersCount);
-       
+        pInstance->pAdapters = cyber_new_n<RHIAdapter_D3D12>(pInstance->mAdaptersCount);
+        CB_CORE_INFO("test");
+
         for(uint32_t i = 0;i < pCount; i++)
         {
             auto& adapter = pInstance->pAdapters[i];

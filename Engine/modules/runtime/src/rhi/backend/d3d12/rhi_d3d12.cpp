@@ -1402,7 +1402,7 @@ namespace Cyber
         swapchain.reset();
     }
 
-    void RHI_D3D12::rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter* const adapters, uint32_t* adapterCount)
+    void RHI_D3D12::rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount)
     {
         cyber_assert(instance, "fatal: Invalid instance!");
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(instance.get());
@@ -1415,7 +1415,7 @@ namespace Cyber
         {
             for(uint32_t i = 0; i < dxInstance->mAdaptersCount; ++i)
             {
-                adapters[i] = dxInstance->pAdapters[i];
+                adapters[i] = &dxInstance->pAdapters[i];
             }
         }
     }

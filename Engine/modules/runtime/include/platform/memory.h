@@ -29,8 +29,19 @@ static T* cyber_placement_new(void* ptr, Args&&... args)
 template<typename T, typename... Args>
 static T* cyber_new(Args&&... args)
 {
-    void* ptr = _cyber_malloc_aligned(alignof(T), sizeof(T));
+    void* ptr = _cyber_malloc_aligned(sizeof(T), alignof(T));
     return cyber_placement_new<T>(ptr, eastl::forward<Args>(args)...);
+}
+
+template<typename T, typename... Args>
+static T* cyber_new_n(size_t count, Args&&... args)
+{
+    void* ptr = _cyber_malloc_aligned(sizeof(T) * count, alignof(T));
+    for(size_t i = 0; i < count; i++)
+    {
+        cyber_placement_new<T>(static_cast<T*>(ptr) + i, eastl::forward<Args>(args)...);
+    }
+    return static_cast<T*>(ptr);
 }
 
 #ifndef cyber_new_n
