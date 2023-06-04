@@ -451,7 +451,7 @@ namespace Cyber
 
     void D3D12Util_Optionalenable_debug_layer(RHIInstance_D3D12* result, const RHIInstanceCreateDesc& instanceDesc);
 
-    void D3D12Util_QueryAllAdapters(Ref<RHIInstance_D3D12> pInstance, uint32_t& count, bool& foundSoftwareAdapter);
+    void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* pInstance, uint32_t& count, bool& foundSoftwareAdapter);
 
     void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
 

@@ -39,7 +39,7 @@ namespace Cyber
         // Pick shader reflection data
         for(uint32_t i = 0; i < desc.shader_count; ++i)
         {
-            const RHIPipelineShaderCreateDesc* shader_desc = desc.shaders[i].get();
+            const RHIPipelineShaderCreateDesc* shader_desc = desc.shaders[i];
             // Find shader reflection data
             for(uint32_t j = 0; j < shader_desc->library->entry_count; ++j)
             {
@@ -244,10 +244,5 @@ namespace Cyber
             cyber_free(rootSignature->static_samplers);
         }
 
-    }
-
-    bool rhi_util_pool_free_signature(struct RHIRootSignaturePool* pool, struct RHIRootSignature* signature)
-    {
-        return false;
     }
 }

@@ -81,27 +81,23 @@ namespace Cyber
 
     };
 
-    class CYBER_RHI_API RHIAdapter
+    struct CYBER_RHI_API RHIAdapter
     {
-    public:
         Cyber::Ref<RHIInstance> pInstance = nullptr;
     };
 
-    class CYBER_RHI_API RHIDevice
+    struct CYBER_RHI_API RHIDevice
     {
-    public:
         Cyber::Ref<RHIAdapter> pAdapter;
     };
 
-    class CYBER_RHI_API RHIFence
+    struct CYBER_RHI_API RHIFence
     {
-    public:
         Cyber::Ref<RHIDevice> pDevice;
     };
 
-    class CYBER_RHI_API RHISemaphore
+    struct CYBER_RHI_API RHISemaphore
     {
-    public:
         Cyber::Ref<RHIDevice> pDevice;
     };
 
@@ -156,13 +152,13 @@ namespace Cyber
         RHIShaderResource* static_samplers;
         uint32_t static_sampler_count;
         ERHIPipelineType pipeline_type;
-        Ref<RHIRootSignaturePool> pool;
-        Ref<RHIRootSignature> pool_next;
+        RHIRootSignaturePool* pool;
+        RHIRootSignature* pool_next;
     };
     
     struct CYBER_RHI_API RHIDescriptorSet
     {
-        Ref<RHIRootSignature> root_signature;
+        RHIRootSignature* root_signature;
         uint32_t set_index;
     };
 
@@ -292,7 +288,7 @@ namespace Cyber
     struct CYBER_RHI_API RHITextureViewCreateDesc
     {
         const char8_t* name;
-        Ref<RHITexture> texture;
+        RHITexture* texture;
         ERHIFormat format;
         ERHITextureViewUsages usages;
         ERHITextureViewAspect aspects;
@@ -399,7 +395,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIBufferBarrier
     {
-        Ref<RHIBuffer> buffer;
+        RHIBuffer* buffer;
         ERHIResourceState src_state;
         ERHIResourceState dst_state;
         uint8_t queue_acquire : 1;
@@ -413,7 +409,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHITextureBarrier
     {
-        Ref<RHITexture> texture;
+        RHITexture* texture;
         ERHIResourceState src_state;
         ERHIResourceState dst_state;
         uint8_t queue_acquire : 1;
@@ -446,7 +442,7 @@ namespace Cyber
     };
 
     // Objects
-    class CYBER_RHI_API RHIInstance
+    struct CYBER_RHI_API RHIInstance
     {
         ERHIBackend mBackend;
         ERHINvAPI_Status mNvAPIStatus;
@@ -484,23 +480,20 @@ namespace Cyber
         uint32_t queue_group_count;
     };
 
-    class CYBER_RHI_API RHIQueue
+    struct CYBER_RHI_API RHIQueue
     {
-    public:
         Cyber::Ref<RHIDevice> pDevice;
         ERHIQueueType mType;
         RHIQueueIndex mIdex;
     };
 
-    class CYBER_RHI_API RHICommandPool
+    struct CYBER_RHI_API RHICommandPool
     {
-    public:
-        Cyber::Ref<RHIQueue> pQueue;
+        RHIQueue* pQueue;
     };
 
-    class CYBER_RHI_API RHICommandBuffer
+    struct CYBER_RHI_API RHICommandBuffer
     {
-    public:
         Cyber::Ref<RHIDevice> pDevice;
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
@@ -508,17 +501,15 @@ namespace Cyber
     using RHIRenderPassEncoder = RHICommandBuffer;
     using RHIComputePassEncoder = RHICommandBuffer;
 
-    class CYBER_RHI_API RHIQueryPool
+    struct CYBER_RHI_API RHIQueryPool
     {
-    public:
         Cyber::Ref<RHIDevice> pDevice;
         uint32_t mCount;
     };
 
-    class CYBER_RHI_API RHISwapChain
+    struct CYBER_RHI_API RHISwapChain
     {
-    public:
-        Ref<RHITexture>* mBackBuffers;
+        RHITexture* mBackBuffers;
         uint32_t mBufferCount;
     };
 
@@ -534,10 +525,10 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueueSubmitDesc
     {
-        Ref<RHICommandBuffer>* pCmds;
-        Ref<RHIFence> mSignalFence;
-        Ref<RHISemaphore>* pWaitSemaphores;
-        Ref<RHISemaphore>* pSignalSemaphores;
+        RHICommandBuffer** pCmds;
+        RHIFence* mSignalFence;
+        RHISemaphore** pWaitSemaphores;
+        RHISemaphore** pSignalSemaphores;
         uint32_t mCmdsCount;
         uint32_t mWaitSemaphoreCount;
         uint32_t mSignalSemaphoreCount;
@@ -545,8 +536,8 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueuePresentDesc
     {
-        Ref<RHISwapChain> swap_chain;
-        const Ref<RHISemaphore>* wait_semaphores;
+        RHISwapChain* swap_chain;
+        const RHISemaphore** wait_semaphores;
         uint32_t wait_semaphore_count;
         uint32_t index;
     };
@@ -554,7 +545,7 @@ namespace Cyber
     struct CYBER_RHI_API RHISwapChainCreateDesc
     {
         /// Present Queues
-        Ref<RHIQueue> mPresentQueue;
+        RHIQueue* mPresentQueue;
         /// Present Queues Count
         uint32_t mPresentQueueCount;
         /// Number of backbuffers in the swapchain
@@ -566,7 +557,7 @@ namespace Cyber
         /// Format of the swapchain
         ERHIFormat mFormat;
         /// Surface
-        Ref<RHISurface> surface;
+        RHISurface* surface;
         /// Set whether swapchain will be presented using vsync
         bool mEnableVsync;
         /// We can toogle to using FLIP model if app desires
@@ -575,13 +566,13 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIAcquireNextDesc
     {
-        Ref<RHISemaphore> signal_semaphore;
-        Ref<RHIFence> fence;
+        RHISemaphore* signal_semaphore;
+        RHIFence* fence;
     };
 
     struct CYBER_RHI_API RHIPipelineShaderCreateDesc
     {
-        Ref<RHIShaderLibrary> library;
+        RHIShaderLibrary* library;
         const char8_t* entry;
         ERHIShaderStage stage;
     };
@@ -593,26 +584,26 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRootSignatureCreateDesc
     {
-        Ref<RHIPipelineShaderCreateDesc>* shaders;
+        RHIPipelineShaderCreateDesc** shaders;
         uint32_t shader_count;
         RHISampler** static_samplers;
         const char8_t* const* static_sampler_names;
         uint32_t static_sampler_count;
         const char8_t* const* push_constant_names;
         uint32_t push_constant_count;
-        Ref<RHIRootSignaturePool> pool;
+        RHIRootSignaturePool* pool;
     };
     
     struct CYBER_RHI_API RHIDescriptorSetCreateDesc
     {
-        Ref<RHIRootSignature> root_signature;
+        RHIRootSignature* root_signature;
         uint32_t set_index;
     };
 
     struct CYBER_RHI_API RHIColorAttachment
     {
-        Ref<RHITextureView> view;
-        Ref<RHITextureView> resolve_view;
+        RHITextureView* view;
+        RHITextureView* resolve_view;
         ERHILoadAction load_action;
         ERHIStoreAction store_action;
         RHIClearValue clear_value;
@@ -620,7 +611,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIDepthStencilAttachment
     {
-        Ref<RHITextureView> view;
+        RHITextureView* view;
         ERHILoadAction depth_load_action;
         ERHIStoreAction depth_store_action;
         float clear_depth;
@@ -719,16 +710,16 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRenderPipelineCreateDesc
     {
-        Ref<RHIRootSignature> root_signature;
-        Ref<RHIPipelineShaderCreateDesc> vertex_shader;
-        Ref<RHIPipelineShaderCreateDesc> tesc_shader;
-        Ref<RHIPipelineShaderCreateDesc> tese_shader;
-        Ref<RHIPipelineShaderCreateDesc> geometry_shader;
-        Ref<RHIPipelineShaderCreateDesc> fragment_shader;
+        RHIRootSignature* root_signature;
+        RHIPipelineShaderCreateDesc* vertex_shader;
+        RHIPipelineShaderCreateDesc* tesc_shader;
+        RHIPipelineShaderCreateDesc* tese_shader;
+        RHIPipelineShaderCreateDesc* geometry_shader;
+        RHIPipelineShaderCreateDesc* fragment_shader;
         const RHIVertexLayout* vertex_layout;
-        Ref<RHIBlendStateCreateDesc> blend_state;
-        Ref<RHIDepthStateCreateDesc> depth_stencil_state;
-        Ref<RHIRasterizerStateCreateDesc> rasterizer_state;
+        RHIBlendStateCreateDesc* blend_state;
+        RHIDepthStateCreateDesc* depth_stencil_state;
+        RHIRasterizerStateCreateDesc* rasterizer_state;
 
         const ERHIFormat* color_formats;
         uint32_t render_target_count;
@@ -747,257 +738,257 @@ namespace Cyber
         static RHI* gloablRHI;
     public:
         // Instance APIs
-        virtual InstanceRHIRef rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
+        virtual RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_instance!");
-            return CreateRef<RHIInstance>();
+            return nullptr;
         }
-        virtual void rhi_free_instance(Ref<RHIInstance> instance)
+        virtual void rhi_free_instance(RHIInstance* instance)
         {
             cyber_core_assert(false, "Empty implement rhi_free_instance!");
         }
         // Device APIS
-        virtual Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
+        virtual RHIDevice* rhi_create_device(RHIAdapter* pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_device!");
-            return CreateRef<RHIDevice>();
+            return nullptr;
         }
-        virtual void rhi_free_device(Ref<RHIDevice> pDevice) 
+        virtual void rhi_free_device(RHIDevice* pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_free_device!");
         }
         // API Object APIs
-        virtual Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
+        virtual RHISurface* rhi_surface_from_hwnd(RHIDevice* pDevice, HWND hwnd)
         {
             cyber_core_assert(false, "Empty implement rhi_surface_from_hwnd!");
-            return CreateRef<RHISurface>();
+            return nullptr;
         }
-        virtual void rhi_free_surface(Ref<RHISurface> pSurface)
+        virtual void rhi_free_surface(RHISurface* pSurface)
         {
             cyber_core_assert(false, "Empty implement rhi_free_surface!");
         }
-        virtual Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
+        virtual RHIFence* rhi_create_fence(RHIDevice* pDevice) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_fence!");
-            return CreateRef<RHIFence>();
+            return nullptr;
         };
-        virtual void rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount)
+        virtual void rhi_wait_fences(RHIFence** fences, uint32_t fenceCount)
         {
             cyber_core_assert(false, "Empty implement rhi_wait_fences!");
         }
-        virtual void rhi_free_fence(Ref<RHIFence> fence)
+        virtual void rhi_free_fence(RHIFence* fence)
         {
             cyber_core_assert(false, "Empty implement rhi_free_fence!");
         }
-        virtual ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence)
+        virtual ERHIFenceStatus rhi_query_fence_status(RHIFence* pFence)
         {
             cyber_core_assert(false, "Empty implement rhi_query_fence_status!");
             return RHI_FENCE_STATUS_NOTSUBMITTED;
         }
-        virtual SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
+        virtual RHISwapChain* rhi_create_swap_chain(RHIDevice* pDevice, const RHISwapChainCreateDesc& swapchainDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_swap_chain!");
-            return CreateRef<RHISwapChain>();
+            return nullptr;
         }
-        virtual void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain)
+        virtual void rhi_free_swap_chain(RHISwapChain* pSwapChain)
         {
             cyber_core_assert(false, "Empty implement rhi_free_swap_chain!");
         }
-        virtual void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount)
+        virtual void rhi_enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount)
         {
             cyber_core_assert(false, "Empty implement rhi_enum_adapters!");
         }
-        virtual uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc)
+        virtual uint32_t rhi_acquire_next_image(RHISwapChain* pSwapChain, const RHIAcquireNextDesc& acquireDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_acquire_next_image!");
             return 0;
         }
         // Queue APIs
-        virtual QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
+        virtual RHIQueue* rhi_get_queue(RHIDevice* pDevice, ERHIQueueType type, uint32_t index) 
         { 
             cyber_core_assert(false, "Empty implement rhi_get_queue!");
-            return CreateRef<RHIQueue>();
+            return nullptr;
         }
-        virtual void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
+        virtual void rhi_submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_submit_queue!");
         }
-        virtual void rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc)
+        virtual void rhi_present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_present_queue!");
         }
-        virtual void rhi_wait_queue_idle(Ref<RHIQueue> queue)
+        virtual void rhi_wait_queue_idle(RHIQueue* queue)
         {
             cyber_core_assert(false, "Empty implement rhi_wait_queue_idle!");
         }
-        virtual void rhi_free_queue(Ref<RHIQueue> queue)
+        virtual void rhi_free_queue(RHIQueue* queue)
         {
             cyber_core_assert(false, "Empty implement rhi_free_queue!");
         }
         // Command APIs
-        virtual CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc)
+        virtual RHICommandPool* rhi_create_command_pool(RHIQueue* pQueue, const CommandPoolCreateDesc& commandPoolDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_command_pool!");
-            return CreateRef<RHICommandPool>();
+            return nullptr;
         }
-        virtual void rhi_reset_command_pool(Ref<RHICommandPool> pPool)
+        virtual void rhi_reset_command_pool(RHICommandPool* pPool)
         {
             cyber_core_assert(false, "Empty implement rhi_reset_command_pool!");
         }
-        virtual void rhi_free_command_pool(Ref<RHICommandPool> pPool)
+        virtual void rhi_free_command_pool(RHICommandPool* pPool)
         {
             cyber_core_assert(false, "Empty implement rhi_free_command_pool!");
         }
-        virtual CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc)
+        virtual RHICommandBuffer* rhi_create_command_buffer(RHICommandPool* pPool, const CommandBufferCreateDesc& commandBufferDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_command_buffer!");
-            return CreateRef<RHICommandBuffer>();
+            return nullptr;
         }
-        virtual void rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer)
+        virtual void rhi_free_command_buffer(RHICommandBuffer* pCommandBuffer)
         {
             cyber_core_assert(false, "Empty implement rhi_free_command_buffer!");
         }
         /// RootSignature
-        virtual RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
+        virtual RHIRootSignature* rhi_create_root_signature(RHIDevice* pDevice, const RHIRootSignatureCreateDesc& rootSigDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_root_signature!");
-            return CreateRef<RHIRootSignature>();
+            return nullptr;
         }
-        virtual void rhi_free_root_signature(Ref<RHIRootSignature> pRootSignature)
+        virtual void rhi_free_root_signature(RHIRootSignature* pRootSignature)
         {
             cyber_core_assert(false, "Empty implement rhi_free_root_signature!");
         }
-        virtual DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> pDevice, const RHIDescriptorSetCreateDesc& dSetDesc)
+        virtual RHIDescriptorSet* rhi_create_descriptor_set(RHIDevice* pDevice, const RHIDescriptorSetCreateDesc& dSetDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_descriptor_set!");
-            return CreateRef<RHIDescriptorSet>();
+            return nullptr;
         }
         virtual void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count)
         {
             cyber_core_assert(false, "Empty implement rhi_update_descriptor_set!");
         }
-        virtual Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc)
+        virtual RHIRenderPipeline* rhi_create_render_pipeline(RHIDevice* pDevice, const RHIRenderPipelineCreateDesc& pipelineDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_render_pipeline!");
-            return CreateRef<RHIRenderPipeline>();
+            return nullptr;
         }
-        virtual void rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline)
+        virtual void rhi_free_render_pipeline(RHIRenderPipeline* pipeline)
         {
             cyber_core_assert(false, "Empty implement rhi_free_render_pipeline!");
         }
 
         // Resource APIs
-        virtual Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> pDevice, const RHITextureViewCreateDesc& viewDesc)
+        virtual RHITextureView* rhi_create_texture_view(RHIDevice* pDevice, const RHITextureViewCreateDesc& viewDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture_view!");
-            return CreateRef<RHITextureView>();
+            return nullptr;
         }
-        virtual void rhi_free_texture_view(Ref<RHITextureView> view)
+        virtual void rhi_free_texture_view(RHITextureView* view)
         {
             cyber_core_assert(false, "Empty implement rhi_free_texture_view!");
         }
-        virtual Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> pDevice, const TextureCreationDesc& textureDesc) 
+        virtual RHITexture2D* rhi_create_texture(RHIDevice* pDevice, const TextureCreationDesc& textureDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");
-            return CreateRef<RHITexture2D>();
+            return nullptr;
         }
-        virtual void rhi_free_texture(Ref<RHITexture> texture)
+        virtual void rhi_free_texture(RHITexture* texture)
         {
             cyber_core_assert(false, "Empty implement rhi_free_texture!");
         }
-        virtual BufferRHIRef rhi_create_buffer(Ref<RHIDevice> pDevice, const BufferCreateDesc& bufferDesc) 
+        virtual RHIBuffer* rhi_create_buffer(RHIDevice* pDevice, const BufferCreateDesc& bufferDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");
-            return CreateRef<RHIBuffer>();
+            return nullptr;
         }
-        virtual void rhi_free_buffer(Ref<RHIBuffer> buffer)
+        virtual void rhi_free_buffer(RHIBuffer* buffer)
         {
             cyber_core_assert(false, "Empty implement rhi_free_buffer!");
         }
-        virtual void rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range)
+        virtual void rhi_map_buffer(RHIBuffer* buffer, const RHIBufferRange* range)
         {
             cyber_core_assert(false, "Empty implement rhi_map_buffer!");
         }
-        virtual void rhi_unmap_buffer(Ref<RHIBuffer> buffer)
+        virtual void rhi_unmap_buffer(RHIBuffer* buffer)
         {
             cyber_core_assert(false, "Empty implement rhi_unmap_buffer!");
         }
 
         // Shader
-        virtual ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
+        virtual RHIShaderLibrary* rhi_create_shader_library(RHIDevice* device, const struct RHIShaderLibraryCreateDesc& desc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_shader_library!");
-            return CreateRef<RHIShaderLibrary>();
+            return nullptr;
         }
-        virtual void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary)
+        virtual void rhi_free_shader_library(RHIShaderLibrary* shaderLibrary)
         {
             cyber_core_assert(false, "Empty implement rhi_free_shader_library!");
         }
 
         /// CMDS
-        virtual void rhi_cmd_begin(Ref<RHICommandBuffer> cmd)
+        virtual void rhi_cmd_begin(RHICommandBuffer* cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin!");
         }
-        virtual void rhi_cmd_end(Ref<RHICommandBuffer> cmd)
+        virtual void rhi_cmd_end(RHICommandBuffer* cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_end!");
         }
-        virtual void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
+        virtual void rhi_cmd_resource_barrier(RHICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_resource_barrier!");
         }
         // Render Pass
-        virtual Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
+        virtual RHIRenderPassEncoder* rhi_cmd_begin_render_pass(RHICommandBuffer* cmd, const RHIRenderPassDesc& beginRenderPassDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin_renderpass!");
-            return cmd;
+            return nullptr;
         }
-        virtual void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> cmd)
+        virtual void rhi_cmd_end_render_pass(RHICommandBuffer* cmd)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_end_renderpass!");
         }
-        virtual void rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet)
+        virtual void rhi_render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_descriptor_set!");
         }
-        virtual void rhi_render_encoder_set_viewport(Ref<RHIRenderPassEncoder> encoder, float x, float y, float width, float height, float min_depth, float max_depth)
+        virtual void rhi_render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_set_viewport!");
         }
-        virtual void rhi_render_encoder_set_scissor(Ref<RHIRenderPassEncoder> encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+        virtual void rhi_render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_set_scissor!");
         }
-        virtual void rhi_render_encoder_bind_pipeline(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRenderPipeline> pipeline)
+        virtual void rhi_render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_pipeline!");
         }
-        virtual void rhi_render_encoder_bind_vertex_buffer(Ref<RHIRenderPassEncoder> encoder, uint32_t buffer_count, Ref<RHIBuffer>* buffers,const uint32_t* strides, const uint32_t* offsets)
+        virtual void rhi_render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RHIBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_vertex_buffer!");
         }
-        virtual void rhi_render_encoder_bind_index_buffer(Ref<RHIRenderPassEncoder> encoder, Ref<RHIBuffer> buffer, uint32_t index_stride, uint64_t offset)
+        virtual void rhi_render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RHIBuffer* buffer, uint32_t index_stride, uint64_t offset)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_bind_index_buffer!");
         }
-        virtual void rhi_render_encoder_push_constants(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRootSignature> rs, const char8_t* name, const void* data)
+        virtual void rhi_render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_push_constants!");
         }
-        virtual void rhi_render_encoder_draw(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex)
+        virtual void rhi_render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw!");
         }
-        virtual void rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+        virtual void rhi_render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_instanced!");
         }
-        virtual void rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+        virtual void rhi_render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_indexed!");
         }
-        virtual void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+        virtual void rhi_render_encoder_draw_indexed_instanced(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_indexed_instanced!");
         }
@@ -1006,117 +997,116 @@ namespace Cyber
     #define RHI_SINGLE_GPU_NODE_MASK 1
     #define RHI_SINGLE_GPU_NODE_INDEX 0
 
-
-    FORCEINLINE Ref<RHIInstance> rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
+    FORCEINLINE RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
     {
         return RHI::gloablRHI->rhi_create_instance(instanceDesc);
     }
-    FORCEINLINE void rhi_free_instance(Ref<RHIInstance> instance)
+    FORCEINLINE void rhi_free_instance(RHIInstance* instance)
     {
         RHI::gloablRHI->rhi_free_instance(instance);
     }
     // Device APIS
-    FORCEINLINE Ref<RHIDevice> rhi_create_device(Ref<RHIAdapter> pAdapter, const RHIDeviceCreateDesc& deviceDesc) 
+    FORCEINLINE RHIDevice* rhi_create_device(RHIAdapter* adapter, const RHIDeviceCreateDesc& deviceDesc) 
     {
-        return RHI::gloablRHI->rhi_create_device(pAdapter, deviceDesc);
+        return RHI::gloablRHI->rhi_create_device(adapter, deviceDesc);
     }
-    FORCEINLINE void rhi_free_device(Ref<RHIDevice> pDevice) 
+    FORCEINLINE void rhi_free_device(RHIDevice* device) 
     {
-        RHI::gloablRHI->rhi_free_device(pDevice);
+        RHI::gloablRHI->rhi_free_device(device);
     }
     // API Object APIs
-    FORCEINLINE Ref<RHISurface> rhi_surface_from_hwnd(Ref<RHIDevice> pDevice, HWND hwnd)
+    FORCEINLINE RHISurface* rhi_surface_from_hwnd(RHIDevice* device, HWND hwnd)
     {
-        return RHI::gloablRHI->rhi_surface_from_hwnd(pDevice, hwnd);
+        return RHI::gloablRHI->rhi_surface_from_hwnd(device, hwnd);
     }
-    FORCEINLINE void rhi_free_surface(Ref<RHISurface> surface)
+    FORCEINLINE void rhi_free_surface(RHISurface* surface)
     {
         RHI::gloablRHI->rhi_free_surface(surface);
     }
-    FORCEINLINE Ref<RHIFence> rhi_create_fence(Ref<RHIDevice> pDevice) 
+    FORCEINLINE RHIFence* rhi_create_fence(RHIDevice* device) 
     {
-        return RHI::gloablRHI->rhi_create_fence(pDevice);
+        return RHI::gloablRHI->rhi_create_fence(device);
     };
-    FORCEINLINE void rhi_wait_fences(const Ref<RHIFence>* fences, uint32_t fenceCount)
+    FORCEINLINE void rhi_wait_fences(RHIFence** fences, uint32_t fenceCount)
     {
         RHI::gloablRHI->rhi_wait_fences(fences, fenceCount);
     }
-    FORCEINLINE void rhi_free_fence(Ref<RHIFence> fence)
+    FORCEINLINE void rhi_free_fence(RHIFence* fence)
     {
         RHI::gloablRHI->rhi_free_fence(fence);
     }
-    FORCEINLINE ERHIFenceStatus rhi_query_fence_status(Ref<RHIFence> pFence)
+    FORCEINLINE ERHIFenceStatus rhi_query_fence_status(RHIFence* fence)
     {
-        return RHI::gloablRHI->rhi_query_fence_status(pFence);
+        return RHI::gloablRHI->rhi_query_fence_status(fence);
     }
-    FORCEINLINE SwapChainRef rhi_create_swap_chain(Ref<RHIDevice> pDevice, const RHISwapChainCreateDesc& swapchainDesc)
+    FORCEINLINE RHISwapChain* rhi_create_swap_chain(RHIDevice* device, const RHISwapChainCreateDesc& swapchainDesc)
     {
-        return RHI::gloablRHI->rhi_create_swap_chain(pDevice, swapchainDesc);
+        return RHI::gloablRHI->rhi_create_swap_chain(device, swapchainDesc);
     }
-    FORCEINLINE void rhi_free_swap_chain(Ref<RHISwapChain> pSwapChain)
+    FORCEINLINE void rhi_free_swap_chain(RHISwapChain* swapchain)
     {
-        RHI::gloablRHI->rhi_free_swap_chain(pSwapChain);
+        RHI::gloablRHI->rhi_free_swap_chain(swapchain);
     }
-    FORCEINLINE void rhi_enum_adapters(Ref<RHIInstance> instance, RHIAdapter** adapters, uint32_t* adapterCount)
+    FORCEINLINE void rhi_enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount)
     {
         RHI::gloablRHI->rhi_enum_adapters(instance, adapters, adapterCount);
     }
-    FORCEINLINE uint32_t rhi_acquire_next_image(Ref<RHISwapChain> pSwapChain, const RHIAcquireNextDesc& acquireDesc)
+    FORCEINLINE uint32_t rhi_acquire_next_image(RHISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc)
     {
-        return RHI::gloablRHI->rhi_acquire_next_image(pSwapChain, acquireDesc);
+        return RHI::gloablRHI->rhi_acquire_next_image(swapchain, acquireDesc);
     }
     // Queue APIs
-    FORCEINLINE QueueRHIRef rhi_get_queue(Ref<RHIDevice> pDevice, ERHIQueueType type, uint32_t index) 
+    FORCEINLINE RHIQueue* rhi_get_queue(RHIDevice* device, ERHIQueueType type, uint32_t index) 
     { 
-        return RHI::gloablRHI->rhi_get_queue(pDevice, type, index); 
+        return RHI::gloablRHI->rhi_get_queue(device, type, index); 
     }
-    FORCEINLINE void rhi_submit_queue(Ref<RHIQueue> queue, const RHIQueueSubmitDesc& submitDesc)
+    FORCEINLINE void rhi_submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
     {
         RHI::gloablRHI->rhi_submit_queue(queue, submitDesc);
     }
-    FORCEINLINE void rhi_present_queue(Ref<RHIQueue> queue, const RHIQueuePresentDesc& presentDesc)
+    FORCEINLINE void rhi_present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
     {
         RHI::gloablRHI->rhi_present_queue(queue, presentDesc);
     }
-    FORCEINLINE void rhi_wait_queue_idle(Ref<RHIQueue> queue)
+    FORCEINLINE void rhi_wait_queue_idle(RHIQueue* queue)
     {
         RHI::gloablRHI->rhi_wait_queue_idle(queue);
     }
-    FORCEINLINE void rhi_free_queue(Ref<RHIQueue> queue)
+    FORCEINLINE void rhi_free_queue(RHIQueue* queue)
     {
         RHI::gloablRHI->rhi_free_queue(queue);
     }
     // Command APIs
-    FORCEINLINE CommandPoolRef rhi_create_command_pool(Ref<RHIQueue> pQueue, const CommandPoolCreateDesc& commandPoolDesc)
+    FORCEINLINE RHICommandPool* rhi_create_command_pool(RHIQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
     {
-        return RHI::gloablRHI->rhi_create_command_pool(pQueue, commandPoolDesc);
+        return RHI::gloablRHI->rhi_create_command_pool(queue, commandPoolDesc);
     }
-    FORCEINLINE void rhi_reset_command_pool(Ref<RHICommandPool> pPool)
+    FORCEINLINE void rhi_reset_command_pool(RHICommandPool* pool)
     {
-        RHI::gloablRHI->rhi_reset_command_pool(pPool);
+        RHI::gloablRHI->rhi_reset_command_pool(pool);
     }
-    FORCEINLINE void rhi_free_command_pool(Ref<RHICommandPool> pPool)
+    FORCEINLINE void rhi_free_command_pool(RHICommandPool* pool)
     {
-        RHI::gloablRHI->rhi_free_command_pool(pPool);
+        RHI::gloablRHI->rhi_free_command_pool(pool);
     }
-    FORCEINLINE CommandBufferRef rhi_create_command_buffer(Ref<RHICommandPool> pPool, const CommandBufferCreateDesc& commandBufferDesc)
+    FORCEINLINE RHICommandBuffer* rhi_create_command_buffer(RHICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc)
     {
-        return RHI::gloablRHI->rhi_create_command_buffer(pPool, commandBufferDesc);
+        return RHI::gloablRHI->rhi_create_command_buffer(pool, commandBufferDesc);
     }
-    FORCEINLINE void rhi_free_command_buffer(Ref<RHICommandBuffer> pCommandBuffer)
+    FORCEINLINE void rhi_free_command_buffer(RHICommandBuffer* commandBuffer)
     {
-        RHI::gloablRHI->rhi_free_command_buffer(pCommandBuffer);
+        RHI::gloablRHI->rhi_free_command_buffer(commandBuffer);
     }
     /// RootSignature
-    FORCEINLINE RootSignatureRHIRef rhi_create_root_signature(Ref<RHIDevice> device, const RHIRootSignatureCreateDesc& rootSigDesc)
+    FORCEINLINE RHIRootSignature* rhi_create_root_signature(RHIDevice* device, const RHIRootSignatureCreateDesc& rootSigDesc)
     {
         return RHI::gloablRHI->rhi_create_root_signature(device, rootSigDesc);
     }
-    FORCEINLINE void rhi_free_root_signature(Ref<RHIRootSignature> rootSignature)
+    FORCEINLINE void rhi_free_root_signature(RHIRootSignature* rootSignature)
     {
         RHI::gloablRHI->rhi_free_root_signature(rootSignature);
     }
-    FORCEINLINE DescriptorSetRHIRef rhi_create_descriptor_set(Ref<RHIDevice> device, const RHIDescriptorSetCreateDesc& descriptorSetDesc)
+    FORCEINLINE RHIDescriptorSet* rhi_create_descriptor_set(RHIDevice* device, const RHIDescriptorSetCreateDesc& descriptorSetDesc)
     {
         return RHI::gloablRHI->rhi_create_descriptor_set(device, descriptorSetDesc);
     }
@@ -1124,115 +1114,115 @@ namespace Cyber
     {
         RHI::gloablRHI->rhi_update_descriptor_set(set, updateDesc, count);
     }
-    FORCEINLINE Ref<RHIRenderPipeline> rhi_create_render_pipeline(Ref<RHIDevice> device, const RHIRenderPipelineCreateDesc& pipelineDesc)
+    FORCEINLINE RHIRenderPipeline* rhi_create_render_pipeline(RHIDevice* device, const RHIRenderPipelineCreateDesc& pipelineDesc)
     {
         return RHI::gloablRHI->rhi_create_render_pipeline(device, pipelineDesc);
     }
-    FORCEINLINE void rhi_free_render_pipeline(Ref<RHIRenderPipeline> pipeline)
+    FORCEINLINE void rhi_free_render_pipeline(RHIRenderPipeline* pipeline)
     {
         RHI::gloablRHI->rhi_free_render_pipeline(pipeline);
     }
     // Resource APIs
-    FORCEINLINE Ref<RHITextureView> rhi_create_texture_view(Ref<RHIDevice> device, const RHITextureViewCreateDesc& viewDesc)
+    FORCEINLINE RHITextureView* rhi_create_texture_view(RHIDevice* device, const RHITextureViewCreateDesc& viewDesc)
     {
         return RHI::gloablRHI->rhi_create_texture_view(device, viewDesc);
     }
-    FORCEINLINE void rhi_free_texture_view(Ref<RHITextureView> view)
+    FORCEINLINE void rhi_free_texture_view(RHITextureView* view)
     {
         RHI::gloablRHI->rhi_free_texture_view(view);
     }
-    FORCEINLINE Texture2DRHIRef rhi_create_texture(Ref<RHIDevice> device, const TextureCreationDesc& textureDesc) 
+    FORCEINLINE RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreationDesc& textureDesc) 
     {
         return RHI::gloablRHI->rhi_create_texture(device, textureDesc);
     }
-    FORCEINLINE BufferRHIRef rhi_create_buffer(Ref<RHIDevice> device, const BufferCreateDesc& bufferDesc) 
+    FORCEINLINE RHIBuffer* rhi_create_buffer(RHIDevice* device, const BufferCreateDesc& bufferDesc) 
     {
         return RHI::gloablRHI->rhi_create_buffer(device, bufferDesc);
     }
-    FORCEINLINE void rhi_free_buffer(Ref<RHIBuffer> buffer)
+    FORCEINLINE void rhi_free_buffer(RHIBuffer* buffer)
     {
         RHI::gloablRHI->rhi_free_buffer(buffer);
     }
-    FORCEINLINE void rhi_map_buffer(Ref<RHIBuffer> buffer, const RHIBufferRange* range)
+    FORCEINLINE void rhi_map_buffer(RHIBuffer* buffer, const RHIBufferRange* range)
     {
         RHI::gloablRHI->rhi_map_buffer(buffer, range);
     }
-    FORCEINLINE void rhi_unmap_buffer(Ref<RHIBuffer> buffer)
+    FORCEINLINE void rhi_unmap_buffer(RHIBuffer* buffer)
     {
         RHI::gloablRHI->rhi_unmap_buffer(buffer);
     }
     // Shader
-    FORCEINLINE ShaderLibraryRHIRef rhi_create_shader_library(Ref<RHIDevice> device, const struct RHIShaderLibraryCreateDesc& desc)
+    FORCEINLINE RHIShaderLibrary* rhi_create_shader_library(RHIDevice* device, const struct RHIShaderLibraryCreateDesc& desc)
     {
         return RHI::gloablRHI->rhi_create_shader_library(device, desc);
     }
-    FORCEINLINE void rhi_free_shader_library(Ref<RHIShaderLibrary> shaderLibrary)
+    FORCEINLINE void rhi_free_shader_library(RHIShaderLibrary* shaderLibrary)
     {
         RHI::gloablRHI->rhi_free_shader_library(shaderLibrary);
     }
     /// CMDS
-    FORCEINLINE void rhi_cmd_begin(Ref<RHICommandBuffer> cmd)
+    FORCEINLINE void rhi_cmd_begin(RHICommandBuffer* cmd)
     {
         RHI::gloablRHI->rhi_cmd_begin(cmd);
     }
-    FORCEINLINE void rhi_cmd_end(Ref<RHICommandBuffer> cmd)
+    FORCEINLINE void rhi_cmd_end(RHICommandBuffer* cmd)
     {
         RHI::gloablRHI->rhi_cmd_end(cmd);
     }
-    FORCEINLINE void rhi_cmd_resource_barrier(Ref<RHICommandBuffer> cmd, const RHIResourceBarrierDesc& barrierDesc)
+    FORCEINLINE void rhi_cmd_resource_barrier(RHICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc)
     {
         RHI::gloablRHI->rhi_cmd_resource_barrier(cmd, barrierDesc);
     }
     // Render Pass
-    FORCEINLINE Ref<RHIRenderPassEncoder> rhi_cmd_begin_render_pass(Ref<RHICommandBuffer> cmd, const RHIRenderPassDesc& beginRenderPassDesc)
+    FORCEINLINE RHIRenderPassEncoder* rhi_cmd_begin_render_pass(RHICommandBuffer* cmd, const RHIRenderPassDesc& beginRenderPassDesc)
     {
         return RHI::gloablRHI->rhi_cmd_begin_render_pass(cmd, beginRenderPassDesc);
     }
-    FORCEINLINE void rhi_cmd_end_render_pass(Ref<RHICommandBuffer> cmd)
+    FORCEINLINE void rhi_cmd_end_render_pass(RHICommandBuffer* cmd)
     {
         RHI::gloablRHI->rhi_cmd_end_render_pass(cmd);
     }
-    FORCEINLINE void rhi_render_encoder_bind_descriptor_set(Ref<RHIRenderPassEncoder> encoder, Ref<RHIDescriptorSet> descriptorSet)
+    FORCEINLINE void rhi_render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet)
     {
         RHI::gloablRHI->rhi_render_encoder_bind_descriptor_set(encoder, descriptorSet);
     }
-    FORCEINLINE void rhi_render_encoder_set_viewport(Ref<RHIRenderPassEncoder> encoder, float x, float y, float width, float height, float min_depth, float max_depth)
+    FORCEINLINE void rhi_render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth)
     {
         RHI::gloablRHI->rhi_render_encoder_set_viewport(encoder, x, y, width, height, min_depth, max_depth);
     }
-    FORCEINLINE void rhi_render_encoder_set_scissor(Ref<RHIRenderPassEncoder> encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+    FORCEINLINE void rhi_render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
     {
         RHI::gloablRHI->rhi_render_encoder_set_scissor(encoder, x, y, width, height);
     }
-    FORCEINLINE void rhi_render_encoder_bind_pipeline(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRenderPipeline> pipeline)
+    FORCEINLINE void rhi_render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline)
     {
         RHI::gloablRHI->rhi_render_encoder_bind_pipeline(encoder, pipeline);
     }
-    FORCEINLINE void rhi_render_encoder_bind_vertex_buffer(Ref<RHIRenderPassEncoder> encoder, uint32_t buffer_count, Ref<RHIBuffer>* buffers,const uint32_t* strides, const uint32_t* offsets)
+    FORCEINLINE void rhi_render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RHIBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
     {
         RHI::gloablRHI->rhi_render_encoder_bind_vertex_buffer(encoder, buffer_count, buffers, strides, offsets);
     }
-    FORCEINLINE void rhi_render_encoder_bind_index_buffer(Ref<RHIRenderPassEncoder> encoder, Ref<RHIBuffer> buffer, uint32_t index_stride, uint64_t offset)
+    FORCEINLINE void rhi_render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RHIBuffer* buffer, uint32_t index_stride, uint64_t offset)
     {
         RHI::gloablRHI->rhi_render_encoder_bind_index_buffer(encoder, buffer, index_stride, offset);
     }
-    FORCEINLINE void rhi_render_encoder_push_constants(Ref<RHIRenderPassEncoder> encoder, Ref<RHIRootSignature> rs, const char8_t* name, const void* data)
+    FORCEINLINE void rhi_render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data)
     {
         RHI::gloablRHI->rhi_render_encoder_push_constants(encoder, rs, name, data);
     }
-    FORCEINLINE void rhi_render_encoder_draw(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex)
+    FORCEINLINE void rhi_render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
     {
         RHI::gloablRHI->rhi_render_encoder_draw(encoder, vertex_count, first_vertex);
     }
-    FORCEINLINE void rhi_render_encoder_draw_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+    FORCEINLINE void rhi_render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
     {
         RHI::gloablRHI->rhi_render_encoder_draw_instanced(encoder, vertex_count, first_vertex, instance_count, first_instance);
     }
-    FORCEINLINE void rhi_render_encoder_draw_indexed(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+    FORCEINLINE void rhi_render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
     {
         RHI::gloablRHI->rhi_render_encoder_draw_indexed(encoder, index_count, first_index, first_vertex);
     }
-    FORCEINLINE void rhi_render_encoder_draw_indexed_instanced(Ref<RHIRenderPassEncoder> encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+    FORCEINLINE void rhi_render_encoder_draw_indexed_instanced(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
     {
         RHI::gloablRHI->rhi_render_encoder_draw_indexed_instanced(encoder, index_count, first_index, instance_count, first_instance, first_vertex);
     } 

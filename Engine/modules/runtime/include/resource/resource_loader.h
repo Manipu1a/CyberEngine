@@ -34,6 +34,6 @@ namespace Cyber
             uint32_t constant_count;
         };
 
-        ShaderLibraryRHIRef add_shader(Renderer& renderer, const ShaderLoadDesc& desc);
+        RHIShaderLibrary* add_shader(Renderer& renderer, const ShaderLoadDesc& desc);
     }
 }

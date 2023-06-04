@@ -43,7 +43,7 @@ namespace Cyber
         virtual void update(float DeltaTime);
         virtual void raster_draw();
     public:
-        Ref<RHIDevice> GetDevice() { return device; }
+        RHIDevice* GetDevice() { return device; }
         
     protected:
         HINSTANCE mhAppInst = nullptr;
@@ -57,19 +57,19 @@ namespace Cyber
         static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
         static const uint32_t BACK_BUFFER_COUNT = 3;
 
-        Ref<RHIDevice> device = nullptr;
-        Ref<RHIInstance> instance = nullptr;
-        Ref<RHIAdapter> adapter = nullptr;
-        Ref<RHIFence> present_fence = nullptr;
-        Ref<RHIQueue> queue = nullptr;
-        Ref<RHICommandPool> pool = nullptr;
-        Ref<RHICommandBuffer> cmd = nullptr;
-        Ref<RHISwapChain> swap_chain = nullptr;
-        Ref<RHISurface> surface = nullptr;
-        Ref<RHIFence> present_swmaphore = nullptr; 
-        Ref<RHITextureView> views[BACK_BUFFER_COUNT];
-        Ref<RHIRenderPipeline> pipeline = nullptr;
-        Ref<RHIRootSignature> root_signature = nullptr;
+        RHIDevice* device = nullptr;
+        RHIInstance* instance = nullptr;
+        RHIAdapter* adapter = nullptr;
+        RHIFence* present_fence = nullptr;
+        RHIQueue* queue = nullptr;
+        RHICommandPool* pool = nullptr;
+        RHICommandBuffer* cmd = nullptr;
+        RHISwapChain* swap_chain = nullptr;
+        RHISurface* surface = nullptr;
+        RHIFence* present_swmaphore = nullptr; 
+        RHITextureView* views[BACK_BUFFER_COUNT];
+        RHIRenderPipeline* pipeline = nullptr;
+        RHIRootSignature* root_signature = nullptr;
         uint32_t backbuffer_index = 0;
 
         ID3D12CommandQueue* mCommandQueue;

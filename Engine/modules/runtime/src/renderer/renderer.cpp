@@ -41,8 +41,8 @@ namespace Cyber
         for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
         {
             RHITextureViewCreateDesc view_desc = {
-                .texture = swap_chain->mBackBuffers[i],
-                .format = (ERHIFormat)swap_chain->mBackBuffers[i]->mFormat,
+                .texture = &swap_chain->mBackBuffers[i],
+                .format = (ERHIFormat)swap_chain->mBackBuffers[i].mFormat,
                 .usages = RHI_TVU_RTV_DSV,
                 .aspects = RHI_TVA_COLOR,
                 .dimension = RHI_TEX_DIMENSION_2D,
@@ -86,7 +86,7 @@ namespace Cyber
         rhi_enum_adapters(instance, nullptr, &adapter_count);
         RHIAdapter* adapters[64];
         rhi_enum_adapters(instance, adapters, &adapter_count);
-        adapter.reset(adapters[0]);
+        adapter = adapters[0];
         RHIAdapter_D3D12* adapter_d3d12 = static_cast<RHIAdapter_D3D12*>(adapters[0]);
 
         // Create device
@@ -132,7 +132,7 @@ namespace Cyber
             .stage = RHI_SHADER_STAGE_VERT,
             .entry_point_name = CYBER_UTF8("main")
         };
-        Ref<RHIShaderLibrary> vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
+        RHIShaderLibrary* vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
 
         ResourceLoader::ShaderLoadDesc ps_load_desc = {};
         ps_load_desc.target = shader_target_6_0;
@@ -141,10 +141,10 @@ namespace Cyber
             .stage = RHI_SHADER_STAGE_FRAG,
             .entry_point_name = CYBER_UTF8("main"),
         };
-        Ref<RHIShaderLibrary> ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
+        RHIShaderLibrary* ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
 
         // create root signature
-        Ref<RHIPipelineShaderCreateDesc> pipeline_shader_create_desc[2];
+        RHIPipelineShaderCreateDesc* pipeline_shader_create_desc[2];
         pipeline_shader_create_desc[0]->stage = RHI_SHADER_STAGE_VERT;
         pipeline_shader_create_desc[0]->library = vs_shader;
         pipeline_shader_create_desc[0]->entry = CYBER_UTF8("main");
@@ -186,8 +186,8 @@ namespace Cyber
             .fence = present_fence
         };
         backbuffer_index = rhi_acquire_next_image(swap_chain, acquire_desc);
-        const auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
-        const auto back_buffer_view = views[backbuffer_index];
+        auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
+        auto back_buffer_view = views[backbuffer_index];
         rhi_reset_command_pool(pool);
         // record
         rhi_cmd_begin(cmd);
@@ -204,20 +204,20 @@ namespace Cyber
             .render_target_count = 1,
         };
         RHITextureBarrier draw_barrier = {
-            .texture = back_buffer,
+            .texture = &back_buffer,
             .src_state = RHI_RESOURCE_STATE_UNDEFINED,
             .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
         };
         RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
         rhi_cmd_resource_barrier(cmd, barrier_desc0);
-        Ref<RHIRenderPassEncoder> rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
-        rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-        rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+        RHIRenderPassEncoder* rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
+        rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer.mWidth, back_buffer.mHeight, 0.0f, 1.0f);
+        rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer.mWidth, back_buffer.mHeight);
         rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
         rhi_render_encoder_draw(rp_encoder, 3, 0);
 
         RHITextureBarrier present_barrier = {
-            .texture = back_buffer,
+            .texture = &back_buffer,
             .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
             .dst_state = RHI_RESOURCE_STATE_PRESENT
         };

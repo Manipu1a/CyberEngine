@@ -186,10 +186,10 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_QueryAllAdapters(Ref<RHIInstance_D3D12> pInstance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
+    void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* instance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
     {
-        cyber_assert(pInstance->pAdapters == nullptr, "getProperGpuCount should be called only once!");
-        cyber_assert(pInstance->mAdaptersCount == 0, "getProperGpuCount should be called only once!");
+        cyber_assert(instance->pAdapters == nullptr, "getProperGpuCount should be called only once!");
+        cyber_assert(instance->mAdaptersCount == 0, "getProperGpuCount should be called only once!");
 
         IDXGIAdapter* _adapter = nullptr;
         eastl::vector<IDXGIAdapter4*> dxgi_adapters;
@@ -197,7 +197,7 @@ namespace Cyber
 
         for(UINT i = 0; i < 10;i++)
         {
-            if(!SUCCEEDED(pInstance->pDXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&_adapter))))
+            if(!SUCCEEDED(instance->pDXGIFactory->EnumAdapterByGpuPreference(i, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&_adapter))))
             {
                 break;
             }
@@ -220,7 +220,7 @@ namespace Cyber
                         if(SUCCEEDED(hres))
                         {
                             SAFE_RELEASE(tempAdapter);
-                            pInstance->mAdaptersCount++;
+                            instance->mAdaptersCount++;
                             // Add ref
                             {
                                 dxgi_adapters.push_back(adapter);
@@ -238,17 +238,17 @@ namespace Cyber
             }
         }
 
-        pCount = pInstance->mAdaptersCount;
-        pInstance->pAdapters = cyber_new_n<RHIAdapter_D3D12>(pInstance->mAdaptersCount);
+        pCount = instance->mAdaptersCount;
+        instance->pAdapters = cyber_new_n<RHIAdapter_D3D12>(instance->mAdaptersCount);
         CB_CORE_INFO("test");
 
         for(uint32_t i = 0;i < pCount; i++)
         {
-            auto& adapter = pInstance->pAdapters[i];
+            auto& adapter = instance->pAdapters[i];
             // Device Objects
             adapter.pDxActiveGPU = dxgi_adapters[i];
             adapter.mFeatureLevel = adapter_levels[i];
-            adapter.pInstance = pInstance;
+            adapter.pInstance = CreateRef<RHIInstance>(*instance);
         }
     }
 

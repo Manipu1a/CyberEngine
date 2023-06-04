@@ -60,7 +60,7 @@ namespace Cyber
 
         }
 
-        FORCEINLINE RSCharacteristic calculateCharacteristic(Ref<RHIRootSignature> RSTables, const struct RHIRootSignatureCreateDesc* desc)
+        FORCEINLINE RSCharacteristic calculateCharacteristic(RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc* desc)
         {
             // calculate characteristic
             RSCharacteristic newCharacteristic = {};
@@ -116,7 +116,7 @@ namespace Cyber
             return newCharacteristic;
         }
 
-        Ref<RHIRootSignature> try_allocate(Ref<RHIRootSignature> RSTables, const struct RHIRootSignatureCreateDesc* desc)
+        RHIRootSignature* try_allocate(RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc* desc)
         {
             const auto character = calculateCharacteristic(RSTables, desc);
             const auto iter = characterMap.find(character);
@@ -128,7 +128,7 @@ namespace Cyber
             return nullptr;
         }
 
-        bool deallocate(Ref<RHIRootSignature> rootSig)
+        bool deallocate(RHIRootSignature* rootSig)
         {
             auto trueSig = rootSig;
             while(trueSig->pool_next && rootSig->pool)
@@ -156,7 +156,7 @@ namespace Cyber
             return false;
         }
 
-        bool insert(Ref<RHIRootSignature> RSTables, const struct RHIRootSignatureCreateDesc* desc)
+        bool insert(RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc* desc)
         {
             const auto character = calculateCharacteristic(RSTables, desc);
             const auto iter = characterMap.find(character);
@@ -183,27 +183,27 @@ namespace Cyber
         }
     private:
         const eastl::string name;
-        phmap::flat_hash_map<RSCharacteristic, Ref<RHIRootSignature>, RSCharacteristic::hasher> characterMap;
-        phmap::flat_hash_map<Ref<RHIRootSignature>, RSCharacteristic> biCharacterMap;
-        phmap::flat_hash_map<Ref<RHIRootSignature>, uint32_t> counterMap;
+        phmap::flat_hash_map<RSCharacteristic, RHIRootSignature*, RSCharacteristic::hasher> characterMap;
+        phmap::flat_hash_map<RHIRootSignature*, RSCharacteristic> biCharacterMap;
+        phmap::flat_hash_map<RHIRootSignature*, uint32_t> counterMap;
     };
 
-    Ref<RHIRootSignaturePool> rhi_util_create_root_signature_pool(const RHIRootSignaturePoolCreateDesc& desc)
+    RHIRootSignaturePool* rhi_util_create_root_signature_pool(const RHIRootSignaturePoolCreateDesc& desc)
     {
-        return Ref<RHIRootSignaturePool>(new RHIRootSignaturePoolImpl(desc.name));
+        return cyber_new<RHIRootSignaturePoolImpl>(desc.name);
     }
 
-    Ref<RHIRootSignature> rhi_util_try_allocate_signature(Ref<RHIRootSignaturePool> pool, Ref<RHIRootSignature> RSTables, const struct RHIRootSignatureCreateDesc& desc)
+    RHIRootSignature* rhi_util_try_allocate_signature(RHIRootSignaturePool* pool, RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc& desc)
     {
-        return static_cast<RHIRootSignaturePoolImpl*>(pool.get())->try_allocate(RSTables, &desc);
+        return static_cast<RHIRootSignaturePoolImpl*>(pool)->try_allocate(RSTables, &desc);
     }
-    bool rhi_util_add_signature(Ref<RHIRootSignaturePool> pool, Ref<RHIRootSignature> sig, const RHIRootSignatureCreateDesc& desc)
+    bool rhi_util_add_signature(RHIRootSignaturePool* pool, RHIRootSignature* sig, const RHIRootSignatureCreateDesc& desc)
     {
-        return static_cast<RHIRootSignaturePoolImpl*>(pool.get())->insert(sig, &desc);
+        return static_cast<RHIRootSignaturePoolImpl*>(pool)->insert(sig, &desc);
     }
-    bool rhi_util_pool_free_signature(Ref<RHIRootSignaturePool> pool, Ref<RHIRootSignature> signature)
+    bool rhi_util_pool_free_signature(RHIRootSignaturePool* pool, RHIRootSignature* signature)
     {
-        return static_cast<RHIRootSignaturePoolImpl*>(pool.get())->deallocate(signature);
+        return static_cast<RHIRootSignaturePoolImpl*>(pool)->deallocate(signature);
     }
     void rhi_util_free_root_signature_pool(Ref<RHIRootSignaturePool> pool)
     {

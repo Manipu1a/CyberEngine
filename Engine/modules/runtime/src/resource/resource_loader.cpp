@@ -55,7 +55,7 @@ namespace Cyber
             return true;
         }
 
-        ShaderLibraryRHIRef add_shader(Renderer& renderer, const ShaderLoadDesc& desc)
+        RHIShaderLibrary* add_shader(Renderer& renderer, const ShaderLoadDesc& desc)
         {
             RHIShaderLibraryCreateDesc libraryDesc;
             
@@ -78,7 +78,7 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    ShaderLibraryRHIRef shaderLibrary = rhi_create_shader_library(renderer.GetDevice(), libraryDesc);
+                    RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(renderer.GetDevice(), libraryDesc);
                     if(shaderLibrary)
                     {
                         return shaderLibrary;
