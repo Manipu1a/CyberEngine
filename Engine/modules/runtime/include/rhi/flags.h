@@ -701,7 +701,7 @@ enum ERHIResourceState
     RHI_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
     RHI_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
 };
-typedef uint32_t RHIResourceState;
+typedef uint32_t ERHIResourceStates;
 enum ERHIResourceMemoryUsage
 {
     /// No intended memory usage specified.
@@ -717,7 +717,7 @@ enum ERHIResourceMemoryUsage
     RHI_RESOURCE_MEMORY_USAGE_COUNT,
     RHI_RESOURCE_MEMORY_USAGE_MAX_ENUM = 0x7FFFFFFF
 };
-enum ERHIBufferCreationFlags
+typedef enum ERHIBufferCreationFlags
 {
     /// Default flag (Buffer will use aliased memory, buffer will not be cpu accessible until mapBuffer is called)
     RHI_BCF_NONE = 0x01,
@@ -734,7 +734,7 @@ enum ERHIBufferCreationFlags
     RHI_BCF_HOST_VISIBLE = 0x100,
     RHI_BCF_HOST_COHERENT = 0x200,
 #endif
-};
+} ERHIBufferCreationFlags;
 typedef uint32_t RHIBufferCreationFlags;
 typedef enum ERHIScanlineOrdering
 {

@@ -259,7 +259,7 @@ namespace Cyber
     };
 
     /// Texture group
-    struct CYBER_RHI_API TextureCreationDesc
+    struct CYBER_RHI_API TextureCreateDesc
     {
         /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
         RHIClearValue mClearValue;
@@ -285,7 +285,7 @@ namespace Cyber
         ERHIResourceState mStartState;
     };
 
-    struct CYBER_RHI_API RHITextureViewCreateDesc
+    struct CYBER_RHI_API TextureViewCreateDesc
     {
         const char8_t* name;
         RHITexture* texture;
@@ -331,7 +331,7 @@ namespace Cyber
     
     struct RHITextureView
     {
-        RHITextureViewCreateDesc create_info;
+        TextureViewCreateDesc create_info;
         Ref<RHIDevice> device;
     };
 
@@ -878,7 +878,7 @@ namespace Cyber
         }
 
         // Resource APIs
-        virtual RHITextureView* rhi_create_texture_view(RHIDevice* pDevice, const RHITextureViewCreateDesc& viewDesc)
+        virtual RHITextureView* rhi_create_texture_view(RHIDevice* pDevice, const TextureViewCreateDesc& viewDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture_view!");
             return nullptr;
@@ -887,7 +887,7 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_free_texture_view!");
         }
-        virtual RHITexture2D* rhi_create_texture(RHIDevice* pDevice, const TextureCreationDesc& textureDesc) 
+        virtual RHITexture2D* rhi_create_texture(RHIDevice* pDevice, const TextureCreateDesc& textureDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");
             return nullptr;
@@ -1123,7 +1123,7 @@ namespace Cyber
         RHI::gloablRHI->rhi_free_render_pipeline(pipeline);
     }
     // Resource APIs
-    FORCEINLINE RHITextureView* rhi_create_texture_view(RHIDevice* device, const RHITextureViewCreateDesc& viewDesc)
+    FORCEINLINE RHITextureView* rhi_create_texture_view(RHIDevice* device, const TextureViewCreateDesc& viewDesc)
     {
         return RHI::gloablRHI->rhi_create_texture_view(device, viewDesc);
     }
@@ -1131,7 +1131,7 @@ namespace Cyber
     {
         RHI::gloablRHI->rhi_free_texture_view(view);
     }
-    FORCEINLINE RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreationDesc& textureDesc) 
+    FORCEINLINE RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreateDesc& textureDesc) 
     {
         return RHI::gloablRHI->rhi_create_texture(device, textureDesc);
     }
