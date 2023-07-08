@@ -36,21 +36,66 @@ namespace Cyber
         using RGBufferCreateDesc = BufferCreateDesc;
         using RGTextureViewCreateDesc = TextureViewCreateDesc;
 
+        enum class ERGResourceType
+        {
+            Buffer,
+            Texture,
+            TextureView,
+            BufferSRV,
+            BufferUAV,
+            TextureSRV,
+            TextureUAV,
+            UniformBuffer
+        };
+
         class RGRenderResource
         {
         public:
-            const char8_t* ResourceName;
-
+            const char8_t* resource_name;
+            ERGResourceType resource_type;
+            RHIDevice* device;
         };
 
         class RGBuffer : public RGRenderResource
         {
+        public:
+            RGBuffer() : RGRenderResource()
+            {
+                resource_type = ERGResourceType::Buffer;
+            }
+            RGBufferCreateDesc create_desc;
+            RHIBuffer* buffer;
 
+            RHIBuffer* GetBuffer();
         };
 
         class RGTexture : public RGRenderResource
         {
-            
+        public:
+            RGTexture() : RGRenderResource()
+            {
+                resource_type = ERGResourceType::Texture;
+            }
+            RGTextureCreateDesc create_desc;
+            RHITexture* texture;
+            RHITexture* GetTexture();
+        };
+        
+
+        ///////////////////////////////////////////////////////////////
+        using render_pass_function = void(*)(eastl::vector<RGRenderResource*>, eastl::vector<RGRenderResource*>);
+
+        class RGRenderPass
+        {
+        public:
+            RGRenderPass() = default;
+            virtual ~RGRenderPass() = default;
+
+            void execute();
+        public:
+            eastl::vector<RGRenderResource*> input_resources;
+            eastl::vector<RGRenderResource*> output_resources;
+            render_pass_function pass_function;
         };
     }
 
