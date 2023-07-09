@@ -1,0 +1,5 @@
+target("triangle")
+    set_kind("shared")
+    add_deps("GameRuntime", {public=true})
+    add_includedirs("include", {public=true})
+    add_files("src/*.cpp")

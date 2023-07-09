@@ -1,2 +1,2 @@
-#include "samples/triangle/triangle.h"
+#include "triangle.h"
 

@@ -1,5 +1,4 @@
 #pragma once
-
 #include "render_graph_flag.h"
 #include "render_graph_builder.h"
 
