@@ -4,7 +4,7 @@
 #include "core/Application.h"
 #include "core/Window.h"
 #include "CyberEvents/ApplicationEvent.h"
-#include "CyberInputSystem/InputSystem.h"
+#include "inputsystem/InputSystem.h"
 #include <windows.h>
 
 

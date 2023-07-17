@@ -1,5 +1,4 @@
 #pragma once
-
 #include <gainput/gainput.h>
 #include "CyberLog/Log.h"
 

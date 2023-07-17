@@ -1,0 +1,1 @@
+includes("application/xmake.lua")

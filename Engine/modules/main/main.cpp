@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "core/Core.h"
 #include "platform/WindowsWindow.h"
 #include "CyberLog/Log.h"

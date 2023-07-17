@@ -1,11 +1,12 @@
 #pragma once
+
 #include "render_graph_flag.h"
 #include "render_graph_builder.h"
 
 class RenderGraph
 {
 public:
-    static ERenderGraphResult Create();
+    //static ERenderGraphResult Create();
 
     void Destroy();
 
@@ -15,7 +16,5 @@ private:
     RenderGraph() = default;
     ~RenderGraph() = default;
 
-    RenderGraphBuilder* graphBuilder;
-    ERenderGraphResult OnInit();
-    ERenderGraphResult UpdateImpl();
+    class RenderGraphBuilder* graphBuilder;
 };

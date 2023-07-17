@@ -1,6 +1,6 @@
-#include "CyberInputSystem/InputSystem.h"
+#include "inputsystem/InputSystem.h"
 #include "CyberLog/Log.h"
-#include "CyberInputSystem/InputListener.h"
+#include "inputsystem/InputListener.h"
 
 namespace Cyber
 {
@@ -483,7 +483,7 @@ namespace Cyber
     {
         const uint32_t actionId = ctx->mActionId;
 
-        CB_CORE_INFO("Inputaction{%d}", actionId);
+        CB_CORE_INFO("Inputaction{0}", actionId);
 
         return true;
     }

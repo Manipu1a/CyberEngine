@@ -319,9 +319,9 @@ namespace Cyber
         virtual RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
         virtual void rhi_free_instance(RHIInstance* instance) override;
 
-        virtual RHITextureView* rhi_create_texture_view(RHIDevice* device, const RHITextureViewCreateDesc& viewDesc) override;
+        virtual RHITextureView* rhi_create_texture_view(RHIDevice* device, const TextureViewCreateDesc& viewDesc) override;
         virtual void rhi_free_texture_view(RHITextureView* view) override;
-        virtual RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreationDesc& textureDesc) override;
+        virtual RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreateDesc& textureDesc) override;
         virtual RHIBuffer* rhi_create_buffer(RHIDevice* device, const BufferCreateDesc& bufferDesc) override;
         virtual void rhi_free_buffer(RHIBuffer* buffer) override;
         virtual void rhi_map_buffer(RHIBuffer* buffer, const RHIBufferRange* range) override;

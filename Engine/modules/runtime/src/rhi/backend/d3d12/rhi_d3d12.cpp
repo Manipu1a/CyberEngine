@@ -219,7 +219,7 @@ namespace Cyber
         cyber_delete(dx_device);
     }
 
-    RHITextureView* RHI_D3D12::rhi_create_texture_view(RHIDevice* device, const RHITextureViewCreateDesc& viewDesc)
+    RHITextureView* RHI_D3D12::rhi_create_texture_view(RHIDevice* device, const TextureViewCreateDesc& viewDesc)
     {
         RHITextureView_D3D12* tex_view = cyber_new<RHITextureView_D3D12>();
         RHITexture_D3D12* tex = static_cast<RHITexture_D3D12*>(viewDesc.texture);
@@ -519,7 +519,7 @@ namespace Cyber
         }
     }
 
-    RHITexture2D* RHI_D3D12::rhi_create_texture(RHIDevice* device, const TextureCreationDesc& pDesc)
+    RHITexture2D* RHI_D3D12::rhi_create_texture(RHIDevice* device, const TextureCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(device);
 
@@ -580,7 +580,7 @@ namespace Cyber
 
             desc.SampleDesc.Count = data.SampleCount;
 
-            RHIResourceState actualStartState = pDesc.mStartState;
+            ERHIResourceState actualStartState = pDesc.mStartState;
 
             // Decide UAV flags
             if(descriptors & RHI_DESCRIPTOR_TYPE_RW_TEXTURE)
@@ -592,16 +592,16 @@ namespace Cyber
             if(pDesc.mStartState & RHI_RESOURCE_STATE_RENDER_TARGET)
             {
                 desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-                actualStartState = (pDesc.mStartState > RHI_RESOURCE_STATE_RENDER_TARGET)
+                actualStartState = (ERHIResourceState)((pDesc.mStartState > RHI_RESOURCE_STATE_RENDER_TARGET)
                                     ? (pDesc.mStartState & (ERHIResourceState)~RHI_RESOURCE_STATE_RENDER_TARGET)
-                                    : RHI_RESOURCE_STATE_RENDER_TARGET;
+                                    : RHI_RESOURCE_STATE_RENDER_TARGET);
             }
             else if(pDesc.mStartState & RHI_RESOURCE_STATE_DEPTH_WRITE)
             {
                 desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-                actualStartState = (pDesc.mStartState > RHI_RESOURCE_STATE_DEPTH_WRITE)
+                actualStartState = (ERHIResourceState)((pDesc.mStartState > RHI_RESOURCE_STATE_DEPTH_WRITE)
                                     ? (pDesc.mStartState & (ERHIResourceState)~RHI_RESOURCE_STATE_DEPTH_WRITE)
-                                    : RHI_RESOURCE_STATE_DEPTH_WRITE;
+                                    : RHI_RESOURCE_STATE_DEPTH_WRITE);
             }
 
             // Decide sharing flags for multi adapter
@@ -2078,7 +2078,7 @@ namespace Cyber
         // Buffer is 1D
         desc.Width = padded_size;
 
-        RHIResourceState start_state = pDesc.mStartState;
+        ERHIResourceState start_state = pDesc.mStartState;
         if(pDesc.mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_CPU_TO_GPU || pDesc.mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_CPU_ONLY)
         {
             // Your application should generally avoid transitioning to D3D12_RESOURCE_STATE_GENERIC_READ when possible, 

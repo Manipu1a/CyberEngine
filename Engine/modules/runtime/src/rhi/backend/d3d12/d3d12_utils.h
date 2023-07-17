@@ -247,7 +247,7 @@ namespace Cyber
             return DXGI_FORMAT_UNKNOWN;
     }
 
-    static D3D12_RESOURCE_STATES D3D12Util_TranslateResourceState(RHIResourceState state)
+    static D3D12_RESOURCE_STATES D3D12Util_TranslateResourceState(ERHIResourceState state)
     {
         D3D12_RESOURCE_STATES ret = D3D12_RESOURCE_STATE_COMMON;
 

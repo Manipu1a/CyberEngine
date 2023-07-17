@@ -40,7 +40,7 @@ namespace Cyber
         // Create views
         for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
         {
-            RHITextureViewCreateDesc view_desc = {
+            TextureViewCreateDesc view_desc = {
                 .texture = &swap_chain->mBackBuffers[i],
                 .format = (ERHIFormat)swap_chain->mBackBuffers[i].mFormat,
                 .usages = RHI_TVU_RTV_DSV,

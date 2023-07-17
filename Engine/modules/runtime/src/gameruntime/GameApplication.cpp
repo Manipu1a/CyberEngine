@@ -1,4 +1,4 @@
-#include "game_runtime/GameApplication.h"
+#include "GameRuntime/GameApplication.h"
 #include "core/Timestep.h"
 #include "renderer/renderer.h"
 

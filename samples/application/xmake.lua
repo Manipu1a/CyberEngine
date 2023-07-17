@@ -1,0 +1,5 @@
+target("Samples")
+    set_kind("shared")
+    add_includedirs("triangle/include", {public=true})
+    add_files("triangle/src/triangle.cpp")
+    add_deps("CyberRuntime", {public = true})

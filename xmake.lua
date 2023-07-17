@@ -1,7 +1,7 @@
 set_project("CyberEngine")
 add_rules("mode.debug", "mode.release", "mode.releasedbg")
 
-include_dir_list = {""}
+include_dir_list = {"include"}
 source_list = {}
 packages_list = {}
 defs_list = {}
