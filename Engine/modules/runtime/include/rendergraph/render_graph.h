@@ -2,19 +2,23 @@
 
 #include "render_graph_flag.h"
 #include "render_graph_builder.h"
+#include "platform/configure.h"
 
-class RenderGraph
+namespace Cyber
 {
-public:
-    //static ERenderGraphResult Create();
+    namespace render_graph
+    {
+        class CYBER_RUNTIME_API RenderGraph
+        {
+        public:
+            RenderGraph() = default;
+            ~RenderGraph() = default;
 
-    void Destroy();
-
-    void Update();
-
-private:
-    RenderGraph() = default;
-    ~RenderGraph() = default;
-
-    class RenderGraphBuilder* graphBuilder;
-};
+            using RenderGraphSetupFunction = eastl::function<void(RenderGraphBuilder&)>;
+            static RenderGraph* create(const RenderGraphSetupFunction& setup) CYBER_NOEXCEPT;
+            static void destroy(RenderGraph* graph) CYBER_NOEXCEPT;
+        private:
+            class RenderGraphBuilder* graphBuilder;
+        };
+    }
+}

@@ -2,15 +2,19 @@
 #include "render_graph_resource.h"
 #include "EASTL/map.h"
 #include "EASTL/vector.h"
+#include "platform/configure.h"
+
 namespace Cyber
 {
     namespace render_graph
     {
-        class RenderGraphBuilder
+        class CYBER_RUNTIME_API RenderGraphBuilder
         {
         public:
-            RenderGraphBuilder(RHIDevice* device);
+            RenderGraphBuilder();
             ~RenderGraphBuilder();
+            void backend_api(ERHIBackend backend) CYBER_NOEXCEPT;
+            void with_device(RHIDevice* device) CYBER_NOEXCEPT;
 
         public:
             RGTextureRef CreateRGTexture(RGTextureCreateDesc desc, const char8_t* name);

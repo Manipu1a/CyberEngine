@@ -10,15 +10,15 @@ namespace Cyber
 #define CYBER_MB (CYBER_KB * 1024)
 #define CYBER_GB (CYBER_MB * 1024)
 
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_malloc(size_t size);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_calloc(size_t count, size_t size);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_malloc_aligned(size_t size, size_t align);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_calloc_aligned(size_t count, size_t size, size_t align);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_new_n(size_t count, size_t size);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_new_aligned(size_t size, size_t align);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void _cyber_free(void* ptr) CYBER_NOEXCEPT;
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void _cyber_free_aligned(void* ptr, size_t alignment);
-CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_EXTERN_C void* _cyber_realloc(void* ptr, size_t size);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_malloc(size_t size);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_calloc(size_t count, size_t size);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_malloc_aligned(size_t size, size_t align);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_calloc_aligned(size_t count, size_t size, size_t align);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_new_n(size_t count, size_t size);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_new_aligned(size_t size, size_t align);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void _cyber_free(void* ptr) CYBER_NOEXCEPT;
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void _cyber_free_aligned(void* ptr, size_t alignment);
+CYBER_RUNTIME_EXTERN_C CYBER_RUNTIME_API void* _cyber_realloc(void* ptr, size_t size);
 
 template<typename T, typename... Args>
 static T* cyber_placement_new(void* ptr, Args&&... args)

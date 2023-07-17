@@ -5,7 +5,22 @@ namespace Cyber
 {
     namespace render_graph
     {
-        RenderGraphBuilder::RenderGraphBuilder(RHIDevice* device)
+        RenderGraphBuilder::RenderGraphBuilder()
+        {
+
+        }
+
+        RenderGraphBuilder::~RenderGraphBuilder()
+        {
+
+        }
+        
+        void RenderGraphBuilder::backend_api(ERHIBackend backend) CYBER_NOEXCEPT
+        {
+
+        }
+
+        void RenderGraphBuilder::with_device(RHIDevice* device) CYBER_NOEXCEPT
         {
             this->device = device;
         }

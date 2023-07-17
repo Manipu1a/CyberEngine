@@ -33,7 +33,7 @@ namespace Cyber
         mWindow->setEventCallback(CB_BIND_EVENT_FN(Application::onEvent));
     }
 
-    void GameApplication::Run()
+    void GameApplication::run()
     {
         while(mRunning)
         {

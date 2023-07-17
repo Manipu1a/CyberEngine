@@ -8,7 +8,8 @@ defs_list = {}
 links_list = {}
 generator_list = {}
 
-set_languages("c11", "cxx20")
+set_toolchains("msvc", {vs = "2019"})
+set_languages("cxx20")
 add_defines("UNICODE", "_UNICODE")
 add_defines("_WINDOWS")
 includes("xmake/thirdparty.lua")

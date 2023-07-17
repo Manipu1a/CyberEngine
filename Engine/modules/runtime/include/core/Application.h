@@ -12,7 +12,7 @@ namespace Cyber
         virtual ~Application();
 
         static Application& getApp();
-        virtual void Run() {}
+        virtual void run() {}
         virtual Ref<Window> getWindow() { return nullptr; }
 
         virtual void onEvent(Event& e) {}

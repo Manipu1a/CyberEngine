@@ -11,7 +11,7 @@ namespace Cyber
     {
         return mi_calloc(count, size);
     }
-    void* _cyber_malloc_aligned(size_t size, size_t align)
+    void*  _cyber_malloc_aligned(size_t size, size_t align)
     {
         return mi_malloc_aligned(size, align);
     }

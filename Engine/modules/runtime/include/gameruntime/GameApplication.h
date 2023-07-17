@@ -19,7 +19,7 @@ namespace Cyber
         virtual ~GameApplication();
 
         virtual void initialize(Cyber::WindowDesc& desc);
-        virtual void Run() override;
+        virtual void run() override;
         virtual void onEvent(Event& e);
 
         virtual Ref<Window> getWindow() override { return mWindow; }
