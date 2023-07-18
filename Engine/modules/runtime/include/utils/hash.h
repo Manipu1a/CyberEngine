@@ -6,7 +6,7 @@
 
 namespace Cyber
 {
-    FORCEINLINE static size_t cyber_hash(const void* buffer, size_t size, size_t seed)
+    CYBER_FORCE_INLINE static size_t cyber_hash(const void* buffer, size_t size, size_t seed)
     {
     #if SIZE_MAX == UINT64_MAX
         return XXH64(buffer, size, seed);
@@ -17,12 +17,12 @@ namespace Cyber
     #endif
     }
 
-    FORCEINLINE static size_t cyber_hash64(const void* buffer, size_t size, size_t seed)
+    CYBER_FORCE_INLINE static size_t cyber_hash64(const void* buffer, size_t size, size_t seed)
     {
         return XXH64(buffer, size, seed);
     }
 
-    FORCEINLINE static size_t cyber_hash32(const void* buffer, size_t size, size_t seed)
+    CYBER_FORCE_INLINE static size_t cyber_hash32(const void* buffer, size_t size, size_t seed)
     {
         return XXH32(buffer, size, seed);
     }

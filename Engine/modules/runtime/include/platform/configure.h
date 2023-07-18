@@ -4,13 +4,13 @@
 
 
 #if defined (_MSC_VER) && !defined (__clang__)
-    #ifndef FORCEINLINE
-        #define FORCEINLINE __forceinline
+    #ifndef CYBER_FORCE_INLINE
+        #define CYBER_FORCE_INLINE __forceinline
     #endif
     #define DEFINE_ALIGNED(def, a) __declspec(align(a)) def
 #else
-    #ifndef FORCEINLINE
-        #define FORCEINLINE inline __attribute__((always_inline))
+    #ifndef CYBER_FORCE_INLINE
+        #define CYBER_FORCE_INLINE inline __attribute__((always_inline))
     #endif
         #define DEFINE_ALIGNED(def, a) __attribute__((aligned(a))) def
 #endif

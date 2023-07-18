@@ -371,7 +371,7 @@ namespace Cyber
         RHI_FORMAT_R32G32B32A32_SFLOAT,
     };
 
-    FORCEINLINE void D3D12Util_ReflectionRecordShaderResource(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc,RHIShaderLibrary_D3D12* library)
+    CYBER_FORCE_INLINE void D3D12Util_ReflectionRecordShaderResource(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc,RHIShaderLibrary_D3D12* library)
     {
         // Get the number of bound resources
         library->entry_count = 1;
@@ -419,7 +419,7 @@ namespace Cyber
         }
     }
 
-    FORCEINLINE void D3D12Util_CollectShaderReflectionData(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, RHIShaderLibrary_D3D12* library)
+    CYBER_FORCE_INLINE void D3D12Util_CollectShaderReflectionData(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, RHIShaderLibrary_D3D12* library)
     {
         D3D12_SHADER_DESC shaderDesc;
         d3d12Reflection->GetDesc(&shaderDesc);

@@ -84,6 +84,11 @@ namespace Cyber
         
 
         ///////////////////////////////////////////////////////////////
+        struct RGRenderPassCreateDesc
+        {
+            
+        };
+
         using render_pass_function = void(*)(eastl::vector<RGRenderResource*>, eastl::vector<RGRenderResource*>);
 
         class RGRenderPass

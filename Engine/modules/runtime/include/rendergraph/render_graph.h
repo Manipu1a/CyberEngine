@@ -17,6 +17,8 @@ namespace Cyber
             using RenderGraphSetupFunction = eastl::function<void(RenderGraphBuilder&)>;
             static RenderGraph* create(const RenderGraphSetupFunction& setup) CYBER_NOEXCEPT;
             static void destroy(RenderGraph* graph) CYBER_NOEXCEPT;
+        public:
+            CYBER_FORCE_INLINE RenderGraphBuilder* get_builder() const CYBER_NOEXCEPT { return graphBuilder; }
         private:
             class RenderGraphBuilder* graphBuilder;
         };

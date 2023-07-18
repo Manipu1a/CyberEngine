@@ -1,6 +1,8 @@
 #include "triangle.h"
 #include "platform/memory.h"
 #include "renderer/renderer.h"
+#include "rendergraph/render_graph_resource.h"
+
 namespace Cyber
 {
     namespace Samples
@@ -46,6 +48,15 @@ namespace Cyber
                 builder.backend_api(ERHIBackend::RHI_BACKEND_D3D12);
             });
             
+            auto builder = graph->get_builder();
+
+            auto backbuffer = builder->create_texture(
+                render_graph::RGTextureCreateDesc{ 
+                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
+                , u8"test");
+
+            
+
         }
 
         void TrignaleApp::finalize()

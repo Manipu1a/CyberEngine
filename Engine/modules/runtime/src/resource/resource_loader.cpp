@@ -12,7 +12,7 @@ namespace Cyber
 {
     namespace ResourceLoader
     {
-        FORCEINLINE bool load_shader_source_file(const char* fileName, char8_t** bytes, uint32_t* length)
+        CYBER_FORCE_INLINE bool load_shader_source_file(const char* fileName, char8_t** bytes, uint32_t* length)
         {
             FILE* f = fopen(fileName, "rb");
             fseek(f, 0, SEEK_END);
@@ -24,7 +24,7 @@ namespace Cyber
             return true;
         }
 
-        FORCEINLINE bool load_shader_stage_byte_code(ERHIShaderTarget shaderTarget, const ShaderStageLoadDesc& loadDesc, uint32_t macroCount, ShaderMacro* macros, RHIShaderLibraryCreateDesc* libraryDesc, ShaderByteCodeBuffer* shaderByteCodeBuffer)
+        CYBER_FORCE_INLINE bool load_shader_stage_byte_code(ERHIShaderTarget shaderTarget, const ShaderStageLoadDesc& loadDesc, uint32_t macroCount, ShaderMacro* macros, RHIShaderLibraryCreateDesc* libraryDesc, ShaderByteCodeBuffer* shaderByteCodeBuffer)
         {
             char8_t* bytes = nullptr;
             uint32_t length = 0;

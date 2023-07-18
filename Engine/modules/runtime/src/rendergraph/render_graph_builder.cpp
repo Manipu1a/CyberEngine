@@ -25,7 +25,7 @@ namespace Cyber
             this->device = device;
         }
 
-        RGTextureRef RenderGraphBuilder::CreateRGTexture(RGTextureCreateDesc desc, const char8_t* name)
+        RGTextureRef RenderGraphBuilder::create_texture(RGTextureCreateDesc desc, const char8_t* name)
         {
             RGTexture* texture = cyber_new<RGTexture>();
             texture->create_desc = desc;
@@ -41,7 +41,7 @@ namespace Cyber
             return texture;
         }
 
-        RGTextureRef RenderGraphBuilder::GetRGTexture(const char8_t* name)
+        RGTextureRef RenderGraphBuilder::get_texture(const char8_t* name)
         {
             if(resource_map.find(name) == resource_map.end())
             {
@@ -58,7 +58,7 @@ namespace Cyber
             return (RGTexture*)resource_map[name];   
         }
 
-        RGBufferRef RenderGraphBuilder::CreateRGBuffer(RGBufferCreateDesc desc, const char8_t* name)
+        RGBufferRef RenderGraphBuilder::create_buffer(RGBufferCreateDesc desc, const char8_t* name)
         {
             RGBuffer* buffer = cyber_new<RGBuffer>();
             buffer->create_desc = desc;
@@ -74,7 +74,7 @@ namespace Cyber
             return buffer;
         }
 
-        RGBufferRef RenderGraphBuilder::GetRGBuffer(const char8_t* name)
+        RGBufferRef RenderGraphBuilder::get_buffer(const char8_t* name)
         {
             if(resource_map.find(name) == resource_map.end())
             {

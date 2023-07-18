@@ -418,7 +418,7 @@ enum ERHIFormat
     RHI_FORMAT_MAX_ENUM_BIT = 0x7FFFFFFF
 };
 
-static FORCEINLINE uint32_t FormatUtil_BitSizeOfBlock(ERHIFormat fmt)
+static CYBER_FORCE_INLINE uint32_t FormatUtil_BitSizeOfBlock(ERHIFormat fmt)
 {
     switch (fmt) 
     {
@@ -638,7 +638,7 @@ static FORCEINLINE uint32_t FormatUtil_BitSizeOfBlock(ERHIFormat fmt)
     }
 }
 
-static FORCEINLINE bool FormatUtil_IsDepthStencilFormat(ERHIFormat const fmt)
+static CYBER_FORCE_INLINE bool FormatUtil_IsDepthStencilFormat(ERHIFormat const fmt)
 {
     switch (fmt)
     {

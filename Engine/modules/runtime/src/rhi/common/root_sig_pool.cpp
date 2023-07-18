@@ -60,7 +60,7 @@ namespace Cyber
 
         }
 
-        FORCEINLINE RSCharacteristic calculateCharacteristic(RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc* desc)
+        CYBER_FORCE_INLINE RSCharacteristic calculateCharacteristic(RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc* desc)
         {
             // calculate characteristic
             RSCharacteristic newCharacteristic = {};
