@@ -27,7 +27,7 @@ namespace Cyber
 
             RGTextureViewRef CreateTextureView(RGTextureViewCreateDesc desc);
 
-            void add_render_pass(RGRenderPass* pass);
+            void add_render_pass(const char8_t* name, RGRenderPassCreateDesc desc, const render_pass_function& func);
             void add_compute_pass();
         protected:
             RHIDevice* device;

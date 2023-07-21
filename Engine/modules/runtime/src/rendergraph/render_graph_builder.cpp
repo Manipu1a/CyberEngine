@@ -96,8 +96,12 @@ namespace Cyber
             return nullptr;
         }
 
-        void RenderGraphBuilder::AddRenderPass(RGRenderPass* pass)
+        void RenderGraphBuilder::add_render_pass(const char8_t* name, RGRenderPassCreateDesc desc, const render_pass_function& func)
         {
+            RGRenderPass* pass = cyber_new<RGRenderPass>();
+            pass->resource_name = name;
+            pass->create_desc = desc;
+            pass->pass_function = func;
             passes.push_back(pass);
         }
     }

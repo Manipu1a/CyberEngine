@@ -5,6 +5,16 @@ namespace Cyber
 {
     namespace render_graph
     {
+        RenderGraph::RenderGraph()
+        {
+
+        }
+
+        RenderGraph::~RenderGraph()
+        {
+
+        }
+
         RenderGraph* RenderGraph::create(const RenderGraphSetupFunction& setup) CYBER_NOEXCEPT
         {
             RenderGraphBuilder* graphBuilder = cyber_new<RenderGraphBuilder>();
@@ -19,6 +29,13 @@ namespace Cyber
         {
             cyber_delete(graph->graphBuilder);
             cyber_delete(graph);
+        }
+
+        template<typename Phase>
+        void RenderGraph::add_custom_phase()
+        {
+            auto phase = cyber_new<Phase>();
+            phases.push_back(phase);
         }
     }
 }

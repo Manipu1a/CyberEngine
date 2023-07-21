@@ -40,7 +40,6 @@ namespace Cyber
         void TrignaleApp::create_render_pipeline()
         {
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
-            
             namespace render_graph = Cyber::render_graph;
             render_graph::RenderGraph* graph = render_graph::RenderGraph::create([=](render_graph::RenderGraphBuilder& builder)
             {
@@ -49,14 +48,25 @@ namespace Cyber
             });
             
             auto builder = graph->get_builder();
-
             auto backbuffer = builder->create_texture(
                 render_graph::RGTextureCreateDesc{ 
                 .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
                 , u8"test");
 
-            
+            builder->add_render_pass(
+                u8"ColorPass",
+                render_graph::RGRenderPassCreateDesc{
+                .pipeline = nullptr,
+                .render_targets = {
+                    {0, backbuffer}
+                }},
+                 [=](render_graph::RGRenderPassCreateDesc& desc)
+                {
+                    //desc.render_targets[0]->GetTexture();
+                });
 
+            graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
+            graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
         }
 
         void TrignaleApp::finalize()

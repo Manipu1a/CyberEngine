@@ -1,5 +1,6 @@
 #pragma once
 #include "cyber_render_graph_config.h"
+#include "EASTL/map.h"
 #include "rhi/rhi.h"
 
 namespace Cyber
@@ -82,14 +83,14 @@ namespace Cyber
             RHITexture* GetTexture();
         };
         
-
         ///////////////////////////////////////////////////////////////
         struct RGRenderPassCreateDesc
         {
-            
+            RHIRenderPipeline* pipeline;
+            eastl::map<uint32_t, RGTextureRef> render_targets;
         };
 
-        using render_pass_function = void(*)(eastl::vector<RGRenderResource*>, eastl::vector<RGRenderResource*>);
+        using render_pass_function = eastl::function<void(RGRenderPassCreateDesc&)>;
 
         class RGRenderPass
         {
@@ -99,9 +100,9 @@ namespace Cyber
 
             void execute();
         public:
-            eastl::vector<RGRenderResource*> input_resources;
-            eastl::vector<RGRenderResource*> output_resources;
+            const char8_t* resource_name;
             render_pass_function pass_function;
+            RGRenderPassCreateDesc create_desc;
         };
     }
 

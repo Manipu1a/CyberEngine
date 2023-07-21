@@ -40,7 +40,7 @@ namespace Cyber
         /////////////////////////////////////////////////
         void RGRenderPass::execute()
         {
-            pass_function(input_resources, output_resources);
+            
         }
     }
 }
