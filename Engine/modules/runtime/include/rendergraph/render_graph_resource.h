@@ -31,6 +31,9 @@ namespace Cyber
         class RGUniformBuffer;
         using RGUniformBufferRef = RGUniformBuffer*;
 
+        class RGDepthStencil;
+        using RGDepthStencilRef = RGDepthStencil*;
+
         class RGRenderPass;
         class RGComputePass;
 
@@ -83,11 +86,51 @@ namespace Cyber
             RHITexture* GetTexture();
         };
         
+        class RGDepthStencil : public RGRenderResource
+        {
+        public:
+
+        };
+
         ///////////////////////////////////////////////////////////////
         struct RGRenderPassCreateDesc
         {
             RHIRenderPipeline* pipeline;
+
+            RGRenderPassCreateDesc& add_render_target(uint32_t index, RGTextureRef texture,
+             ERHILoadAction load_action = RHI_LOAD_ACTION_CLEAR, 
+             ERHIClearValue clear_color = fastclear_0000, 
+             ERHIStoreAction store_action = RHI_STORE_ACTION_STORE)
+            {
+                render_targets[index] = texture;
+
+                return *this;
+            }
+
+            RGRenderPassCreateDesc& set_depthstencil(RGDepthStencilRef depthstencil, 
+            ERHILoadAction depth_load_action = RHI_LOAD_ACTION_CLEAR, 
+            ERHIStoreAction depth_store_action = RHI_STORE_ACTION_STORE,
+            ERHILoadAction stencil_load_action = RHI_LOAD_ACTION_CLEAR, 
+            ERHIStoreAction stencil_store_action = RHI_STORE_ACTION_STORE)
+            {
+                return *this;
+            }
+
+            RGRenderPassCreateDesc& add_input(const char8_t* name, RGTextureRef texture)
+            {
+                input_textures[name] = texture;
+                return *this;
+            }
+
+            RGRenderPassCreateDesc& add_input(const char8_t* name, RGBufferRef buffer)
+            {
+                input_buffers[name] = buffer;
+                return *this;
+            }
+
             eastl::map<uint32_t, RGTextureRef> render_targets;
+            eastl::map<const char8_t*, RGTextureRef> input_textures;
+            eastl::map<const char8_t*, RGBufferRef> input_buffers;
         };
 
         using render_pass_function = eastl::function<void(RGRenderPassCreateDesc&)>;

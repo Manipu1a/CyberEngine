@@ -15,14 +15,15 @@ namespace Cyber
 
         }
         
-        void RenderGraphBuilder::backend_api(ERHIBackend backend) CYBER_NOEXCEPT
+        RenderGraphBuilder& RenderGraphBuilder::backend_api(ERHIBackend backend) CYBER_NOEXCEPT
         {
-
+            return *this;
         }
 
-        void RenderGraphBuilder::with_device(RHIDevice* device) CYBER_NOEXCEPT
+        RenderGraphBuilder& RenderGraphBuilder::with_device(RHIDevice* device) CYBER_NOEXCEPT
         {
             this->device = device;
+            return *this;
         }
 
         RGTextureRef RenderGraphBuilder::create_texture(RGTextureCreateDesc desc, const char8_t* name)

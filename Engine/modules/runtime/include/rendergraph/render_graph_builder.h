@@ -13,8 +13,8 @@ namespace Cyber
         public:
             RenderGraphBuilder();
             ~RenderGraphBuilder();
-            void backend_api(ERHIBackend backend) CYBER_NOEXCEPT;
-            void with_device(RHIDevice* device) CYBER_NOEXCEPT;
+            RenderGraphBuilder& backend_api(ERHIBackend backend) CYBER_NOEXCEPT;
+            RenderGraphBuilder& with_device(RHIDevice* device) CYBER_NOEXCEPT;
 
         public:
             RGTextureRef create_texture(RGTextureCreateDesc desc, const char8_t* name);

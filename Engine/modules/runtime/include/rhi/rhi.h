@@ -47,7 +47,7 @@ namespace Cyber
         RHI_BACKEND_METAL
     } ERHIBackend;
 
-    typedef union RHIClearValue
+    typedef union ERHIClearValue
     {
         struct
         {
@@ -61,18 +61,18 @@ namespace Cyber
             float depth;
             uint32_t stencil;
         };
-    } RHIClearValue;
+    } ERHIClearValue;
     
-    static const RHIClearValue fastclear_0000 = {
+    static const ERHIClearValue fastclear_0000 = {
         {0.f, 0.f, 0.f, 0.f}
     };
-    static const RHIClearValue fastclear_0001 = {
+    static const ERHIClearValue fastclear_0001 = {
         {0.f, 0.f, 0.f, 1.f}
     };
-    static const RHIClearValue fastclear_1110 = {
+    static const ERHIClearValue fastclear_1110 = {
         {1.f, 1.f, 1.f, 0.f}
     };
-    static const RHIClearValue fastclear_1111 = {
+    static const ERHIClearValue fastclear_1111 = {
         {1.f, 1.f, 1.f, 1.f}
     };
     
@@ -262,7 +262,7 @@ namespace Cyber
     struct CYBER_RHI_API TextureCreateDesc
     {
         /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
-        RHIClearValue mClearValue;
+        ERHIClearValue mClearValue;
         /// Pointer to native texture handle if the texture does not own underlying resource
         void* mNativeHandle;
         /// Debug name used in gpu profile
@@ -606,7 +606,7 @@ namespace Cyber
         RHITextureView* resolve_view;
         ERHILoadAction load_action;
         ERHIStoreAction store_action;
-        RHIClearValue clear_value;
+        ERHIClearValue clear_value;
     };
 
     struct CYBER_RHI_API RHIDepthStencilAttachment

@@ -43,15 +43,20 @@ namespace Cyber
             namespace render_graph = Cyber::render_graph;
             render_graph::RenderGraph* graph = render_graph::RenderGraph::create([=](render_graph::RenderGraphBuilder& builder)
             {
-                builder.with_device(device);
-                builder.backend_api(ERHIBackend::RHI_BACKEND_D3D12);
+                builder.with_device(device)
+                .backend_api(ERHIBackend::RHI_BACKEND_D3D12);
             });
             
             auto builder = graph->get_builder();
+            auto tex = builder->create_texture(
+                render_graph::RGTextureCreateDesc{ 
+                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
+                , u8"tex");
+
             auto backbuffer = builder->create_texture(
                 render_graph::RGTextureCreateDesc{ 
                 .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"test");
+                , u8"color");
 
             builder->add_render_pass(
                 u8"ColorPass",
@@ -62,8 +67,10 @@ namespace Cyber
                 }},
                  [=](render_graph::RGRenderPassCreateDesc& desc)
                 {
-                    //desc.render_targets[0]->GetTexture();
+                    desc.add_input(u8"Tex", tex)
+                    .add_render_target(0, backbuffer);
                 });
+
 
             graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
             graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
