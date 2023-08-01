@@ -2,6 +2,8 @@
 #include "cyber_render_graph_config.h"
 #include "EASTL/map.h"
 #include "rhi/rhi.h"
+#include "rendergraph/base_type.h"
+#include "rendergraph/render_graph.h"
 
 namespace Cyber
 {
@@ -40,6 +42,8 @@ namespace Cyber
         using RGTextureCreateDesc = TextureCreateDesc;
         using RGBufferCreateDesc = BufferCreateDesc;
         using RGTextureViewCreateDesc = TextureViewCreateDesc;
+
+        #define MAX_MRT_COUNT 8
 
         enum class ERGResourceType
         {
@@ -91,63 +95,53 @@ namespace Cyber
         public:
 
         };
-
         ///////////////////////////////////////////////////////////////
-        struct RGRenderPassCreateDesc
-        {
-            RHIRenderPipeline* pipeline;
+        using render_pass_function = eastl::function<void(RGRenderPass&)>;
+        using render_pass_execute_function = eastl::function<void(RenderGraph&, RenderPassContext&)>;
 
-            RGRenderPassCreateDesc& add_render_target(uint32_t index, RGTextureRef texture,
+        class CYBER_RUNTIME_API RGRenderPass
+        {
+        public:
+            RGRenderPass();
+            virtual ~RGRenderPass();
+
+        public:
+            RGRenderPass& add_render_target(uint32_t mrt_index, RGTextureRef texture,
              ERHILoadAction load_action = RHI_LOAD_ACTION_CLEAR, 
              ERHIClearValue clear_color = fastclear_0000, 
-             ERHIStoreAction store_action = RHI_STORE_ACTION_STORE)
-            {
-                render_targets[index] = texture;
+             ERHIStoreAction store_action = RHI_STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
-                return *this;
-            }
-
-            RGRenderPassCreateDesc& set_depthstencil(RGDepthStencilRef depthstencil, 
+            RGRenderPass& set_depthstencil(RGDepthStencilRef depthstencil, 
             ERHILoadAction depth_load_action = RHI_LOAD_ACTION_CLEAR, 
             ERHIStoreAction depth_store_action = RHI_STORE_ACTION_STORE,
             ERHILoadAction stencil_load_action = RHI_LOAD_ACTION_CLEAR, 
-            ERHIStoreAction stencil_store_action = RHI_STORE_ACTION_STORE)
-            {
-                return *this;
-            }
+            ERHIStoreAction stencil_store_action = RHI_STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
-            RGRenderPassCreateDesc& add_input(const char8_t* name, RGTextureRef texture)
-            {
-                input_textures[name] = texture;
-                return *this;
-            }
+            RGRenderPass& set_pipeline(RHIRenderPipeline* pipeline) CYBER_NOEXCEPT;
+            RGRenderPass& add_input(const char8_t* name, RGTextureRef texture) CYBER_NOEXCEPT;
+            RGRenderPass& add_input(const char8_t* name, RGBufferRef buffer) CYBER_NOEXCEPT;
 
-            RGRenderPassCreateDesc& add_input(const char8_t* name, RGBufferRef buffer)
-            {
-                input_buffers[name] = buffer;
-                return *this;
-            }
-
+            RHIRenderPipeline* pipeline;
             eastl::map<uint32_t, RGTextureRef> render_targets;
             eastl::map<const char8_t*, RGTextureRef> input_textures;
             eastl::map<const char8_t*, RGBufferRef> input_buffers;
+
+            ERHILoadAction dload_action;
+            ERHIStoreAction dstore_action;
+            ERHILoadAction sload_action;
+            ERHIStoreAction sstore_action;
+
+            eastl::vector<ERHILoadAction> mrt_load_actions;
+            eastl::vector<ERHIStoreAction> mrt_store_actions;
+
+            uint32_t num_render_target = 0;
+            const char8_t* pass_name;
+            render_pass_execute_function pass_function;
         };
 
-        using render_pass_function = eastl::function<void(RGRenderPassCreateDesc&)>;
-
-        class RGRenderPass
+        class CYBER_RUNTIME_API RGPresentPass
         {
-        public:
-            RGRenderPass() = default;
-            virtual ~RGRenderPass() = default;
 
-            void execute();
-        public:
-            const char8_t* resource_name;
-            render_pass_function pass_function;
-            RGRenderPassCreateDesc create_desc;
         };
     }
-
-    
 }

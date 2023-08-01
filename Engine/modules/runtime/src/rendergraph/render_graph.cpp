@@ -1,10 +1,27 @@
 #include "rendergraph/render_graph.h"
 #include "platform/memory.h"
+#include "rendergraph/render_graph_builder.h"
+#include "rendergraph/render_graph_resource.h"
 
 namespace Cyber
 {
     namespace render_graph
     {
+        void RenderGraphFrameExecutor::initialize(RHIQueue* queue, RHIDevice* device)
+        {
+            CommandPoolCreateDesc cmd_pool_desc = {};
+            gfx_cmd_pool = rhi_create_command_pool(queue, cmd_pool_desc);
+            CommandBufferCreateDesc cmd_buffer_desc = {};
+            cmd_buffer_desc.is_secondary = false;
+            gfx_cmd_buffer = rhi_create_command_buffer(gfx_cmd_pool, cmd_buffer_desc);
+        }
+
+        void RenderGraphFrameExecutor::finalize()
+        {
+
+        }
+
+        /////////////////////////////
         RenderGraph::RenderGraph()
         {
 
@@ -22,7 +39,18 @@ namespace Cyber
 
             RenderGraph* graph = cyber_new<RenderGraph>();
             graph->graphBuilder = graphBuilder;
+            graph->gfx_queue = graphBuilder->gfx_queue;
+            graph->initialize();
             return graph;
+        }
+
+        void RenderGraph::initialize()
+        {
+            for(uint32_t i = 0; i < RG_MAX_FRAME_IN_FLIGHT; ++i)
+            {
+                frame_executors[i].initialize(gfx_queue, graphBuilder->device);
+            }
+
         }
 
         void RenderGraph::destroy(RenderGraph* graph) CYBER_NOEXCEPT
@@ -36,6 +64,16 @@ namespace Cyber
         {
             auto phase = cyber_new<Phase>();
             phases.push_back(phase);
+        }
+
+        void RenderGraph::execute_pass(class RGRenderPass* pass)
+        {
+            RenderPassContext pass_context;
+
+            RHIRenderPassDesc beginRenderPassDesc = {};
+            pass_context.encoder = rhi_cmd_begin_render_pass(frame_executors[0].gfx_cmd_buffer, beginRenderPassDesc);
+
+            pass->pass_function(*this), pass_context);
         }
     }
 }

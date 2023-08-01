@@ -15,7 +15,8 @@ namespace Cyber
             ~RenderGraphBuilder();
             RenderGraphBuilder& backend_api(ERHIBackend backend) CYBER_NOEXCEPT;
             RenderGraphBuilder& with_device(RHIDevice* device) CYBER_NOEXCEPT;
-
+            RenderGraphBuilder& with_queue(RHIQueue* queue) CYBER_NOEXCEPT;
+            
         public:
             RGTextureRef create_texture(RGTextureCreateDesc desc, const char8_t* name);
             RGTextureRef get_texture(const char8_t* name);
@@ -27,15 +28,12 @@ namespace Cyber
 
             RGTextureViewRef CreateTextureView(RGTextureViewCreateDesc desc);
 
-            void add_render_pass(const char8_t* name, RGRenderPassCreateDesc desc, const render_pass_function& func);
+            void add_render_pass(const char8_t* name, const render_pass_function& func, const render_pass_execute_function& execute_func);
             void add_compute_pass();
-        protected:
+        public:
             RHIDevice* device;
-            eastl::map<const char8_t*, class RGRenderResource*> resource_map;
-            eastl::vector<class RGRenderResource*> resources;
-            eastl::vector<class RGRenderPass*> passes;
-            eastl::vector<class RGRenderResource*> culled_resources;
-            eastl::vector<class RGRenderPass*> culled_passes;
+            RHIQueue* gfx_queue;
+            class RenderGraph* graph;
         };
     }
 

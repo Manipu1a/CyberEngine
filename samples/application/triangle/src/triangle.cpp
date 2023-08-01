@@ -2,6 +2,7 @@
 #include "platform/memory.h"
 #include "renderer/renderer.h"
 #include "rendergraph/render_graph_resource.h"
+#include "rendergraph/render_graph_builder.h"
 
 namespace Cyber
 {
@@ -60,17 +61,17 @@ namespace Cyber
 
             builder->add_render_pass(
                 u8"ColorPass",
-                render_graph::RGRenderPassCreateDesc{
-                .pipeline = nullptr,
-                .render_targets = {
-                    {0, backbuffer}
-                }},
-                 [=](render_graph::RGRenderPassCreateDesc& desc)
+                 [=](render_graph::RGRenderPass& pass)
                 {
-                    desc.add_input(u8"Tex", tex)
+                    pass.add_input(u8"Tex", tex)
+                    .set_pipeline(nullptr)
                     .add_render_target(0, backbuffer);
+                },
+                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
+                {
+                    // execute context
+                    CB_CORE_INFO("test render graph : execute context");
                 });
-
 
             graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
             graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
