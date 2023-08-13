@@ -66,14 +66,44 @@ namespace Cyber
             phases.push_back(phase);
         }
 
-        void RenderGraph::execute_pass(class RGRenderPass* pass)
+        void RenderGraph::execute()
+        {
+            bool find_present_pass = false;
+
+            // 对Pass进行排序，资源可以确定依赖的pass，从而方便创建和销毁
+            
+            for(uint32_t i = passes.size()-1; i >= 0; --i)
+            {
+                auto& pass = passes[i];
+                
+                if(!find_present_pass)
+                {
+                    if(pass->pass_type == RG_PRESENT_PASS)
+                    {
+                        find_present_pass = true;
+
+                        for(const auto& read : pass->read_edges)
+                        {
+                            
+                        }
+                    }
+                }
+                else
+                {
+                    
+                }
+                execute_pass(passes[i]->pass_handle);
+            }
+        }
+
+        void RenderGraph::execute_pass(class RGPass* pass)
         {
             RenderPassContext pass_context;
 
             RHIRenderPassDesc beginRenderPassDesc = {};
             pass_context.encoder = rhi_cmd_begin_render_pass(frame_executors[0].gfx_cmd_buffer, beginRenderPassDesc);
 
-            pass->pass_function(*this), pass_context);
+            pass->pass_function(*this, pass_context);
         }
     }
 }

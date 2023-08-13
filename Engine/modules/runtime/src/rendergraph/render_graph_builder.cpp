@@ -106,8 +106,11 @@ namespace Cyber
 
         void RenderGraphBuilder::add_render_pass(const char8_t* name, const render_pass_function& pre_func, const render_pass_execute_function& execute_func)
         {
+            RenderPassNode * node = cyber_new<RenderPassNode>();
             RGRenderPass* pass = cyber_new<RGRenderPass>();
             pass->pass_name = name;
+            node->pass_handle = pass;
+            
             pre_func(*pass);
             pass->pass_function = execute_func;
             graph->passes.push_back(pass);

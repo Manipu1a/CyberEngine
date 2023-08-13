@@ -1,4 +1,5 @@
 #include "rendergraph/render_graph_resource.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -40,8 +41,10 @@ namespace Cyber
         /////////////////////////////////////////////////
         RGRenderPass::RGRenderPass()
         {
+            pass_type = ERGPassType::RG_COMPUTE_PASS;
             mrt_load_actions.resize(MAX_MRT_COUNT);
             mrt_store_actions.resize(MAX_MRT_COUNT);
+            pass_node = nullptr;
         }
 
         RGRenderPass::~RGRenderPass()
@@ -63,6 +66,9 @@ namespace Cyber
 
             mrt_load_actions[mrt_index] = load_action;
             mrt_store_actions[mrt_index] = store_action;
+
+            TextureWriteEdge* edge = cyber_new<TextureWriteEdge>(texture, pass_node);
+            pass_node->write_edges.push_back(edge);
 
             return *this;
         }
@@ -90,6 +96,9 @@ namespace Cyber
         RGRenderPass& RGRenderPass::add_input(const char8_t* name, RGTextureRef texture) CYBER_NOEXCEPT
         {
             input_textures[name] = texture;
+            TextureReadEdge* edge = cyber_new<TextureReadEdge>(texture, pass_node);
+            pass_node->read_edges.push_back(edge);
+
             return *this;
         }
 

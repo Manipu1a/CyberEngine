@@ -72,10 +72,10 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Buffer;
             }
+            RHIBuffer* GetBuffer();
+
             RGBufferCreateDesc create_desc;
             RHIBuffer* buffer;
-
-            RHIBuffer* GetBuffer();
         };
 
         class RGTexture : public RGRenderResource
@@ -85,9 +85,11 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Texture;
             }
+            RHITexture* GetTexture();
+
             RGTextureCreateDesc create_desc;
             RHITexture* texture;
-            RHITexture* GetTexture();
+            struct TextureNode* texture_node;
         };
         
         class RGDepthStencil : public RGRenderResource
@@ -96,10 +98,20 @@ namespace Cyber
 
         };
         ///////////////////////////////////////////////////////////////
+        class CYBER_RUNTIME_API RGPass
+        {
+        public:
+            RGPass() = default;
+            virtual ~RGPass() = default;
+
+            ERGPassType pass_type;
+        };
+
+
         using render_pass_function = eastl::function<void(RGRenderPass&)>;
         using render_pass_execute_function = eastl::function<void(RenderGraph&, RenderPassContext&)>;
 
-        class CYBER_RUNTIME_API RGRenderPass
+        class CYBER_RUNTIME_API RGRenderPass : public RGPass
         {
         public:
             RGRenderPass();
@@ -137,11 +149,85 @@ namespace Cyber
             uint32_t num_render_target = 0;
             const char8_t* pass_name;
             render_pass_execute_function pass_function;
+            struct RenderPassNode* pass_node;
         };
 
-        class CYBER_RUNTIME_API RGPresentPass
+        class CYBER_RUNTIME_API RGPresentPass : public RGPass
         {
+        public:
+            RGPresentPass();
+            virtual ~RGPresentPass();
+        };
 
+        //////////////////////////////////////////////////////////////////////////
+
+        struct RenderPassNode : public PassNode
+        {
+            RenderPassNode() : PassNode(RG_RENDER_PASS_NODE) {}
+        };
+
+        struct ComputePassNode : public PassNode
+        {
+        };
+
+        struct PresentPassNode : public PassNode
+        {
+        };
+
+        struct ResourceNode : public RenderGraphNode
+        {
+            ResourceNode(ERGObjectType type) : RenderGraphNode(type) {}
+
+        };
+
+        struct BufferNode : public ResourceNode
+        {
+            RHIBuffer* buffer;
+        };
+ 
+        struct TextureNode : public ResourceNode
+        {
+            TextureNode() : ResourceNode(RG_TEXTURE_NODE)
+            {
+            }
+
+            RHITexture* texture;
+        };
+
+        struct TextureEdge : public RenderGraphEdge
+        {
+            TextureEdge(RGTextureRef tex, PassNode* from)
+            {
+                from_node = (RenderGraphNode*)from;
+                to_node = tex->texture_node;
+            }
+        };
+
+        // SRV
+        struct TextureReadEdge : public TextureEdge
+        {
+            TextureReadEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
+            {
+                tex->texture_node->write_edges.push_back(this);
+            }
+        };
+
+        // RTV
+        struct TextureWriteEdge : public TextureEdge
+        {
+            TextureWriteEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
+            {
+                tex->texture_node->read_edges.push_back(this);
+            }
+        };
+        // UAV
+        struct TextureReadWriteEdge : public TextureEdge
+        {
+            TextureReadWriteEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
+            {
+                tex->texture_node->read_edges.push_back(this);
+                tex->texture_node->write_edges.push_back(this);
+            }
         };
     }
 }

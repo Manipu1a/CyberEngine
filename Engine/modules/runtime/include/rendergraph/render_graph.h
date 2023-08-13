@@ -42,7 +42,7 @@ namespace Cyber
             CYBER_FORCE_INLINE RenderGraphBuilder* get_builder() const CYBER_NOEXCEPT { return graphBuilder; }
             void initialize();
             void execute();
-            void execute_pass(class RGRenderPass* pass);
+            void execute_pass(class RGPass* pass);
             template<typename Phase>
             void add_custom_phase();
         private:
@@ -50,10 +50,10 @@ namespace Cyber
             class RenderGraphBuilder* graphBuilder;
         public:
             eastl::map<const char8_t*, class RGRenderResource*> resource_map;
-            eastl::vector<class RGRenderResource*> resources;
-            eastl::vector<class RGRenderPass*> passes;
-            eastl::vector<class RGRenderResource*> culled_resources;
-            eastl::vector<class RGRenderPass*> culled_passes;
+            eastl::vector<class ResourceNode*> resources;
+            eastl::vector<class PassNode*> passes;
+            eastl::vector<class ResourceNode*> culled_resources;
+            eastl::vector<class PassNode*> culled_passes;
             RHIQueue* gfx_queue;
             RenderGraphFrameExecutor frame_executors[RG_MAX_FRAME_IN_FLIGHT];
         };

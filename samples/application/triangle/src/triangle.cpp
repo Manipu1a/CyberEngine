@@ -75,6 +75,8 @@ namespace Cyber
 
             graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
             graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
+
+            graph->execute();
         }
 
         void TrignaleApp::finalize()
