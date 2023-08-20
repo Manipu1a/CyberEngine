@@ -59,11 +59,30 @@ namespace Cyber
                 .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
                 , u8"color");
 
+            auto depth = builder->create_texture(
+                render_graph::RGTextureCreateDesc{ 
+                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
+                , u8"depth");
+
+            builder->add_render_pass(
+                u8"ShadowPass",
+                 [=](render_graph::RGRenderPass& pass)
+                {
+                    pass.set_pipeline(nullptr)
+                    .add_render_target(0, depth);
+                },
+                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
+                {
+                    // execute context
+                    CB_CORE_INFO("test render graph : execute context");
+                });
+
             builder->add_render_pass(
                 u8"ColorPass",
                  [=](render_graph::RGRenderPass& pass)
                 {
                     pass.add_input(u8"Tex", tex)
+                    .add_input(u8"Depth", depth)
                     .set_pipeline(nullptr)
                     .add_render_target(0, backbuffer);
                 },
@@ -73,8 +92,23 @@ namespace Cyber
                     CB_CORE_INFO("test render graph : execute context");
                 });
 
-            graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
-            graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
+            builder->add_render_pass(
+                u8"PostPass",
+                 [=](render_graph::RGRenderPass& pass)
+                {
+                    pass.add_input(u8"Color", backbuffer)
+                    .set_pipeline(nullptr)
+                    .add_render_target(0, backbuffer);
+                },
+                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
+                {
+                    // execute context
+                    CB_CORE_INFO("test render graph : execute context");
+                });
+
+            
+            //graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
+            //graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
 
             graph->execute();
         }

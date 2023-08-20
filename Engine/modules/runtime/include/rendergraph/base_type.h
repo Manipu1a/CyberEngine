@@ -38,6 +38,7 @@ namespace Cyber
             eastl::vector<RenderGraphEdge*> write_edges;
             ERGObjectType object_type;
             DependencyGraph* graph;
+            uint32_t order;
         };
 
         struct PassNode : public RenderGraphNode
@@ -50,7 +51,6 @@ namespace Cyber
 
         struct RenderGraphEdge
         {
-
             RenderGraphNode* to() const { return to_node; }
             RenderGraphNode* from() const { return from_node; }
 

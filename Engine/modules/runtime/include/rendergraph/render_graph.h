@@ -42,7 +42,7 @@ namespace Cyber
             CYBER_FORCE_INLINE RenderGraphBuilder* get_builder() const CYBER_NOEXCEPT { return graphBuilder; }
             void initialize();
             void execute();
-            void execute_pass(class RGPass* pass);
+            void execute_pass(class RGRenderPass* pass);
             template<typename Phase>
             void add_custom_phase();
         private:

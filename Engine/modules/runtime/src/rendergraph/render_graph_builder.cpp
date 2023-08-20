@@ -113,7 +113,7 @@ namespace Cyber
             
             pre_func(*pass);
             pass->pass_function = execute_func;
-            graph->passes.push_back(pass);
+            graph->passes.push_back(node);
         }
     }
 }

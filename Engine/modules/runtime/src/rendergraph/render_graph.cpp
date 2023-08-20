@@ -66,12 +66,24 @@ namespace Cyber
             phases.push_back(phase);
         }
 
+        uint32_t recursive_pass(PassNode* pass_node, uint32_t order)
+        {
+            pass_node->order = order;
+            auto res = order;
+            for(const auto& read : pass_node->read_edges)
+            {
+                auto from_node = read->from();
+                res = recursive_pass((PassNode*)from_node, ++res);
+            }
+            return res;
+        }
+
         void RenderGraph::execute()
         {
             bool find_present_pass = false;
 
             // 对Pass进行排序，资源可以确定依赖的pass，从而方便创建和销毁
-            
+            PassNode* present_node;
             for(uint32_t i = passes.size()-1; i >= 0; --i)
             {
                 auto& pass = passes[i];
@@ -81,22 +93,32 @@ namespace Cyber
                     if(pass->pass_type == RG_PRESENT_PASS)
                     {
                         find_present_pass = true;
-
-                        for(const auto& read : pass->read_edges)
-                        {
-                            
-                        }
+                        present_node = pass;
                     }
                 }
                 else
                 {
                     
                 }
-                execute_pass(passes[i]->pass_handle);
+                //execute_pass(passes[i]->pass_handle);
             }
+
+            auto pass_count = recursive_pass(present_node, 0);
+            for(auto& pass : passes)
+            {
+                if(pass->order != -1)
+                {
+                    pass->order = pass_count - pass->order;
+                }
+                else
+                {
+                    culled_passes.push_back(pass);
+                }
+            }
+            
         }
 
-        void RenderGraph::execute_pass(class RGPass* pass)
+        void RenderGraph::execute_pass(class RGRenderPass* pass)
         {
             RenderPassContext pass_context;
 

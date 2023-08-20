@@ -107,5 +107,15 @@ namespace Cyber
             input_buffers[name] = buffer;
             return *this;
         }
+
+        RGPresentPass::RGPresentPass()
+        {
+
+        }
+        
+        RGPresentPass::~RGPresentPass()
+        {
+
+        }
     }
 }
