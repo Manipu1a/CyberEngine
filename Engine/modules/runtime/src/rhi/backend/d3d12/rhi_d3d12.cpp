@@ -48,10 +48,10 @@ namespace Cyber
     RHIDevice* RHI_D3D12::rhi_create_device(RHIAdapter* adapter, const RHIDeviceCreateDesc& deviceDesc)
     {
         RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
-        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance.get());
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance);
         RHIDevice_D3D12* dxDevice = cyber_new<RHIDevice_D3D12>();
         
-        dxDevice->pAdapter = CreateRef<RHIAdapter>(*adapter);
+        dxDevice->pAdapter = adapter;
 
         if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&dxDevice->pDxDevice))))
         {
@@ -87,12 +87,18 @@ namespace Cyber
                         cyber_assert(false, "[D3D12 Fatal]: Create D3D12CommandQueue Failed!");
                         break;
                 }
+                queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+
+                if(!SUCCEEDED(dxDevice->pDxDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&dxDevice->ppCommandQueues[type][j]))))
+                {
+                    cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
+                }
             }
         }
 
         // Create D3D12MA Allocator
         D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dxDevice);
-        cyber_assert(dxDevice->pResourceAllocator == nullptr, "DMA Allocator Must be Created!");
+        cyber_assert(dxDevice->pResourceAllocator, "DMA Allocator Must be Created!");
         // Create Descriptor Heaps
         for(uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
         {
@@ -819,7 +825,7 @@ namespace Cyber
         RHIQueue_D3D12* dx_queue = static_cast<RHIQueue_D3D12*>(queue);
         RHIFence_D3D12* dx_fence = static_cast<RHIFence_D3D12*>(submitDesc.mSignalFence);
 
-        cyber_check(submitDesc.mCmdsCounht > 0);
+        cyber_check(submitDesc.mCmdsCount > 0);
         cyber_check(submitDesc.pCmds);
 
         ID3D12CommandList** cmds = (ID3D12CommandList**)cyber_malloc(sizeof(ID3D12CommandList*) * cmd_count);
@@ -939,7 +945,6 @@ namespace Cyber
     {
         RHICommandBuffer_D3D12* dxCommandBuffer = static_cast<RHICommandBuffer_D3D12*>(commandBuffer);
         SAFE_RELEASE(dxCommandBuffer->pDxCmdList);
-        cyber_assert(pCommandBuffer.use_count() == 1, "Command buffer free failed!");
         cyber_delete(commandBuffer);
     }
 
@@ -968,7 +973,7 @@ namespace Cyber
     void RHI_D3D12::rhi_cmd_end(RHICommandBuffer* commandBuffer)
     {
         RHICommandBuffer_D3D12* cmd = static_cast<RHICommandBuffer_D3D12*>(commandBuffer);
-        cyber_check(cmd.pDxCmdList);
+        cyber_check(cmd->pDxCmdList);
         CHECK_HRESULT(cmd->pDxCmdList->Close());
     }
 
@@ -1194,7 +1199,7 @@ namespace Cyber
         cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
         return cmd;
     #endif
-        cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
+        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
         return cmd;
     }
 
@@ -1206,7 +1211,7 @@ namespace Cyber
             cmdList4->EndRenderPass();
             return;
         #endif
-        cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
+        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
     }
     
     void RHI_D3D12::rhi_render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet)
@@ -1307,7 +1312,7 @@ namespace Cyber
 
     RHISwapChain* RHI_D3D12::rhi_create_swap_chain(RHIDevice* pDevice, const RHISwapChainCreateDesc& desc)
     {
-        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance.get());
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance);
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice);
         const uint32_t buffer_count = desc.mImageCount;
         RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12) + desc.mImageCount * sizeof(RHITexture));
@@ -1479,7 +1484,7 @@ namespace Cyber
             }
         }
         // Create push constant parameter
-        cyber_assert(dxRootSignature.push_constant_count <= 1, "Only support one push constant range");
+        cyber_assert(dxRootSignature->push_constant_count <= 1, "Only support one push constant range");
         if(dxRootSignature->push_constant_count > 0)
         {
             auto& pushConstant = dxRootSignature->push_constants;
@@ -2040,7 +2045,7 @@ namespace Cyber
     RHIBuffer* RHI_D3D12::rhi_create_buffer(RHIDevice* device, const BufferCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(device);
-        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(device->pAdapter.get());
+        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(device->pAdapter);
         
         RHIBuffer_D3D12* pBuffer = cyber_new<RHIBuffer_D3D12>();
 

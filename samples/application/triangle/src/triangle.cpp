@@ -20,12 +20,16 @@ namespace Cyber
 
         void TrignaleApp::initialize(Cyber::WindowDesc& desc)
         {
+            GameApplication::initialize(desc);
 
+            create_api_objects();
+            create_render_pipeline();
+            create_resource();
         }
 
         void TrignaleApp::run()
         {
-
+            GameApplication::run();
         }
 
         void TrignaleApp::create_api_objects()

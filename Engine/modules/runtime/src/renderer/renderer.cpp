@@ -76,7 +76,7 @@ namespace Cyber
     {
         // Create instance
         DECLARE_ZERO(RHIInstanceCreateDesc, instance_desc);
-        instance_desc.enable_debug_layer = false;
+        instance_desc.enable_debug_layer = true;
         instance_desc.enable_gpu_based_validation = false;
         instance_desc.enable_set_name = true;
         instance = rhi_create_instance(instance_desc);

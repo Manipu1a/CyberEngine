@@ -924,6 +924,7 @@ typedef enum ERHIFrontFace
     RHI_FRONT_FACE_CLOCKWISE,
     RHI_FRONT_FACE_MAX_ENUM_BIT = 0x7FFFFFFF
 } ERHIFrontFace;
+typedef uint32_t ERHIFrontFaces;
 
 typedef enum ERHIFillMode
 {

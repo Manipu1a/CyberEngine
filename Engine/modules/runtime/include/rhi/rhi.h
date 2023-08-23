@@ -83,22 +83,22 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIAdapter
     {
-        Cyber::Ref<RHIInstance> pInstance = nullptr;
+        RHIInstance* pInstance = nullptr;
     };
 
     struct CYBER_RHI_API RHIDevice
     {
-        Cyber::Ref<RHIAdapter> pAdapter;
+        RHIAdapter* pAdapter;
     };
 
     struct CYBER_RHI_API RHIFence
     {
-        Cyber::Ref<RHIDevice> pDevice;
+        RHIDevice* pDevice;
     };
 
     struct CYBER_RHI_API RHISemaphore
     {
-        Cyber::Ref<RHIDevice> pDevice;
+        RHIDevice* pDevice;
     };
 
     /// Shaders

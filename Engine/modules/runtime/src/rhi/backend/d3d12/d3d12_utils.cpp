@@ -134,7 +134,7 @@ namespace Cyber
     }
     void D3D12Util_ReturnDescriptorHandles(RHIDescriptorHeap_D3D12* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t count)
     {
-        cyber_assert((heap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) == 0);
+        cyber_assert((heap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) == 0, "Descriptor Handle flag should not be shader visible!");
 
         for(uint32_t i = 0; i < count; ++i)
         {
@@ -182,7 +182,7 @@ namespace Cyber
         }
         else if(instanceDesc.enable_gpu_based_validation)
         {
-            cyber_warn("D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
+            cyber_warn(false, "D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
         }
     }
 
@@ -248,7 +248,7 @@ namespace Cyber
             // Device Objects
             adapter.pDxActiveGPU = dxgi_adapters[i];
             adapter.mFeatureLevel = adapter_levels[i];
-            adapter.pInstance = CreateRef<RHIInstance>(*instance);
+            adapter.pInstance = instance;
         }
     }
 
@@ -577,9 +577,9 @@ namespace Cyber
     }
     D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RHIRasterizerStateCreateDesc* pDesc)
     {
-        cyber_check(pDesc.fill_mode < RHI_FILL_MODE_COUNT);
-        cyber_check(pDesc.cull_mode < RHI_CULL_MODE_COUNT);
-        cyber_check(pDesc.front_face == RHI_FRONT_FACE_CCW || pDesc.front_face == RHI_FRONT_FACE_CW);
+        cyber_check(pDesc->fill_mode < RHI_FILL_MODE_COUNT);
+        cyber_check(pDesc->cull_mode < RHI_CULL_MODE_COUNT);
+        cyber_check(pDesc->front_face == RHI_FRONT_FACE_COUNTER_CLOCKWISE || pDesc->front_face == RHI_FRONT_FACE_CLOCKWISE);
         D3D12_RASTERIZER_DESC ret = {};
         ret.FillMode = gDx12FillModeTranslator[pDesc->fill_mode];
         ret.CullMode = gDx12CullModeTranslator[pDesc->cull_mode];
@@ -597,11 +597,11 @@ namespace Cyber
 
     D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const RHIDepthStateCreateDesc* pDesc)
     {
-        cyber_check(pDesc->depth_func < RHI_CMP_FUNC_COUNT);
-        cyber_check(pDesc->stencil_func < RHI_CMP_FUNC_COUNT);
-        cyber_check(pDesc->stecil_front_fail_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_pass_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_depth_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->depth_func < RHI_CMP_COUNT);
+        cyber_check(pDesc->stencil_front_func < RHI_CMP_COUNT);
+        cyber_check(pDesc->stencil_front_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_front_pass_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_front_depth_fail_op < RHI_STENCIL_OP_COUNT);
         cyber_check(pDesc->stencil_back_fail_op < RHI_STENCIL_OP_COUNT);
         cyber_check(pDesc->stencil_back_pass_op < RHI_STENCIL_OP_COUNT);
         cyber_check(pDesc->stencil_back_depth_fail_op < RHI_STENCIL_OP_COUNT);

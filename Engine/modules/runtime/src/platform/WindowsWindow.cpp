@@ -95,10 +95,10 @@ namespace Cyber
 
     uint32_t WindowsWindow::getWidth() const
     {
-        return 0;
+        return mData.mWindowDesc.mWndW;
     }
     uint32_t WindowsWindow::getHeight() const
     {
-        return 0;
+        return mData.mWindowDesc.mWndH;
     }
 }
