@@ -761,7 +761,8 @@ namespace Cyber
     RHISurface* RHI_D3D12::rhi_surface_from_hwnd(RHIDevice* device, HWND window)
     {
         RHISurface* surface = cyber_new<RHISurface>();
-        surface = (RHISurface*)(&window);
+        surface->handle = window;
+        //surface = (RHISurface*)(&window);
         return surface;
     }
 
@@ -817,6 +818,7 @@ namespace Cyber
         RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
         dxQueue->pCommandQueue = dxDevice->ppCommandQueues[type][index];
         dxQueue->pFence = rhi_create_fence(device);
+        dxQueue->pDevice = device;
         return dxQueue;
     }
     void RHI_D3D12::rhi_submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
@@ -885,7 +887,7 @@ namespace Cyber
     // Command Objects
     void allocate_transient_command_allocator(RHICommandPool_D3D12* commandPool, RHIQueue* queue)
     {
-        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(queue->pDevice.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(queue->pDevice);
 
         D3D12_COMMAND_LIST_TYPE type = queue->mType == RHI_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->mType == RHI_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -895,6 +897,7 @@ namespace Cyber
         {
             cyber_assert(false, "command allocator create failed!");
         }
+        commandPool->pQueue = queue;
     }
 
     RHICommandPool* RHI_D3D12::rhi_create_command_pool(RHIQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
@@ -920,7 +923,7 @@ namespace Cyber
         RHICommandBuffer_D3D12* dxCommandBuffer = cyber_new<RHICommandBuffer_D3D12>();
         RHICommandPool_D3D12* dxPool = static_cast<RHICommandPool_D3D12*>(pool);
         RHIQueue_D3D12* dxQueue = static_cast<RHIQueue_D3D12*>(dxPool->pQueue);
-        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(dxQueue->pDevice.get());
+        RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(dxQueue->pDevice);
 
         // set command pool of new command
         dxCommandBuffer->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
@@ -1338,7 +1341,7 @@ namespace Cyber
 
         IDXGISwapChain1* swapchain;
 
-        HWND hwnd = *(HWND*)desc.surface;
+        HWND hwnd = desc.surface->handle;
 
         RHIQueue_D3D12* queue = nullptr;
         if(desc.mPresentQueue)
@@ -1367,7 +1370,7 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        RHITexture_D3D12* Ts = (RHITexture_D3D12*)(dxSwapChain + 1);
+        RHITexture_D3D12* Ts = (RHITexture_D3D12*)(dxSwapChain + sizeof(RHISwapChain_D3D12));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
             Ts[i].pDxResource = backbuffers[i];
@@ -1384,7 +1387,13 @@ namespace Cyber
             Ts[i].mOwnsImage = false;
             Ts[i].mNativeHandle = Ts[i].pDxResource;
         }
-        dxSwapChain->mBackBuffers = Ts;
+        //dxSwapChain->mBackBuffers = Ts;
+
+        for(auto i = 0; i < buffer_count; ++i)
+        {
+            auto buffer = dxSwapChain->mBackBuffers[i];
+            auto format = buffer.mFormat;
+        }
         dxSwapChain->mBufferCount = buffer_count;
         return dxSwapChain;
     }

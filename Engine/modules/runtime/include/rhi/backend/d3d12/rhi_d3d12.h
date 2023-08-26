@@ -184,7 +184,6 @@ namespace Cyber
 
     struct RHIQueue_D3D12: public RHIQueue
     {
-        Cyber::Ref<RHIDevice> pDevice;
         ID3D12CommandQueue* pCommandQueue;
         RHIFence* pFence;
     };

@@ -78,7 +78,7 @@ namespace Cyber
     
     struct CYBER_RHI_API RHISurface
     {
-
+        HWND handle;
     };
 
     struct CYBER_RHI_API RHIAdapter
@@ -482,7 +482,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueue
     {
-        Cyber::Ref<RHIDevice> pDevice;
+        RHIDevice* pDevice;
         ERHIQueueType mType;
         RHIQueueIndex mIdex;
     };
