@@ -14,7 +14,7 @@
 #include <dxgitype.h>
 #include <handleapi.h>
 #include <intsafe.h>
-#include <memory>
+#include "platform/memory.h"
 #include <minwinbase.h>
 #include <minwindef.h>
 #include <stdlib.h>
@@ -41,8 +41,8 @@ namespace Cyber
         for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
         {
             TextureViewCreateDesc view_desc = {
-                .texture = &swap_chain->mBackBuffers[i],
-                .format = (ERHIFormat)swap_chain->mBackBuffers[i].mFormat,
+                .texture = swap_chain->mBackBuffers[i],
+                .format = (ERHIFormat)swap_chain->mBackBuffers[i]->mFormat,
                 .usages = RHI_TVU_RTV_DSV,
                 .aspects = RHI_TVA_COLOR,
                 .dimension = RHI_TEX_DIMENSION_2D,
@@ -50,6 +50,7 @@ namespace Cyber
             };
             views[i] = rhi_create_texture_view(device, view_desc);
         }
+
         create_render_pipeline();
     }
 
@@ -145,9 +146,11 @@ namespace Cyber
 
         // create root signature
         RHIPipelineShaderCreateDesc* pipeline_shader_create_desc[2];
+        pipeline_shader_create_desc[0] = cyber_new<RHIPipelineShaderCreateDesc>();
         pipeline_shader_create_desc[0]->stage = RHI_SHADER_STAGE_VERT;
         pipeline_shader_create_desc[0]->library = vs_shader;
         pipeline_shader_create_desc[0]->entry = CYBER_UTF8("main");
+        pipeline_shader_create_desc[1] = cyber_new<RHIPipelineShaderCreateDesc>();
         pipeline_shader_create_desc[1]->stage = RHI_SHADER_STAGE_FRAG;
         pipeline_shader_create_desc[1]->library = ps_shader;
         pipeline_shader_create_desc[1]->entry = CYBER_UTF8("main");
@@ -204,20 +207,20 @@ namespace Cyber
             .render_target_count = 1,
         };
         RHITextureBarrier draw_barrier = {
-            .texture = &back_buffer,
+            .texture = back_buffer,
             .src_state = RHI_RESOURCE_STATE_UNDEFINED,
             .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
         };
         RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
         rhi_cmd_resource_barrier(cmd, barrier_desc0);
         RHIRenderPassEncoder* rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
-        rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer.mWidth, back_buffer.mHeight, 0.0f, 1.0f);
-        rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer.mWidth, back_buffer.mHeight);
+        rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+        rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
         rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
         rhi_render_encoder_draw(rp_encoder, 3, 0);
 
         RHITextureBarrier present_barrier = {
-            .texture = &back_buffer,
+            .texture = back_buffer,
             .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
             .dst_state = RHI_RESOURCE_STATE_PRESENT
         };

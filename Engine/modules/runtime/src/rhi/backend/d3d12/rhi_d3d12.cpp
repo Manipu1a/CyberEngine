@@ -1318,7 +1318,7 @@ namespace Cyber
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pDevice->pAdapter->pInstance);
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(pDevice);
         const uint32_t buffer_count = desc.mImageCount;
-        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12) + desc.mImageCount * sizeof(RHITexture));
+        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12));
         dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
@@ -1370,30 +1370,26 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        RHITexture_D3D12* Ts = (RHITexture_D3D12*)(dxSwapChain + sizeof(RHISwapChain_D3D12));
+        dxSwapChain->mBackBuffers = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            Ts[i].pDxResource = backbuffers[i];
-            Ts[i].pDxAllocation = nullptr;
-            Ts[i].mIsCube = false;
-            Ts[i].mArraySize = 0;
-            Ts[i].mFormat = desc.mFormat;
-            Ts[i].mAspectMask = 1;
-            Ts[i].mDepth = 1;
-            Ts[i].mWidth = desc.mWidth;
-            Ts[i].mHeight = desc.mHeight;
-            Ts[i].mMipLevels = 1;
-            Ts[i].mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
-            Ts[i].mOwnsImage = false;
-            Ts[i].mNativeHandle = Ts[i].pDxResource;
+            RHITexture_D3D12* Ts = (RHITexture_D3D12*)cyber_malloc(sizeof(RHITexture_D3D12));
+            Ts->pDxResource = backbuffers[i];
+            Ts->pDxAllocation = nullptr;
+            Ts->mIsCube = false;
+            Ts->mArraySize = 0;
+            Ts->mFormat = desc.mFormat;
+            Ts->mAspectMask = 1;
+            Ts->mDepth = 1;
+            Ts->mWidth = desc.mWidth;
+            Ts->mHeight = desc.mHeight;
+            Ts->mMipLevels = 1;
+            Ts->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
+            Ts->mOwnsImage = false;
+            Ts->mNativeHandle = Ts->pDxResource;
+            dxSwapChain->mBackBuffers[i] = Ts;
         }
-        //dxSwapChain->mBackBuffers = Ts;
 
-        for(auto i = 0; i < buffer_count; ++i)
-        {
-            auto buffer = dxSwapChain->mBackBuffers[i];
-            auto format = buffer.mFormat;
-        }
         dxSwapChain->mBufferCount = buffer_count;
         return dxSwapChain;
     }
@@ -1402,7 +1398,7 @@ namespace Cyber
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
         for(uint32_t i = 0;i < dxSwapChain->mBufferCount; ++i)
         {
-            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(&dxSwapChain->mBackBuffers[i]);
+            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBuffers[i]);
             SAFE_RELEASE(dxTexture->pDxResource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);

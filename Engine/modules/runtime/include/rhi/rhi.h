@@ -509,7 +509,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHISwapChain
     {
-        RHITexture* mBackBuffers;
+        RHITexture** mBackBuffers;
         uint32_t mBufferCount;
     };
 
