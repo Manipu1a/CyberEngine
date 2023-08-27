@@ -4,6 +4,7 @@
 #include <EASTL/unique_ptr.h>
 #include "debug.h"
 #include <functional>
+#include "../../../config.h"
 
 #ifdef _WIN32
     #ifdef _WIN64
@@ -17,7 +18,11 @@
 #define CB_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
 
 #define BIT(x) (1 << x)
-
+/*
+#ifndef PROJECT_PATH
+    #define PROJECT_PATH ""
+#endif
+*/
 namespace Cyber
 {
     template<typename T>

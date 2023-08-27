@@ -9,3 +9,5 @@ add_includedirs(include_dir_list, {public = true})
 set_pcheader("$(projectdir)/Engine/cepch.h")
 includes("Modules/xmake.lua")
 
+set_configvar("PROJECT_PATH", "$(projectdir)")
+

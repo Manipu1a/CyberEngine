@@ -29,8 +29,11 @@ namespace Cyber
             char8_t* bytes = nullptr;
             uint32_t length = 0;
 
-            const char* rendererApi = "DX12";
-            eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
+            const char8_t* rendererApi = u8"shaders/DX12";
+            eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s/%s", PROJECT_PATH, rendererApi, loadDesc.file_name);
+            
+            WCHAR assetsPath[512];
+            DWORD size = GetModuleFileName(nullptr, assetsPath, sizeof(assetsPath));
 
             CB_INFO("Compiling shader in runtime: [0] -> '[1]' macroCount=[2]", "DX12", (char*)loadDesc.entry_point_name, macroCount);
             load_shader_source_file(fileNameAPI.c_str(), &bytes, &length);

@@ -129,18 +129,18 @@ namespace Cyber
         ResourceLoader::ShaderLoadDesc vs_load_desc = {};
         vs_load_desc.target = shader_target_6_0;
         vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = CYBER_UTF8(""),
+            .file_name = CYBER_UTF8("shaders.hlsl"),
             .stage = RHI_SHADER_STAGE_VERT,
-            .entry_point_name = CYBER_UTF8("main")
+            .entry_point_name = CYBER_UTF8("VSMain")
         };
         RHIShaderLibrary* vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
 
         ResourceLoader::ShaderLoadDesc ps_load_desc = {};
         ps_load_desc.target = shader_target_6_0;
         ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = CYBER_UTF8(""),
+            .file_name = CYBER_UTF8("shaders.hlsl"),
             .stage = RHI_SHADER_STAGE_FRAG,
-            .entry_point_name = CYBER_UTF8("main"),
+            .entry_point_name = CYBER_UTF8("PSMain"),
         };
         RHIShaderLibrary* ps_shader = ResourceLoader::add_shader(*this, ps_load_desc);
 

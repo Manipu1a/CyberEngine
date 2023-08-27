@@ -16,6 +16,7 @@ includes("xmake/thirdparty.lua")
 includes("Engine/xmake.lua")
 includes("samples/xmake.lua")
 
+
 if (is_os("windows")) then 
     add_links("advapi32","gdi32","user32", "Shell32",{public = true})
 end
