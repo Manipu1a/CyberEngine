@@ -7,6 +7,7 @@
 #include <vcruntime.h>
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
+#include "filesystem"
 
 namespace Cyber
 {
@@ -29,13 +30,14 @@ namespace Cyber
             char8_t* bytes = nullptr;
             uint32_t length = 0;
 
-            const char8_t* rendererApi = u8"shaders/DX12";
-            eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s/%s", PROJECT_PATH, rendererApi, loadDesc.file_name);
+            const char8_t* rendererApi = u8"../../../../shaders/DX12";
+            eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
             
+            auto path = std::filesystem::current_path();
+
             WCHAR assetsPath[512];
             DWORD size = GetModuleFileName(nullptr, assetsPath, sizeof(assetsPath));
-
-            CB_INFO("Compiling shader in runtime: [0] -> '[1]' macroCount=[2]", "DX12", (char*)loadDesc.entry_point_name, macroCount);
+            CB_CORE_INFO("Compiling shader in runtime: {0} -> '{1}' macroCount={2}", "DX12", (char*)loadDesc.entry_point_name, macroCount);
             load_shader_source_file(fileNameAPI.c_str(), &bytes, &length);
             libraryDesc->code = bytes;
             libraryDesc->code_size = length;
@@ -53,7 +55,7 @@ namespace Cyber
             eastl::string binaryShaderComponent;
             static const size_t seed = 0x31415926;
             size_t shaderDefinesHash = rhi_hash(shaderDefines.c_str(), shaderDefines.size(), seed);
-            binaryShaderComponent.append_sprintf("%s_%s_%zu_%s_%u", rendererApi, loadDesc.file_name, shaderDefinesHash, loadDesc.stage, shaderTarget);
+            binaryShaderComponent.append_sprintf("%s_%s_%zu_%u_%u", rendererApi, loadDesc.file_name, shaderDefinesHash, loadDesc.stage, shaderTarget);
             
             return true;
         }

@@ -12,14 +12,14 @@ set_toolchains("msvc", {vs = "2019"})
 set_languages("cxx20")
 add_defines("UNICODE", "_UNICODE")
 add_defines("_WINDOWS")
-includes("xmake/thirdparty.lua")
+includes("xmake/xmake.lua")
 includes("Engine/xmake.lua")
 includes("samples/xmake.lua")
-
-
 if (is_os("windows")) then 
-    add_links("advapi32","gdi32","user32", "Shell32",{public = true})
+    add_links("advapi32","gdi32","user32", "Shell32", "dxcompiler",{public = true})
+    add_linkdirs("$(projectdir)/tools/DirectXShaderCompiler/lib/x64")
 end
+
 
 
 --

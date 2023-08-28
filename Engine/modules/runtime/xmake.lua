@@ -16,3 +16,6 @@ target("CyberRuntime")
     add_deps("CyberEvents",{public=true})
     add_deps("mimalloc", {public = true})
     add_deps("Gainput", {public=true})
+    set_configdir("$(projectdir)/Engine")
+    add_configfiles("$(projectdir)/Engine/config.h.in")
+

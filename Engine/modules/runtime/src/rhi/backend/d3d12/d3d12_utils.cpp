@@ -46,6 +46,10 @@ namespace Cyber
     }
     DxcCreateInstanceProc D3D12Util_GetDxcCreateInstanceProc()
     {
+        if(RHIUtil_DXCLoader::pDxcCreateInstance == nullptr)
+        {
+            D3D12Util_LoadDxcDLL();
+        }
         return RHIUtil_DXCLoader::Get();
     }
     #endif
