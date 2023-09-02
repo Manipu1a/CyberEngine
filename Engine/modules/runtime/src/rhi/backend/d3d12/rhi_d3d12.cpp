@@ -1370,10 +1370,10 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->mBackBuffers = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
+        dxSwapChain->mBackBuffers = new RHITexture[buffer_count];
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            RHITexture_D3D12* Ts = (RHITexture_D3D12*)cyber_malloc(sizeof(RHITexture_D3D12));
+            RHITexture_D3D12* Ts = (RHITexture_D3D12*)(&dxSwapChain->mBackBuffers[i]);
             Ts->pDxResource = backbuffers[i];
             Ts->pDxAllocation = nullptr;
             Ts->mIsCube = false;
@@ -1387,9 +1387,14 @@ namespace Cyber
             Ts->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
             Ts->mOwnsImage = false;
             Ts->mNativeHandle = Ts->pDxResource;
-            dxSwapChain->mBackBuffers[i] = Ts;
         }
+        //dxSwapChain->mBackBuffers = Ts;
 
+        for(auto i = 0; i < buffer_count; ++i)
+        {
+            auto buffer = dxSwapChain->mBackBuffers[i];
+            auto format = buffer.mFormat;
+        }
         dxSwapChain->mBufferCount = buffer_count;
         return dxSwapChain;
     }
@@ -1398,7 +1403,7 @@ namespace Cyber
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
         for(uint32_t i = 0;i < dxSwapChain->mBufferCount; ++i)
         {
-            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBuffers[i]);
+            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(&dxSwapChain->mBackBuffers[i]);
             SAFE_RELEASE(dxTexture->pDxResource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);
