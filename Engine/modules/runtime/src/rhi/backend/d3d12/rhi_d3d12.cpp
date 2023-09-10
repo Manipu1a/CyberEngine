@@ -9,6 +9,7 @@
 #include <combaseapi.h>
 #include <d3d12.h>
 #include <dxgi.h>
+#include <d3dcompiler.h>
 #include <dxgi1_2.h>
 #include <dxgi1_5.h>
 #include <intsafe.h>
@@ -1370,10 +1371,10 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->mBackBuffers = new RHITexture[buffer_count];
+        dxSwapChain->mBackBuffers = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            RHITexture_D3D12* Ts = (RHITexture_D3D12*)(&dxSwapChain->mBackBuffers[i]);
+            RHITexture_D3D12* Ts = cyber_new<RHITexture_D3D12>();
             Ts->pDxResource = backbuffers[i];
             Ts->pDxAllocation = nullptr;
             Ts->mIsCube = false;
@@ -1387,23 +1388,19 @@ namespace Cyber
             Ts->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
             Ts->mOwnsImage = false;
             Ts->mNativeHandle = Ts->pDxResource;
+            dxSwapChain->mBackBuffers[i] = Ts;
         }
         //dxSwapChain->mBackBuffers = Ts;
-
-        for(auto i = 0; i < buffer_count; ++i)
-        {
-            auto buffer = dxSwapChain->mBackBuffers[i];
-            auto format = buffer.mFormat;
-        }
         dxSwapChain->mBufferCount = buffer_count;
         return dxSwapChain;
     }
+
     void RHI_D3D12::rhi_free_swap_chain(RHISwapChain* swapchain)
     {
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
         for(uint32_t i = 0;i < dxSwapChain->mBufferCount; ++i)
         {
-            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(&dxSwapChain->mBackBuffers[i]);
+            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBuffers[i]);
             SAFE_RELEASE(dxTexture->pDxResource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);
@@ -2265,21 +2262,47 @@ namespace Cyber
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device);
         RHIShaderLibrary_D3D12* pLibrary = cyber_new<RHIShaderLibrary_D3D12>();
+        IDxcUtils* pDxcUtils;
         IDxcLibrary* pDxcLibrary;
+        IDxcContainerReflection* pReflection;
         auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
         if(!procDxcCreateInstance)
         {
             CB_CORE_ERROR("Cannot find dxc.dll");
             return nullptr;
         }
-
+        procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pDxcUtils));
         procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pDxcLibrary));
+        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
         if(!pDxcLibrary)
         {
             CB_CORE_ERROR("Cannot create dxc library");
             return nullptr;
         }
-        pDxcLibrary->CreateBlobWithEncodingOnHeapCopy(desc.code, (uint32_t)desc.code_size, DXC_CP_ACP, &pLibrary->shader_blob);
+        
+        constexpr char TestShader[] = R"(
+            float4 main() : SV_Target0
+            {
+                return float4(0.0, 0.0, 0.0, 0.0);
+            }
+            )";
+
+        IDxcBlobEncoding *pBlobEncoding;
+        //CHECK_HRESULT(pDxcUtils->CreateBlob(desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
+        CHECK_HRESULT(pDxcLibrary->CreateBlobWithEncodingFromPinned(TestShader, sizeof(TestShader), 0, &pBlobEncoding));
+        
+        IDxcCompiler *pCompiler;
+        CHECK_HRESULT(procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler)));
+        HRESULT hr = S_OK;
+        ID3D12ShaderReflection *pReflection2;
+        hr = D3DReflect(TestShader, sizeof(TestShader), __uuidof(pReflection2), reinterpret_cast<void**>(&pReflection2));
+        IDxcOperationResult *pResult;
+        hr = pCompiler->Compile(pBlobEncoding, L"", L"main", L"ps_6_0", nullptr, 0,nullptr, 0, nullptr, &pResult);
+        if(FAILED(hr))
+        {
+            hr = (pReflection->Load(pBlobEncoding));
+        }
+
         pLibrary->pDevice = CreateRef<RHIDevice>(*device);
         // Reflect shader
         D3D12Util_InitializeShaderReflection(dxDevice->pDxDevice, pLibrary, desc);

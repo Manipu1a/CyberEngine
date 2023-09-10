@@ -469,21 +469,24 @@ namespace Cyber
 #define DXIL_FOURCC(ch0, ch1, ch2, ch3) \
         ((uint32_t)(uint8_t)(ch0) | (uint32_t)(uint8_t)(ch1) << 8 | (uint32_t)(uint8_t)(ch2) << 16 | (uint32_t)(uint8_t)(ch3) << 24)
 
-        IDxcContainerReflection* pReflection;
+        IDxcContainerReflection* reflection;
         UINT32 shaderIdx;
         auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
         cyber_assert(procDxcCreateInstance, "Failed to get dxc proc!");
-        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
-        pReflection->Load(library->shader_blob);
-        pReflection->FindFirstPartKind(DXIL_FOURCC('D','X','I','L'), &shaderIdx);
+        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&reflection));
+        HRESULT hr = S_OK;
 
-        CHECK_HRESULT(pReflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&d3d12Reflection)));
+        hr = reflection->Load(library->shader_blob);
+
+        hr = reflection->FindFirstPartKind(DXIL_FOURCC('D','X','I','L'), &shaderIdx);
+
+        CHECK_HRESULT(reflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&d3d12Reflection)));
         if(d3d12Reflection)
         {
             D3D12Util_CollectShaderReflectionData(d3d12Reflection, desc.stage, library);
         }
 
-        pReflection->Release();
+        reflection->Release();
         d3d12Reflection->Release();
     }
 

@@ -25,7 +25,7 @@
         HRESULT hres = (exp);                                                           \
         if(!SUCCEEDED(hres))                                                            \
         {                                                                               \
-            cyber_assert(false, "[0]: FAILED with HRESULT: [1]", #exp, (uint32_t)hres); \
+            cyber_assert(false, "{0}: FAILED with HRESULT: {1}", 15, (uint32_t)hres); \
         }                                                                               \
     } while (0)
 #endif
