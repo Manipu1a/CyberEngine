@@ -477,7 +477,6 @@ namespace Cyber
         HRESULT hr = S_OK;
 
         hr = reflection->Load(library->shader_blob);
-
         hr = reflection->FindFirstPartKind(DXIL_FOURCC('D','X','I','L'), &shaderIdx);
 
         CHECK_HRESULT(reflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&d3d12Reflection)));
