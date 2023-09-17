@@ -191,6 +191,54 @@ namespace Cyber
         uint32_t stack_used;
     };
 
+    struct CYBER_RHI_API ShaderVersion
+    {
+        uint32_t major = 0;
+        uint32_t minor = 0;
+
+        CYBER_CONSTEXPR  ShaderVersion() CYBER_NOEXCEPT
+        {
+
+        }
+
+        CYBER_CONSTEXPR ShaderVersion(uint32_t major, uint32_t minor) CYBER_NOEXCEPT
+            : major(major)
+            , minor(minor)
+        {
+
+        }
+
+        CYBER_CONSTEXPR bool operator==(const ShaderVersion& other) const
+        {
+            return major == other.major && minor == other.minor;
+        }
+
+        CYBER_CONSTEXPR bool operator!=(const ShaderVersion& other) const
+        {
+            return !(*this == other);
+        }
+
+        CYBER_CONSTEXPR bool operator<(const ShaderVersion& other) const
+        {
+            return major < other.major || (major == other.major && minor < other.minor);
+        }
+
+        CYBER_CONSTEXPR bool operator>(const ShaderVersion& other) const
+        {
+            return major > other.major || (major == other.major && minor > other.minor);
+        }
+
+        CYBER_CONSTEXPR bool operator<=(const ShaderVersion& other) const
+        {
+            return !(*this > other);
+        }
+
+        CYBER_CONSTEXPR bool operator>=(const ShaderVersion& other) const
+        {
+            return !(*this < other);
+        }
+    };
+
     struct CYBER_RHI_API RHIShaderReflection
     {
         const char8_t* entry_name;
@@ -686,9 +734,12 @@ namespace Cyber
     struct CYBER_RHI_API RHIShaderLibraryCreateDesc
     {
         const char8_t* name;
+        const char8_t* entry_point;
         const void* code;
         uint32_t code_size;
         ERHIShaderStage stage;
+        EShaderCompiler shader_compiler;
+        ERHIShaderTarget shader_target;
     };
 
     struct CYBER_RHI_API RHIVertexAttribute 

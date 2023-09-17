@@ -5,7 +5,7 @@
 #include <dxcapi.h>
 #include <d3d12shader.h>
 #include "platform/memory.h"
-
+#include <d3dcompiler.h>
 //#include "cyber_runtime.config.h"
 //#include "../../common/common_utils.h"
 
@@ -14,43 +14,112 @@ namespace Cyber
     #if !defined (XBOX) && defined (_WIN32)
     struct RHIUtil_DXCLoader
     {
-        static void Load()
+        void Load()
         {
             dxcLibrary = LoadLibrary(L"dxcompiler.dll");
             pDxcCreateInstance = (void*)::GetProcAddress((HMODULE)dxcLibrary, "DxcCreateInstance");
+
         }
-        static void Unload()
+        void Unload()
         {
             pDxcCreateInstance = nullptr;
             ::FreeLibrary(dxcLibrary);
         }
 
-        static DxcCreateInstanceProc Get()
+        DxcCreateInstanceProc Get()
         {
             return (DxcCreateInstanceProc)pDxcCreateInstance;
         }
-        static HMODULE dxcLibrary;
-        static void* pDxcCreateInstance;
+        HMODULE dxcLibrary;
+        void* pDxcCreateInstance;
+        uint32_t mMajorVersion;
+        uint32_t mMinorVersion;
+        uint32_t shader_model_major;
+        uint32_t shader_model_minor;
     };
 
-    void* RHIUtil_DXCLoader::pDxcCreateInstance = nullptr;
-    HMODULE RHIUtil_DXCLoader::dxcLibrary = nullptr;
+    //void* RHIUtil_DXCLoader::pDxcCreateInstance = nullptr;
+    //HMODULE RHIUtil_DXCLoader::dxcLibrary = nullptr;
+    static RHIUtil_DXCLoader DxcLoader;
+    
+    void TestModel()
+    {
+        auto procDxcCreateInstance = DxcLoader.Get();
+        DxcLoader.shader_model_major = 6;
+        constexpr char TestShader[] = R"(
+        float4 main() : SV_Target0
+        {
+            return float4(0.0, 0.0, 0.0, 0.0);
+        }
+        )";
 
+        IDxcLibrary* pLibrary = nullptr;
+        IDxcCompiler* pCompiler = nullptr;
+        procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pLibrary));
+        procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler));
+
+        IDxcBlobEncoding* pSource = nullptr;
+        pLibrary->CreateBlobWithEncodingFromPinned(TestShader, sizeof(TestShader), 0, &pSource);
+
+        eastl::vector<const wchar_t*> DxilArgs;
+
+        for(uint32_t MinorVer = 1;;++MinorVer)
+        {
+            eastl::wstring Profile(eastl::wstring::CtorSprintf(), L"ps_6_%d" , MinorVer);
+            IDxcOperationResult* pdxcResult = nullptr;
+            auto hr = pCompiler->Compile(pSource, L"", L"main", Profile.c_str(), !DxilArgs.empty() ? DxilArgs.data() : nullptr, (uint32_t)DxilArgs.size(), nullptr, 0, nullptr, &pdxcResult);
+            if(FAILED(hr))
+            {
+                break;
+            }
+
+            HRESULT status = E_FAIL;
+            if(FAILED(pdxcResult->GetStatus(&status)))
+            {
+                break;
+            }
+            if(FAILED(status))
+            {
+                break;
+            }
+
+            DxcLoader.shader_model_minor = MinorVer;
+        }
+    }
     void D3D12Util_LoadDxcDLL()
     {
-        RHIUtil_DXCLoader::Load();
+        DxcLoader.Load();
+
+        auto procDxcCreateInstance = DxcLoader.Get();
+        TestModel();
+
+        if(procDxcCreateInstance)
+        {
+            IDxcValidator* pValidator = nullptr;
+            if(SUCCEEDED(procDxcCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(&pValidator))))
+            {
+                IDxcVersionInfo* pVersionInfo;
+                if(SUCCEEDED(pValidator->QueryInterface(IID_PPV_ARGS(&pVersionInfo))))
+                {
+                    pVersionInfo->GetVersion(&DxcLoader.mMajorVersion, &DxcLoader.mMinorVersion);
+
+                }
+            }
+            CB_INFO("Loaded DX Shader Compiler {0}.{1}. Max supported shader model: {2}.{3}", DxcLoader.mMajorVersion, DxcLoader.mMinorVersion, DxcLoader.shader_model_major, DxcLoader.shader_model_minor);
+            //LOG_INFO_MESSAGE("Loaded DX Shader Compiler ", m_MajorVer, ".", m_MinorVer, ". Max supported shader model: ", m_MaxShaderModel.Major, '.', m_MaxShaderModel.Minor);
+        }
     }
     void D3D12Util_UnloadDxcDLL()
     {
-        RHIUtil_DXCLoader::Unload();
+        DxcLoader.Unload();
     }
     DxcCreateInstanceProc D3D12Util_GetDxcCreateInstanceProc()
     {
-        if(RHIUtil_DXCLoader::pDxcCreateInstance == nullptr)
+        if(DxcLoader.pDxcCreateInstance == nullptr)
         {
             D3D12Util_LoadDxcDLL();
         }
-        return RHIUtil_DXCLoader::Get();
+        return DxcLoader.Get();
     }
     #endif
 
@@ -466,26 +535,59 @@ namespace Cyber
     void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
     {
         ID3D12ShaderReflection* d3d12Reflection = nullptr;
-#define DXIL_FOURCC(ch0, ch1, ch2, ch3) \
-        ((uint32_t)(uint8_t)(ch0) | (uint32_t)(uint8_t)(ch1) << 8 | (uint32_t)(uint8_t)(ch2) << 16 | (uint32_t)(uint8_t)(ch3) << 24)
-
-        IDxcContainerReflection* reflection;
-        UINT32 shaderIdx;
         auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
-        cyber_assert(procDxcCreateInstance, "Failed to get dxc proc!");
-        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&reflection));
-        HRESULT hr = S_OK;
 
-        hr = reflection->Load(library->shader_blob);
-        hr = reflection->FindFirstPartKind(DXIL_FOURCC('D','X','I','L'), &shaderIdx);
+        bool bUseDXC = false;
+        switch(desc.shader_compiler)
+        {
+            case SHADER_COMPILER_DEFAULT:
+                bUseDXC = false;
+                break;
+            case SHADER_COMPILER_GLSLANG:
+                bUseDXC = false;
+                break;
+            case SHADER_COMPILER_DXC:
+                bUseDXC = true;
+                break;
+            case SHADER_COMPILER_FXC:
+                bUseDXC = false;
+                break;
+            default:
+                CB_CORE_ERROR("Invalid shader compiler");
+                return;
+        }
 
-        CHECK_HRESULT(reflection->GetPartReflection(shaderIdx, IID_PPV_ARGS(&d3d12Reflection)));
+        if(bUseDXC)
+        {
+            IDxcUtils* pDxcUtils;
+            procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pDxcUtils));
+
+            IDxcBlob *pReflectionData;
+            library->shader_result->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&pReflectionData), nullptr);
+            if(pReflectionData != nullptr)
+            {
+                DxcBuffer ReflectionData;
+                ReflectionData.Encoding = DXC_CP_ACP;
+                ReflectionData.Ptr = pReflectionData->GetBufferPointer();
+                ReflectionData.Size = pReflectionData->GetBufferSize();
+
+                if(SUCCEEDED(pDxcUtils->CreateReflection(&ReflectionData, IID_PPV_ARGS(&d3d12Reflection))))
+                {
+                    D3D12_SHADER_DESC* shader_desc;
+                    d3d12Reflection->GetDesc(shader_desc);
+                }
+            }
+        }
+        else 
+        {
+            D3DReflect(library->shader_blob->GetBufferPointer(), library->shader_blob->GetBufferSize(), __uuidof(d3d12Reflection), reinterpret_cast<void**>(&d3d12Reflection));
+        }
+
         if(d3d12Reflection)
         {
             D3D12Util_CollectShaderReflectionData(d3d12Reflection, desc.stage, library);
         }
 
-        reflection->Release();
         d3d12Reflection->Release();
     }
 

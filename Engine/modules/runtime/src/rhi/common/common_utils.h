@@ -15,6 +15,8 @@ namespace Cyber
     bool rhi_util_add_signature(RHIRootSignaturePool* pool, RHIRootSignature* sig, const RHIRootSignatureCreateDesc& desc);
     bool rhi_util_pool_free_signature(RHIRootSignaturePool* pool, RHIRootSignature* signature);
     void rhi_util_free_root_signature_pool(RHIRootSignaturePool* pool);
+
+    eastl::string GetHLSLProfileString(ERHIShaderStage stage, ShaderVersion version);
 }
 
 

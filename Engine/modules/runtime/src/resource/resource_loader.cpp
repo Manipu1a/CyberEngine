@@ -42,7 +42,10 @@ namespace Cyber
             libraryDesc->code = bytes;
             libraryDesc->code_size = length;
             libraryDesc->stage = loadDesc.stage;
-            libraryDesc->name = CYBER_UTF8("ShaderLibrary");
+            libraryDesc->name = loadDesc.file_name;
+            libraryDesc->shader_compiler = SHADER_COMPILER_DXC;
+            libraryDesc->entry_point = loadDesc.entry_point_name;
+            libraryDesc->shader_target = shaderTarget;
             eastl::string shaderDefines = "";
 
             // Apply user specified macros

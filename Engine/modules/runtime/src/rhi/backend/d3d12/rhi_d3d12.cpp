@@ -2262,24 +2262,129 @@ namespace Cyber
     {
         RHIDevice_D3D12* dxDevice = static_cast<RHIDevice_D3D12*>(device);
         RHIShaderLibrary_D3D12* pLibrary = cyber_new<RHIShaderLibrary_D3D12>();
-        IDxcUtils* pDxcUtils;
-        IDxcLibrary* pDxcLibrary;
-        IDxcContainerReflection* pReflection;
-        auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
-        if(!procDxcCreateInstance)
+
+        bool bUseDXC = false;
+        switch(desc.shader_compiler)
         {
-            CB_CORE_ERROR("Cannot find dxc.dll");
-            return nullptr;
+            case SHADER_COMPILER_DEFAULT:
+                bUseDXC = false;
+                break;
+            case SHADER_COMPILER_GLSLANG:
+                bUseDXC = false;
+                break;
+            case SHADER_COMPILER_DXC:
+                bUseDXC = true;
+                break;
+            case SHADER_COMPILER_FXC:
+                bUseDXC = false;
+                break;
+            default:
+                CB_CORE_ERROR("Invalid shader compiler");
+                return nullptr;
         }
-        procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pDxcUtils));
-        procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pDxcLibrary));
-        procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
-        if(!pDxcLibrary)
+
+        HRESULT hr = S_OK;
+        if(bUseDXC)
         {
-            CB_CORE_ERROR("Cannot create dxc library");
-            return nullptr;
+            IDxcUtils* pDxcUtils;
+            IDxcLibrary* pDxcLibrary;
+            IDxcContainerReflection* pReflection;
+            IDxcValidator* pValidator;
+
+            auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
+            if(!procDxcCreateInstance)
+            {
+                CB_CORE_ERROR("Cannot find dxc.dll");
+                return nullptr;
+            }
+            procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pDxcUtils));
+            procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pDxcLibrary));
+            procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
+            procDxcCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(&pValidator));
+            if(!pDxcLibrary)
+            {
+                CB_CORE_ERROR("Cannot create dxc library");
+                return nullptr;
+            }
+            /*
+            LPCWSTR* pszArgs = cyber_new_n<LPCWSTR>(12);
+            pszArgs[0] = L"shaders.hlsl";
+            pszArgs[1] = L"-E";
+            pszArgs[2] = L"VSMain";
+            pszArgs[3] = L"-T";
+            pszArgs[4] = L"vs_6_0";
+            pszArgs[5] = L"D";
+            pszArgs[6] = L"MYDEFINE=1";
+            pszArgs[7] = L"-Fo";
+            pszArgs[8] = L"shaders.bin";
+            pszArgs[9] = L"-Fd";
+            pszArgs[10] = L"shaders.pdb";
+            pszArgs[11] = L"-Qstrip_reflect";
+            */
+
+            eastl::wstring shaderName(eastl::wstring::CtorSprintf(), L"%s", desc.name);
+            eastl::wstring entry_point(eastl::wstring::CtorSprintf(), L"%s", desc.entry_point);
+            auto entry = entry_point.c_str();
+            ShaderVersion shader_version(6 , 0);
+            eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
+            eastl::wstring profile_wstr(eastl::wstring::CtorSprintf(), L"%s", profile.c_str());
+
+            eastl::vector<const wchar_t*> DxilArgs;
+            DxilArgs.push_back(shaderName.c_str());
+            DxilArgs.push_back(L"-E");
+            DxilArgs.push_back(entry_point.c_str());
+            DxilArgs.push_back(L"-T");
+            DxilArgs.push_back(L"vs_6_0");
+            DxilArgs.push_back(L"-D");
+            DxilArgs.push_back(L"MYDEFINE=1");
+
+            IDxcBlobEncoding* pBlobEncoding;
+            CHECK_HRESULT(pDxcUtils->CreateBlob((LPCVOID)desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
+            pLibrary->shader_blob = reinterpret_cast<ID3DBlob*>(pBlobEncoding);
+            //CHECK_HRESULT(pDxcLibrary->CreateBlobWithEncodingFromPinned((LPCVOID)TestShader, sizeof(TestShader), 0, &pBlobEncoding));
+            
+            //IDxcCompiler *pCompiler;
+            IDxcCompiler3 *pCompiler3;
+            CHECK_HRESULT(procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler3)));
+            DxcBuffer pSource;
+            pSource.Ptr = pLibrary->shader_blob->GetBufferPointer();
+            pSource.Size = pLibrary->shader_blob->GetBufferSize();
+            pSource.Encoding = DXC_CP_ACP;
+            IDxcIncludeHandler* pIncludeHandler;
+            pDxcUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
+
+            pCompiler3->Compile(&pSource, DxilArgs.data(), DxilArgs.size(), pIncludeHandler, IID_PPV_ARGS(&pLibrary->shader_result));
+
+            IDxcBlobUtf8* pErrors = nullptr;
+            pLibrary->shader_result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
+            // Note that d3dcompiler would return null if no errors or warnings are present.
+            // IDxcCompiler3::Compile will always return an error buffer, but its length
+            // will be zero if there are no warnings or errors.
+            if (pErrors != nullptr && pErrors->GetStringLength() != 0)
+                CB_WARN("Warnings and Errors:{0}", pErrors->GetStringPointer());
+                
+            pLibrary->shader_result->GetStatus(&hr);
+            if(FAILED(hr))
+            {
+                return nullptr;
+            }
+
+            pDxcUtils->Release();
+            pDxcLibrary->Release();
         }
-        
+        else {
+            //hr = (pReflection->Load(pBlobEncoding));
+            ID3D12ShaderReflection *pReflection2;
+            ID3DBlob *ppCode;
+            ID3DBlob* ppErrorMsgs;
+            D3D_SHADER_MACRO Macros[] = {{"D3DCOMPILER", ""}, {}};
+            DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, nullptr, "main", "ps_5_1", dwShaderFlags, 0, &pLibrary->shader_blob, &ppErrorMsgs);
+
+            D3D12_SHADER_DESC* shader_desc;
+            pReflection2->GetDesc(shader_desc);
+        }
+
         constexpr char TestShader[] = R"(
             float4 main() : SV_Target0
             {
@@ -2287,86 +2392,11 @@ namespace Cyber
             }
             )";
 
-           LPCWSTR pszArgs[] =
-    {
-        L"shaders.hlsl",            // Optional shader source file name for error reporting
-                                     // and for PIX shader source view.  
-        L"-E", L"VSMain",              // Entry point.
-        L"-T", L"vs_6_0",            // Target.
-                           // Enable debug information (slim format)
-        L"-D", L"MYDEFINE=1",        // A single define.
-        L"-Fo", L"shaders.bin",     // Optional. Stored in the pdb. 
-        L"-Fd", L"shaders.pdb",     // The file name of the pdb. This must either be supplied
-                                     // or the autogenerated file name must be used.
-        L"-Qstrip_reflect",          // Strip reflection into a separate blob. 
-    };
-
-        IDxcBlobEncoding *pBlobEncoding;
-        CHECK_HRESULT(pDxcUtils->CreateBlob((LPCVOID)desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
-        //CHECK_HRESULT(pDxcLibrary->CreateBlobWithEncodingFromPinned((LPCVOID)TestShader, sizeof(TestShader), 0, &pBlobEncoding));
-        
-        //IDxcCompiler *pCompiler;
-        IDxcCompiler3 *pCompiler3;
-        CHECK_HRESULT(procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler3)));
-        //CHECK_HRESULT(pCompiler->QueryInterface(IID_PPV_ARGS(&pCompiler3)));
-        DxcBuffer pSource;
-        pSource.Ptr = pBlobEncoding->GetBufferPointer();
-        pSource.Size = pBlobEncoding->GetBufferSize();
-        pSource.Encoding = DXC_CP_ACP;
-        IDxcIncludeHandler* pIncludeHandler;
-        pDxcUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
-
-        HRESULT hr = S_OK;
-        IDxcResult* pResult;
-        //IDxcOperationResult *pResult;
-        //hr = pCompiler->Compile(pBlobEncoding, L"", L"main", L"ps_6_0", nullptr, 0,nullptr, 0, nullptr, &pResult);
-        pCompiler3->Compile(&pSource, pszArgs, _countof(pszArgs), pIncludeHandler, IID_PPV_ARGS(&pResult));
-
-        IDxcBlobUtf8* pErrors = nullptr;
-        pResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
-        // Note that d3dcompiler would return null if no errors or warnings are present.
-        // IDxcCompiler3::Compile will always return an error buffer, but its length
-        // will be zero if there are no warnings or errors.
-        if (pErrors != nullptr && pErrors->GetStringLength() != 0)
-            CB_WARN("Warnings and Errors:{0}", pErrors->GetStringPointer());
-            
-        pResult->GetStatus(&hr);
-        if(FAILED(hr))
-        {
-            return nullptr;
-        }
-
-        IDxcBlob *pReflectionData;
-        pResult->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(&pReflectionData), nullptr);
-        if(pReflectionData != nullptr)
-        {
-            DxcBuffer ReflectionData;
-            ReflectionData.Encoding = DXC_CP_ACP;
-            ReflectionData.Ptr = pReflectionData->GetBufferPointer();
-            ReflectionData.Size = pReflectionData->GetBufferSize();
-
-            ID3D12ShaderReflection* pReflection;
-            hr = pDxcUtils->CreateReflection(&ReflectionData, IID_PPV_ARGS(&pReflection));
-        }
-        //hr = (pReflection->Load(pBlobEncoding));
-        ID3D12ShaderReflection *pReflection2;
-        ID3DBlob *ppCode;
-        ID3DBlob* ppErrorMsgs;
-        D3D_SHADER_MACRO Macros[] = {{"D3DCOMPILER", ""}, {}};
-        DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-        hr = D3DCompile((LPCVOID)TestShader, sizeof(TestShader), nullptr, Macros, nullptr, "main", "ps_5_1", dwShaderFlags, 0, &ppCode, &ppErrorMsgs);
-        hr = D3DReflect(ppCode->GetBufferPointer(), ppCode->GetBufferSize(), __uuidof(pReflection2), reinterpret_cast<void**>(&pReflection2));
-
-        D3D12_SHADER_DESC* shader_desc;
-        pReflection2->GetDesc(shader_desc);
-
-
 
         pLibrary->pDevice = CreateRef<RHIDevice>(*device);
         // Reflect shader
         D3D12Util_InitializeShaderReflection(dxDevice->pDxDevice, pLibrary, desc);
 
-        pDxcLibrary->Release();
         return pLibrary;
     }
 

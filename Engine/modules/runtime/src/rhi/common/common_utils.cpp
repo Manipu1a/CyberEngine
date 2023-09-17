@@ -245,4 +245,32 @@ namespace Cyber
         }
 
     }
+
+    eastl::string GetHLSLProfileString(ERHIShaderStage stage, ShaderVersion version)
+    {
+        eastl::string shader_profile;
+
+        switch(stage)
+        {
+            case RHI_SHADER_STAGE_VERT: shader_profile = "vs"; break;
+            case RHI_SHADER_STAGE_FRAG: shader_profile = "ps"; break;
+            case RHI_SHADER_STAGE_GEOM: shader_profile = "gs"; break;
+            case RHI_SHADER_STAGE_COMPUTE: shader_profile = "cs"; break;
+            case RHI_SHADER_STAGE_TESC: shader_profile = "hs"; break;
+            case RHI_SHADER_STAGE_DOMAIN: shader_profile = "ds"; break;
+            case RHI_SHADER_STAGE_MESH: shader_profile = "ms"; break;
+            case RHI_SHADER_STAGE_RAYTRACING: shader_profile = "lib"; break;
+            default:
+            {
+                CB_WARN("Unknown shader type");
+            }
+        }
+        
+        shader_profile += "_";
+        shader_profile += eastl::to_string(version.major);
+        shader_profile += "_";
+        shader_profile += eastl::to_string(version.minor);
+
+        return shader_profile;
+    }
 }

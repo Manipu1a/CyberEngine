@@ -257,7 +257,9 @@ namespace Cyber
     
     struct RHIShaderLibrary_D3D12 : public RHIShaderLibrary
     {
-        struct IDxcBlobEncoding* shader_blob;
+        ID3DBlob* shader_blob;
+        //struct IDxcBlobEncoding* shader_dxc_blob;
+        struct IDxcResult* shader_result;
     };
 
     class RHI_D3D12 : public RHI
