@@ -12,7 +12,8 @@ namespace Cyber
         virtual void onClose() override;
         virtual uint32_t getWidth() const override;
         virtual uint32_t getHeight() const override;
-
+        virtual void rebuildDisplayMetrics(DisplayMetrics& outMetrics);
+        
         inline virtual void setEventCallback(const EventCallbackFn& callback) override { mData.mEventCallback = callback; }
 
         void initWindow(const Cyber::WindowDesc& desc);

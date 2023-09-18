@@ -2322,14 +2322,14 @@ namespace Cyber
             pszArgs[11] = L"-Qstrip_reflect";
             */
 
-            eastl::wstring shaderName(eastl::wstring::CtorSprintf(), L"%s", desc.name);
-            eastl::wstring entry_point(eastl::wstring::CtorSprintf(), L"%s", desc.entry_point);
+            eastl::wstring shaderName(eastl::wstring::CtorConvert(), desc.name);
+            eastl::wstring entry_point(eastl::wstring::CtorConvert(), desc.entry_point);
             auto entry = entry_point.c_str();
             ShaderVersion shader_version(6 , 0);
             eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
-            eastl::wstring profile_wstr(eastl::wstring::CtorSprintf(), L"%s", profile.c_str());
-
+            eastl::wstring profile_wstr(eastl::wstring::CtorConvert(),profile.c_str());
             eastl::vector<const wchar_t*> DxilArgs;
+            
             DxilArgs.push_back(shaderName.c_str());
             DxilArgs.push_back(L"-E");
             DxilArgs.push_back(entry_point.c_str());
