@@ -131,7 +131,9 @@ namespace Cyber
         vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
             .file_name = CYBER_UTF8("shaders.hlsl"),
             .stage = RHI_SHADER_STAGE_VERT,
-            .entry_point_name = CYBER_UTF8("VSMain")
+            .macros = {{"MYDEFINE", "1"}, {"MYDEFINE2", "2"}},
+            .macro_count = 2,
+            .entry_point_name = CYBER_UTF8("VSMain"),
         };
         RHIShaderLibrary* vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
 

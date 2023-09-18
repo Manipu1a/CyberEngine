@@ -46,6 +46,8 @@ namespace Cyber
             libraryDesc->shader_compiler = SHADER_COMPILER_DXC;
             libraryDesc->entry_point = loadDesc.entry_point_name;
             libraryDesc->shader_target = shaderTarget;
+            libraryDesc->shader_macro_count = macroCount;
+            libraryDesc->shader_macros = macros;
             eastl::string shaderDefines = "";
 
             // Apply user specified macros

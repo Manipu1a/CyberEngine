@@ -737,9 +737,12 @@ namespace Cyber
         const char8_t* entry_point;
         const void* code;
         uint32_t code_size;
+
         ERHIShaderStage stage;
         EShaderCompiler shader_compiler;
         ERHIShaderTarget shader_target;
+        uint32_t shader_macro_count;
+        ShaderMacro* shader_macros;
     };
 
     struct CYBER_RHI_API RHIVertexAttribute 

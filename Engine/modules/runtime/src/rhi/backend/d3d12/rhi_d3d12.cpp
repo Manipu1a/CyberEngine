@@ -2334,10 +2334,33 @@ namespace Cyber
             DxilArgs.push_back(L"-E");
             DxilArgs.push_back(entry_point.c_str());
             DxilArgs.push_back(L"-T");
-            DxilArgs.push_back(L"vs_6_0");
-            DxilArgs.push_back(L"-D");
-            DxilArgs.push_back(L"MYDEFINE=1");
+            DxilArgs.push_back(profile_wstr.c_str());
+            if(desc.shader_macro_count > 0)
+            {
+                DxilArgs.push_back(L"-D");
 
+                for(uint32_t i = 0; i < desc.shader_macro_count; ++i)
+                {
+                    eastl::string macro_name(eastl::string::CtorSprintf(), "%s=%s",desc.shader_macros[i].definition, desc.shader_macros[i].value);
+                    CB_INFO("Shader Define: {0} ", macro_name.c_str());
+                    eastl::wstring wmacro_name(eastl::wstring::CtorConvert(), macro_name.c_str());
+                    DxilArgs.push_back(wmacro_name.c_str());
+                }
+            }
+
+            // debug
+            {
+                DxilArgs.push_back(L"-Fo");
+                eastl::wstring shader_bin(shaderName.substr(0, shaderName.find(L".")));
+                shader_bin += L".bin";
+                DxilArgs.push_back(shader_bin.c_str());
+
+                DxilArgs.push_back(L"-Fd");
+                eastl::wstring shader_pdb(shaderName.substr(0, shaderName.find(L".")));
+                shader_pdb += L".pdb";
+                DxilArgs.push_back(shader_pdb.c_str());
+            }
+            
             IDxcBlobEncoding* pBlobEncoding;
             CHECK_HRESULT(pDxcUtils->CreateBlob((LPCVOID)desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
             pLibrary->shader_blob = reinterpret_cast<ID3DBlob*>(pBlobEncoding);
