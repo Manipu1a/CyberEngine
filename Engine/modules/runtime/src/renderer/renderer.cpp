@@ -40,7 +40,9 @@ namespace Cyber
         // Create views
         for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
         {
+            eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
             TextureViewCreateDesc view_desc = {
+                .name = swap_chain_name.c_str(),
                 .texture = swap_chain->mBackBuffers[i],
                 .format = (ERHIFormat)swap_chain->mBackBuffers[i]->mFormat,
                 .usages = RHI_TVU_RTV_DSV,
@@ -151,11 +153,11 @@ namespace Cyber
         pipeline_shader_create_desc[0] = cyber_new<RHIPipelineShaderCreateDesc>();
         pipeline_shader_create_desc[0]->stage = RHI_SHADER_STAGE_VERT;
         pipeline_shader_create_desc[0]->library = vs_shader;
-        pipeline_shader_create_desc[0]->entry = CYBER_UTF8("main");
+        pipeline_shader_create_desc[0]->entry = CYBER_UTF8("VSMain");
         pipeline_shader_create_desc[1] = cyber_new<RHIPipelineShaderCreateDesc>();
         pipeline_shader_create_desc[1]->stage = RHI_SHADER_STAGE_FRAG;
         pipeline_shader_create_desc[1]->library = ps_shader;
-        pipeline_shader_create_desc[1]->entry = CYBER_UTF8("main");
+        pipeline_shader_create_desc[1]->entry = CYBER_UTF8("PSMain");
         RHIRootSignatureCreateDesc root_signature_create_desc = {
           .shaders = pipeline_shader_create_desc,
           .shader_count = 2,

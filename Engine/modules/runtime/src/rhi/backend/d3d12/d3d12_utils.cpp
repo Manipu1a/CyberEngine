@@ -515,10 +515,15 @@ namespace Cyber
                 uint32_t source_len = (uint32_t)strlen(paramDesc.SemanticName) + (hasParamIndex ? 1 : 0);
 
                 reflection->vertex_inputs[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1));
+                reflection->vertex_inputs[i].semantics_name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1));
                 if(hasParamIndex)
-                    sprintf((char*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
+                    EA::StdC::Sprintf((char*)reflection->vertex_inputs[i].name, "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
                 else
-                    sprintf((char*)reflection->vertex_inputs[i].name, "%s", paramDesc.SemanticName);
+                    EA::StdC::Sprintf((char*)reflection->vertex_inputs[i].name, "%s", paramDesc.SemanticName);
+
+                EA::StdC::Sprintf((char*)reflection->vertex_inputs[i].semantics_name, "%s", paramDesc.SemanticName);
+                reflection->vertex_inputs[i].semantics_index = paramDesc.SemanticIndex;
+
                 const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
                 reflection->vertex_inputs[i].format = gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)];
             }

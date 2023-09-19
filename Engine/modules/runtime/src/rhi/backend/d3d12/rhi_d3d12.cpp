@@ -229,6 +229,7 @@ namespace Cyber
     RHITextureView* RHI_D3D12::rhi_create_texture_view(RHIDevice* device, const TextureViewCreateDesc& viewDesc)
     {
         RHITextureView_D3D12* tex_view = cyber_new<RHITextureView_D3D12>();
+        tex_view->create_info = viewDesc;
         RHITexture_D3D12* tex = static_cast<RHITexture_D3D12*>(viewDesc.texture);
         RHIDevice_D3D12* dx_device = static_cast<RHIDevice_D3D12*>(device);
 
@@ -1679,7 +1680,10 @@ namespace Cyber
     }
     D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {};
     D3D12_BLEND_DESC gDefaultBlendDesc = {};
-    D3D12_RASTERIZER_DESC gDefaultRasterizerDesc = {};
+    D3D12_RASTERIZER_DESC gDefaultRasterizerDesc = {
+        .FillMode = D3D12_FILL_MODE_SOLID,
+        .CullMode = D3D12_CULL_MODE_BACK,
+    };
     RHIRenderPipeline* RHI_D3D12::rhi_create_render_pipeline(RHIDevice* device, const RHIRenderPipelineCreateDesc& pipelineDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(device);
@@ -1688,6 +1692,17 @@ namespace Cyber
         // Input layout
         DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[RHI_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
+
+        if(pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count > 0)
+        {
+            eastl::string_hash_map<uint32_t> semantic_index_map;
+            for(uint32_t attrib_index = 0; attrib_index < pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count; ++attrib_index)
+            {
+                
+            }
+
+        }
+        
         if(pipelineDesc.vertex_layout)
         {
             eastl::string_hash_map<uint32_t> semantic_index_map;
@@ -1868,7 +1883,7 @@ namespace Cyber
                 psoRenderHash = cyber_hash(&pso_desc.InputLayout.pInputElementDescs[i], sizeof(D3D12_INPUT_ELEMENT_DESC), psoRenderHash);
             }
 
-            swprintf(pipelineName, PSO_NAME_LENGTH, L"%s_S%zuR%zu", "GRAPHCISPSO", psoShaderHash, psoRenderHash);
+            swprintf(pipelineName, PSO_NAME_LENGTH, L"GRAPHCISPSO_S%zuR%zu", psoShaderHash, psoRenderHash);
             result = DxDevice->pPipelineLibrary->LoadGraphicsPipeline(pipelineName, &pso_desc, IID_PPV_ARGS(&pPipeline->pDxPipelineState));
         }
         // Not find in cache
@@ -2329,7 +2344,7 @@ namespace Cyber
             eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
             eastl::wstring profile_wstr(eastl::wstring::CtorConvert(),profile.c_str());
             eastl::vector<const wchar_t*> DxilArgs;
-            
+
             DxilArgs.push_back(shaderName.c_str());
             DxilArgs.push_back(L"-E");
             DxilArgs.push_back(entry_point.c_str());
@@ -2363,15 +2378,14 @@ namespace Cyber
             
             IDxcBlobEncoding* pBlobEncoding;
             CHECK_HRESULT(pDxcUtils->CreateBlob((LPCVOID)desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
-            pLibrary->shader_blob = reinterpret_cast<ID3DBlob*>(pBlobEncoding);
             //CHECK_HRESULT(pDxcLibrary->CreateBlobWithEncodingFromPinned((LPCVOID)TestShader, sizeof(TestShader), 0, &pBlobEncoding));
             
             //IDxcCompiler *pCompiler;
             IDxcCompiler3 *pCompiler3;
             CHECK_HRESULT(procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler3)));
             DxcBuffer pSource;
-            pSource.Ptr = pLibrary->shader_blob->GetBufferPointer();
-            pSource.Size = pLibrary->shader_blob->GetBufferSize();
+            pSource.Ptr = pBlobEncoding->GetBufferPointer();
+            pSource.Size = pBlobEncoding->GetBufferSize();
             pSource.Encoding = DXC_CP_ACP;
             IDxcIncludeHandler* pIncludeHandler;
             pDxcUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
@@ -2385,12 +2399,14 @@ namespace Cyber
             // will be zero if there are no warnings or errors.
             if (pErrors != nullptr && pErrors->GetStringLength() != 0)
                 CB_WARN("Warnings and Errors:{0}", pErrors->GetStringPointer());
-                
+            
             pLibrary->shader_result->GetStatus(&hr);
             if(FAILED(hr))
             {
                 return nullptr;
             }
+
+            pLibrary->shader_result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pLibrary->shader_blob), nullptr);
 
             pDxcUtils->Release();
             pDxcLibrary->Release();
@@ -2403,6 +2419,8 @@ namespace Cyber
             D3D_SHADER_MACRO Macros[] = {{"D3DCOMPILER", ""}, {}};
             DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
             hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, nullptr, "main", "ps_5_1", dwShaderFlags, 0, &pLibrary->shader_blob, &ppErrorMsgs);
+
+            auto size = pLibrary->shader_blob->GetBufferSize();
 
             D3D12_SHADER_DESC* shader_desc;
             pReflection2->GetDesc(shader_desc);

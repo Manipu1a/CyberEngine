@@ -179,7 +179,8 @@ namespace Cyber
     {
         // resource name
         const char8_t* name;
-        const char8_t* semantics;
+        const char8_t* semantics_name;
+        uint32_t semantics_index;
         ERHIFormat format;
     };
     
