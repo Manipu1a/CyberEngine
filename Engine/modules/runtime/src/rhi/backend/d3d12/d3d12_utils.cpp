@@ -523,7 +523,7 @@ namespace Cyber
 
                 EA::StdC::Sprintf((char*)reflection->vertex_inputs[i].semantics_name, "%s", paramDesc.SemanticName);
                 reflection->vertex_inputs[i].semantics_index = paramDesc.SemanticIndex;
-
+                reflection->vertex_inputs[i].binding = paramDesc.Register;
                 const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
                 reflection->vertex_inputs[i].format = gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)];
             }

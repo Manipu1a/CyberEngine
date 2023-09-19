@@ -1693,16 +1693,32 @@ namespace Cyber
         DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[RHI_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
 
+        static const D3D12_INPUT_ELEMENT_DESC s_inputElementDesc[] =
+        {
+            { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT,
+            D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        };
+
         if(pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count > 0)
         {
             eastl::string_hash_map<uint32_t> semantic_index_map;
             for(uint32_t attrib_index = 0; attrib_index < pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count; ++attrib_index)
             {
-                
+                auto attribute = pipelineDesc.vertex_shader->library->entry_reflections->vertex_inputs[attrib_index];
+                input_elements[input_element_count].SemanticName = (char*)attribute.semantics_name;
+                input_elements[input_element_count].SemanticIndex = attribute.semantics_index;
+                input_elements[input_element_count].Format = DXGIUtil_TranslatePixelFormat(attribute.format);
+                input_elements[input_element_count].InputSlot = 0;
+                input_elements[input_element_count].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
+                input_elements[input_element_count].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
+                input_elements[input_element_count].InstanceDataStepRate = 0;
+                input_element_count++;
             }
-
         }
         
+        /*
         if(pipelineDesc.vertex_layout)
         {
             eastl::string_hash_map<uint32_t> semantic_index_map;
@@ -1738,6 +1754,7 @@ namespace Cyber
                 }
             }
         }
+        */
         DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, input_layout_desc);
         input_layout_desc.pInputElementDescs = input_element_count ? input_elements : nullptr;
         input_layout_desc.NumElements = input_element_count;

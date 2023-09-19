@@ -181,6 +181,7 @@ namespace Cyber
         const char8_t* name;
         const char8_t* semantics_name;
         uint32_t semantics_index;
+        uint32_t binding;
         ERHIFormat format;
     };
     
