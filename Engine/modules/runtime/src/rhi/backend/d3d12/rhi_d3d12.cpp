@@ -1564,6 +1564,30 @@ namespace Cyber
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
         }
         
+        
+        D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
+        rootSignatureDesc.NumParameters = valid_root_tables + dxRootSignature->push_constant_count;
+        rootSignatureDesc.pParameters = nullptr;
+        rootSignatureDesc.NumStaticSamplers = staticSamplerCount;
+        rootSignatureDesc.pStaticSamplers = staticSamplerDescs;
+        rootSignatureDesc.Flags = rootSignatureFlags;
+        
+        D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc = {};
+        versionedRootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
+        versionedRootSignatureDesc.Desc_1_1 = rootSignatureDesc;
+        ID3DBlob* signature = nullptr;
+        ID3DBlob* error = nullptr;
+        HRESULT hr = D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, &signature, &error);
+        if(SUCCEEDED(hr))
+        {
+            hr = dxDevice->pDxDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dxRootSignature->dxRootSignature));
+            if(FAILED(hr))
+            {
+                CB_ERROR("Failed to create root signature!");
+                return nullptr;
+            }
+        }
+
         return dxRootSignature;
     }
 
