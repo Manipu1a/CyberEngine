@@ -100,6 +100,7 @@ namespace Cyber
         // Create D3D12MA Allocator
         D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dxDevice);
         cyber_assert(dxDevice->pResourceAllocator, "DMA Allocator Must be Created!");
+
         // Create Descriptor Heaps
         for(uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
         {
@@ -113,6 +114,24 @@ namespace Cyber
 #endif
             dxDevice->mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
             D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mCPUDescriptorHeaps[i]);
+        }
+        
+        // One shader visible heap for each linked node
+        for(uint32_t i = 0; i < RHI_SINGLE_GPU_NODE_COUNT; ++i)
+        {
+            D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+            desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+            desc.NodeMask = RHI_SINGLE_GPU_NODE_MASK;
+            desc.NumDescriptors = 1 << 16;
+            desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+
+            dxDevice->mCbvSrvUavHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
+            D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mCbvSrvUavHeaps[i]);
+
+            desc.NumDescriptors = 1 << 11;
+            desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+            dxDevice->mSamplerHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
+            D3D12Util_CreateDescriptorHeap(dxDevice->pDxDevice, desc, &dxDevice->mSamplerHeaps[i]);
         }
 
         // Allocate NULL Descriptors
@@ -657,8 +676,8 @@ namespace Cyber
             if(hRes != S_OK)
             {
                 auto fallbackhRes = hRes;
-                CB_CORE_ERROR("[D3D12] Create Texture Resource Failed With HRESULT [0]! \n\t With Name: [1] \n\t Size: [2][3] \n\t Format: [4] \n\t Sample Count: [5]", 
-                                hRes, pDesc.pName ? pDesc.pName : "", pDesc.mWidth, pDesc.mHeight,
+                CB_CORE_ERROR("[D3D12] Create Texture Resource Failed With HRESULT {0}! \n\t With Name: {1} \n\t Size: {2}{3} \n\t Format: {4} \n\t Sample Count: {5}", 
+                                hRes, (char*)pDesc.pName ? (char*)pDesc.pName : "", pDesc.mWidth, pDesc.mHeight,
                                 pDesc.mFormat, pDesc.mSampleCount);
                 const bool use_fallback_commited = true;
                 if(use_fallback_commited)
@@ -682,8 +701,8 @@ namespace Cyber
             }
             else
             {
-                CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: [0]\n\t Size: [1]x[2] \n\t Format: [3] \n\t Sample Count: [4]", 
-                                pDesc.pName ? pDesc.pName : "", pDesc.mWidth, pDesc.mHeight,
+                CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: {0}\n\t Size: {1}x{2} \n\t Format: {3} \n\t Sample Count: {4}", 
+                                (char*)pDesc.pName ? (char*)pDesc.pName : "", pDesc.mWidth, pDesc.mHeight,
                                 pDesc.mFormat, pDesc.mSampleCount);
             }
 
@@ -775,7 +794,7 @@ namespace Cyber
         cyber_assert(dxFence, "Fence create failed!");
         
         CHECK_HRESULT(dxDevice->pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->pDxFence)));
-        dxFence->mFenceValue = 1;
+        dxFence->mFenceValue = 0;
 
         dxFence->pDxWaitIdleFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
         return dxFence;
@@ -1372,7 +1391,7 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->mBackBuffers = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
+        dxSwapChain->mBackBufferSRVs = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
             RHITexture_D3D12* Ts = cyber_new<RHITexture_D3D12>();
@@ -1389,19 +1408,45 @@ namespace Cyber
             Ts->mNodeIndex = RHI_SINGLE_GPU_NODE_INDEX;
             Ts->mOwnsImage = false;
             Ts->mNativeHandle = Ts->pDxResource;
-            dxSwapChain->mBackBuffers[i] = Ts;
+            dxSwapChain->mBackBufferSRVs[i] = Ts;
         }
         //dxSwapChain->mBackBuffers = Ts;
-        dxSwapChain->mBufferCount = buffer_count;
+        dxSwapChain->mBufferSRVCount = buffer_count;
+
+        // Create depth stencil view
+        dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
+        TextureCreateDesc depthStencilDesc = {};
+        depthStencilDesc.mHeight = desc.mHeight;
+        depthStencilDesc.mWidth = desc.mWidth;
+        depthStencilDesc.mDepth = 1;
+        depthStencilDesc.mArraySize = 1;
+        depthStencilDesc.mFormat = RHI_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilDesc.mMipLevels = 1;
+        depthStencilDesc.mSampleCount = RHI_SAMPLE_COUNT_1;
+        depthStencilDesc.mDescriptors = RHI_DESCRIPTOR_TYPE_UNDEFINED;
+        depthStencilDesc.mStartState = RHI_RESOURCE_STATE_DEPTH_WRITE;
+        depthStencilDesc.pName = u8"Main Depth Stencil";
+        dxSwapChain->mBackBufferDSV = rhi_create_texture(pDevice, depthStencilDesc);
+
+        TextureViewCreateDesc depthStencilViewDesc = {};
+        depthStencilViewDesc.texture = dxSwapChain->mBackBufferDSV;
+        depthStencilViewDesc.dimension = RHI_TEX_DIMENSION_2D;
+        depthStencilViewDesc.format = RHI_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilViewDesc.usages = RHI_TVU_RTV_DSV;
+        depthStencilViewDesc.aspects = RHI_TVA_DEPTH;
+        depthStencilViewDesc.array_layer_count = 1;
+        dxSwapChain->mBackBufferDSVView = rhi_create_texture_view(pDevice, depthStencilViewDesc);
+
+        dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
         return dxSwapChain;
     }
 
     void RHI_D3D12::rhi_free_swap_chain(RHISwapChain* swapchain)
     {
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
-        for(uint32_t i = 0;i < dxSwapChain->mBufferCount; ++i)
+        for(uint32_t i = 0;i < dxSwapChain->mBufferSRVCount; ++i)
         {
-            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBuffers[i]);
+            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBufferSRVs[i]);
             SAFE_RELEASE(dxTexture->pDxResource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);
@@ -1620,29 +1665,32 @@ namespace Cyber
         descSet->set_index = dSetDesc.set_index;
 
         const uint32_t node_index = RHI_SINGLE_GPU_NODE_INDEX;
-        RHIDescriptorHeap_D3D12* cbv_srv_uav_heap = dxDevice->mCbvSrvUavHeaps[node_index];
-        RHIDescriptorHeap_D3D12* sampler_heap = dxDevice->mSamplerHeaps[node_index];
+        auto& cbv_srv_uav_heap = dxDevice->mCbvSrvUavHeaps[node_index];
+        auto& sampler_heap = dxDevice->mSamplerHeaps[node_index];
         RHIParameterTable* param_table = &root_signature->parameter_tables[dSetDesc.set_index];
         uint32_t cbv_srv_uav_count = 0;
         uint32_t sampler_count = 0;
         // collect descriptor counts
-        for(uint32_t i = 0; i < param_table->resource_count; ++i)
+        if(root_signature->parameter_table_count > 0)
         {
-            if(param_table->resources[i].type == RHI_RESOURCE_TYPE_SAMPLER)
+            for(uint32_t i = 0; i < param_table->resource_count; ++i)
             {
-                sampler_count++;
-            }
-            else if(param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE || 
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_TEXTURE ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER_RAW ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER_RAW ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE_CUBE ||
-                    param_table->resources[i].type == RHI_RESOURCE_TYPE_UNIFORM_BUFFER 
-                    )
-            {
-                cbv_srv_uav_count += descriptor_count_needed(&param_table->resources[i]);
+                if(param_table->resources[i].type == RHI_RESOURCE_TYPE_SAMPLER)
+                {
+                    sampler_count++;
+                }
+                else if(param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE || 
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_TEXTURE ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_BUFFER_RAW ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_RW_BUFFER_RAW ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_TEXTURE_CUBE ||
+                        param_table->resources[i].type == RHI_RESOURCE_TYPE_UNIFORM_BUFFER 
+                        )
+                {
+                    cbv_srv_uav_count += descriptor_count_needed(&param_table->resources[i]);
+                }
             }
         }
 

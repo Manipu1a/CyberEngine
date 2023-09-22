@@ -67,9 +67,10 @@ namespace Cyber
         RHISwapChain* swap_chain = nullptr;
         RHISurface* surface = nullptr;
         RHIFence* present_swmaphore = nullptr; 
-        RHITextureView* views[BACK_BUFFER_COUNT];
+        //RHITextureView* views[BACK_BUFFER_COUNT];
         RHIRenderPipeline* pipeline = nullptr;
         RHIRootSignature* root_signature = nullptr;
+        RHIDescriptorSet* descriptor_set = nullptr;
         uint32_t backbuffer_index = 0;
 
         ID3D12CommandQueue* mCommandQueue;

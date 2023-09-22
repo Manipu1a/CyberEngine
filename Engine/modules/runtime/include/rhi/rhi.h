@@ -131,9 +131,9 @@ namespace Cyber
     struct CYBER_RHI_API RHIParameterTable
     {
         // This should be stored here because shader could be destroyed after RS creation
-        RHIShaderResource* resources;
-        uint32_t resource_count;
-        uint32_t set_index;
+        RHIShaderResource* resources = nullptr;
+        uint32_t resource_count = 0;
+        uint32_t set_index = 0;
     };
 
     struct RHIRootSignaturePool
@@ -316,7 +316,7 @@ namespace Cyber
         /// Pointer to native texture handle if the texture does not own underlying resource
         void* mNativeHandle;
         /// Debug name used in gpu profile
-        const char* pName;
+        const char8_t* pName;
 
         uint32_t mWidth;
         uint32_t mHeight;
@@ -559,8 +559,11 @@ namespace Cyber
 
     struct CYBER_RHI_API RHISwapChain
     {
-        RHITexture** mBackBuffers;
-        uint32_t mBufferCount;
+        RHITexture** mBackBufferSRVs;
+        RHITextureView** mBackBufferSRVViews;
+        uint32_t mBufferSRVCount;
+        RHITexture* mBackBufferDSV;
+        RHITextureView* mBackBufferDSVView;
     };
 
     struct CYBER_RHI_API CommandPoolCreateDesc

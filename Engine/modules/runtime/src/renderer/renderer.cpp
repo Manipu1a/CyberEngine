@@ -38,19 +38,20 @@ namespace Cyber
         create_gfx_objects(app);
 
         // Create views
-        for(uint32_t i = 0; i < swap_chain->mBufferCount; ++i)
+        swap_chain->mBackBufferSRVViews = (RHITextureView**)cyber_malloc(sizeof(RHITextureView*) * swap_chain->mBufferSRVCount);
+        for(uint32_t i = 0; i < swap_chain->mBufferSRVCount; ++i)
         {
             eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
             TextureViewCreateDesc view_desc = {
                 .name = swap_chain_name.c_str(),
-                .texture = swap_chain->mBackBuffers[i],
-                .format = (ERHIFormat)swap_chain->mBackBuffers[i]->mFormat,
+                .texture = swap_chain->mBackBufferSRVs[i],
+                .format = (ERHIFormat)swap_chain->mBackBufferSRVs[i]->mFormat,
                 .usages = RHI_TVU_RTV_DSV,
                 .aspects = RHI_TVA_COLOR,
                 .dimension = RHI_TEX_DIMENSION_2D,
                 .array_layer_count = 1
             };
-            views[i] = rhi_create_texture_view(device, view_desc);
+            swap_chain->mBackBufferSRVViews[i] = rhi_create_texture_view(device, view_desc);
         }
 
         create_render_pipeline();
@@ -61,9 +62,9 @@ namespace Cyber
         rhi_wait_queue_idle(queue);
         rhi_wait_fences(&present_fence, 1);
         rhi_free_fence(present_fence);
-        for(uint32_t i = 0;i < swap_chain->mBufferCount; ++i)
+        for(uint32_t i = 0;i < swap_chain->mBufferSRVCount; ++i)
         {
-            rhi_free_texture_view(views[i]);
+            rhi_free_texture_view(swap_chain->mBackBufferSRVViews[i]);
         }
         rhi_free_swap_chain(swap_chain);
         rhi_free_surface(surface);
@@ -121,6 +122,7 @@ namespace Cyber
 
         present_swmaphore = rhi_create_fence(device);
         pool = rhi_create_command_pool(queue, CommandPoolCreateDesc());
+
         CommandBufferCreateDesc cmd_buffer_desc = {.is_secondary = false};
         cmd =  rhi_create_command_buffer(pool, cmd_buffer_desc);
     }
@@ -164,6 +166,13 @@ namespace Cyber
         };
         root_signature = rhi_create_root_signature(device, root_signature_create_desc);
         // create descriptor set
+
+        RHIDescriptorSetCreateDesc desc_set_create_desc = {
+            .root_signature = root_signature,
+            .set_index = 0
+        };
+        descriptor_set = rhi_create_descriptor_set(device, desc_set_create_desc);
+
         RHIVertexLayout vertex_layout = {.attribute_count = 0};
         RHIRenderPipelineCreateDesc rp_desc = 
         {
@@ -171,7 +180,7 @@ namespace Cyber
             .vertex_shader = pipeline_shader_create_desc[0],
             .fragment_shader = pipeline_shader_create_desc[1],
             .vertex_layout = &vertex_layout,
-            .color_formats = &views[0]->create_info.format,
+            .color_formats = &swap_chain->mBackBufferSRVViews[0]->create_info.format,
             .render_target_count = 1,
             .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
         };
@@ -193,8 +202,8 @@ namespace Cyber
             .fence = present_fence
         };
         backbuffer_index = rhi_acquire_next_image(swap_chain, acquire_desc);
-        auto back_buffer = swap_chain->mBackBuffers[backbuffer_index];
-        auto back_buffer_view = views[backbuffer_index];
+        auto back_buffer = swap_chain->mBackBufferSRVs[backbuffer_index];
+        auto back_buffer_view = swap_chain->mBackBufferSRVViews[backbuffer_index];
         rhi_reset_command_pool(pool);
         // record
         rhi_cmd_begin(cmd);

@@ -45,6 +45,7 @@ namespace Cyber
         void TrignaleApp::create_render_pipeline()
         {
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
+            /*
             namespace render_graph = Cyber::render_graph;
             render_graph::RenderGraph* graph = render_graph::RenderGraph::create([=](render_graph::RenderGraphBuilder& builder)
             {
@@ -115,6 +116,7 @@ namespace Cyber
             //graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
 
             graph->execute();
+            */
         }
 
         void TrignaleApp::finalize()
