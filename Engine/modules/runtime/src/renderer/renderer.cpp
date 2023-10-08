@@ -196,8 +196,6 @@ namespace Cyber
 
     void Renderer::raster_draw()
     {
-        // sync & reset
-        rhi_wait_fences(&present_fence, 1);
         RHIAcquireNextDesc acquire_desc = {
             .fence = present_fence
         };
@@ -221,7 +219,7 @@ namespace Cyber
         };
         RHITextureBarrier draw_barrier = {
             .texture = back_buffer,
-            .src_state = RHI_RESOURCE_STATE_UNDEFINED,
+            .src_state = RHI_RESOURCE_STATE_PRESENT,
             .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
         };
         RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
@@ -245,12 +243,12 @@ namespace Cyber
         // submit
         RHIQueueSubmitDesc submit_desc = {
             .pCmds = &cmd,
+            .mSignalFence = present_fence,
             .mCmdsCount = 1
         };
         rhi_submit_queue(queue, submit_desc);
 
         // present
-        
         RHIQueuePresentDesc present_desc = {
             .swap_chain = swap_chain,
             .wait_semaphores = nullptr,
@@ -258,5 +256,9 @@ namespace Cyber
             .index = backbuffer_index,
         };
         rhi_present_queue(queue, present_desc);
+
+
+        // sync & reset
+        rhi_wait_fences(&present_fence, 1);
     }
 }

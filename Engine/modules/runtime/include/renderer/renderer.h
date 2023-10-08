@@ -74,7 +74,6 @@ namespace Cyber
         uint32_t backbuffer_index = 0;
 
         ID3D12CommandQueue* mCommandQueue;
-        ID3D12CommandAllocator* mDirectCmdListAlloc;
         ID3D12GraphicsCommandList* mCommandList;
 
         static const int SwapChainBufferCount = 2;

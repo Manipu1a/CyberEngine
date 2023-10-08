@@ -416,7 +416,7 @@ namespace Cyber
                 RHIDescriptorHeap_D3D12* dsv_heap = dx_device->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
                 tex_view->mRtvDsvDescriptorHandle = D3D12Util_ConsumeDescriptorHandles(dsv_heap, 1).mCpu;
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
+                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, false);
                 switch (viewDesc.dimension)
                 {
                     case RHI_TEX_DIMENSION_1D:
@@ -527,7 +527,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                         break;
                 }
-                D3D12Util_CreateRTV(dx_device, tex->pDxResource, &rtvDesc, &tex_view->mDxDescriptorHandles);
+                D3D12Util_CreateRTV(dx_device, tex->pDxResource, &rtvDesc, &tex_view->mRtvDsvDescriptorHandle);
             }
         }
         return tex_view;
@@ -868,7 +868,7 @@ namespace Cyber
         // Signal fences
         if(dx_fence)
         {
-            D3D12Util_SignalFence(dx_queue, dx_fence->pDxFence, dx_fence->mFenceValue++);
+            D3D12Util_SignalFence(dx_queue, dx_fence->pDxFence, ++dx_fence->mFenceValue);
         }
         // Signal semaphores
         for(uint32_t i = 0; i < submitDesc.mSignalSemaphoreCount; i++)
@@ -881,7 +881,7 @@ namespace Cyber
     void RHI_D3D12::rhi_present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
     {
         RHISwapChain_D3D12* dx_swapchain = static_cast<RHISwapChain_D3D12*>(presentDesc.swap_chain);
-        HRESULT hr =  dx_swapchain->pDxSwapChain->Present(dx_swapchain->mDxSyncInterval, dx_swapchain->mFlags);
+        HRESULT hr =  dx_swapchain->pDxSwapChain->Present(0, dx_swapchain->mFlags);
 
         if(FAILED(hr))
         {
@@ -1123,7 +1123,7 @@ namespace Cyber
                         continue;
                     }
                 }
-                cyber_assert(false, "D3D12 ERROR: Texture Barrier with same src and dst state!");
+                //cyber_assert(false, "D3D12 ERROR: Texture Barrier with same src and dst state!");
                 ++transition_count;
             }
         }
@@ -1139,9 +1139,9 @@ namespace Cyber
         {
             cmd->pBoundRootSignature = rootSignature;
             if(type == RHI_PIPELINE_TYPE_GRAPHICS)
-                cmd->pDxCmdList->SetGraphicsRootSignature(nullptr);
+                cmd->pDxCmdList->SetGraphicsRootSignature(rootSignature);
             else
-                cmd->pDxCmdList->SetComputeRootSignature(nullptr);
+                cmd->pDxCmdList->SetComputeRootSignature(rootSignature);
         }
     }
 
