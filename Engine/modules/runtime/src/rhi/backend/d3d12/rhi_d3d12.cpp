@@ -546,11 +546,10 @@ namespace Cyber
         }
     }
 
-    RHITexture2D* RHI_D3D12::rhi_create_texture(RHIDevice* device, const TextureCreateDesc& pDesc)
+    RHITexture* RHI_D3D12::rhi_create_texture(RHIDevice* device, const TextureCreateDesc& pDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(device);
-
-        RHITexture2D_D3D12* pTexture = cyber_new<RHITexture2D_D3D12>();
+        RHITexture_D3D12* pTexture = cyber_new<RHITexture_D3D12>();
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         D3D12_RESOURCE_DESC desc = {};
@@ -1316,7 +1315,7 @@ namespace Cyber
     void RHI_D3D12::rhi_render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
     {
         RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder);
-        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)0, (UINT)first_vertex, (UINT)0);
+        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)1, (UINT)first_vertex, (UINT)0);
     }
     void RHI_D3D12::rhi_render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
     {
@@ -1414,7 +1413,7 @@ namespace Cyber
         dxSwapChain->mBufferSRVCount = buffer_count;
 
         // Create depth stencil view
-        dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
+        //dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
         TextureCreateDesc depthStencilDesc = {};
         depthStencilDesc.mHeight = desc.mHeight;
         depthStencilDesc.mWidth = desc.mWidth;
@@ -1427,6 +1426,8 @@ namespace Cyber
         depthStencilDesc.mStartState = RHI_RESOURCE_STATE_DEPTH_WRITE;
         depthStencilDesc.pName = u8"Main Depth Stencil";
         dxSwapChain->mBackBufferDSV = rhi_create_texture(pDevice, depthStencilDesc);
+
+        auto dsv = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBufferDSV);
 
         TextureViewCreateDesc depthStencilViewDesc = {};
         depthStencilViewDesc.texture = dxSwapChain->mBackBufferDSV;
@@ -1751,11 +1752,19 @@ namespace Cyber
         return descSet;
     }
     D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {};
-    D3D12_BLEND_DESC gDefaultBlendDesc = {};
-    D3D12_RASTERIZER_DESC gDefaultRasterizerDesc = {
-        .FillMode = D3D12_FILL_MODE_SOLID,
-        .CullMode = D3D12_CULL_MODE_BACK,
-    };
+    const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
+        {
+            FALSE,FALSE,
+            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+            D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+            D3D12_LOGIC_OP_NOOP,
+            D3D12_COLOR_WRITE_ENABLE_ALL,
+        };
+    
+    // Default pipeline state
+    CD3D12_BLEND_DESC gDefaultBlendDesc(D3D12_DEFAULT);
+    CD3D12_RASTERIZER_DESC gDefaultRasterizerDesc(D3D12_DEFAULT);
+
     RHIRenderPipeline* RHI_D3D12::rhi_create_render_pipeline(RHIDevice* device, const RHIRenderPipelineCreateDesc& pipelineDesc)
     {
         RHIDevice_D3D12* DxDevice = static_cast<RHIDevice_D3D12*>(device);
@@ -2507,12 +2516,17 @@ namespace Cyber
             ID3DBlob* ppErrorMsgs;
             D3D_SHADER_MACRO Macros[] = {{"D3DCOMPILER", ""}, {}};
             DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, nullptr, "main", "ps_5_1", dwShaderFlags, 0, &pLibrary->shader_blob, &ppErrorMsgs);
+            //desc.shader_target;
+            ShaderVersion shader_version(5 , 1);
+            eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
+            eastl::string entry_point(eastl::string::CtorConvert(), desc.entry_point);
+            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, nullptr, entry_point.c_str(), profile.c_str(), dwShaderFlags, 0, &pLibrary->shader_blob, &ppErrorMsgs);
 
-            auto size = pLibrary->shader_blob->GetBufferSize();
-
-            D3D12_SHADER_DESC* shader_desc;
-            pReflection2->GetDesc(shader_desc);
+            if(hr != S_OK)
+            {
+                CB_CORE_ERROR("Failed to compile shader: {0}", (char*)ppErrorMsgs->GetBufferPointer());
+                return nullptr;
+            }
         }
 
         constexpr char TestShader[] = R"(

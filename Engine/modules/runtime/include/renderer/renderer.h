@@ -37,6 +37,7 @@ namespace Cyber
     public:
         virtual void initialize(class Application* app, const RendererDesc& desc);
         virtual void finalize();
+        void create_resource();
         void create_gfx_objects(class Application* app);
         void create_render_pipeline();
         

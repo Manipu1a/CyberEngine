@@ -28,6 +28,8 @@
 #include "resource/resource_loader.h"
 #include "core/Application.h"
 #include "rhi/backend/d3d12/rhi_d3d12.h"
+#include "resource/vertex.h"
+
 namespace Cyber
 {
     #define UTF8(str) u8##str
@@ -53,6 +55,18 @@ namespace Cyber
             };
             swap_chain->mBackBufferSRVViews[i] = rhi_create_texture_view(device, view_desc);
         }
+        
+        rhi_cmd_begin(cmd);
+        {
+            RHITextureBarrier depth_barrier = {
+                .texture = swap_chain->mBackBufferDSV,
+                .src_state = RHI_RESOURCE_STATE_COMMON,
+                .dst_state = RHI_RESOURCE_STATE_DEPTH_WRITE
+            };
+            RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
+            rhi_cmd_resource_barrier(cmd, barrier_desc1);
+        }
+        rhi_cmd_end(cmd);
 
         create_render_pipeline();
     }
@@ -76,6 +90,28 @@ namespace Cyber
         rhi_free_device(device);
         rhi_free_instance(instance);
     }
+
+    void Renderer::create_resource()
+    {
+        eastl::vector<Vertex> vertices = {
+            {{1.0f, 0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.0f}},
+            {{0.0f, 1.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.0f}},
+            {{0.0f, 0.0f, 1.0f}, {1.0f, 1.0f, 1.0f, 0.0f}},
+        };
+        
+        eastl::vector<UINT16> indices = {
+          0, 1, 2  
+        };
+
+        ID3DBlob* vertex_buffer = nullptr;
+        ID3DBlob* index_buffer = nullptr;
+
+        D3DCreateBlob(sizeof(Vertex) * vertices.size(), &vertex_buffer);
+        CopyMemory(vertex_buffer->GetBufferPointer(), vertices.data(), sizeof(Vertex) * vertices.size());
+        D3DCreateBlob(sizeof(UINT16) * indices.size(), &index_buffer);
+        CopyMemory(index_buffer->GetBufferPointer(), indices.data(), sizeof(UINT16) * indices.size());
+    }
+
     void Renderer::create_gfx_objects(class Application* app)
     {
         // Create instance
@@ -133,10 +169,8 @@ namespace Cyber
         ResourceLoader::ShaderLoadDesc vs_load_desc = {};
         vs_load_desc.target = shader_target_6_0;
         vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = CYBER_UTF8("shaders.hlsl"),
+            .file_name = CYBER_UTF8("vertex_shader.hlsl"),
             .stage = RHI_SHADER_STAGE_VERT,
-            .macros = {{"MYDEFINE", "1"}, {"MYDEFINE2", "2"}},
-            .macro_count = 2,
             .entry_point_name = CYBER_UTF8("VSMain"),
         };
         RHIShaderLibrary* vs_shader = ResourceLoader::add_shader(*this, vs_load_desc);
@@ -144,7 +178,7 @@ namespace Cyber
         ResourceLoader::ShaderLoadDesc ps_load_desc = {};
         ps_load_desc.target = shader_target_6_0;
         ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-            .file_name = CYBER_UTF8("shaders.hlsl"),
+            .file_name = CYBER_UTF8("pixel_shader.hlsl"),
             .stage = RHI_SHADER_STAGE_FRAG,
             .entry_point_name = CYBER_UTF8("PSMain"),
         };
@@ -180,6 +214,7 @@ namespace Cyber
             .vertex_shader = pipeline_shader_create_desc[0],
             .fragment_shader = pipeline_shader_create_desc[1],
             .vertex_layout = &vertex_layout,
+            //.rasterizer_state = {},
             .color_formats = &swap_chain->mBackBufferSRVViews[0]->create_info.format,
             .render_target_count = 1,
             .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
@@ -202,6 +237,7 @@ namespace Cyber
         backbuffer_index = rhi_acquire_next_image(swap_chain, acquire_desc);
         auto back_buffer = swap_chain->mBackBufferSRVs[backbuffer_index];
         auto back_buffer_view = swap_chain->mBackBufferSRVViews[backbuffer_index];
+        auto back_depth_buffer_view = swap_chain->mBackBufferDSVView;
         rhi_reset_command_pool(pool);
         // record
         rhi_cmd_begin(cmd);
@@ -209,12 +245,25 @@ namespace Cyber
             .view = back_buffer_view,
             .load_action = RHI_LOAD_ACTION_CLEAR,
             .store_action = RHI_STORE_ACTION_STORE,
-            .clear_value = fastclear_0000
+            .clear_value = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f }
         };
+
+        RHIDepthStencilAttachment depth_attachment = {
+            .view = back_depth_buffer_view,
+            .depth_load_action = RHI_LOAD_ACTION_CLEAR,
+            .depth_store_action = RHI_STORE_ACTION_STORE,
+            .clear_depth = 0.0f,
+            .write_depth = 1,
+            .stencil_load_action = RHI_LOAD_ACTION_CLEAR,
+            .stencil_store_action = RHI_STORE_ACTION_STORE,
+            .clear_stencil = 0,
+            .write_stencil = 0
+        };
+
         RHIRenderPassDesc rp_desc = {
             .sample_count = RHI_SAMPLE_COUNT_1,
             .color_attachments = &screen_attachment,
-            .depth_stencil_attachment = nullptr,
+            .depth_stencil_attachment = &depth_attachment,
             .render_target_count = 1,
         };
         RHITextureBarrier draw_barrier = {
@@ -224,10 +273,13 @@ namespace Cyber
         };
         RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
         rhi_cmd_resource_barrier(cmd, barrier_desc0);
+
         RHIRenderPassEncoder* rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
         rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
         rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
         rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
+
+        //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
         rhi_render_encoder_draw(rp_encoder, 3, 0);
 
         RHITextureBarrier present_barrier = {
@@ -236,8 +288,8 @@ namespace Cyber
             .dst_state = RHI_RESOURCE_STATE_PRESENT
         };
         rhi_cmd_end_render_pass(cmd);
-        RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-        rhi_cmd_resource_barrier(cmd, barrier_desc1);
+        RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+        rhi_cmd_resource_barrier(cmd, barrier_desc2);
         rhi_cmd_end(cmd);
 
         // submit
@@ -256,7 +308,6 @@ namespace Cyber
             .index = backbuffer_index,
         };
         rhi_present_queue(queue, present_desc);
-
 
         // sync & reset
         rhi_wait_fences(&present_fence, 1);

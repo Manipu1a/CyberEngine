@@ -43,7 +43,7 @@ namespace Cyber
             libraryDesc->code_size = length;
             libraryDesc->stage = loadDesc.stage;
             libraryDesc->name = loadDesc.file_name;
-            libraryDesc->shader_compiler = SHADER_COMPILER_DXC;
+            libraryDesc->shader_compiler = SHADER_COMPILER_DEFAULT;
             libraryDesc->entry_point = loadDesc.entry_point_name;
             libraryDesc->shader_target = shaderTarget;
             libraryDesc->shader_macro_count = macroCount;

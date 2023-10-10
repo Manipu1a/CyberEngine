@@ -75,7 +75,6 @@ namespace Cyber
     static const ERHIClearValue fastclear_1111 = {
         {1.f, 1.f, 1.f, 1.f}
     };
-    
     struct CYBER_RHI_API RHISurface
     {
         HWND handle;
@@ -369,16 +368,6 @@ namespace Cyber
         void* mNativeHandle;
     };
 
-    struct RHITexture2D : public RHITexture
-    {
-
-    };
-
-    struct RHITexture3D : public RHITexture
-    {
-
-    };
-    
     struct RHITextureView
     {
         TextureViewCreateDesc create_info;
@@ -946,7 +935,7 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_free_texture_view!");
         }
-        virtual RHITexture2D* rhi_create_texture(RHIDevice* pDevice, const TextureCreateDesc& textureDesc) 
+        virtual RHITexture* rhi_create_texture(RHIDevice* pDevice, const TextureCreateDesc& textureDesc) 
         {
             cyber_core_assert(false, "Empty implement rhi_create_texture!");
             return nullptr;
@@ -1190,7 +1179,7 @@ namespace Cyber
     {
         RHI::gloablRHI->rhi_free_texture_view(view);
     }
-    CYBER_FORCE_INLINE RHITexture2D* rhi_create_texture(RHIDevice* device, const TextureCreateDesc& textureDesc) 
+    CYBER_FORCE_INLINE RHITexture* rhi_create_texture(RHIDevice* device, const TextureCreateDesc& textureDesc) 
     {
         return RHI::gloablRHI->rhi_create_texture(device, textureDesc);
     }

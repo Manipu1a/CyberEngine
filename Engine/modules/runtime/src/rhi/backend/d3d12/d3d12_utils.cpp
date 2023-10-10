@@ -700,7 +700,7 @@ namespace Cyber
         ret.DepthBias = pDesc->depth_bias;
         ret.DepthBiasClamp = 0.0f;
         ret.SlopeScaledDepthBias = pDesc->slope_scaled_depth_bias;
-        ret.DepthClipEnable = !pDesc->enable_depth_clip;
+        ret.DepthClipEnable = pDesc->enable_depth_clip;
         ret.MultisampleEnable = pDesc->enable_multisample ? TRUE : FALSE;
         ret.AntialiasedLineEnable = false;
         ret.ForcedSampleCount = 0;
