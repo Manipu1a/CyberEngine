@@ -23,10 +23,13 @@ namespace Cyber
 
         public:
             void raster_draw();
-            virtual void create_gfx_objects();
-            virtual void create_render_pipeline();
-            virtual void create_resource();
-            virtual void finalize();
+            void create_gfx_objects();
+            void create_render_pipeline();
+            void create_resource();
+            void create_ui();
+            void draw_ui();
+            void finalize();
+
         public:
             ///-------------------------------------
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
@@ -46,6 +49,7 @@ namespace Cyber
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
             uint32_t backbuffer_index = 0;
+
         };
     }
 }

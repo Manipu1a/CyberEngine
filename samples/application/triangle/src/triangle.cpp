@@ -3,6 +3,7 @@
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
+#include "rhi/backend/d3d12/rhi_d3d12.h"
 
 namespace Cyber
 {
@@ -54,6 +55,7 @@ namespace Cyber
             rhi_cmd_end(cmd);
 
             create_render_pipeline();
+
         }
 
         void TrignaleApp::run()
@@ -208,6 +210,18 @@ namespace Cyber
 
         void TrignaleApp::create_resource()
         {
+
+        }
+
+        void TrignaleApp::create_ui()
+        {
+
+
+        }
+
+        void TrignaleApp::draw_ui()
+        {
+
 
         }
 
