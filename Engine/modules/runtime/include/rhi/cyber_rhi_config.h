@@ -10,8 +10,20 @@
     #endif
 #endif
 
+#ifndef CYBER_RHI_IMPORT
+    #if defined (_MSC_VER)
+        #define CYBER_RHI_IMPORT __declspec(dllimport)
+    #else
+        #define CYBER_RHI_IMPORT
+    #endif
+#endif
+
 #ifndef CYBER_RHI_API
-    #define CYBER_RHI_API CYBER_RHI_EXPORT
+    #if defined (CYBER_API_EXPORT)
+        #define CYBER_RHI_API CYBER_RHI_EXPORT
+    #else
+        #define CYBER_RHI_API CYBER_RHI_IMPORT
+    #endif
 #endif
 
 #if defined (_WINDOWS)

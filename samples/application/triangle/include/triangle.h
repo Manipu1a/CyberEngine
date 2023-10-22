@@ -19,12 +19,33 @@ namespace Cyber
 
             virtual void initialize(Cyber::WindowDesc& desc) override;
             virtual void run() override;
-            virtual void create_api_objects();
+            virtual void update(float deltaTime) override;
+
+        public:
+            void raster_draw();
+            virtual void create_gfx_objects();
             virtual void create_render_pipeline();
             virtual void create_resource();
             virtual void finalize();
-
-            RHIDevice* device;
+        public:
+            ///-------------------------------------
+            static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+            static const uint32_t BACK_BUFFER_COUNT = 3;
+            RHIDevice* device = nullptr;
+            RHIInstance* instance = nullptr;
+            RHIAdapter* adapter = nullptr;
+            RHIFence* present_fence = nullptr;
+            RHIQueue* queue = nullptr;
+            RHICommandPool* pool = nullptr;
+            RHICommandBuffer* cmd = nullptr;
+            RHISwapChain* swap_chain = nullptr;
+            RHISurface* surface = nullptr;
+            RHIFence* present_swmaphore = nullptr; 
+            //RHITextureView* views[BACK_BUFFER_COUNT];
+            RHIRenderPipeline* pipeline = nullptr;
+            RHIRootSignature* root_signature = nullptr;
+            RHIDescriptorSet* descriptor_set = nullptr;
+            uint32_t backbuffer_index = 0;
         };
     }
 }

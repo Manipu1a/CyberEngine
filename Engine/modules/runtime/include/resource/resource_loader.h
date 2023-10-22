@@ -2,7 +2,6 @@
 
 #include "rhi/rhi.h"
 #include <stdint.h>
-#include "renderer/renderer.h"
 
 namespace Cyber
 {
@@ -34,6 +33,6 @@ namespace Cyber
             uint32_t constant_count;
         };
 
-        RHIShaderLibrary* add_shader(Renderer& renderer, const ShaderLoadDesc& desc);
+        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RHIDevice* device, const ShaderLoadDesc& desc);
     }
 }

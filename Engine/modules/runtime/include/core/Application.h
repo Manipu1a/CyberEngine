@@ -13,6 +13,8 @@ namespace Cyber
 
         static Application& getApp();
         virtual void run() {}
+        virtual void update(float deltaTime) {}
+        
         virtual Ref<Window> getWindow() { return nullptr; }
 
         virtual void onEvent(Event& e) {}

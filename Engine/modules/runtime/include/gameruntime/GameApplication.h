@@ -20,8 +20,8 @@ namespace Cyber
 
         virtual void initialize(Cyber::WindowDesc& desc);
         virtual void run() override;
+        virtual void update(float deltaTime) override;
         virtual void onEvent(Event& e);
-
         virtual Ref<Window> getWindow() override { return mWindow; }
 
     private:
@@ -30,7 +30,6 @@ namespace Cyber
     private:
         Ref<Window> mWindow;
         Ref<InputSystem> mInputSystem; 
-        Scope<Renderer> renderer;
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;

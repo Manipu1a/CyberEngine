@@ -14,6 +14,16 @@
     #endif
 #endif
 
-#ifndef CYBER_RUNTIME_API
+#ifndef CYBER_RUNTIME_IMPORT
+    #if defined (_MSC_VER)
+        #define CYBER_RUNTIME_IMPORT __declspec(dllimport)
+    #else
+        #define CYBER_RUNTIME_IMPORT
+    #endif
+#endif
+
+#if defined (CYBER_API_EXPORT)
     #define CYBER_RUNTIME_API CYBER_RUNTIME_EXPORT
+#else
+    #define CYBER_RUNTIME_API CYBER_RUNTIME_IMPORT
 #endif

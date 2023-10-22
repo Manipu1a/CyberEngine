@@ -1,6 +1,5 @@
 #include "GameRuntime/GameApplication.h"
 #include "core/Timestep.h"
-#include "renderer/renderer.h"
 
 namespace Cyber
 {
@@ -17,11 +16,7 @@ namespace Cyber
     void GameApplication::initialize(Cyber::WindowDesc& desc)
     {
         create_window(desc);
-        renderer = CreateScope<Renderer>();
-        
-        RendererDesc renderer_desc;
-        renderer_desc.backend = RHI_BACKEND_D3D12;
-        renderer->initialize(this, renderer_desc);
+
 
         mInputSystem = CreateRef<InputSystem>();
         mInputSystem->initInputSystem();
@@ -42,11 +37,16 @@ namespace Cyber
             mLastFrameTime = time;
 
             //spdlog::info("Time: {0}", timestep);
-            renderer->update(timestep);
 
             mInputSystem->updateInputSystem(mWindow->getNativeWindow());
             mWindow->onUpdate(timestep);
+            update(timestep);
         }
+    }
+
+    void GameApplication::update(float deltaTime)
+    {
+
     }
 
     void GameApplication::onEvent(Event& e)
