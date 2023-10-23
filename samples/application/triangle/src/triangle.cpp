@@ -4,6 +4,7 @@
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
 #include "rhi/backend/d3d12/rhi_d3d12.h"
+#include "gui/cyber_gui.h"
 
 namespace Cyber
 {
@@ -23,7 +24,11 @@ namespace Cyber
         {
             GameApplication::initialize(desc);
             RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
+            gui_app = cyber_new<GUI::GUIApplication>();
+
             create_gfx_objects();
+            
+            gui_app->initialize(device, getWindow()->getNativeWindow());
 
             // Create views
             swap_chain->mBackBufferSRVViews = (RHITextureView**)cyber_malloc(sizeof(RHITextureView*) * swap_chain->mBufferSRVCount);
@@ -68,7 +73,7 @@ namespace Cyber
         void TrignaleApp::update(float deltaTime)
         {
             GameApplication::update(deltaTime);
-
+            
             raster_draw();
         }
 
@@ -131,6 +136,10 @@ namespace Cyber
                 .dst_state = RHI_RESOURCE_STATE_PRESENT
             };
             rhi_cmd_end_render_pass(cmd);
+
+            // draw ui
+            gui_app->update(cmd, 0.0f);
+
             RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
             rhi_cmd_resource_barrier(cmd, barrier_desc2);
             rhi_cmd_end(cmd);

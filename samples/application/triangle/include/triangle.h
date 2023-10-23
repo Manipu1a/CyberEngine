@@ -5,6 +5,11 @@
 
 namespace Cyber
 {
+    namespace GUI
+    {
+        class GUIApplication;
+    }
+    
     namespace Samples
     {
         class TestApp
@@ -50,6 +55,7 @@ namespace Cyber
             RHIDescriptorSet* descriptor_set = nullptr;
             uint32_t backbuffer_index = 0;
 
+            class GUI::GUIApplication* gui_app = nullptr;
         };
     }
 }

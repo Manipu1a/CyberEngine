@@ -2,6 +2,7 @@
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -24,8 +25,8 @@ namespace Cyber
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             desc.NodeMask = 0;
-            device_d3d12->pDxDevice->CreateDescriptorHeap(&desc, IID_ARGS(&g_imguiSrvDescHeap->pCurrentHeap));
-            
+            g_imguiSrvDescHeap = cyber_new<RHIDescriptorHeap_D3D12>();
+            CHECK_HRESULT(device_d3d12->pDxDevice->CreateDescriptorHeap(&desc, IID_ARGS(&g_imguiSrvDescHeap->pCurrentHeap)));
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
