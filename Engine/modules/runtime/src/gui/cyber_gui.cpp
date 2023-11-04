@@ -67,6 +67,8 @@ namespace Cyber
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->pCurrentHeap };
             Cmd->pDxCmdList->SetDescriptorHeaps(1, GuidescriptorHeaps);
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->pDxCmdList);
+
+            
         }
 
         void GUIApplication::finalize()

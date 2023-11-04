@@ -119,27 +119,40 @@ namespace Cyber
                 .src_state = RHI_RESOURCE_STATE_PRESENT,
                 .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
             };
+
             RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             rhi_cmd_resource_barrier(cmd, barrier_desc0);
-
             RHIRenderPassEncoder* rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
             rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
             rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
             rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
-
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             rhi_render_encoder_draw(rp_encoder, 3, 0);
+            rhi_cmd_end_render_pass(cmd);
+
+            // ui pass
+            screen_attachment.load_action = RHI_LOAD_ACTION_LOAD;
+            depth_attachment.depth_load_action = RHI_LOAD_ACTION_LOAD;
+            depth_attachment.stencil_load_action = RHI_LOAD_ACTION_LOAD;
+            RHIRenderPassDesc ui_rp_desc = {
+                .sample_count = RHI_SAMPLE_COUNT_1,
+                .color_attachments = &screen_attachment,
+                .depth_stencil_attachment = &depth_attachment,
+                .render_target_count = 1,
+            };
+
+            RHIRenderPassEncoder* rp_ui_encoder = rhi_cmd_begin_render_pass(cmd, ui_rp_desc);
+            rhi_render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+            rhi_render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+            // draw ui
+            gui_app->update(cmd, 0.0f);
+            rhi_cmd_end_render_pass(cmd);
 
             RHITextureBarrier present_barrier = {
                 .texture = back_buffer,
                 .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
                 .dst_state = RHI_RESOURCE_STATE_PRESENT
             };
-            rhi_cmd_end_render_pass(cmd);
-
-            // draw ui
-            gui_app->update(cmd, 0.0f);
-
             RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
             rhi_cmd_resource_barrier(cmd, barrier_desc2);
             rhi_cmd_end(cmd);

@@ -3,13 +3,23 @@
 #include "CyberLog/Log.h"
 #include "core/Application.h"
 #include <windef.h>
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_win32.h"
+#include "imgui/backends/imgui_impl_dx12.h"
+
+// Forward declare message handler from imgui_impl_win32.cpp
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 namespace Cyber
 {
+
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         PAINTSTRUCT ps;
 	    HDC hdc;
+
+        if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
+            return true;
 
 	    switch (msg)
 	    {

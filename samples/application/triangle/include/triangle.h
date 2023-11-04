@@ -1,5 +1,5 @@
 #pragma once
-#include "rhi/rhi.h"
+
 #include "rendergraph/render_graph.h"
 #include "gameruntime/GameApplication.h"
 
@@ -49,11 +49,13 @@ namespace Cyber
             RHISwapChain* swap_chain = nullptr;
             RHISurface* surface = nullptr;
             RHIFence* present_swmaphore = nullptr; 
-            //RHITextureView* views[BACK_BUFFER_COUNT];
-            RHIRenderPipeline* pipeline = nullptr;
+            uint32_t backbuffer_index = 0;
+
+        protected:
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
-            uint32_t backbuffer_index = 0;
+            RHIRenderPipeline* pipeline = nullptr;
+
 
             class GUI::GUIApplication* gui_app = nullptr;
         };

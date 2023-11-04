@@ -3,6 +3,7 @@
 #include "core/Core.h"
 #include "core/Application.h"
 #include "core/Window.h"
+#include "rhi/rhi.h"
 #include "CyberEvents/ApplicationEvent.h"
 #include "inputsystem/InputSystem.h"
 #include <windows.h>
@@ -33,5 +34,21 @@ namespace Cyber
         bool mRunning = true;
         bool mMinimized = false;
         float mLastFrameTime = 0.0f;
+
+    protected:
+        ///-------------------------------------
+        static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
+        static const uint32_t BACK_BUFFER_COUNT = 3;
+        RHIDevice* device = nullptr;
+        RHIInstance* instance = nullptr;
+        RHIAdapter* adapter = nullptr;
+        RHIFence* present_fence = nullptr;
+        RHIQueue* queue = nullptr;
+        RHICommandPool* pool = nullptr;
+        RHICommandBuffer* cmd = nullptr;
+        RHISwapChain* swap_chain = nullptr;
+        RHISurface* surface = nullptr;
+        RHIFence* present_swmaphore = nullptr; 
+        uint32_t backbuffer_index = 0;
     };
 }
