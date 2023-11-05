@@ -31,6 +31,8 @@ namespace Cyber
             RHISurface* surface = nullptr;
             RHIFence* present_swmaphore = nullptr; 
             uint32_t backbuffer_index = 0;
+
+            RHI* immediate_context = nullptr;
         };
 
     }

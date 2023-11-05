@@ -407,32 +407,32 @@ namespace Cyber
 }
 
 
-        int WINAPI WinMain(HINSTANCE hInstance,
+int WINAPI WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      PSTR    lpCmdLine,
                      int       nCmdShow)
-        {
-            //auto app = create_sample();
-            AllocConsole();
-            FILE* stream;
-            freopen_s(&stream, "CON", "r", stdin);
-            freopen_s(&stream, "CON", "w", stdout);
-            SetConsoleTitle(L"Console");
-            //std::cout << "test log" << std::endl;
-            Cyber::Log::initLog();
-            CB_CORE_INFO("initLog");
+{
+    //auto app = create_sample();
+    AllocConsole();
+    FILE* stream;
+    freopen_s(&stream, "CON", "r", stdin);
+    freopen_s(&stream, "CON", "w", stdout);
+    SetConsoleTitle(L"Console");
+    //std::cout << "test log" << std::endl;
+    Cyber::Log::initLog();
+    CB_CORE_INFO("initLog");
 
-            Cyber::WindowDesc desc;
-            desc.title = L"Cyber";
-            desc.mWndW = 1280;
-            desc.mWndH = 720;
-            desc.hInstance = hInstance;
-            desc.cmdShow = nCmdShow;
+    Cyber::WindowDesc desc;
+    desc.title = L"Cyber";
+    desc.mWndW = 1280;
+    desc.mWndH = 720;
+    desc.hInstance = hInstance;
+    desc.cmdShow = nCmdShow;
 
-            Cyber::Samples::TrignaleApp app;
-            app.initialize(desc);
-            app.run();
+    Cyber::Samples::TrignaleApp app;
+    app.initialize(desc);
+    app.run();
 
-            FreeConsole();
-            return 1;
-        }
+    FreeConsole();
+    return 1;
+}

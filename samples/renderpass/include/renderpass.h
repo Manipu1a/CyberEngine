@@ -7,19 +7,19 @@ namespace Cyber
     {
         class GUIApplication;
     }
-    
+
     namespace Samples
     {
-        class TrignaleApp : public SampleApp
+        class RenderPassApp : public SampleApp
         {
         public:
-            TrignaleApp();
-            ~TrignaleApp();
+            RenderPassApp();
+            ~RenderPassApp();
 
             virtual void initialize(Cyber::WindowDesc& desc) override;
             virtual void run() override;
             virtual void update(float deltaTime) override;
-
+        
         public:
             void raster_draw();
             void create_gfx_objects();
@@ -28,13 +28,10 @@ namespace Cyber
             void create_ui();
             void draw_ui();
             void finalize();
-
         protected:
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
             RHIRenderPipeline* pipeline = nullptr;
-
-            class GUI::GUIApplication* gui_app = nullptr;
         };
     }
 }

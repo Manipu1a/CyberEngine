@@ -779,11 +779,11 @@ namespace Cyber
         bool enable_indirect_command;
     };
 
-    class CYBER_RHI_API RHI
+    class CYBER_RHI_API RHIContext
     {
     public:
-        static void createRHI(ERHIBackend backend);
-        static RHI* gloablRHI;
+        static RHIContext* createRHI(ERHIBackend backend);
+
     public:
         // Instance APIs
         virtual RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
@@ -1040,238 +1040,13 @@ namespace Cyber
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_encoder_draw_indexed_instanced!");
         }
+
+    protected:
+
     };
+
     #define RHI_SINGLE_GPU_NODE_COUNT 1
     #define RHI_SINGLE_GPU_NODE_MASK 1
     #define RHI_SINGLE_GPU_NODE_INDEX 0
 
-    CYBER_FORCE_INLINE RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
-    {
-        return RHI::gloablRHI->rhi_create_instance(instanceDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_instance(RHIInstance* instance)
-    {
-        RHI::gloablRHI->rhi_free_instance(instance);
-    }
-    // Device APIS
-    CYBER_FORCE_INLINE RHIDevice* rhi_create_device(RHIAdapter* adapter, const RHIDeviceCreateDesc& deviceDesc) 
-    {
-        return RHI::gloablRHI->rhi_create_device(adapter, deviceDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_device(RHIDevice* device) 
-    {
-        RHI::gloablRHI->rhi_free_device(device);
-    }
-    // API Object APIs
-    CYBER_FORCE_INLINE RHISurface* rhi_surface_from_hwnd(RHIDevice* device, HWND hwnd)
-    {
-        return RHI::gloablRHI->rhi_surface_from_hwnd(device, hwnd);
-    }
-    CYBER_FORCE_INLINE void rhi_free_surface(RHISurface* surface)
-    {
-        RHI::gloablRHI->rhi_free_surface(surface);
-    }
-    CYBER_FORCE_INLINE RHIFence* rhi_create_fence(RHIDevice* device) 
-    {
-        return RHI::gloablRHI->rhi_create_fence(device);
-    };
-    CYBER_FORCE_INLINE void rhi_wait_fences(RHIFence** fences, uint32_t fenceCount)
-    {
-        RHI::gloablRHI->rhi_wait_fences(fences, fenceCount);
-    }
-    CYBER_FORCE_INLINE void rhi_free_fence(RHIFence* fence)
-    {
-        RHI::gloablRHI->rhi_free_fence(fence);
-    }
-    CYBER_FORCE_INLINE ERHIFenceStatus rhi_query_fence_status(RHIFence* fence)
-    {
-        return RHI::gloablRHI->rhi_query_fence_status(fence);
-    }
-    CYBER_FORCE_INLINE RHISwapChain* rhi_create_swap_chain(RHIDevice* device, const RHISwapChainCreateDesc& swapchainDesc)
-    {
-        return RHI::gloablRHI->rhi_create_swap_chain(device, swapchainDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_swap_chain(RHISwapChain* swapchain)
-    {
-        RHI::gloablRHI->rhi_free_swap_chain(swapchain);
-    }
-    CYBER_FORCE_INLINE void rhi_enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount)
-    {
-        RHI::gloablRHI->rhi_enum_adapters(instance, adapters, adapterCount);
-    }
-    CYBER_FORCE_INLINE uint32_t rhi_acquire_next_image(RHISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc)
-    {
-        return RHI::gloablRHI->rhi_acquire_next_image(swapchain, acquireDesc);
-    }
-    // Queue APIs
-    CYBER_FORCE_INLINE RHIQueue* rhi_get_queue(RHIDevice* device, ERHIQueueType type, uint32_t index) 
-    { 
-        return RHI::gloablRHI->rhi_get_queue(device, type, index); 
-    }
-    CYBER_FORCE_INLINE void rhi_submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
-    {
-        RHI::gloablRHI->rhi_submit_queue(queue, submitDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
-    {
-        RHI::gloablRHI->rhi_present_queue(queue, presentDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_wait_queue_idle(RHIQueue* queue)
-    {
-        RHI::gloablRHI->rhi_wait_queue_idle(queue);
-    }
-    CYBER_FORCE_INLINE void rhi_free_queue(RHIQueue* queue)
-    {
-        RHI::gloablRHI->rhi_free_queue(queue);
-    }
-    // Command APIs
-    CYBER_FORCE_INLINE RHICommandPool* rhi_create_command_pool(RHIQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
-    {
-        return RHI::gloablRHI->rhi_create_command_pool(queue, commandPoolDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_reset_command_pool(RHICommandPool* pool)
-    {
-        RHI::gloablRHI->rhi_reset_command_pool(pool);
-    }
-    CYBER_FORCE_INLINE void rhi_free_command_pool(RHICommandPool* pool)
-    {
-        RHI::gloablRHI->rhi_free_command_pool(pool);
-    }
-    CYBER_FORCE_INLINE RHICommandBuffer* rhi_create_command_buffer(RHICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc)
-    {
-        return RHI::gloablRHI->rhi_create_command_buffer(pool, commandBufferDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_command_buffer(RHICommandBuffer* commandBuffer)
-    {
-        RHI::gloablRHI->rhi_free_command_buffer(commandBuffer);
-    }
-    /// RootSignature
-    CYBER_FORCE_INLINE RHIRootSignature* rhi_create_root_signature(RHIDevice* device, const RHIRootSignatureCreateDesc& rootSigDesc)
-    {
-        return RHI::gloablRHI->rhi_create_root_signature(device, rootSigDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_root_signature(RHIRootSignature* rootSignature)
-    {
-        RHI::gloablRHI->rhi_free_root_signature(rootSignature);
-    }
-    CYBER_FORCE_INLINE RHIDescriptorSet* rhi_create_descriptor_set(RHIDevice* device, const RHIDescriptorSetCreateDesc& descriptorSetDesc)
-    {
-        return RHI::gloablRHI->rhi_create_descriptor_set(device, descriptorSetDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count)
-    {
-        RHI::gloablRHI->rhi_update_descriptor_set(set, updateDesc, count);
-    }
-    CYBER_FORCE_INLINE RHIRenderPipeline* rhi_create_render_pipeline(RHIDevice* device, const RHIRenderPipelineCreateDesc& pipelineDesc)
-    {
-        return RHI::gloablRHI->rhi_create_render_pipeline(device, pipelineDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_render_pipeline(RHIRenderPipeline* pipeline)
-    {
-        RHI::gloablRHI->rhi_free_render_pipeline(pipeline);
-    }
-    // Resource APIs
-    CYBER_FORCE_INLINE RHITextureView* rhi_create_texture_view(RHIDevice* device, const TextureViewCreateDesc& viewDesc)
-    {
-        return RHI::gloablRHI->rhi_create_texture_view(device, viewDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_texture_view(RHITextureView* view)
-    {
-        RHI::gloablRHI->rhi_free_texture_view(view);
-    }
-    CYBER_FORCE_INLINE RHITexture* rhi_create_texture(RHIDevice* device, const TextureCreateDesc& textureDesc) 
-    {
-        return RHI::gloablRHI->rhi_create_texture(device, textureDesc);
-    }
-    CYBER_FORCE_INLINE RHIBuffer* rhi_create_buffer(RHIDevice* device, const BufferCreateDesc& bufferDesc) 
-    {
-        return RHI::gloablRHI->rhi_create_buffer(device, bufferDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_buffer(RHIBuffer* buffer)
-    {
-        RHI::gloablRHI->rhi_free_buffer(buffer);
-    }
-    CYBER_FORCE_INLINE void rhi_map_buffer(RHIBuffer* buffer, const RHIBufferRange* range)
-    {
-        RHI::gloablRHI->rhi_map_buffer(buffer, range);
-    }
-    CYBER_FORCE_INLINE void rhi_unmap_buffer(RHIBuffer* buffer)
-    {
-        RHI::gloablRHI->rhi_unmap_buffer(buffer);
-    }
-    // Shader
-    CYBER_FORCE_INLINE RHIShaderLibrary* rhi_create_shader_library(RHIDevice* device, const struct RHIShaderLibraryCreateDesc& desc)
-    {
-        return RHI::gloablRHI->rhi_create_shader_library(device, desc);
-    }
-    CYBER_FORCE_INLINE void rhi_free_shader_library(RHIShaderLibrary* shaderLibrary)
-    {
-        RHI::gloablRHI->rhi_free_shader_library(shaderLibrary);
-    }
-    /// CMDS
-    CYBER_FORCE_INLINE void rhi_cmd_begin(RHICommandBuffer* cmd)
-    {
-        RHI::gloablRHI->rhi_cmd_begin(cmd);
-    }
-    CYBER_FORCE_INLINE void rhi_cmd_end(RHICommandBuffer* cmd)
-    {
-        RHI::gloablRHI->rhi_cmd_end(cmd);
-    }
-    CYBER_FORCE_INLINE void rhi_cmd_resource_barrier(RHICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc)
-    {
-        RHI::gloablRHI->rhi_cmd_resource_barrier(cmd, barrierDesc);
-    }
-    // Render Pass
-    CYBER_FORCE_INLINE RHIRenderPassEncoder* rhi_cmd_begin_render_pass(RHICommandBuffer* cmd, const RHIRenderPassDesc& beginRenderPassDesc)
-    {
-        return RHI::gloablRHI->rhi_cmd_begin_render_pass(cmd, beginRenderPassDesc);
-    }
-    CYBER_FORCE_INLINE void rhi_cmd_end_render_pass(RHICommandBuffer* cmd)
-    {
-        RHI::gloablRHI->rhi_cmd_end_render_pass(cmd);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet)
-    {
-        RHI::gloablRHI->rhi_render_encoder_bind_descriptor_set(encoder, descriptorSet);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth)
-    {
-        RHI::gloablRHI->rhi_render_encoder_set_viewport(encoder, x, y, width, height, min_depth, max_depth);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
-    {
-        RHI::gloablRHI->rhi_render_encoder_set_scissor(encoder, x, y, width, height);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline)
-    {
-        RHI::gloablRHI->rhi_render_encoder_bind_pipeline(encoder, pipeline);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RHIBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
-    {
-        RHI::gloablRHI->rhi_render_encoder_bind_vertex_buffer(encoder, buffer_count, buffers, strides, offsets);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RHIBuffer* buffer, uint32_t index_stride, uint64_t offset)
-    {
-        RHI::gloablRHI->rhi_render_encoder_bind_index_buffer(encoder, buffer, index_stride, offset);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data)
-    {
-        RHI::gloablRHI->rhi_render_encoder_push_constants(encoder, rs, name, data);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
-    {
-        RHI::gloablRHI->rhi_render_encoder_draw(encoder, vertex_count, first_vertex);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
-    {
-        RHI::gloablRHI->rhi_render_encoder_draw_instanced(encoder, vertex_count, first_vertex, instance_count, first_instance);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
-    {
-        RHI::gloablRHI->rhi_render_encoder_draw_indexed(encoder, index_count, first_index, first_vertex);
-    }
-    CYBER_FORCE_INLINE void rhi_render_encoder_draw_indexed_instanced(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
-    {
-        RHI::gloablRHI->rhi_render_encoder_draw_indexed_instanced(encoder, index_count, first_index, instance_count, first_instance, first_vertex);
-    } 
 }

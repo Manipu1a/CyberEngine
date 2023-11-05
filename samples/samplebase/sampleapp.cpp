@@ -6,7 +6,7 @@ namespace Cyber
     {
         SampleApp::SampleApp()
         {
-
+            immediate_context = RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
         }
         SampleApp::~SampleApp()
         {
