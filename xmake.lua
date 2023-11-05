@@ -15,6 +15,7 @@ add_defines("_WINDOWS")
 includes("xmake/xmake.lua")
 includes("Engine/xmake.lua")
 includes("samples/xmake.lua")
+includes("xmake/options.lua")
 if (is_os("windows")) then 
     add_links("advapi32","gdi32","user32", "Shell32", "dxcompiler", "d3dcompiler",{public = true})
     add_linkdirs("$(projectdir)/tools/DirectXShaderCompiler/lib/x64")

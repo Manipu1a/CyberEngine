@@ -1,0 +1,5 @@
+target("triangle")
+    set_kind("binary")
+    add_includedirs("include", {public = true})
+    add_files("src/triangle.cpp")
+    add_deps("samples", {public = false})

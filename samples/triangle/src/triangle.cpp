@@ -10,6 +10,7 @@ namespace Cyber
 {
     namespace Samples
     {
+
         TrignaleApp::TrignaleApp()
         {
 
@@ -401,14 +402,17 @@ namespace Cyber
             rhi_free_device(device);
             rhi_free_instance(instance);
         }
+
     }
 }
+
 
         int WINAPI WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      PSTR    lpCmdLine,
                      int       nCmdShow)
         {
+            //auto app = create_sample();
             AllocConsole();
             FILE* stream;
             freopen_s(&stream, "CON", "r", stdin);
@@ -424,6 +428,7 @@ namespace Cyber
             desc.mWndH = 720;
             desc.hInstance = hInstance;
             desc.cmdShow = nCmdShow;
+
             Cyber::Samples::TrignaleApp app;
             app.initialize(desc);
             app.run();
