@@ -22,7 +22,7 @@
     #endif
 #endif
 
-#if defined (CYBER_API_EXPORT)
+#if defined (CYBER_SAMPLES_API_EXPORT)
     #define CYBER_SAMPLES_API CYBER_SAMPLES_EXPORT
 #else
     #define CYBER_SAMPLES_API CYBER_SAMPLES_IMPORT

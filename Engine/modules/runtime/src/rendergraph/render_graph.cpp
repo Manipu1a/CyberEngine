@@ -10,10 +10,10 @@ namespace Cyber
         void RenderGraphFrameExecutor::initialize(RHIQueue* queue, RHIDevice* device)
         {
             CommandPoolCreateDesc cmd_pool_desc = {};
-            gfx_cmd_pool = rhi_create_command_pool(queue, cmd_pool_desc);
+            //gfx_cmd_pool = rhi_create_command_pool(queue, cmd_pool_desc);
             CommandBufferCreateDesc cmd_buffer_desc = {};
             cmd_buffer_desc.is_secondary = false;
-            gfx_cmd_buffer = rhi_create_command_buffer(gfx_cmd_pool, cmd_buffer_desc);
+            //gfx_cmd_buffer = rhi_create_command_buffer(gfx_cmd_pool, cmd_buffer_desc);
         }
 
         void RenderGraphFrameExecutor::finalize()
@@ -123,7 +123,7 @@ namespace Cyber
             RenderPassContext pass_context;
 
             RHIRenderPassDesc beginRenderPassDesc = {};
-            pass_context.encoder = rhi_cmd_begin_render_pass(frame_executors[0].gfx_cmd_buffer, beginRenderPassDesc);
+            //pass_context.encoder = rhi_cmd_begin_render_pass(frame_executors[0].gfx_cmd_buffer, beginRenderPassDesc);
 
             pass->pass_function(*this, pass_context);
         }

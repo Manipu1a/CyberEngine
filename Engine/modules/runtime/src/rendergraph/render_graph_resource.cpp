@@ -12,7 +12,7 @@ namespace Cyber
                 return buffer;
             }
 
-            buffer = rhi_create_buffer(device, create_desc);
+            //buffer = rhi_create_buffer(device, create_desc);
             if(!buffer)
             {
                 cyber_assert(false, "Failed to create buffer");
@@ -28,7 +28,7 @@ namespace Cyber
                 return texture;
             }
 
-            texture = rhi_create_texture(device, create_desc);
+            //texture = rhi_create_texture(device, create_desc);
             if(!texture)
             {
                 cyber_assert(false, "Failed to create texture");

@@ -1155,18 +1155,20 @@ namespace Cyber
         DECLARE_ZERO(D3D12_RENDER_PASS_RENDER_TARGET_DESC, renderPassRenderTargetDescs[RHI_MAX_MRT_COUNT]);
         DECLARE_ZERO(D3D12_RENDER_PASS_DEPTH_STENCIL_DESC, renderPassDepthStencilDesc);
         uint32_t colorTargetCount = 0;
+        uint32_t subpassIndex = 0;
+        
         // color
-        for(uint32_t i = 0; i < beginRenderPassDesc.render_target_count; ++i)
+        for(uint32_t i = 0; i < beginRenderPassDesc.subpasses[0].render_target_count; ++i)
         {
-            RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.color_attachments[i].view);
+            RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].color_attachments[i].view);
             clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->create_info.format);
-            clearValues[i].Color[0] = beginRenderPassDesc.color_attachments[i].clear_value.r;
-            clearValues[i].Color[1] = beginRenderPassDesc.color_attachments[i].clear_value.g;
-            clearValues[i].Color[2] = beginRenderPassDesc.color_attachments[i].clear_value.b;
-            clearValues[i].Color[3] = beginRenderPassDesc.color_attachments[i].clear_value.a;
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.color_attachments[i].load_action];
-            RHITextureView_D3D12* tex_view_resolve = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.color_attachments[i].resolve_view);
-            if(beginRenderPassDesc.sample_count != RHI_SAMPLE_COUNT_1 && tex_view_resolve)
+            clearValues[i].Color[0] = beginRenderPassDesc.subpasses[0].color_attachments[i].clear_value.r;
+            clearValues[i].Color[1] = beginRenderPassDesc.subpasses[0].color_attachments[i].clear_value.g;
+            clearValues[i].Color[2] = beginRenderPassDesc.subpasses[0].color_attachments[i].clear_value.b;
+            clearValues[i].Color[3] = beginRenderPassDesc.subpasses[0].color_attachments[i].clear_value.a;
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].color_attachments[i].load_action];
+            RHITextureView_D3D12* tex_view_resolve = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].color_attachments[i].resolve_view);
+            if(beginRenderPassDesc.subpasses[0].sample_count != RHI_SAMPLE_COUNT_1 && tex_view_resolve)
             {
                 RHITexture_D3D12* tex = static_cast<RHITexture_D3D12*>(tex_view->create_info.texture);
                 RHITexture_D3D12* tex_resolve = static_cast<RHITexture_D3D12*>(tex_view_resolve->create_info.texture);
@@ -1191,7 +1193,7 @@ namespace Cyber
             else
             {
                 // Load & Store action
-                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.color_attachments[i].store_action];
+                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].color_attachments[i].store_action];
                 renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->mRtvDsvDescriptorHandle;
                 renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                 renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
@@ -1200,17 +1202,17 @@ namespace Cyber
         }
         // depth stencil
         D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pRenderPassDepthStencilDesc = nullptr;
-        if(beginRenderPassDesc.depth_stencil_attachment != nullptr && beginRenderPassDesc.depth_stencil_attachment->view != nullptr)
+        if(beginRenderPassDesc.subpasses[0].depth_stencil_attachment != nullptr && beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view != nullptr)
         {
-            RHITextureView_D3D12* dt_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.depth_stencil_attachment->view);
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.depth_stencil_attachment->depth_load_action];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.depth_stencil_attachment->depth_store_action];
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.depth_stencil_attachment->stencil_load_action];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.depth_stencil_attachment->stencil_store_action];
-            clearDepth.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.depth_stencil_attachment->view->create_info.format);
-            clearDepth.DepthStencil.Depth = beginRenderPassDesc.depth_stencil_attachment->clear_depth;
-            clearStencil.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.depth_stencil_attachment->view->create_info.format);
-            clearStencil.DepthStencil.Stencil = beginRenderPassDesc.depth_stencil_attachment->clear_stencil;
+            RHITextureView_D3D12* dt_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view);
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->depth_load_action];
+            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->depth_store_action];
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->stencil_load_action];
+            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->stencil_store_action];
+            clearDepth.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view->create_info.format);
+            clearDepth.DepthStencil.Depth = beginRenderPassDesc.subpasses[0].depth_stencil_attachment->clear_depth;
+            clearStencil.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view->create_info.format);
+            clearStencil.DepthStencil.Stencil = beginRenderPassDesc.subpasses[0].depth_stencil_attachment->clear_stencil;
             renderPassDepthStencilDesc.cpuDescriptor = dt_view->mRtvDsvDescriptorHandle;
             renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };
             renderPassDepthStencilDesc.DepthEndingAccess = { depthEndingAccess, {} };

@@ -239,7 +239,6 @@ namespace Cyber
         void TrignaleApp::create_ui()
         {
 
-
         }
 
         void TrignaleApp::draw_ui()
@@ -412,7 +411,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
                      PSTR    lpCmdLine,
                      int       nCmdShow)
 {
-    //auto app = create_sample();
     AllocConsole();
     FILE* stream;
     freopen_s(&stream, "CON", "r", stdin);

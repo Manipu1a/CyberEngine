@@ -4,14 +4,16 @@
 
 namespace Cyber
 {
-    RHI* RHI::createRHI(ERHIBackend backend)
-    {
+    RHI* RHI::gDynamicRHI = nullptr;
 
+    void RHI::createRHI(ERHIBackend backend)
+    {
         if(backend == ERHIBackend::RHI_BACKEND_D3D12)
         {
-            RHI* context = cyber_new<RHI_D3D12>();
-            return context;
+            gDynamicRHI = cyber_new<RHI_D3D12>();
+            return;
         }
+
         cyber_assert(false, "RHI for platform [0] initialize failed!", backend);
     }
 }

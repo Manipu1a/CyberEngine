@@ -1,5 +1,6 @@
 #pragma once
 #include "gameruntime/GameApplication.h"
+#include "rhi/device_context.h"
 #include "cyber_samples.config.h"
 
 namespace Cyber
@@ -16,6 +17,7 @@ namespace Cyber
             virtual void run() override;
             virtual void update(float deltaTime) override;
 
+            void create_gfx_objects();
         protected:
             ///-------------------------------------
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
@@ -32,7 +34,7 @@ namespace Cyber
             RHIFence* present_swmaphore = nullptr; 
             uint32_t backbuffer_index = 0;
 
-            RHI* immediate_context = nullptr;
+            RenderObject::CDeviceContext* immediate_context = nullptr;
         };
 
     }
