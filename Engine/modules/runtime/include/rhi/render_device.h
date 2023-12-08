@@ -17,9 +17,18 @@ namespace Cyber
         class CYBER_RHI_API CERenderDevice
         {
         public:
-            CERenderDevice();
+            CERenderDevice(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
+            {
+                this->adapter = adapter;
+                this->device_desc = deviceDesc;
+            }
             virtual ~CERenderDevice();
-
+        private:
+            CERenderDevice();
+            
+        protected:
+            RHIAdapter* adapter;
+            RenderDeviceCreateDesc device_desc;
         public:
             // Instance APIs
             virtual RHIInstance* create_instance(const RHIInstanceCreateDesc& instanceDesc) 
@@ -35,7 +44,6 @@ namespace Cyber
             virtual void create_device(RHIAdapter* pAdapter, const RenderDeviceCreateDesc& deviceDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_device!");
-                return nullptr;
             }
             virtual void free_device() 
             {
@@ -279,8 +287,6 @@ namespace Cyber
                 cyber_core_assert(false, "Empty implement render_encoder_draw_indexed_instanced!");
             }
 
-        protected:
-            RHIAdapter* pAdapter;
         };
     }
 }

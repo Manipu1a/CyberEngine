@@ -100,11 +100,6 @@ namespace Cyber
         D3D12_CPU_DESCRIPTOR_HANDLE BufferCBV;
     };
 
-    struct RHIDevice_D3D12 : public RHIDevice
-    {
-
-    };
-
     struct RHIInstance_D3D12 : public RHIInstance
     {
     #if defined(XBOX)
@@ -135,7 +130,6 @@ namespace Cyber
     struct RHIFence_D3D12 : public RHIFence
     {
     public:
-        Cyber::Ref<RHIDevice> pDevice;
         ID3D12Fence* pDxFence;
         HANDLE pDxWaitIdleFenceEvent;
         uint64_t mFenceValue;

@@ -11,7 +11,7 @@ namespace Cyber
         class CYBER_RHI_API CEDeviceContext
         {
         public:
-            CEDeviceContext(RHIDevice* device);
+            CEDeviceContext(CERenderDevice* device);
             virtual ~CEDeviceContext();
 
         public:
@@ -19,9 +19,7 @@ namespace Cyber
             void EndRenderPass();
 
             CERenderDevice* GetRenderDevice() const { return pRenderDevice; }
-            RHIDevice* GetDevice() const { return pDevice; }
         protected:
-            RHIDevice* pDevice;
             CERenderDevice* pRenderDevice;
             RHIRenderPassDesc mActiveRenderPassDesc;
             CEFameBuffer* mBoundFrameBuffer;

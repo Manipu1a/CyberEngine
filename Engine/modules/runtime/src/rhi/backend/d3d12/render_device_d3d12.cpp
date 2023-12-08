@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <synchapi.h>
 #include "platform/memory.h"
-#include "common_utils.h"
+#include "../../common/common_utils.h"
 #include "rhi/device_context.h"
 #include "rhi/render_device.h"
 
@@ -29,6 +29,16 @@ namespace Cyber
     namespace RenderObject
     {
     #define DECLARE_ZERO(type, var) type var = {};
+
+    CERenderDevice_D3D12::CERenderDevice_D3D12(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : CERenderDevice(adapter, deviceDesc)
+    {
+        create_device(adapter, deviceDesc);
+    }
+    
+    CERenderDevice_D3D12::~CERenderDevice_D3D12()
+    {
+        free_device();
+    }
 
     void CERenderDevice_D3D12::create_device(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
     {
@@ -2518,6 +2528,5 @@ namespace Cyber
         }
         cyber_delete(shaderLibrary);
     }
-
     }
 }

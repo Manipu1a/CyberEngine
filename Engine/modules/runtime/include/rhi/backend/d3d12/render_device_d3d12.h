@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rhi/render_device.h"
-
+#include "rhi/backend/d3d12/rhi_d3d12.h"
 
 namespace Cyber
 {
@@ -9,7 +9,12 @@ namespace Cyber
     {
         class CERenderDevice_D3D12 : public CERenderDevice
         {
+
         public:
+            CERenderDevice_D3D12(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
+            virtual ~CERenderDevice_D3D12();
+        public:
+
             // Device APIs
             virtual void create_device(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
             virtual void free_device() override;

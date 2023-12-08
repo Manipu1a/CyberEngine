@@ -164,7 +164,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRenderPipeline
     {
-        RenderObject::CERenderDevice device;
+        RenderObject::CERenderDevice* device;
         RHIRootSignature* root_signature;
     };
     /// Shader Reflection
@@ -262,7 +262,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIShaderLibrary
     {
-        RenderObject::CERenderDevice pDevice;
+        RenderObject::CERenderDevice* pDevice;
         char8_t* pName;
         RHIShaderReflection* entry_reflections;
         uint32_t entry_count;
@@ -371,7 +371,7 @@ namespace Cyber
     struct RHITextureView
     {
         TextureViewCreateDesc create_info;
-        RenderObject::CERenderDevice device;
+        RenderObject::CERenderDevice* device;
     };
 
     struct CYBER_RHI_API RHISampler 
@@ -423,7 +423,7 @@ namespace Cyber
         uint64_t mDescriptors : 20;
         uint64_t mMemoryUsage : 3;
         uint64_t mNodeIndex : 4;
-        RenderObject::CERenderDevice device;
+        RenderObject::CERenderDevice* device;
     };
     
     struct CYBER_RHI_API RHIBufferRange
@@ -526,7 +526,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHICommandBuffer
     {
-        RenderObject::CERenderDevice pDevice;
+        RenderObject::CERenderDevice* pDevice;
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
     };
@@ -535,7 +535,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueryPool
     {
-        RenderObject::CERenderDevice pDevice;
+        RenderObject::CERenderDevice* pDevice;
         uint32_t mCount;
     };
 
