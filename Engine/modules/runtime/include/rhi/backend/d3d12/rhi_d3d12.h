@@ -102,31 +102,7 @@ namespace Cyber
 
     struct RHIDevice_D3D12 : public RHIDevice
     {
-        HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
-        HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
 
-        class D3D12MA::Allocator* pResourceAllocator;
-
-        // API specific descriptor heap and memory allocator
-        eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCPUDescriptorHeaps;
-        eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mSamplerHeaps;
-        eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCbvSrvUavHeaps;
-        struct RHIEmptyDescriptors_D3D12* pNullDescriptors;
-        eastl::map<uint32_t, ID3D12CommandQueue**> ppCommandQueues;
-        eastl::map<uint32_t, uint32_t> pCommandQueueCounts;
-        IDXGIFactory6* pDXGIFactory;
-        IDXGIAdapter4* pDxActiveGPU;
-        ID3D12Device* pDxDevice;
-
-        // PSO Cache
-        ID3D12PipelineLibrary* pPipelineLibrary;
-        void* pPSOCacheData;
-        
-        uint64_t mPadA;
-        ID3D12Debug* pDxDebug;
-        #if defined (_WINDOWS)
-            ID3D12InfoQueue* pDxDebugValidation;
-        #endif
     };
 
     struct RHIInstance_D3D12 : public RHIInstance
@@ -331,7 +307,7 @@ namespace Cyber
         //struct IDxcBlobEncoding* shader_dxc_blob;
         struct IDxcResult* shader_result;
     };
-
+/*
     class RHI_D3D12 : public RHI
     {
     public:
@@ -402,7 +378,7 @@ namespace Cyber
         virtual void rhi_free_shader_library(RHIShaderLibrary* shaderLibrary) override;
 
     };
-
+*/
     static const D3D_FEATURE_LEVEL d3d_feature_levels[] = 
     {
         D3D_FEATURE_LEVEL_12_1,

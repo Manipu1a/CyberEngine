@@ -4,6 +4,7 @@
 
 namespace Cyber
 {
+    /*
     RHI* RHI::gDynamicRHI = nullptr;
 
     void RHI::createRHI(ERHIBackend backend)
@@ -16,4 +17,5 @@ namespace Cyber
 
         cyber_assert(false, "RHI for platform [0] initialize failed!", backend);
     }
+    */
 }

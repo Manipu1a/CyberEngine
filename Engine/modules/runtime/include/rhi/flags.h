@@ -1007,3 +1007,189 @@ typedef enum ERHIStoreAction
     RHI_STORE_ACTION_MAX_ENUM_BIT = 0x7FFFFFFF
 } ERHIStoreAction;
 
+/// These flags mirror [VkPipelineStageFlagBits](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VkPipelineStageFlagBits)
+/// enum and only have effect in Vulkan backend.
+typedef enum ERHIPipelineStageFlags
+{
+    /// Undefined stage
+    RHI_PIPELINE_STAGE_FLAG_UNDEFINED = 0x00000000,
+
+    /// The top of the pipeline.
+    RHI_PIPELINE_STAGE_FLAG_TOP_OF_PIPE = 0x00000001,
+
+    /// The stage of the pipeline where Draw/DispatchIndirect data structures are consumed.
+    RHI_PIPELINE_STAGE_FLAG_DRAW_INDIRECT = 0x00000002,
+
+    /// The stage of the pipeline where vertex and index buffers are consumed.
+    RHI_PIPELINE_STAGE_FLAG_VERTEX_INPUT = 0x00000004,
+
+    /// Vertex shader stage.
+    RHI_PIPELINE_STAGE_FLAG_VERTEX_SHADER = 0x00000008,
+
+    /// Hull shader stage.
+    RHI_PIPELINE_STAGE_FLAG_HULL_SHADER = 0x00000010,
+
+    /// Domain shader stage.
+    RHI_PIPELINE_STAGE_FLAG_DOMAIN_SHADER = 0x00000020,
+
+    /// Geometry shader stage.
+    RHI_PIPELINE_STAGE_FLAG_GEOMETRY_SHADER = 0x00000040,
+
+    /// Pixel shader stage.
+    RHI_PIPELINE_STAGE_FLAG_PIXEL_SHADER = 0x00000080,
+
+    /// The stage of the pipeline where early fragment tests (depth and
+    /// stencil tests before fragment shading) are performed. This stage
+    /// also includes subpass load operations for framebuffer attachments
+    /// with a depth/stencil format.
+    RHI_PIPELINE_STAGE_FLAG_EARLY_FRAGMENT_TESTS = 0x00000100,
+
+    /// The stage of the pipeline where late fragment tests (depth and
+    /// stencil tests after fragment shading) are performed. This stage
+    /// also includes subpass store operations for framebuffer attachments
+    /// with a depth/stencil format.
+    RHI_PIPELINE_STAGE_FLAG_LATE_FRAGMENT_TESTS = 0x00000200,
+
+    /// The stage of the pipeline after blending where the final color values
+    /// are output from the pipeline. This stage also includes subpass load
+    /// and store operations and multisample resolve operations for framebuffer
+    /// attachments with a color or depth/stencil format.
+    RHI_PIPELINE_STAGE_FLAG_RENDER_TARGET = 0x00000400,
+
+    /// Compute shader stage.
+    RHI_PIPELINE_STAGE_FLAG_COMPUTE_SHADER = 0x00000800,
+
+    /// The stage where all copy and outside-of-renderpass
+    /// resolve and clear operations happen.
+    RHI_PIPELINE_STAGE_FLAG_TRANSFER = 0x00001000,
+
+    /// The bottom of the pipeline.
+    RHI_PIPELINE_STAGE_FLAG_BOTTOM_OF_PIPE = 0x00002000,
+
+    /// A pseudo-stage indicating execution on the host of reads/writes
+    /// of device memory. This stage is not invoked by any commands recorded
+    /// in a command buffer.
+    RHI_PIPELINE_STAGE_FLAG_HOST = 0x00004000,
+
+    /// The stage of the pipeline where the predicate of conditional rendering is consumed.
+    RHI_PIPELINE_STAGE_FLAG_CONDITIONAL_RENDERING = 0x00040000,
+
+    /// The stage of the pipeline where the shading rate texture is
+    /// read to determine the shading rate for portions of a rasterized primitive.
+    RHI_PIPELINE_STAGE_SHADING_RATE_TEXTURE = 0x00400000,
+
+    /// Ray tracing shader.
+    RHI_PIPELINE_STAGE_FLAG_RAY_TRACING_SHADER = 0x00200000,
+
+    /// Acceleration structure build shader.
+    RHI_PIPELINE_STAGE_FLAG_ACCELERATION_STRUCTURE_BUILD = 0x02000000,
+
+    /// Task shader stage.
+    RHI_PIPELINE_STAGE_FLAG_TASK_SHADER = 0x00080000,
+
+    /// Mesh shader stage.
+    RHI_PIPELINE_STAGE_FLAG_MESH_SHADER = 0x00100000,
+
+    /// The stage of the pipeline where the fragment density map is read to generate the fragment areas.
+    RHI_PIPELINE_STAGE_FLAG_FRAGMENT_DENSITY_PROCESS = 0x00800000,
+
+    /// Default pipeline stage that is determined by the resource state.
+    /// For example, RESOURCE_STATE_RENDER_TARGET corresponds to
+    /// PIPELINE_STAGE_FLAG_RENDER_TARGET pipeline stage.
+    RHI_PIPELINE_STAGE_FLAG_DEFAULT = 0x80000000
+
+} ERHIPipelineStageFlags;
+
+
+/// The flags mirror [VkAccessFlags](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/vkspec.html#VkAccessFlags) enum
+/// and only have effect in Vulkan backend.
+typedef enum ERHIAccessFlags
+{
+    /// No access
+    RHI_ACCESS_FLAG_NONE                         = 0x00000000,
+
+    /// Read access to indirect command data read as part of an indirect
+    /// drawing or dispatch command.
+    RHI_ACCESS_FLAG_INDIRECT_COMMAND_READ        = 0x00000001,
+
+    /// Read access to an index buffer as part of an indexed drawing command
+    RHI_ACCESS_FLAG_INDEX_READ                   = 0x00000002,
+
+    /// Read access to a vertex buffer as part of a drawing command
+    RHI_ACCESS_FLAG_VERTEX_READ                  = 0x00000004,
+
+    /// Read access to a uniform buffer
+    RHI_ACCESS_FLAG_UNIFORM_READ                 = 0x00000008,
+
+    /// Read access to an input attachment within a render pass during fragment shading
+    RHI_ACCESS_FLAG_INPUT_ATTACHMENT_READ        = 0x00000010,
+
+    /// Read access from a shader resource, formatted buffer, UAV
+    RHI_ACCESS_FLAG_SHADER_READ                  = 0x00000020,
+
+    /// Write access to a UAV
+    RHI_ACCESS_FLAG_SHADER_WRITE                 = 0x00000040,
+
+    /// Read access to a color render target, such as via blending,
+    /// logic operations, or via certain subpass load operations.
+    RHI_ACCESS_FLAG_RENDER_TARGET_READ           = 0x00000080,
+
+    /// Write access to a color render target, resolve, or depth/stencil resolve
+    /// attachment during a render pass or via certain subpass load and store operations.
+    RHI_ACCESS_FLAG_RENDER_TARGET_WRITE          = 0x00000100,
+
+    /// Read access to a depth/stencil buffer, via depth or stencil operations
+    /// or via certain subpass load operations
+    RHI_ACCESS_FLAG_DEPTH_STENCIL_READ           = 0x00000200,
+
+    /// Write access to a depth/stencil buffer, via depth or stencil operations
+    /// or via certain subpass load and store operations
+    RHI_ACCESS_FLAG_DEPTH_STENCIL_WRITE          = 0x00000400,
+
+    /// Read access to an texture or buffer in a copy operation.
+    RHI_ACCESS_FLAG_COPY_SRC                     = 0x00000800,
+
+    /// Write access to an texture or buffer in a copy operation.
+    RHI_ACCESS_FLAG_COPY_DST                     = 0x00001000,
+
+    /// Read access by a host operation. Accesses of this type are
+    /// not performed through a resource, but directly on memory.
+    RHI_ACCESS_FLAG_HOST_READ                    = 0x00002000,
+
+    /// Write access by a host operation. Accesses of this type are
+    /// not performed through a resource, but directly on memory.
+    RHI_ACCESS_FLAG_HOST_WRITE                   = 0x00004000,
+
+    /// All read accesses. It is always valid in any access mask,
+    /// and is treated as equivalent to setting all READ access flags
+    /// that are valid where it is used.
+    RHI_ACCESS_FLAG_MEMORY_READ                  = 0x00008000,
+
+    /// All write accesses. It is always valid in any access mask,
+    /// and is treated as equivalent to setting all WRITE access
+    // flags that are valid where it is used.
+    RHI_ACCESS_FLAG_MEMORY_WRITE                 = 0x00010000,
+
+    /// Read access to a predicate as part of conditional rendering.
+    RHI_ACCESS_FLAG_CONDITIONAL_RENDERING_READ   = 0x00100000,
+
+    /// Read access to a shading rate texture as part of a drawing command.
+    RHI_ACCESS_FLAG_SHADING_RATE_TEXTURE_READ    = 0x00800000,
+
+    /// Read access to an acceleration structure as part of a trace or build command.
+    RHI_ACCESS_FLAG_ACCELERATION_STRUCTURE_READ  = 0x00200000,
+
+    /// Write access to an acceleration structure or acceleration structure
+    /// scratch buffer as part of a build command.
+    RHI_ACCESS_FLAG_ACCELERATION_STRUCTURE_WRITE = 0x00400000,
+
+    /// Read access to a fragment density map attachment during
+    /// dynamic fragment density map operations.
+    RHI_ACCESS_FLAG_FRAGMENT_DENSITY_MAP_READ    = 0x01000000,
+
+    /// Default access type that is determined by the resource state.
+    /// For example, RESOURCE_STATE_RENDER_TARGET corresponds to
+    /// ACCESS_FLAG_RENDER_TARGET_WRITE access type.
+    RHI_ACCESS_FLAG_DEFAULT                      = 0x80000000
+
+} ERHIAccessFlags;;

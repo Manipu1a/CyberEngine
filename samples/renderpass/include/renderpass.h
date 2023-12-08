@@ -1,5 +1,6 @@
 #pragma once
 #include "sampleapp.h"
+#include "rhi/frame_buffer.h"
 
 namespace Cyber
 {
@@ -24,6 +25,7 @@ namespace Cyber
             void raster_draw();
             void create_gfx_objects();
             void create_render_pipeline();
+            void create_render_pass();
             void create_resource();
             void create_ui();
             void draw_ui();
@@ -32,6 +34,9 @@ namespace Cyber
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
             RHIRenderPipeline* pipeline = nullptr;
+            RHITexture* base_color_texture = nullptr;
+            Cyber::RenderObject::CEFrameBuffer* frame_buffer = nullptr;
+            Cyber::RenderObject::CERenderPass* render_pass = nullptr;
         };
     }
 }

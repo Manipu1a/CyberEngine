@@ -7,7 +7,7 @@ namespace Cyber
     {
         SampleApp::SampleApp()
         {
-            RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
+           // RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
 
         }
         SampleApp::~SampleApp()

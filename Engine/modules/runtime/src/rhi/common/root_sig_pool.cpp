@@ -2,6 +2,7 @@
 #include <EASTL/vector.h>
 #include "rhi/flags.h"
 #include "rhi/rhi.h"
+#include "rhi/device_context.h"
 #include "parallel_hashmap/phmap.h"
 #include "platform/memory.h"
 
@@ -147,7 +148,7 @@ namespace Cyber
                     biCharacterMap.erase(trueSig);
                     trueSig->pool = nullptr;
                     trueSig->pool_next = nullptr;
-                    rhi_free_root_signature(trueSig);
+                    device_context->GetRenderDevice()->free_root_signature(trueSig);
                     return true;
                 }
                 iter->second--;
@@ -178,7 +179,7 @@ namespace Cyber
                 auto enforceDestroy = iter.first;
                 enforceDestroy->pool = nullptr;
                 enforceDestroy->pool_next = nullptr;
-                rhi_free_root_signature(enforceDestroy);
+                device_context->GetRenderDevice()->free_root_signature(enforceDestroy);
             }
         }
     private:

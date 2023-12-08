@@ -14,6 +14,12 @@ namespace Cyber
     #define RHI_MAX_MRT_COUNT 8u
     #define RHI_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
     
+    namespace RenderObject
+    {
+        class CEDeviceContext;
+        class CERenderDevice;
+    }
+
     typedef uint32_t RHIQueueIndex;
     struct RHITexture;
     typedef Ref<RHITexture> TextureRHIRef;
@@ -85,19 +91,14 @@ namespace Cyber
         RHIInstance* pInstance = nullptr;
     };
 
-    struct CYBER_RHI_API RHIDevice
-    {
-        RHIAdapter* pAdapter;
-    };
-
     struct CYBER_RHI_API RHIFence
     {
-        RHIDevice* pDevice;
+        RenderObject::CERenderDevice* pDevice;
     };
 
     struct CYBER_RHI_API RHISemaphore
     {
-        RHIDevice* pDevice;
+        RenderObject::CERenderDevice* pDevice;
     };
 
     /// Shaders
@@ -137,13 +138,13 @@ namespace Cyber
 
     struct RHIRootSignaturePool
     {
-        Ref<RHIDevice> pDevice;
+        RenderObject::CEDeviceContext* device_context;
         ERHIPipelineType mPipelineType;
     };
 
     struct CYBER_RHI_API RHIRootSignature
     {
-        Ref<RHIDevice> device;
+        RenderObject::CEDeviceContext* device_context;
         RHIParameterTable* parameter_tables;
         uint32_t parameter_table_count;
         RHIShaderResource* push_constants;
@@ -163,7 +164,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIRenderPipeline
     {
-        Ref<RHIDevice> device;
+        RenderObject::CERenderDevice device;
         RHIRootSignature* root_signature;
     };
     /// Shader Reflection
@@ -261,7 +262,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIShaderLibrary
     {
-        Ref<RHIDevice> pDevice;
+        RenderObject::CERenderDevice pDevice;
         char8_t* pName;
         RHIShaderReflection* entry_reflections;
         uint32_t entry_count;
@@ -310,28 +311,27 @@ namespace Cyber
     /// Texture group
     struct CYBER_RHI_API TextureCreateDesc
     {
-        /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
-        ERHIClearValue mClearValue;
         /// Pointer to native texture handle if the texture does not own underlying resource
-        void* mNativeHandle;
+        void* native_handle;
         /// Debug name used in gpu profile
-        const char8_t* pName;
-
-        uint32_t mWidth;
-        uint32_t mHeight;
-        uint32_t mDepth;
-        uint32_t mArraySize;
-        uint32_t mMipLevels;
-        ERHIDescriptorType mDescriptors;
-        RHITextureCreationFlag mFlags;
+        const char8_t* name;
+        uint32_t width;
+        uint32_t height;
+        uint32_t depth;
+        uint32_t array_size;
+        uint32_t mip_levels;
+        /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
+        ERHIClearValue clear_value;
+        ERHIDescriptorType descriptors;
+        RHITextureCreationFlag flags;
         /// Number of multisamples per pixel (currently Textures created with mUsage TEXTURE_USAGE_SAMPLED_IMAGE only support SAMPLE_COUNT_1)
-        ERHITextureSampleCount mSampleCount;
+        ERHITextureSampleCount sample_count;
         /// The image quality level. The higher the quality, the lower the performance. The valid range is between zero and the value appropriate for mSampleCount
-        uint32_t mSampleQuality;
+        uint32_t sample_quality;
         /// Image format
-        ERHIFormat mFormat;
+        ERHIFormat format;
         /// What state will the texture get created in
-        ERHIResourceState mStartState;
+        ERHIResourceState start_state;
     };
 
     struct CYBER_RHI_API TextureViewCreateDesc
@@ -371,7 +371,7 @@ namespace Cyber
     struct RHITextureView
     {
         TextureViewCreateDesc create_info;
-        Ref<RHIDevice> device;
+        RenderObject::CERenderDevice device;
     };
 
     struct CYBER_RHI_API RHISampler 
@@ -423,7 +423,7 @@ namespace Cyber
         uint64_t mDescriptors : 20;
         uint64_t mMemoryUsage : 3;
         uint64_t mNodeIndex : 4;
-        Ref<RHIDevice> device;
+        RenderObject::CERenderDevice device;
     };
     
     struct CYBER_RHI_API RHIBufferRange
@@ -512,16 +512,9 @@ namespace Cyber
         bool mIsCpu : 1;
     };
 
-    struct CYBER_RHI_API RHIDeviceCreateDesc
-    {
-        bool bDisablePipelineCache;
-        eastl::vector<RHIQueueGroupDesc> queue_groups;
-        uint32_t queue_group_count;
-    };
-
     struct CYBER_RHI_API RHIQueue
     {
-        RHIDevice* pDevice;
+        RenderObject::CERenderDevice* pDevice;
         ERHIQueueType mType;
         RHIQueueIndex mIdex;
     };
@@ -533,7 +526,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHICommandBuffer
     {
-        Cyber::Ref<RHIDevice> pDevice;
+        RenderObject::CERenderDevice pDevice;
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
     };
@@ -542,7 +535,7 @@ namespace Cyber
 
     struct CYBER_RHI_API RHIQueryPool
     {
-        Cyber::Ref<RHIDevice> pDevice;
+        RenderObject::CERenderDevice pDevice;
         uint32_t mCount;
     };
 
@@ -664,20 +657,52 @@ namespace Cyber
         uint8_t write_stencil;
     };
 
-    struct CYBER_RHI_API RHIRenderSubpassDesc
+    struct CYBER_RHI_API RenderPassAttachmentDesc
+    {
+        ERHIFormat format;
+        uint8_t sample_count;
+        ERHILoadAction load_action;
+        ERHIStoreAction store_action;
+        ERHILoadAction stencil_load_action;
+        ERHIStoreAction stencil_store_action;
+        ERHIResourceState initial_state;
+        ERHIResourceState final_state;
+    };
+
+    struct CYBER_RHI_API AttachmentReference
+    {
+        uint32_t attachment_index;
+        ERHIResourceState state;
+    };
+
+    struct CYBER_RHI_API RenderSubpassDesc
     {
         ERHITextureSampleCount sample_count;
-        const RHIColorAttachment* color_attachments;
-        const RHIDepthStencilAttachment* depth_stencil_attachment;
+        uint32_t input_attachment_count;
+        const AttachmentReference* input_attachments;
+        const AttachmentReference* depth_stencil_attachment;
         uint32_t render_target_count;
+        const AttachmentReference* render_target_attachments;
+    };
+
+    struct CYBER_RHI_API SubpassDependencyDesc
+    {
+        uint32_t src_subpass;
+        uint32_t dst_subpass;
+        ERHIPipelineStageFlags src_stage_mask;
+        ERHIPipelineStageFlags dst_stage_mask;
+        ERHIAccessFlags src_access_mask;
+        ERHIAccessFlags dst_access_mask;
     };
 
     struct CYBER_RHI_API RHIRenderPassDesc
     {
         const char8_t* name;
+        uint32_t attachment_count;
+        const RenderPassAttachmentDesc* attachments;
         uint32_t subpass_count;
         const char8_t* const* subpass_names;
-        RHIRenderSubpassDesc* subpasses;
+        RenderSubpassDesc* subpasses;
     };
 
     struct CYBER_RHI_API RHIBlendStateCreateDesc
@@ -786,6 +811,7 @@ namespace Cyber
         bool enable_indirect_command;
     };
 
+/*
     class CYBER_RHI_API RHI
     {
     public:
@@ -994,6 +1020,8 @@ namespace Cyber
             cyber_core_assert(false, "Empty implement rhi_cmd_resource_barrier!");
         }
         // Render Pass
+        
+
         virtual RHIRenderPassEncoder* rhi_cmd_begin_render_pass(RHICommandBuffer* cmd, const RHIRenderPassDesc& beginRenderPassDesc)
         {
             cyber_core_assert(false, "Empty implement rhi_cmd_begin_renderpass!");
@@ -1051,6 +1079,7 @@ namespace Cyber
     protected:
 
     };
+
 
     CYBER_FORCE_INLINE RHIInstance* rhi_create_instance(const RHIInstanceCreateDesc& instanceDesc) 
     {
@@ -1281,7 +1310,7 @@ namespace Cyber
     {
         RHI::gDynamicRHI->rhi_render_encoder_draw_indexed_instanced(encoder, index_count, first_index, instance_count, first_instance, first_vertex);
     } 
-
+*/
     #define RHI_SINGLE_GPU_NODE_COUNT 1
     #define RHI_SINGLE_GPU_NODE_MASK 1
     #define RHI_SINGLE_GPU_NODE_INDEX 0

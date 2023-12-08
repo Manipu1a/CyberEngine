@@ -1,13 +1,13 @@
 #include "resource/resource_loader.h"
 #include "EASTL/EABase/eabase.h"
 #include "EASTL/string.h"
-//#include <corecrt_wstdio.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <vcruntime.h>
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
 #include "filesystem"
+#include "rhi/device_context.h"
 
 namespace Cyber
 {
@@ -65,7 +65,7 @@ namespace Cyber
             return true;
         }
 
-        RHIShaderLibrary* add_shader(RHIDevice* device, const ShaderLoadDesc& desc)
+        RHIShaderLibrary* add_shader(RenderObject::CEDeviceContext* context, const ShaderLoadDesc& desc)
         {
             RHIShaderLibraryCreateDesc libraryDesc;
             
@@ -88,7 +88,8 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(device, libraryDesc);
+                    RHIShaderLibrary* shaderLibrary = context->GetRenderDevice()->create_shader_library(nullptr, libraryDesc);
+                    //RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(device, libraryDesc);
                     if(shaderLibrary)
                     {
                         return shaderLibrary;

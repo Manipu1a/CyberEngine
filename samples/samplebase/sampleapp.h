@@ -34,7 +34,7 @@ namespace Cyber
             RHIFence* present_swmaphore = nullptr; 
             uint32_t backbuffer_index = 0;
 
-            RenderObject::CDeviceContext* immediate_context = nullptr;
+            RenderObject::CEDeviceContext* immediate_context = nullptr;
         };
 
     }

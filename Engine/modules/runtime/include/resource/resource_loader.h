@@ -5,8 +5,14 @@
 
 namespace Cyber
 {
+    namespace RenderObject
+    {
+        class CEDeviceContext;
+    }
+    
     namespace ResourceLoader
     {
+
         typedef enum EShaderStageLoadFlag
         {
             SHADER_STAGE_LOAD_FLAG_NONE = 0,
@@ -33,6 +39,6 @@ namespace Cyber
             uint32_t constant_count;
         };
 
-        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RHIDevice* device, const ShaderLoadDesc& desc);
+        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RenderObject::CEDeviceContext* device, const ShaderLoadDesc& desc);
     }
 }

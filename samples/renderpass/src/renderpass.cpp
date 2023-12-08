@@ -39,7 +39,7 @@ namespace Cyber
                     .dimension = RHI_TEX_DIMENSION_2D,
                     .array_layer_count = 1
                 };
-                swap_chain->mBackBufferSRVViews[i] = irhi_create_texture_view(device, view_desc);
+                swap_chain->mBackBufferSRVViews[i] = rhi_create_texture_view(device, view_desc);
             }
             
             rhi_cmd_begin(cmd);
@@ -136,12 +136,97 @@ namespace Cyber
             rhi_free_shader_library(ps_shader);
         }
 
-        void RenderPassApp::create_resource()
+        void RenderPassApp::create_render_pass()
         {
+            // attachment 1 - color
+            // attachment 2 - depth
+            // attachment 3 - final color
+            constexpr uint32_t num_attachments = 3;
+
+            RenderPassAttachmentDesc attachments[num_attachments] = {};
+            attachments[0].format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM;
+            attachments[0].load_action = RHI_LOAD_ACTION_CLEAR;
+            attachments[0].store_action = RHI_STORE_ACTION_STORE;
+            attachments[0].initial_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+            attachments[0].final_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+            
+            attachments[1].format = ERHIFormat::RHI_FORMAT_D24_UNORM_S8_UINT;
+            attachments[1].load_action = RHI_LOAD_ACTION_CLEAR;
+            attachments[1].store_action = RHI_STORE_ACTION_STORE;
+            attachments[1].initial_state = RHI_RESOURCE_STATE_COMMON;
+            attachments[1].final_state = RHI_RESOURCE_STATE_DEPTH_WRITE;
+
+            attachments[2].format = (ERHIFormat)swap_chain->mBackBufferSRVs[0]->mFormat;
+            attachments[2].load_action = RHI_LOAD_ACTION_CLEAR;
+            attachments[2].store_action = RHI_STORE_ACTION_STORE;
+            attachments[2].initial_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+            attachments[2].final_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+
+            constexpr uint32_t num_subpasses = 2;
+            RenderSubpassDesc subpasses[num_subpasses] = {};
+            // subpass 0 attachments
+            AttachmentReference rt_attachment_ref0[] = 
+            {
+                {0, RHI_RESOURCE_STATE_RENDER_TARGET}
+            };
+
+            AttachmentReference depth_attachment_ref0 = {1, RHI_RESOURCE_STATE_DEPTH_WRITE};
+            // subpass 1 attachments
+            AttachmentReference rt_attachment_ref1[] =
+            {
+                {2, RHI_RESOURCE_STATE_RENDER_TARGET}
+            };
+            AttachmentReference depth_attachment_ref1 = { 1, RHI_RESOURCE_STATE_DEPTH_WRITE };
+            AttachmentReference input_attachment_ref1[] = 
+            {
+                { 0, RHI_RESOURCE_STATE_SHADER_RESOURCE }
+            };
+
+            subpasses[0].render_target_count = _countof(rt_attachment_ref0);
+            subpasses[0].render_target_attachments = rt_attachment_ref0;
+            subpasses[0].depth_stencil_attachment = &depth_attachment_ref0;
+
+            subpasses[1].render_target_count = _countof(rt_attachment_ref1);
+            subpasses[1].render_target_attachments = rt_attachment_ref1;
+            subpasses[1].depth_stencil_attachment = &depth_attachment_ref1;
+            subpasses[1].input_attachment_count = _countof(input_attachment_ref1);
+            subpasses[1].input_attachments = input_attachment_ref1;
+
+            RHIRenderPassDesc renderpass_desc;
+            renderpass_desc.attachments = attachments;
+            renderpass_desc.attachment_count = num_attachments;
+            renderpass_desc.subpass_count = num_subpasses;
+            renderpass_desc.subpasses = subpasses;
 
         }
 
-        
+        void RenderPassApp::create_resource()
+        {
+            TextureCreateDesc texture_desc = {
+                .name = CYBER_UTF8("backbuffer"),
+                .width = getWindow()->getWidth(),
+                .height = getWindow()->getHeight(),
+                .depth = 1,
+                .array_size = 1,
+                .mip_levels = 1,
+                .clear_value = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f },
+                .descriptors = RHI_DESCRIPTOR_TYPE_UNDEFINED,
+                .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
+                .start_state = RHI_RESOURCE_STATE_RENDER_TARGET | RHI_RESOURCE_STATE_SHADER_RESOURCE,
+            };
+
+            base_color_texture = rhi_create_texture(device, texture_desc);
+            
+            RenderObject::FrameBuffserDesc frame_buffer_desc = {
+                .name = CYBER_UTF8("frame_buffer"),
+                .render_pass = nullptr,
+                .attachment_count = 1,
+                .attachments = &base_color_texture->mSRV
+            };
+
+
+        }
+
         void RenderPassApp::raster_draw()
         {
             RHIAcquireNextDesc acquire_desc = {
@@ -174,10 +259,12 @@ namespace Cyber
             };
 
             RHIRenderPassDesc rp_desc = {
+                /*
                 .sample_count = RHI_SAMPLE_COUNT_1,
                 .color_attachments = &screen_attachment,
                 .depth_stencil_attachment = &depth_attachment,
                 .render_target_count = 1,
+                */
             };
             RHITextureBarrier draw_barrier = {
                 .texture = back_buffer,
@@ -199,10 +286,10 @@ namespace Cyber
             depth_attachment.depth_load_action = RHI_LOAD_ACTION_LOAD;
             depth_attachment.stencil_load_action = RHI_LOAD_ACTION_LOAD;
             RHIRenderPassDesc ui_rp_desc = {
-                .sample_count = RHI_SAMPLE_COUNT_1,
-                .color_attachments = &screen_attachment,
-                .depth_stencil_attachment = &depth_attachment,
-                .render_target_count = 1,
+                //.sample_count = RHI_SAMPLE_COUNT_1,
+                //.color_attachments = &screen_attachment,
+                //.depth_stencil_attachment = &depth_attachment,
+                //.render_target_count = 1,
             };
 
             RHIRenderPassEncoder* rp_ui_encoder = rhi_cmd_begin_render_pass(cmd, ui_rp_desc);

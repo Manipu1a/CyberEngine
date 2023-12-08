@@ -4,22 +4,22 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        CDeviceContext::CDeviceContext(RHIDevice* device)
+        CEDeviceContext::CEDeviceContext(RHIDevice* device)
         {
             pDevice = device;
         }
 
-        CDeviceContext::~CDeviceContext()
+        CEDeviceContext::~CEDeviceContext()
         {
 
         }
 
-        void CDeviceContext::BeginRenderPass(const RHIRenderPassDesc& desc)
+        void CEDeviceContext::BeginRenderPass(const RHIRenderPassDesc& desc)
         {
 
         }
 
-        void CDeviceContext::EndRenderPass()
+        void CEDeviceContext::EndRenderPass()
         {
 
         }
