@@ -331,7 +331,7 @@ namespace Cyber
         /// Image format
         ERHIFormat format;
         /// What state will the texture get created in
-        ERHIResourceState start_state;
+        ERHIResourceStates start_state;
     };
 
     struct CYBER_RHI_API TextureViewCreateDesc

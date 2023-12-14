@@ -21,7 +21,7 @@ namespace Cyber
         void RenderPassApp::initialize(Cyber::WindowDesc& desc)
         {
             GameApplication::initialize(desc);
-            RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
+            //RHI::createRHI(ERHIBackend::RHI_BACKEND_D3D12);
 
             create_gfx_objects();
 
@@ -39,10 +39,10 @@ namespace Cyber
                     .dimension = RHI_TEX_DIMENSION_2D,
                     .array_layer_count = 1
                 };
-                swap_chain->mBackBufferSRVViews[i] = rhi_create_texture_view(device, view_desc);
+                swap_chain->mBackBufferSRVViews[i] = device->create_texture_view(view_desc);
             }
             
-            rhi_cmd_begin(cmd);
+            device->cmd_begin(cmd);
             {
                 RHITextureBarrier depth_barrier = {
                     .texture = swap_chain->mBackBufferDSV,
@@ -50,9 +50,9 @@ namespace Cyber
                     .dst_state = RHI_RESOURCE_STATE_DEPTH_WRITE
                 };
                 RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
-                rhi_cmd_resource_barrier(cmd, barrier_desc1);
+                device->cmd_resource_barrier(cmd, barrier_desc1);
             }
-            rhi_cmd_end(cmd);
+            device->cmd_end(cmd);
 
             create_render_pipeline();
         }
@@ -110,14 +110,14 @@ namespace Cyber
                 .shaders = pipeline_shader_create_desc,
                 .shader_count = 2,
             };
-            root_signature = rhi_create_root_signature(device, root_signature_create_desc);
+            root_signature = device->create_root_signature(root_signature_create_desc);
             // create descriptor set
 
             RHIDescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
-            descriptor_set = rhi_create_descriptor_set(device, desc_set_create_desc);
+            descriptor_set = device->create_descriptor_set(desc_set_create_desc);
 
             RHIVertexLayout vertex_layout = {.attribute_count = 0};
             RHIRenderPipelineCreateDesc rp_desc = 
@@ -131,9 +131,9 @@ namespace Cyber
                 .render_target_count = 1,
                 .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
             };
-            pipeline = rhi_create_render_pipeline(device, rp_desc);
-            rhi_free_shader_library(vs_shader);
-            rhi_free_shader_library(ps_shader);
+            pipeline = device->create_render_pipeline(rp_desc);
+            device->free_shader_library(vs_shader);
+            device->free_shader_library(ps_shader);
         }
 
         void RenderPassApp::create_render_pass()
@@ -215,15 +215,15 @@ namespace Cyber
                 .start_state = RHI_RESOURCE_STATE_RENDER_TARGET | RHI_RESOURCE_STATE_SHADER_RESOURCE,
             };
 
-            base_color_texture = rhi_create_texture(device, texture_desc);
-            
+            base_color_texture = device->create_texture(texture_desc);
+            /*
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),
                 .render_pass = nullptr,
                 .attachment_count = 1,
                 .attachments = &base_color_texture->mSRV
             };
-
+            */
 
         }
 
@@ -232,13 +232,13 @@ namespace Cyber
             RHIAcquireNextDesc acquire_desc = {
                 .fence = present_fence
             };
-            backbuffer_index = rhi_acquire_next_image(swap_chain, acquire_desc);
+            backbuffer_index = device->acquire_next_image(swap_chain, acquire_desc);
             auto back_buffer = swap_chain->mBackBufferSRVs[backbuffer_index];
             auto back_buffer_view = swap_chain->mBackBufferSRVViews[backbuffer_index];
             auto back_depth_buffer_view = swap_chain->mBackBufferDSVView;
-            rhi_reset_command_pool(pool);
+            device->reset_command_pool(pool);
             // record
-            rhi_cmd_begin(cmd);
+            device->cmd_begin(cmd);
             RHIColorAttachment screen_attachment = {
                 .view = back_buffer_view,
                 .load_action = RHI_LOAD_ACTION_CLEAR,
@@ -273,14 +273,14 @@ namespace Cyber
             };
 
             RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            rhi_cmd_resource_barrier(cmd, barrier_desc0);
-            RHIRenderPassEncoder* rp_encoder = rhi_cmd_begin_render_pass(cmd, rp_desc);
-            rhi_render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-            rhi_render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
-            rhi_render_encoder_bind_pipeline(rp_encoder, pipeline);
+            device->cmd_resource_barrier(cmd, barrier_desc0);
+            RHIRenderPassEncoder* rp_encoder = device->cmd_begin_render_pass(cmd, rp_desc);
+            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+            device->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            rhi_render_encoder_draw(rp_encoder, 3, 0);
-            rhi_cmd_end_render_pass(cmd);
+            device->render_encoder_draw(rp_encoder, 3, 0);
+            device->cmd_end_render_pass(cmd);
 
             screen_attachment.load_action = RHI_LOAD_ACTION_LOAD;
             depth_attachment.depth_load_action = RHI_LOAD_ACTION_LOAD;
@@ -292,10 +292,10 @@ namespace Cyber
                 //.render_target_count = 1,
             };
 
-            RHIRenderPassEncoder* rp_ui_encoder = rhi_cmd_begin_render_pass(cmd, ui_rp_desc);
-            rhi_render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-            rhi_render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
-            rhi_cmd_end_render_pass(cmd);
+            RHIRenderPassEncoder* rp_ui_encoder = device->cmd_begin_render_pass(cmd, ui_rp_desc);
+            device->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+            device->cmd_end_render_pass(cmd);
 
             RHITextureBarrier present_barrier = {
                 .texture = back_buffer,
@@ -303,8 +303,8 @@ namespace Cyber
                 .dst_state = RHI_RESOURCE_STATE_PRESENT
             };
             RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            rhi_cmd_resource_barrier(cmd, barrier_desc2);
-            rhi_cmd_end(cmd);
+            device->cmd_resource_barrier(cmd, barrier_desc2);
+            device->cmd_end(cmd);
 
             // submit
             RHIQueueSubmitDesc submit_desc = {
@@ -312,7 +312,7 @@ namespace Cyber
                 .mSignalFence = present_fence,
                 .mCmdsCount = 1
             };
-            rhi_submit_queue(queue, submit_desc);
+            device->submit_queue(queue, submit_desc);
 
             // present
             RHIQueuePresentDesc present_desc = {
@@ -321,10 +321,10 @@ namespace Cyber
                 .wait_semaphore_count = 0,
                 .index = backbuffer_index,
             };
-            rhi_present_queue(queue, present_desc);
+            device->present_queue(queue, present_desc);
 
             // sync & reset
-            rhi_wait_fences(&present_fence, 1);
+            device->wait_fences(&present_fence, 1);
         }
 
         void RenderPassApp::finalize()

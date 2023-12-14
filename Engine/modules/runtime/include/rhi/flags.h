@@ -679,7 +679,7 @@ typedef enum ERHISlotMaskBit
     RHI_SLOT_7 = 0x80,
 } ERHISlotMaskBit;
 
-enum ERHIResourceState
+typedef enum ERHIResourceState
 {
     RHI_RESOURCE_STATE_UNDEFINED = 0,
     RHI_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1,
@@ -700,8 +700,10 @@ enum ERHIResourceState
     RHI_RESOURCE_STATE_COMMON = 0x2000,
     RHI_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
     RHI_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
-};
-typedef uint32_t RHIResourceState;
+} ERHIResourceState;
+
+typedef uint32_t ERHIResourceStates;
+
 enum ERHIResourceMemoryUsage
 {
     /// No intended memory usage specified.

@@ -15,7 +15,7 @@ namespace Cyber
             Cyber::RHITextureView* attachments;
         };
 
-        class CEFameBuffer
+        class CEFrameBuffer
         {
         public:
             

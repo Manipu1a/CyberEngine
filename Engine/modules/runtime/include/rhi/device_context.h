@@ -18,11 +18,11 @@ namespace Cyber
             void BeginRenderPass(const RHIRenderPassDesc& desc);
             void EndRenderPass();
 
-            CERenderDevice* GetRenderDevice() const { return pRenderDevice; }
+            CERenderDevice* GetRenderDevice() const { return render_device; }
         protected:
-            CERenderDevice* pRenderDevice;
-            RHIRenderPassDesc mActiveRenderPassDesc;
-            CEFameBuffer* mBoundFrameBuffer;
+            CERenderDevice* render_device;
+            RHIRenderPassDesc active_render_pass_desc;
+            CEFrameBuffer* bound_frame_buffer = nullptr;
         };
     }
 }

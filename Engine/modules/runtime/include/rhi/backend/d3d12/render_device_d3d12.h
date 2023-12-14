@@ -78,6 +78,21 @@ namespace Cyber
             virtual RHIShaderLibrary* create_shader_library(const struct RHIShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(RHIShaderLibrary* shaderLibrary) override;
 
+            ID3D12Device* GetD3D12Device() { return pDxDevice; }
+            class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return pResourceAllocator; }
+            RHIDescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return mCPUDescriptorHeaps[heap_type]; }
+
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetSamplerHeaps() { return mSamplerHeaps; }
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return mCbvSrvUavHeaps; }
+            struct RHIEmptyDescriptors_D3D12* GetNullDescriptors() { return pNullDescriptors; }
+            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return ppCommandQueues; }
+            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return pCommandQueueCounts; }
+            IDXGIFactory6* GetDXGIFactory() { return pDXGIFactory; }
+            IDXGIAdapter4* GetDXActiveGPU() { return pDxActiveGPU; }
+            ID3D12PipelineLibrary* GetPipelineLibrary() { return pPipelineLibrary; }
+            void* GetPSOCacheData() { return pPSOCacheData; }
+            ID3D12Debug* GetDxDebug() { return pDxDebug; }
+
         protected:
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);

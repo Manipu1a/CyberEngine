@@ -45,7 +45,7 @@ namespace Cyber
         RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance);
         
-        pAdapter = adapter;
+        this->adapter = adapter;
 
         if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&pDxDevice))))
         {
@@ -91,7 +91,7 @@ namespace Cyber
         }
 
         // Create D3D12MA Allocator
-        D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, dxDevice);
+        D3D12Util_CreateDMAAllocator(dxInstance, dxAdapter, this);
         cyber_assert(pResourceAllocator, "DMA Allocator Must be Created!");
 
         // Create Descriptor Heaps
@@ -106,7 +106,7 @@ namespace Cyber
 
 #endif
             mCPUDescriptorHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
-            D3D12Util_CreateDescriptorHeap(pDxDevice, desc, &mCPUDescriptorHeaps[i]);
+            D3D12Util_CreateDescriptorHeap(this, desc, &mCPUDescriptorHeaps[i]);
         }
         
         // One shader visible heap for each linked node
@@ -119,12 +119,12 @@ namespace Cyber
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 
             mCbvSrvUavHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
-            D3D12Util_CreateDescriptorHeap(pDxDevice, desc, &mCbvSrvUavHeaps[i]);
+            D3D12Util_CreateDescriptorHeap(this, desc, &mCbvSrvUavHeaps[i]);
 
             desc.NumDescriptors = 1 << 11;
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
             mSamplerHeaps[i] = (RHIDescriptorHeap_D3D12*)cyber_malloc(sizeof(RHIDescriptorHeap_D3D12));
-            D3D12Util_CreateDescriptorHeap(pDxDevice, desc, &mSamplerHeaps[i]);
+            D3D12Util_CreateDescriptorHeap(this, desc, &mSamplerHeaps[i]);
         }
 
         // Allocate NULL Descriptors
@@ -143,46 +143,46 @@ namespace Cyber
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D]);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D]);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMS;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_3D]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_3D]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_3D]);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_3D]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D_ARRAY]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D_ARRAY]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_1D_ARRAY]);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_1D_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D_ARRAY]);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D_ARRAY]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2D_ARRAY]);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->TextureUAV[RHI_TEX_DIMENSION_2D_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS_ARRAY]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_2DMS_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE_ARRAY]);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->TextureSRV[RHI_TEX_DIMENSION_CUBE_ARRAY]);
 
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-            D3D12Util_CreateSRV(dxDevice, NULL, &srvDesc, &pNullDescriptors->BufferSRV);
-            D3D12Util_CreateUAV(dxDevice, NULL, NULL, &uavDesc, &pNullDescriptors->BufferUAV);
-            D3D12Util_CreateCBV(dxDevice, NULL, &pNullDescriptors->BufferCBV);
+            D3D12Util_CreateSRV(this, NULL, &srvDesc, &pNullDescriptors->BufferSRV);
+            D3D12Util_CreateUAV(this, NULL, NULL, &uavDesc, &pNullDescriptors->BufferUAV);
+            D3D12Util_CreateCBV(this, NULL, &pNullDescriptors->BufferCBV);
         }
 
         // Pipeline cache
@@ -334,7 +334,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                     break;
                 }
-                D3D12Util_CreateSRV(tex->pDxResource, &srvDesc, &srv);
+                D3D12Util_CreateSRV(this, tex->pDxResource, &srvDesc, &srv);
                 current_offset_cursor += heap->mDescriptorSize * 1;
             }
             // Create UAV
@@ -390,7 +390,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                     break;
                 }
-                D3D12Util_CreateUAV(tex->pDxResource, nullptr, &uavDesc, &uav);
+                D3D12Util_CreateUAV(this, tex->pDxResource, nullptr, &uavDesc, &uav);
             }
         }
 
@@ -451,7 +451,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                         break;
                 }
-                D3D12Util_CreateDSV(tex->pDxResource, &dsvDesc, &tex_view->mRtvDsvDescriptorHandle);
+                D3D12Util_CreateDSV(this, tex->pDxResource, &dsvDesc, &tex_view->mRtvDsvDescriptorHandle);
             }
             else
             {
@@ -515,7 +515,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                         break;
                 }
-                D3D12Util_CreateRTV(tex->pDxResource, &rtvDesc, &tex_view->mRtvDsvDescriptorHandle);
+                D3D12Util_CreateRTV(this, tex->pDxResource, &rtvDesc, &tex_view->mRtvDsvDescriptorHandle);
             }
         }
         return tex_view;
@@ -592,7 +592,7 @@ namespace Cyber
 
             desc.SampleDesc.Count = data.SampleCount;
 
-            ERHIResourceState actualStartState = pDesc.start_state;
+            ERHIResourceState actualStartState = (ERHIResourceState)pDesc.start_state;
 
             // Decide UAV flags
             if(descriptors & RHI_DESCRIPTOR_TYPE_RW_TEXTURE)
@@ -818,9 +818,10 @@ namespace Cyber
 
     RHIQueue* CERenderDevice_D3D12::get_queue(ERHIQueueType type, uint32_t index)
     {
+        RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
         dxQueue->pCommandQueue = ppCommandQueues[type][index];
-        dxQueue->pFence = create_fence(device);
-        dxQueue->pDevice = device;
+        dxQueue->pFence = create_fence();
+        dxQueue->pDevice = this;
         return dxQueue;
     }
     void CERenderDevice_D3D12::submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
@@ -887,12 +888,12 @@ namespace Cyber
     }
 
     // Command Objects
-    void allocate_transient_command_allocator(RHICommandPool_D3D12* commandPool, RHIQueue* queue)
+    void allocate_transient_command_allocator(ID3D12Device* d3d12_device, RHICommandPool_D3D12* commandPool, RHIQueue* queue)
     {
         D3D12_COMMAND_LIST_TYPE type = queue->mType == RHI_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->mType == RHI_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
 
-        bool res = SUCCEEDED(pDxDevice->CreateCommandAllocator(type, IID_PPV_ARGS(&commandPool->pDxCmdAlloc)));
+        bool res = SUCCEEDED(d3d12_device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandPool->pDxCmdAlloc)));
         if(!res)
         {
             cyber_assert(false, "command allocator create failed!");
@@ -903,7 +904,7 @@ namespace Cyber
     RHICommandPool* CERenderDevice_D3D12::create_command_pool(RHIQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
     {
         RHICommandPool_D3D12* dxCommandPool = cyber_new<RHICommandPool_D3D12>();
-        allocate_transient_command_allocator(dxCommandPool, queue);
+        allocate_transient_command_allocator(pDxDevice, dxCommandPool, queue);
         return dxCommandPool;
     }
     void CERenderDevice_D3D12::reset_command_pool(RHICommandPool* pool)
@@ -1318,7 +1319,7 @@ namespace Cyber
 
     RHISwapChain* CERenderDevice_D3D12::create_swap_chain(const RHISwapChainCreateDesc& desc)
     {
-        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(pAdapter->pInstance);
+        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance);
         const uint32_t buffer_count = desc.mImageCount;
         RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12));
         dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
@@ -1352,7 +1353,7 @@ namespace Cyber
         }
         else 
         {
-            queue = static_cast<RHIQueue_D3D12*>(get_queue(pDevice, RHI_QUEUE_TYPE_GRAPHICS, 0));
+            queue = static_cast<RHIQueue_D3D12*>(get_queue(RHI_QUEUE_TYPE_GRAPHICS, 0));
         }
 
         auto bCreated = SUCCEEDED(dxInstance->pDXGIFactory->CreateSwapChainForHwnd(queue->pCommandQueue, hwnd, &chinDesc, NULL, NULL, &swapchain));
@@ -1607,7 +1608,7 @@ namespace Cyber
         HRESULT hr = D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, &signature, &error);
         if(SUCCEEDED(hr))
         {
-            hr = dxDevice->pDxDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dxRootSignature->dxRootSignature));
+            hr = pDxDevice->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&dxRootSignature->dxRootSignature));
             if(FAILED(hr))
             {
                 CB_ERROR("Failed to create root signature!");
@@ -1702,11 +1703,11 @@ namespace Cyber
                 auto src_sampler_handle = D3D12_DESCRIPTOR_ID_NONE;
                 switch (param_table->resources[i].type)
                 {
-                    case RHI_RESOURCE_TYPE_TEXTURE: src_handle = dxDevice->pNullDescriptors->TextureSRV[dimension]; break;
-                    case RHI_RESOURCE_TYPE_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferSRV; break;
-                    case RHI_RESOURCE_TYPE_RW_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferUAV; break;
-                    case RHI_RESOURCE_TYPE_UNIFORM_BUFFER: src_handle = dxDevice->pNullDescriptors->BufferCBV; break;
-                    case RHI_RESOURCE_TYPE_SAMPLER: src_sampler_handle = dxDevice->pNullDescriptors->Sampler; break;
+                    case RHI_RESOURCE_TYPE_TEXTURE: src_handle = pNullDescriptors->TextureSRV[dimension]; break;
+                    case RHI_RESOURCE_TYPE_BUFFER: src_handle = pNullDescriptors->BufferSRV; break;
+                    case RHI_RESOURCE_TYPE_RW_BUFFER: src_handle = pNullDescriptors->BufferUAV; break;
+                    case RHI_RESOURCE_TYPE_UNIFORM_BUFFER: src_handle = pNullDescriptors->BufferCBV; break;
+                    case RHI_RESOURCE_TYPE_SAMPLER: src_sampler_handle = pNullDescriptors->Sampler; break;
                     default: break;
                 }
 
@@ -1966,7 +1967,7 @@ namespace Cyber
         // Not find in cache
         if(!SUCCEEDED(result))
         {
-            CHECK_HRESULT(CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pPipeline->pDxPipelineState)));
+            CHECK_HRESULT(pDxDevice->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&pPipeline->pDxPipelineState)));
             // Pipeline cache
             if(pPipelineLibrary)
             {
@@ -2142,7 +2143,7 @@ namespace Cyber
 
     RHIBuffer* CERenderDevice_D3D12::create_buffer(const BufferCreateDesc& pDesc)
     {
-        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(device->pAdapter);
+        RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
         
         RHIBuffer_D3D12* pBuffer = cyber_new<RHIBuffer_D3D12>();
 
@@ -2228,7 +2229,7 @@ namespace Cyber
         }
         else
         {
-            CHECK_HRESULT(DxDevice->pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, NULL, &pBuffer->pDxAllocation, IID_ARGS(&pBuffer->pDxResource)));
+            CHECK_HRESULT(pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, NULL, &pBuffer->pDxAllocation, IID_ARGS(&pBuffer->pDxResource)));
             CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(pDesc.pName ? pDesc.pName : CYBER_UTF8("")), allocationSize, pDesc.mFormat);
         }
         
@@ -2254,7 +2255,7 @@ namespace Cyber
                 D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
                 cbvDesc.BufferLocation = pBuffer->mDxGpuAddress;
                 cbvDesc.SizeInBytes = (UINT)allocationSize;
-                D3D12Util_CreateCBV(DxDevice, &cbvDesc, &pBuffer->mDxDescriptorHandles);
+                D3D12Util_CreateCBV(this, &cbvDesc, &pBuffer->mDxDescriptorHandles);
             }
 
             // Create SRV
@@ -2285,7 +2286,7 @@ namespace Cyber
                     srvDesc.Buffer.StructureByteStride = 0;
                 }
 
-                D3D12Util_CreateSRV(pBuffer->pDxResource, &srvDesc, &srv);
+                D3D12Util_CreateSRV(this, pBuffer->pDxResource, &srvDesc, &srv);
             }
 
             // Create UAV
@@ -2327,7 +2328,7 @@ namespace Cyber
                 }
 
                 ID3D12Resource* pCounterResource = pDesc.pCounterBuffer ? static_cast<RHIBuffer_D3D12*>(pDesc.pCounterBuffer)->pDxResource : nullptr;
-                D3D12Util_CreateUAV(pBuffer->pDxResource, pCounterResource, &uavDesc, &uav);
+                D3D12Util_CreateUAV(this, pBuffer->pDxResource, pCounterResource, &uavDesc, &uav);
             }
         }
 
@@ -2513,7 +2514,7 @@ namespace Cyber
             )";
 
         // Reflect shader
-        D3D12Util_InitializeShaderReflection(pDxDevice, pLibrary, desc);
+        D3D12Util_InitializeShaderReflection(this, pLibrary, desc);
 
         return pLibrary;
     }
@@ -2527,6 +2528,16 @@ namespace Cyber
             dx_shader_library->shader_blob->Release();
         }
         cyber_delete(shaderLibrary);
+    }
+
+    HRESULT CERenderDevice_D3D12::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)
+    {
+        return pDxDevice->CheckFeatureSupport(pFeature, pFeatureSupportData, pFeatureSupportDataSize);
+    }
+
+    HRESULT CERenderDevice_D3D12::hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource)
+    {
+        return pDxDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
     }
     }
 }

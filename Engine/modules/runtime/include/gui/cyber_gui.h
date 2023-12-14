@@ -1,7 +1,8 @@
 #pragma once
-#include "rhi/rhi.h"
-#include "cyber_runtime.config.h"
 #include "rhi/backend/d3d12/rhi_d3d12.h"
+#include "rhi/render_device.h"
+#include "cyber_runtime.config.h"
+
 
 namespace Cyber
 {
@@ -13,7 +14,7 @@ namespace Cyber
             GUIApplication();
             ~GUIApplication();
 
-            void initialize(RHIDevice* device, HWND hwnd);
+            void initialize(RenderObject::CERenderDevice* device, HWND hwnd);
             void run();
             void update(RHIRenderPassEncoder* encoder, float deltaTime);
             void finalize();

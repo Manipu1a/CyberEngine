@@ -65,7 +65,7 @@ namespace Cyber
             return true;
         }
 
-        RHIShaderLibrary* add_shader(RenderObject::CEDeviceContext* context, const ShaderLoadDesc& desc)
+        RHIShaderLibrary* add_shader(RenderObject::CERenderDevice* device, const ShaderLoadDesc& desc)
         {
             RHIShaderLibraryCreateDesc libraryDesc;
             
@@ -88,7 +88,7 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    RHIShaderLibrary* shaderLibrary = context->GetRenderDevice()->create_shader_library(nullptr, libraryDesc);
+                    RHIShaderLibrary* shaderLibrary = device->create_shader_library(libraryDesc);
                     //RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(device, libraryDesc);
                     if(shaderLibrary)
                     {

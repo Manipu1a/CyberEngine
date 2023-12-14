@@ -22,7 +22,10 @@ namespace Cyber
                 this->adapter = adapter;
                 this->device_desc = deviceDesc;
             }
-            virtual ~CERenderDevice();
+            virtual ~CERenderDevice()
+            {
+                free_device();
+            }
         private:
             CERenderDevice();
             

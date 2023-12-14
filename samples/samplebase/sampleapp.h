@@ -1,5 +1,6 @@
 #pragma once
 #include "gameruntime/GameApplication.h"
+#include "rhi/render_device.h"
 #include "rhi/device_context.h"
 #include "cyber_samples.config.h"
 
@@ -22,7 +23,7 @@ namespace Cyber
             ///-------------------------------------
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
             static const uint32_t BACK_BUFFER_COUNT = 3;
-            RHIDevice* device = nullptr;
+            RenderObject::CERenderDevice* device = nullptr;
             RHIInstance* instance = nullptr;
             RHIAdapter* adapter = nullptr;
             RHIFence* present_fence = nullptr;

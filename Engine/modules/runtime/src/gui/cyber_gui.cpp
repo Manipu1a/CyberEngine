@@ -3,6 +3,7 @@
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
 #include "platform/memory.h"
+#include "rhi/backend/d3d12/render_device_d3d12.h"
 
 namespace Cyber
 {
@@ -17,16 +18,16 @@ namespace Cyber
 
         }
 
-        void GUIApplication::initialize(RHIDevice* device, HWND hwnd)
+        void GUIApplication::initialize(RenderObject::CERenderDevice* device, HWND hwnd)
         {
-            RHIDevice_D3D12* device_d3d12 = static_cast<RHIDevice_D3D12*>(device);
+            RenderObject::CERenderDevice_D3D12* device_d3d12 = static_cast<RenderObject::CERenderDevice_D3D12*>(device);
             D3D12_DESCRIPTOR_HEAP_DESC desc = {};
             desc.NumDescriptors = 1;
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             desc.NodeMask = 0;
             g_imguiSrvDescHeap = cyber_new<RHIDescriptorHeap_D3D12>();
-            CHECK_HRESULT(device_d3d12->pDxDevice->CreateDescriptorHeap(&desc, IID_ARGS(&g_imguiSrvDescHeap->pCurrentHeap)));
+            CHECK_HRESULT(device_d3d12->GetD3D12Device()->CreateDescriptorHeap(&desc, IID_ARGS(&g_imguiSrvDescHeap->pCurrentHeap)));
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
@@ -41,7 +42,7 @@ namespace Cyber
             // Setup Platform/Renderer backends
             ImGui_ImplWin32_Init(hwnd);
             
-            ImGui_ImplDX12_Init(device_d3d12->pDxDevice, 3,
+            ImGui_ImplDX12_Init(device_d3d12->GetD3D12Device(), 3,
                 DXGI_FORMAT_R8G8B8A8_UNORM, g_imguiSrvDescHeap->pCurrentHeap,
                 g_imguiSrvDescHeap->pCurrentHeap->GetCPUDescriptorHandleForHeapStart(),
                 g_imguiSrvDescHeap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart());

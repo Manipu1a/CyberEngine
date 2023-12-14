@@ -325,13 +325,13 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_CreateDescriptorHeap(ID3D12Device* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap)
+    void D3D12Util_CreateDescriptorHeap(RenderObject::CERenderDevice_D3D12* device, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap)
     {
         uint32_t numDesciptors = pDesc.NumDescriptors;
         RHIDescriptorHeap_D3D12* pHeap = (RHIDescriptorHeap_D3D12*)cyber_calloc(1, sizeof(*pHeap));
         // TODO thread safety
 
-        pHeap->pDevice = pDevice;
+        pHeap->pDevice = device->GetD3D12Device();
 
         // Keep 32 aligned for easy remove
         //numDesciptors = cyber_round_up(numDesciptors, 32);
@@ -340,7 +340,7 @@ namespace Cyber
         Desc.NumDescriptors = numDesciptors;
         pHeap->mDesc = Desc;
 
-        if(!SUCCEEDED(pDevice->CreateDescriptorHeap(&Desc, IID_ARGS(&pHeap->pCurrentHeap))))
+        if(!SUCCEEDED(device->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_ARGS(&pHeap->pCurrentHeap))))
         {
             cyber_assert(false, "DescriptorHeap Create Failed!");
         }
@@ -350,7 +350,7 @@ namespace Cyber
         {
             pHeap->mStartHandle.mGpu = pHeap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
         }
-        pHeap->mDescriptorSize = pDevice->GetDescriptorHandleIncrementSize(pHeap->mDesc.Type);
+        pHeap->mDescriptorSize = device->GetD3D12Device()->GetDescriptorHandleIncrementSize(pHeap->mDesc.Type);
         if(Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
         {
             pHeap->pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
@@ -370,11 +370,11 @@ namespace Cyber
         cyber_free(heap);
     }
 
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RHIDevice_D3D12* pDevice)
+    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::CERenderDevice_D3D12* device)
     {
         D3D12MA::ALLOCATOR_DESC desc = {};
         desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
-        desc.pDevice = pDevice->pDxDevice;
+        desc.pDevice = device->GetD3D12Device();
         desc.pAdapter = pAdapter->pDxActiveGPU;
 
         D3D12MA::ALLOCATION_CALLBACKS allocationCallbacks = {};
@@ -386,7 +386,8 @@ namespace Cyber
         };
         desc.pAllocationCallbacks = &allocationCallbacks;
         desc.Flags |= D3D12MA::ALLOCATOR_FLAG_MSAA_TEXTURES_ALWAYS_COMMITTED;
-        if(!SUCCEEDED(D3D12MA::CreateAllocator(&desc, &pDevice->pResourceAllocator)))
+        auto resource_allocator = device->GetD3D12ResourceAllocator();
+        if(!SUCCEEDED(D3D12MA::CreateAllocator(&desc, &resource_allocator)))
         {
             cyber_assert(false, "DMA Allocator Create Failed!");
         }
@@ -537,7 +538,7 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_InitializeShaderReflection(ID3D12Device* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
+    void D3D12Util_InitializeShaderReflection(RenderObject::CERenderDevice_D3D12* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
     {
         ID3D12ShaderReflection* d3d12Reflection = nullptr;
         auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
@@ -626,39 +627,39 @@ namespace Cyber
         queue->pCommandQueue->Signal(fence, fenceValue);
     }
 
-    void D3D12Util_CreateCBV(RHIDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateCBV(RenderObject::CERenderDevice_D3D12* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
-        pDevice->pDxDevice->CreateConstantBufferView(pCbvDesc, *pHandle);
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
+        device->GetD3D12Device()->CreateConstantBufferView(pCbvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateSRV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateSRV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
-        pDevice->pDxDevice->CreateShaderResourceView(pResource, pSrvDesc, *pHandle);
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
+        device->GetD3D12Device()->CreateShaderResourceView(pResource, pSrvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateUAV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateUAV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV], 1).mCpu;
-        pDevice->pDxDevice->CreateUnorderedAccessView(pResource, pCounterResource, pUavDesc, *pHandle);
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
+        device->GetD3D12Device()->CreateUnorderedAccessView(pResource, pCounterResource, pUavDesc, *pHandle);
     }
 
-    void D3D12Util_CreateRTV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateRTV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV], 1).mCpu;
-        pDevice->pDxDevice->CreateRenderTargetView(pResource, pRtvDesc, *pHandle);
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), 1).mCpu;
+        device->GetD3D12Device()->CreateRenderTargetView(pResource, pRtvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateDSV(RHIDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateDSV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(pDevice->mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV], 1).mCpu;
-        pDevice->pDxDevice->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
+            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_DSV), 1).mCpu;
+        device->GetD3D12Device()->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
     }
 
     D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc)

@@ -39,6 +39,6 @@ namespace Cyber
             uint32_t constant_count;
         };
 
-        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RenderObject::CEDeviceContext* device, const ShaderLoadDesc& desc);
+        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RenderObject::CERenderDevice* device, const ShaderLoadDesc& desc);
     }
 }

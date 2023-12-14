@@ -4,9 +4,9 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        CEDeviceContext::CEDeviceContext(RHIDevice* device)
+        CEDeviceContext::CEDeviceContext(CERenderDevice* device)
         {
-            pDevice = device;
+            render_device = device;
         }
 
         CEDeviceContext::~CEDeviceContext()
