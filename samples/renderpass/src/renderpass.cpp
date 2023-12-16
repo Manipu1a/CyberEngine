@@ -1,8 +1,8 @@
 #include "renderpass.h"
 #include "platform/memory.h"
-#include "rendergraph/render_graph_resource.h"
-#include "rendergraph/render_graph_builder.h"
-#include "resource/resource_loader.h"
+#include "graphics/rendergraph/render_graph_resource.h"
+#include "graphics/rendergraph/render_graph_builder.h"
+#include "graphics/resource/resource_loader.h"
 
 namespace Cyber
 {
@@ -216,15 +216,26 @@ namespace Cyber
             };
 
             base_color_texture = device->create_texture(texture_desc);
+            TextureViewCreateDesc view_desc = {
+                .name = CYBER_UTF8("backbuffer_view"),
+                .texture = base_color_texture,
+                .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
+                .usages = RHI_TVU_RTV_DSV,
+                .aspects = RHI_TVA_COLOR,
+                .dimension = RHI_TEX_DIMENSION_2D,
+                .array_layer_count = 1
+            };
+
+            auto base_color_tex_view = device->create_texture_view(view_desc);
             /*
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),
                 .render_pass = nullptr,
                 .attachment_count = 1,
-                .attachments = &base_color_texture->mSRV
+                .attachments = base_color_tex_view
             };
+            frame_buffer = device->create_frame_buffer(frame_buffer_desc);
             */
-
         }
 
         void RenderPassApp::raster_draw()

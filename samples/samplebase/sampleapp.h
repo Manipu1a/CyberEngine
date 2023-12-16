@@ -1,7 +1,7 @@
 #pragma once
 #include "gameruntime/GameApplication.h"
-#include "rhi/render_device.h"
-#include "rhi/device_context.h"
+#include "graphics/rhi/render_device.h"
+#include "graphics/rhi/device_context.h"
 #include "cyber_samples.config.h"
 
 namespace Cyber

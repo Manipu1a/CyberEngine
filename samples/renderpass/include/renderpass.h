@@ -1,6 +1,6 @@
 #pragma once
 #include "sampleapp.h"
-#include "rhi/frame_buffer.h"
+#include "graphics/rhi/frame_buffer.h"
 
 namespace Cyber
 {

@@ -1,5 +1,5 @@
 #pragma once
-#include "rhi/rhi.h"
+#include "graphics/rhi/rhi.h"
 #include "EASTL/map.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>

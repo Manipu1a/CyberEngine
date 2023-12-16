@@ -1,5 +1,5 @@
 #pragma once
-#include "../platform/configure.h"
+#include "platform/configure.h"
 #include "utils/hash.h"
 
 #ifndef CYBER_RHI_EXPORT

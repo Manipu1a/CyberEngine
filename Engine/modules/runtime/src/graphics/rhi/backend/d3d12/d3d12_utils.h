@@ -1,6 +1,6 @@
 #pragma once
-#include "rhi/backend/d3d12/rhi_d3d12.h"
-#include "rhi/backend/d3d12/render_device_d3d12.h"
+#include "graphics/rhi/backend/d3d12/rhi_d3d12.h"
+#include "graphics/rhi/backend/d3d12/render_device_d3d12.h"
 
 namespace Cyber
 {

@@ -1,4 +1,4 @@
-#include "rhi/backend/d3d12/render_device_d3d12.h"
+#include "graphics/rhi/backend/d3d12/render_device_d3d12.h"
 #include "EASTL/vector.h"
 #include <EASTL/hash_map.h>
 #include <EASTL/string_hash_map.h>
@@ -17,8 +17,8 @@
 #include <synchapi.h>
 #include "platform/memory.h"
 #include "../../common/common_utils.h"
-#include "rhi/device_context.h"
-#include "rhi/render_device.h"
+#include "graphics/rhi/device_context.h"
+#include "graphics/rhi/render_device.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
