@@ -1,5 +1,5 @@
 #pragma once
-#include "../platform/configure.h"
+#include "platform/configure.h"
 
 #ifndef CYBER_RENDER_GRAPH_EXPORT
     #if defined (_MSC_VER)

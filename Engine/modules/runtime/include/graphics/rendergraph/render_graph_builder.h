@@ -21,7 +21,7 @@ namespace Cyber
             RGTextureRef create_texture(RGTextureCreateDesc desc, const char8_t* name);
             RGTextureRef get_texture(const char8_t* name);
 
-            RHITexture* GetRHITexture(const char8_t* name);
+            RenderObject::Texture* GetRHITexture(const char8_t* name);
             
             RGBufferRef create_buffer(RGBufferCreateDesc desc, const char8_t* name);
             RGBufferRef get_buffer(const char8_t* name);

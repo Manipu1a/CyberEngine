@@ -8,7 +8,7 @@
 #include "eastl/functional.h"
 #include "eastl/map.h"
 #include "eastl/vector.h"
-#include "rhi/rhi.h"
+#include "graphics/interface/rhi.h"
 
 #ifndef RG_MAX_FRAME_IN_FLIGHT
 #define RG_MAX_FRAME_IN_FLIGHT 3

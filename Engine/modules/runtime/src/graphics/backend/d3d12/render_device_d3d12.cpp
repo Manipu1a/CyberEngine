@@ -1,4 +1,4 @@
-#include "graphics/rhi/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
 #include "EASTL/vector.h"
 #include <EASTL/hash_map.h>
 #include <EASTL/string_hash_map.h>
@@ -17,8 +17,11 @@
 #include <synchapi.h>
 #include "platform/memory.h"
 #include "../../common/common_utils.h"
-#include "graphics/rhi/device_context.h"
-#include "graphics/rhi/render_device.h"
+#include "graphics/interface/device_context.h"
+#include "graphics/interface/render_device.h"
+#include "graphics/backend/d3d12/texture_d3d12.h"
+#include "graphics/backend/d3d12/texture_view_d3d12.h"
+#include "graphics/backend/d3d12/buffer_d3d12.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -234,11 +237,11 @@ namespace Cyber
         if(pPSOCacheData) cyber_free(pPSOCacheData);
     }
 
-    RHITextureView* CERenderDevice_D3D12::create_texture_view(const TextureViewCreateDesc& viewDesc)
+    RenderObject::Texture_View* CERenderDevice_D3D12::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
-        RHITextureView_D3D12* tex_view = cyber_new<RHITextureView_D3D12>();
+        RenderObject::Texture_View_D3D12* tex_view = cyber_new<RenderObject::Texture_View_D3D12>();
         tex_view->create_info = viewDesc;
-        RHITexture_D3D12* tex = static_cast<RHITexture_D3D12*>(viewDesc.texture);
+        RenderObject::Texture_D3D12* tex = static_cast<RenderObject::Texture_D3D12*>(viewDesc.texture);
 
         // Consume handles
         const auto usages = viewDesc.usages;
@@ -521,9 +524,9 @@ namespace Cyber
         return tex_view;
     }
 
-    void CERenderDevice_D3D12::free_texture_view(RHITextureView* view)
+    void CERenderDevice_D3D12::free_texture_view(RenderObject::Texture_View* view)
     {
-        RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(view);
+        RenderObject::Texture_View_D3D12* tex_view = static_cast<RenderObject::Texture_View_D3D12*>(view);
         const auto usages = tex_view->create_info.usages;
         const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->create_info.format);
         if(tex_view->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
@@ -533,9 +536,9 @@ namespace Cyber
         }
     }
 
-    RHITexture* CERenderDevice_D3D12::create_texture(const TextureCreateDesc& pDesc)
+    RenderObject::Texture* CERenderDevice_D3D12::create_texture(const RenderObject::TextureCreateDesc& pDesc)
     {
-        RHITexture_D3D12* pTexture = cyber_new<RHITexture_D3D12>();
+        RenderObject::Texture_D3D12* pTexture = cyber_new<RenderObject::Texture_D3D12>();
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         D3D12_RESOURCE_DESC desc = {};
@@ -989,7 +992,7 @@ namespace Cyber
         {
             const RHIBufferBarrier* transition_barrier = &barrierDesc.buffer_barriers[i];
             D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
-            RHIBuffer_D3D12* buffer = static_cast<RHIBuffer_D3D12*>(transition_barrier->buffer);
+            RenderObject::Buffer_D3D12* buffer = static_cast<RenderObject::Buffer_D3D12*>(transition_barrier->buffer);
             if(buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_GPU_ONLY ||
                 buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_GPU_TO_CPU ||
                 (buffer->mMemoryUsage == RHI_RESOURCE_MEMORY_USAGE_CPU_TO_GPU && buffer->mDescriptors & RHI_RESOURCE_TYPE_RW_BUFFER))
@@ -1049,7 +1052,7 @@ namespace Cyber
         {
             const RHITextureBarrier* transition_barrier = &barrierDesc.texture_barriers[i];
             D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
-            RHITexture_D3D12* texture = static_cast<RHITexture_D3D12*>(transition_barrier->texture);
+            RenderObject::Texture_D3D12* texture = static_cast<RenderObject::Texture_D3D12*>(transition_barrier->texture);
             if(transition_barrier->src_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS &&
                 transition_barrier->dst_state == RHI_RESOURCE_STATE_UNORDERED_ACCESS)
             {
@@ -1262,14 +1265,14 @@ namespace Cyber
         Cmd->pDxCmdList->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
         Cmd->pDxCmdList->SetPipelineState(Pipeline->pDxPipelineState);
     }
-    void CERenderDevice_D3D12::render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RHIBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+    void CERenderDevice_D3D12::render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RenderObject::Buffer** buffers,const uint32_t* strides, const uint32_t* offsets)
     {
         RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder);
 
         DECLARE_ZERO(D3D12_VERTEX_BUFFER_VIEW, views[RHI_MAX_VERTEX_ATTRIBUTES]);
         for(uint32_t i = 0;i < buffer_count; ++i)
         {
-            const RHIBuffer_D3D12* Buffer = static_cast<RHIBuffer_D3D12*>(buffers[i]);
+            const RenderObject::Buffer_D3D12* Buffer = static_cast<RenderObject::Buffer_D3D12*>(buffers[i]);
             cyber_check(Buffer->mDxGpuAddress != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
 
             views[i].BufferLocation = Buffer->mDxGpuAddress + (offsets ? offsets[i] : 0);
@@ -1278,10 +1281,10 @@ namespace Cyber
         }
         Cmd->pDxCmdList->IASetVertexBuffers(0, buffer_count, views);
     }
-    void CERenderDevice_D3D12::render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RHIBuffer* buffer, uint32_t index_stride, uint64_t offset)
+    void CERenderDevice_D3D12::render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RenderObject::Buffer* buffer, uint32_t index_stride, uint64_t offset)
     {
         RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder);
-        const RHIBuffer_D3D12* Buffer = static_cast<RHIBuffer_D3D12*>(buffer);
+        const RenderObject::Buffer_D3D12* Buffer = static_cast<RenderObject::Buffer_D3D12*>(buffer);
 
         DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
         view.BufferLocation = Buffer->mDxGpuAddress + offset;
@@ -1373,10 +1376,10 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->mBackBufferSRVs = (RHITexture**)cyber_malloc(buffer_count * sizeof(RHITexture*));
+        dxSwapChain->mBackBufferSRVs = (RenderObject::Texture**)cyber_malloc(buffer_count * sizeof(RenderObject::Texture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            RHITexture_D3D12* Ts = cyber_new<RHITexture_D3D12>();
+            RenderObject::Texture_D3D12* Ts = cyber_new<RenderObject::Texture_D3D12>();
             Ts->pDxResource = backbuffers[i];
             Ts->pDxAllocation = nullptr;
             Ts->mIsCube = false;
@@ -1410,7 +1413,7 @@ namespace Cyber
         depthStencilDesc.name = u8"Main Depth Stencil";
         dxSwapChain->mBackBufferDSV = create_texture(depthStencilDesc);
 
-        auto dsv = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBufferDSV);
+        auto dsv = static_cast<RenderObject::Texture_D3D12*>(dxSwapChain->mBackBufferDSV);
 
         TextureViewCreateDesc depthStencilViewDesc = {};
         depthStencilViewDesc.texture = dxSwapChain->mBackBufferDSV;
@@ -1430,7 +1433,7 @@ namespace Cyber
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
         for(uint32_t i = 0;i < dxSwapChain->mBufferSRVCount; ++i)
         {
-            RHITexture_D3D12* dxTexture = static_cast<RHITexture_D3D12*>(dxSwapChain->mBackBufferSRVs[i]);
+            RenderObject::Texture_D3D12* dxTexture = static_cast<RenderObject::Texture_D3D12*>(dxSwapChain->mBackBufferSRVs[i]);
             SAFE_RELEASE(dxTexture->pDxResource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);
@@ -2029,7 +2032,7 @@ namespace Cyber
             uint32_t heapOffset = 0;
             if(pParam->name != nullptr)
             {
-                size_t argNameHash = rhi_name_hash(pParam->name, strlen((char*)pParam->name));
+                size_t argNameHash = graphics_name_hash(pParam->name, strlen((char*)pParam->name));
                 for(uint32_t j = 0;j < paramTable->resource_count; ++j)
                 {
                     if(paramTable->resources[j].name_hash == argNameHash)
@@ -2054,7 +2057,7 @@ namespace Cyber
                 }
             }
             // Update info
-            const uint32_t arrayCount = rhi_max(1u,pParam->count);
+            const uint32_t arrayCount = graphics_max(1u,pParam->count);
             switch(resData->type)
             {
                 case RHI_RESOURCE_TYPE_SAMPLER:
@@ -2073,7 +2076,7 @@ namespace Cyber
                 case RHI_RESOURCE_TYPE_TEXTURE_CUBE:
                 {
                     cyber_assert(pParam->textures, "Binding Null Texture");
-                    RHITextureView_D3D12** Textures = (RHITextureView_D3D12**)pParam->textures;
+                    RenderObject::Texture_View_D3D12** Textures = (RenderObject::Texture_View_D3D12**)pParam->textures;
                     for(uint32_t arr = 0; arr < arrayCount; ++arr)
                     {
                         cyber_assert(pParam->textures[arr], "Binding Null Texture");
@@ -2086,7 +2089,7 @@ namespace Cyber
                 case RHI_RESOURCE_TYPE_BUFFER_RAW:
                 {
                     cyber_assert(pParam->buffers, "Binding Null Buffer");
-                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    RenderObject::Buffer_D3D12** Buffers = (RenderObject::Buffer_D3D12**)pParam->buffers;
                     for(uint32_t arr = 0; arr < arrayCount; ++arr)
                     {
                         cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
@@ -2098,7 +2101,7 @@ namespace Cyber
                 case RHI_RESOURCE_TYPE_UNIFORM_BUFFER:
                 {
                     cyber_assert(pParam->buffers, "Binding Null Buffer");
-                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    RenderObject::Buffer_D3D12** Buffers = (RenderObject::Buffer_D3D12**)pParam->buffers;
                     for(uint32_t arr = 0; arr < arrayCount; ++arr)
                     {
                         cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
@@ -2110,7 +2113,7 @@ namespace Cyber
                 case RHI_RESOURCE_TYPE_RW_TEXTURE:
                 {
                     cyber_assert(pParam->textures, "Binding Null Texture");
-                    RHITextureView_D3D12** Textures = (RHITextureView_D3D12**)pParam->textures;
+                    RenderObject::Texture_View_D3D12** Textures = (RenderObject::Texture_View_D3D12**)pParam->textures;
                     for(uint32_t arr = 0; arr < arrayCount; ++arr)
                     {
                         cyber_assert(pParam->textures[arr], "Binding Null Texture");
@@ -2123,7 +2126,7 @@ namespace Cyber
                 case RHI_RESOURCE_TYPE_RW_BUFFER_RAW:
                 {
                     cyber_assert(pParam->buffers, "Binding Null Buffer");
-                    RHIBuffer_D3D12** Buffers = (RHIBuffer_D3D12**)pParam->buffers;
+                    RenderObject::Buffer_D3D12** Buffers = (RenderObject::Buffer_D3D12**)pParam->buffers;
                     for(uint32_t arr = 0; arr < arrayCount; ++arr)
                     {
                         cyber_assert(pParam->buffers[arr], "Binding Null Buffer");
@@ -2141,11 +2144,11 @@ namespace Cyber
         }
     }
 
-    RHIBuffer* CERenderDevice_D3D12::create_buffer(const BufferCreateDesc& pDesc)
+    RenderObject::Buffer* CERenderDevice_D3D12::create_buffer(const BufferCreateDesc& pDesc)
     {
         RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
         
-        RHIBuffer_D3D12* pBuffer = cyber_new<RHIBuffer_D3D12>();
+        RenderObject::Buffer_D3D12* pBuffer = cyber_new<RenderObject::Buffer_D3D12>();
 
         uint64_t allocationSize = pDesc.mSize;
         // Align the buffer size to multiples of the dynamic uniform buffer minimum size
@@ -2327,7 +2330,7 @@ namespace Cyber
                     uavDesc.Buffer.StructureByteStride = 0;
                 }
 
-                ID3D12Resource* pCounterResource = pDesc.pCounterBuffer ? static_cast<RHIBuffer_D3D12*>(pDesc.pCounterBuffer)->pDxResource : nullptr;
+                ID3D12Resource* pCounterResource = pDesc.pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12*>(pDesc.pCounterBuffer)->pDxResource : nullptr;
                 D3D12Util_CreateUAV(this, pBuffer->pDxResource, pCounterResource, &uavDesc, &uav);
             }
         }
@@ -2337,15 +2340,15 @@ namespace Cyber
         pBuffer->mDescriptors = pDesc.mDescriptors;
         return pBuffer;
     }
-    void CERenderDevice_D3D12::free_buffer(RHIBuffer* buffer)
+    void CERenderDevice_D3D12::free_buffer(RenderObject::Buffer* buffer)
     {
 
     }
-    void CERenderDevice_D3D12::map_buffer(RHIBuffer* buffer, const RHIBufferRange* range)
+    void CERenderDevice_D3D12::map_buffer(RenderObject::Buffer* buffer, const RHIBufferRange* range)
     {
 
     }
-    void CERenderDevice_D3D12::unmap_buffer(RHIBuffer* buffer)
+    void CERenderDevice_D3D12::unmap_buffer(RenderObject::Buffer* buffer)
     {
 
     }

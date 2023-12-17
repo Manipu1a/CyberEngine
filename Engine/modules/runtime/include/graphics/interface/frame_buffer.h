@@ -1,18 +1,18 @@
 #pragma once
-#include "cyber_rhi_config.h"
-#include "rhi.h"
+#include "common/cyber_graphics_config.h"
+#include "interface/texture_view.h"
 #include "render_pass.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_RHI_API FrameBuffserDesc
+        struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
             const char8_t* name;
             CERenderPass render_pass;
             uint32_t attachment_count;
-            Cyber::RHITextureView* attachments;
+            RenderObject::Texture_View* attachments;
         };
 
         class CEFrameBuffer

@@ -1,9 +1,11 @@
 #pragma once
-#include "cyber_render_graph_config.h"
 #include "EASTL/map.h"
-#include "rhi/rhi.h"
-#include "rendergraph/base_type.h"
-#include "rendergraph/render_graph.h"
+#include "base_type.h"
+#include "render_graph.h"
+#include "interface/texture.h"
+#include "interface/texture_view.h"
+#include "interface/buffer.h"
+#include "cyber_render_graph_config.h"
 
 namespace Cyber
 {
@@ -39,9 +41,9 @@ namespace Cyber
         class RGRenderPass;
         class RGComputePass;
 
-        using RGTextureCreateDesc = TextureCreateDesc;
-        using RGBufferCreateDesc = BufferCreateDesc;
-        using RGTextureViewCreateDesc = TextureViewCreateDesc;
+        using RGTextureCreateDesc = RenderObject::TextureCreateDesc;
+        using RGBufferCreateDesc = RenderObject::BufferCreateDesc;
+        using RGTextureViewCreateDesc = RenderObject::TextureViewCreateDesc;
 
         #define MAX_MRT_COUNT 8
 
@@ -72,10 +74,10 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Buffer;
             }
-            RHIBuffer* GetBuffer();
+            RenderObject::Buffer* GetBuffer();
 
             RGBufferCreateDesc create_desc;
-            RHIBuffer* buffer;
+            RenderObject::Buffer* buffer;
         };
 
         class RGTexture : public RGRenderResource
@@ -85,10 +87,10 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Texture;
             }
-            RHITexture* GetTexture();
+            RenderObject::Texture* GetTexture();
 
             RGTextureCreateDesc create_desc;
-            RHITexture* texture;
+            RenderObject::Texture* texture;
             struct TextureNode* texture_node;
         };
         
@@ -182,7 +184,7 @@ namespace Cyber
 
         struct BufferNode : public ResourceNode
         {
-            RHIBuffer* buffer;
+            RenderObject::Buffer* buffer;
         };
  
         struct TextureNode : public ResourceNode
@@ -191,7 +193,7 @@ namespace Cyber
             {
             }
 
-            RHITexture* texture;
+            RenderObject::Texture* texture;
         };
 
         struct TextureEdge : public RenderGraphEdge

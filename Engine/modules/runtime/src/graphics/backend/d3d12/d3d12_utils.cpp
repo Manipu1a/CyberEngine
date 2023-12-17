@@ -462,7 +462,7 @@ namespace Cyber
             d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
             const size_t source_len = strlen(bindDesc.Name);
             reflection->shader_resources[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1));
-            reflection->shader_resources[i].name_hash = rhi_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
+            reflection->shader_resources[i].name_hash = graphics_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
             
             // We are very sure it's windows platform
             strcpy_s((char*)reflection->shader_resources[i].name, source_len + 1, bindDesc.Name);

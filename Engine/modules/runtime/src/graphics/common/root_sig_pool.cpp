@@ -1,8 +1,8 @@
 #include "common_utils.h"
 #include <EASTL/vector.h>
-#include "rhi/flags.h"
-#include "rhi/rhi.h"
-#include "rhi/device_context.h"
+#include "common/flags.h"
+#include "interface/rhi.h"
+#include "interface/device_context.h"
 #include "parallel_hashmap/phmap.h"
 #include "platform/memory.h"
 

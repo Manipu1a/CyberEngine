@@ -1,5 +1,5 @@
-#include "graphics/rhi/rhi.h"
-#include "graphics/rhi/backend/d3d12/rhi_d3d12.h"
+#include "interface/rhi.h"
+#include "backend/d3d12/rhi_d3d12.h"
 #include "platform/memory.h"
 
 namespace Cyber

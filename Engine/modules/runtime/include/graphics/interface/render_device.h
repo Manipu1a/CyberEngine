@@ -1,20 +1,23 @@
 #pragma once
 
-#include "cyber_rhi_config.h"
-#include "rhi.h"
+#include "common/cyber_graphics_config.h"
+#include "interface/rhi.h"
+#include "texture.h"
+#include "texture_view.h"
+#include "buffer.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_RHI_API RenderDeviceCreateDesc
+        struct CYBER_GRAPHICS_API RenderDeviceCreateDesc
         {
             bool bDisablePipelineCache;
             eastl::vector<RHIQueueGroupDesc> queue_groups;
             uint32_t queue_group_count;
         };
 
-        class CYBER_RHI_API CERenderDevice
+        class CYBER_GRAPHICS_API CERenderDevice
         {
         public:
             CERenderDevice(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
@@ -173,38 +176,38 @@ namespace Cyber
             }
 
             // Resource APIs
-            virtual RHITextureView* create_texture_view(const TextureViewCreateDesc& viewDesc)
+            virtual RenderObject::Texture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
             {
                 cyber_core_assert(false, "Empty implement create_texture_view!");
                 return nullptr;
             }
-            virtual void free_texture_view(RHITextureView* view)
+            virtual void free_texture_view(RenderObject::Texture_View* view)
             {
                 cyber_core_assert(false, "Empty implement free_texture_view!");
             }
-            virtual RHITexture* create_texture(const TextureCreateDesc& textureDesc) 
+            virtual RenderObject::Texture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_texture!");
                 return nullptr;
             }
-            virtual void free_texture(RHITexture* texture)
+            virtual void free_texture(RenderObject::Texture* texture)
             {
                 cyber_core_assert(false, "Empty implement free_texture!");
             }
-            virtual RHIBuffer* create_buffer(const BufferCreateDesc& bufferDesc) 
+            virtual RenderObject::Buffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_buffer!");
                 return nullptr;
             }
-            virtual void free_buffer(RHIBuffer* buffer)
+            virtual void free_buffer(RenderObject::Buffer* buffer)
             {
                 cyber_core_assert(false, "Empty implement free_buffer!");
             }
-            virtual void map_buffer(RHIBuffer* buffer, const RHIBufferRange* range)
+            virtual void map_buffer(RenderObject::Buffer* buffer, const RHIBufferRange* range)
             {
                 cyber_core_assert(false, "Empty implement map_buffer!");
             }
-            virtual void unmap_buffer(RHIBuffer* buffer)
+            virtual void unmap_buffer(RenderObject::Buffer* buffer)
             {
                 cyber_core_assert(false, "Empty implement unmap_buffer!");
             }
@@ -261,11 +264,11 @@ namespace Cyber
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_pipeline!");
             }
-            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RHIBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RenderObject::Buffer** buffers,const uint32_t* strides, const uint32_t* offsets)
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_vertex_buffer!");
             }
-            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RHIBuffer* buffer, uint32_t index_stride, uint64_t offset)
+            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RenderObject::Buffer* buffer, uint32_t index_stride, uint64_t offset)
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_index_buffer!");
             }
@@ -289,6 +292,10 @@ namespace Cyber
             {
                 cyber_core_assert(false, "Empty implement render_encoder_draw_indexed_instanced!");
             }
+
+            friend RenderObject::Texture;
+            friend RenderObject::Texture_View;
+            friend RenderObject::Buffer;
 
         };
     }

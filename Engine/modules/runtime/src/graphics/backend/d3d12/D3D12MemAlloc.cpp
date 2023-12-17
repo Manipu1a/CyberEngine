@@ -20,7 +20,7 @@
 // THE SOFTWARE.
 //
 
-#include "rhi/backend//d3d12//D3D12MemAlloc.h"
+#include "backend//d3d12//D3D12MemAlloc.h"
 
 #include <combaseapi.h>
 #include <mutex>

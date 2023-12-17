@@ -1,5 +1,5 @@
 #pragma once
-#include "cyber_rhi_config.h"
+#include "cyber_graphics_config.h"
 #include <stdint.h>
 
 // enums
@@ -1195,3 +1195,33 @@ typedef enum ERHIAccessFlags
     RHI_ACCESS_FLAG_DEFAULT                      = 0x80000000
 
 } ERHIAccessFlags;;
+
+
+    typedef union ERHIClearValue
+    {
+        struct
+        {
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+        struct
+        {
+            float depth;
+            uint32_t stencil;
+        };
+    } ERHIClearValue;
+    
+    static const ERHIClearValue fastclear_0000 = {
+        {0.f, 0.f, 0.f, 0.f}
+    };
+    static const ERHIClearValue fastclear_0001 = {
+        {0.f, 0.f, 0.f, 1.f}
+    };
+    static const ERHIClearValue fastclear_1110 = {
+        {1.f, 1.f, 1.f, 0.f}
+    };
+    static const ERHIClearValue fastclear_1111 = {
+        {1.f, 1.f, 1.f, 1.f}
+    };

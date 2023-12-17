@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/rhi/rhi.h"
+#include "graphics/interface/rhi.h"
 
 namespace Cyber
 {

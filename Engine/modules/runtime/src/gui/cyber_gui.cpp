@@ -3,7 +3,7 @@
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
 #include "platform/memory.h"
-#include "rhi/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
 
 namespace Cyber
 {

@@ -3,7 +3,7 @@
 #include "core/Core.h"
 #include "core/Application.h"
 #include "core/Window.h"
-#include "graphics/rhi/rhi.h"
+#include "graphics/interface/rhi.h"
 #include "CyberEvents/ApplicationEvent.h"
 #include "inputsystem/InputSystem.h"
 #include <windows.h>

@@ -30,7 +30,7 @@ namespace Cyber
             for(uint32_t i = 0; i < swap_chain->mBufferSRVCount; ++i)
             {
                 eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
-                TextureViewCreateDesc view_desc = {
+                RenderObject::TextureViewCreateDesc view_desc = {
                     .name = swap_chain_name.c_str(),
                     .texture = swap_chain->mBackBufferSRVs[i],
                     .format = (ERHIFormat)swap_chain->mBackBufferSRVs[i]->mFormat,

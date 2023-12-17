@@ -1,5 +1,5 @@
 #pragma once
-#include "cyber_rhi_config.h"
+#include "common/cyber_graphics_config.h"
 #include "rhi.h"
 #include "frame_buffer.h"
 #include "render_device.h"
@@ -8,7 +8,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class CYBER_RHI_API CEDeviceContext
+        class CYBER_GRAPHICS_API CEDeviceContext
         {
         public:
             CEDeviceContext(CERenderDevice* device);

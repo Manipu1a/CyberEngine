@@ -7,7 +7,7 @@
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
 #include "filesystem"
-#include "rhi/device_context.h"
+#include "interface/device_context.h"
 
 namespace Cyber
 {
@@ -59,7 +59,7 @@ namespace Cyber
 
             eastl::string binaryShaderComponent;
             static const size_t seed = 0x31415926;
-            size_t shaderDefinesHash = rhi_hash(shaderDefines.c_str(), shaderDefines.size(), seed);
+            size_t shaderDefinesHash = graphics_hash(shaderDefines.c_str(), shaderDefines.size(), seed);
             binaryShaderComponent.append_sprintf("%s_%s_%zu_%u_%u", rendererApi, loadDesc.file_name, shaderDefinesHash, loadDesc.stage, shaderTarget);
             
             return true;
