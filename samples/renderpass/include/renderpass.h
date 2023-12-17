@@ -1,6 +1,6 @@
 #pragma once
 #include "sampleapp.h"
-#include "graphics/rhi/frame_buffer.h"
+#include "graphics/interface/frame_buffer.h"
 
 namespace Cyber
 {
@@ -34,7 +34,7 @@ namespace Cyber
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
             RHIRenderPipeline* pipeline = nullptr;
-            RHITexture* base_color_texture = nullptr;
+            class RenderObject::Texture* base_color_texture = nullptr;
             Cyber::RenderObject::CEFrameBuffer* frame_buffer = nullptr;
             Cyber::RenderObject::CERenderPass* render_pass = nullptr;
         };
