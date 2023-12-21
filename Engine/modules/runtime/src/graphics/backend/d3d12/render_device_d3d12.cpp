@@ -240,7 +240,7 @@ namespace Cyber
     RenderObject::Texture_View* CERenderDevice_D3D12::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
         RenderObject::Texture_View_D3D12* tex_view = cyber_new<RenderObject::Texture_View_D3D12>();
-        tex_view->create_info = viewDesc;
+        tex_view->create_desc = viewDesc;
         RenderObject::Texture_D3D12* tex = static_cast<RenderObject::Texture_D3D12*>(viewDesc.texture);
 
         // Consume handles
@@ -527,8 +527,8 @@ namespace Cyber
     void CERenderDevice_D3D12::free_texture_view(RenderObject::Texture_View* view)
     {
         RenderObject::Texture_View_D3D12* tex_view = static_cast<RenderObject::Texture_View_D3D12*>(view);
-        const auto usages = tex_view->create_info.usages;
-        const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->create_info.format);
+        const auto usages = tex_view->create_desc.usages;
+        const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->create_desc.format);
         if(tex_view->mDxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
         {
             uint32_t handleCount = ((usages & RHI_TVU_SRV) ? 1 : 0) + ((usages & RHI_TVU_UAV) ? 1 : 0);
@@ -1463,6 +1463,11 @@ namespace Cyber
         RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
         // On PC AquireNext is always true
         return dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
+    }
+
+    CEFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
+    {
+        
     }
 
     // for example 

@@ -27,12 +27,14 @@ namespace Cyber
         class CYBER_GRAPHICS_API Texture_View
         {
         public:
-    
+
+            const TextureViewCreateDesc get_create_desc() const { return create_desc; }
         protected:
-            TextureViewCreateDesc create_info;
+            TextureViewCreateDesc create_desc;
             RenderObject::CERenderDevice* device;
 
             friend class RenderObject::CERenderDevice;
+
         };
     }
 }

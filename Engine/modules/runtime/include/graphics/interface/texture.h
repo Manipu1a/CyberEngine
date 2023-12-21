@@ -45,6 +45,7 @@ namespace Cyber
             virtual Texture_View* get_default_texture_view() const = 0;
             virtual Texture_View* create_texture_view(const TextureViewCreateDesc& desc) const = 0;
 
+            const TextureCreateDesc& get_create_desc() { return create_desc; }
         protected:
             uint32_t mWidth;
             uint32_t mHeight;
@@ -60,6 +61,8 @@ namespace Cyber
             uint32_t mOwnsImage;
             
             void* mNativeHandle;
+
+            TextureCreateDesc create_desc;
         };
     }
 }

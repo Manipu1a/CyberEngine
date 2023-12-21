@@ -10,7 +10,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
             const char8_t* name;
-            CERenderPass render_pass;
+            CERenderPass* render_pass;
             uint32_t attachment_count;
             RenderObject::Texture_View* attachments;
         };

@@ -26,14 +26,14 @@ namespace Cyber
             create_gfx_objects();
 
             // Create views
-            swap_chain->mBackBufferSRVViews = (RHITextureView**)cyber_malloc(sizeof(RHITextureView*) * swap_chain->mBufferSRVCount);
+            swap_chain->mBackBufferSRVViews = (RenderObject::Texture_View**)cyber_malloc(sizeof(RenderObject::Texture_View*) * swap_chain->mBufferSRVCount);
             for(uint32_t i = 0; i < swap_chain->mBufferSRVCount; ++i)
             {
                 eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
                 RenderObject::TextureViewCreateDesc view_desc = {
                     .name = swap_chain_name.c_str(),
                     .texture = swap_chain->mBackBufferSRVs[i],
-                    .format = (ERHIFormat)swap_chain->mBackBufferSRVs[i]->mFormat,
+                    .format = (ERHIFormat)swap_chain->mBackBufferSRVs[i]->get_create_desc().format,
                     .usages = RHI_TVU_RTV_DSV,
                     .aspects = RHI_TVA_COLOR,
                     .dimension = RHI_TEX_DIMENSION_2D,
@@ -120,6 +120,7 @@ namespace Cyber
             descriptor_set = device->create_descriptor_set(desc_set_create_desc);
 
             RHIVertexLayout vertex_layout = {.attribute_count = 0};
+            auto color_format = swap_chain->mBackBufferSRVViews[0]->get_create_desc().format;
             RHIRenderPipelineCreateDesc rp_desc = 
             {
                 .root_signature = root_signature,
@@ -127,7 +128,7 @@ namespace Cyber
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
                 //.rasterizer_state = {},
-                .color_formats = &swap_chain->mBackBufferSRVViews[0]->create_info.format,
+                .color_formats = &color_format,
                 .render_target_count = 1,
                 .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
             };
@@ -156,7 +157,7 @@ namespace Cyber
             attachments[1].initial_state = RHI_RESOURCE_STATE_COMMON;
             attachments[1].final_state = RHI_RESOURCE_STATE_DEPTH_WRITE;
 
-            attachments[2].format = (ERHIFormat)swap_chain->mBackBufferSRVs[0]->mFormat;
+            attachments[2].format = (ERHIFormat)swap_chain->mBackBufferSRVs[0]->get_create_desc().format;
             attachments[2].load_action = RHI_LOAD_ACTION_CLEAR;
             attachments[2].store_action = RHI_STORE_ACTION_STORE;
             attachments[2].initial_state = RHI_RESOURCE_STATE_RENDER_TARGET;
@@ -202,7 +203,7 @@ namespace Cyber
 
         void RenderPassApp::create_resource()
         {
-            TextureCreateDesc texture_desc = {
+            RenderObject::TextureCreateDesc texture_desc = {
                 .name = CYBER_UTF8("backbuffer"),
                 .width = getWindow()->getWidth(),
                 .height = getWindow()->getHeight(),
@@ -216,7 +217,7 @@ namespace Cyber
             };
 
             base_color_texture = device->create_texture(texture_desc);
-            TextureViewCreateDesc view_desc = {
+            RenderObject::TextureViewCreateDesc view_desc = {
                 .name = CYBER_UTF8("backbuffer_view"),
                 .texture = base_color_texture,
                 .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
@@ -227,7 +228,7 @@ namespace Cyber
             };
 
             auto base_color_tex_view = device->create_texture_view(view_desc);
-            /*
+            
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),
                 .render_pass = nullptr,
@@ -235,7 +236,7 @@ namespace Cyber
                 .attachments = base_color_tex_view
             };
             frame_buffer = device->create_frame_buffer(frame_buffer_desc);
-            */
+            
         }
 
         void RenderPassApp::raster_draw()
@@ -286,8 +287,8 @@ namespace Cyber
             RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device->cmd_resource_barrier(cmd, barrier_desc0);
             RHIRenderPassEncoder* rp_encoder = device->cmd_begin_render_pass(cmd, rp_desc);
-            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height);
             device->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             device->render_encoder_draw(rp_encoder, 3, 0);
@@ -304,8 +305,8 @@ namespace Cyber
             };
 
             RHIRenderPassEncoder* rp_ui_encoder = device->cmd_begin_render_pass(cmd, ui_rp_desc);
-            device->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-            device->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
+            device->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height);
             device->cmd_end_render_pass(cmd);
 
             RHITextureBarrier present_barrier = {

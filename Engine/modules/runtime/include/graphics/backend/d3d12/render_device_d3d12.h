@@ -32,6 +32,7 @@ namespace Cyber
             virtual void free_swap_chain(RHISwapChain* swapchain) override;
             virtual void enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount) override;
             virtual uint32_t acquire_next_image(RHISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc) override;
+            virtual CEFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             // Queue APIs
             virtual RHIQueue* get_queue(ERHIQueueType type, uint32_t index) override;
             virtual void submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc) override;

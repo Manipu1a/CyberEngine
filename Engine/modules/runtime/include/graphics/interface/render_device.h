@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "texture_view.h"
 #include "buffer.h"
+#include "frame_buffer.h"
 
 namespace Cyber
 {
@@ -100,6 +101,11 @@ namespace Cyber
             {
                 cyber_core_assert(false, "Empty implement acquire_next_image!");
                 return 0;
+            }
+            virtual CEFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
+            {
+                cyber_core_assert(false, "Empty implement create_frame_buffer!");
+                return nullptr;
             }
             // Queue APIs
             virtual RHIQueue* get_queue(ERHIQueueType type, uint32_t index) 
