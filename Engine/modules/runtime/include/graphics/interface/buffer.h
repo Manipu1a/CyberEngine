@@ -1,12 +1,18 @@
 #pragma once
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
+#include "render_object.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        class CERenderDevice;
+
+        // Buffer Interface
+        struct CYBER_GRAPHICS_API IBuffer
+        {
+            
+        };
 
         /// Buffer Group
         struct CYBER_GRAPHICS_API BufferCreateDesc
@@ -14,7 +20,7 @@ namespace Cyber
             /// Size of the buffer (in bytes)
             uint64_t mSize;
             /// Set this to specify a counter buffer for this buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
-            class Buffer* pCounterBuffer;
+            class IBuffer* pCounterBuffer;
             /// Index of the first element accessible by the SRV/UAV (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
             uint64_t mFirstElement;
             /// Number of elements in the buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
@@ -44,19 +50,21 @@ namespace Cyber
             ERHIDescriptorType mDescriptors;
         };
 
-        class CYBER_GRAPHICS_API Buffer
+        template<typename EngineImplTraits>
+        class CYBER_GRAPHICS_API Buffer : public RenderObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
             void* pCpuMappedAddress;
             uint64_t mSize : 32;
             uint64_t mDescriptors : 20;
             uint64_t mMemoryUsage : 3;
             uint64_t mNodeIndex : 4;
-            RenderObject::CERenderDevice* device;
-
+            RenderDeviceImplType* device;
         protected:
-            friend class RenderObject::CERenderDevice;
+            friend RenderDeviceImplType;
         };
     }
 }

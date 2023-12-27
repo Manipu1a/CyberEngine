@@ -1,0 +1,30 @@
+#pragma once
+
+namespace Cyber
+{
+    namespace RenderObject
+    {
+        class ITexture_D3D12;
+        class ITextureView_D3D12;
+        class IBuffer_D3D12;
+        class IRenderDevice_D3D12;
+
+        class Texture_D3D12_Impl;
+        class TextureView_D3D12_Impl;
+        class Buffer_D3D12_Impl;
+        class CERenderDevice_D3D12;
+
+        struct EngineD3D12ImplTraits
+        {
+            using TextureInterface = ITexture_D3D12;
+            using TextureViewInterface = ITextureView_D3D12;
+            using BufferInterface = IBuffer_D3D12;
+            using RenderDeviceInterface = IRenderDevice_D3D12;
+
+            using TextureImplType = Texture_D3D12_Impl;
+            using TextureViewImplType = TextureView_D3D12_Impl;
+            using BufferImplType = Buffer_D3D12_Impl;
+            using RenderDeviceImplType = CERenderDevice_D3D12;
+        };
+    }
+}

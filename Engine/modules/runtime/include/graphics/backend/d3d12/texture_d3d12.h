@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/interface/texture.h"
+#include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
 {
@@ -8,36 +9,35 @@ namespace Cyber
     {
         class CERenderDevice_D3D12;
 
-        class CYBER_GRAPHICS_API Texture_D3D12 : public Texture
+        struct ITexture_D3D12 : public ITexture 
+        {
+            virtual ID3D12Resource* get_d3d12_resource() const = 0;
+        };
+
+        class CYBER_GRAPHICS_API Texture_D3D12_Impl final : public Texture<EngineD3D12ImplTraits>
         {
         public:
-            Texture_D3D12()
+            using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
+            using TTextureBase = Texture<EngineD3D12ImplTraits>;
+            
+            Texture_D3D12_Impl(class CERenderDevice_D3D12* device);
+
+            virtual ~Texture_D3D12_Impl()
             {
 
             }
-
-            virtual ~Texture_D3D12()
+            
+            virtual ID3D12Resource* get_d3d12_resource() const override
             {
-
+                return native_resource;
             }
-
-            virtual void* get_native_texture() const override
-            {
-                return pDxResource;
-            }
-            virtual Texture_View* get_default_texture_view() const override
-            {
-                return nullptr;
-            }
-            virtual Texture_View* create_texture_view(const TextureViewCreateDesc& desc) const override
-            {
-                return nullptr;
-            }
-
+            virtual void* get_native_texture() const override;
+            virtual TextureView_D3D12_Impl* get_default_texture_view() const override;
         protected:
-
-            ID3D12Resource* pDxResource;
-            D3D12MA::Allocation* pDxAllocation;
+            virtual TextureView_D3D12_Impl* create_view_internal(const TextureViewCreateDesc& desc) const override;
+        protected:
+            ID3D12Resource* native_resource;
+            D3D12MA::Allocation* allocation;
 
             friend class RenderObject::CERenderDevice_D3D12;
         };

@@ -9,8 +9,17 @@ namespace Cyber
         class GUIApplication;
     }
 
+    namespace RenderObject
+    {
+        class Texture;
+        class CERenderPass;
+        class CEFrameBuffer;
+    };
+
     namespace Samples
     {
+
+
         class RenderPassApp : public SampleApp
         {
         public:
@@ -34,9 +43,16 @@ namespace Cyber
             RHIRootSignature* root_signature = nullptr;
             RHIDescriptorSet* descriptor_set = nullptr;
             RHIRenderPipeline* pipeline = nullptr;
-            class RenderObject::Texture* base_color_texture = nullptr;
-            Cyber::RenderObject::CEFrameBuffer* frame_buffer = nullptr;
-            Cyber::RenderObject::CERenderPass* render_pass = nullptr;
+
+            RenderObject::CERenderPass* render_pass = nullptr;
+            RenderObject::CEFrameBuffer* frame_buffer = nullptr;
+
+            struct GBuffer
+            {
+                RenderObject::Texture* base_color_texture = nullptr;
+                RenderObject::Texture* depth_texture = nullptr;
+                RenderObject::Texture* final_color_texture = nullptr;
+            } gbuffer;
         };
     }
 }

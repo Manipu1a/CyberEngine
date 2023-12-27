@@ -12,7 +12,7 @@ namespace Cyber
             const char8_t* name;
             CERenderPass* render_pass;
             uint32_t attachment_count;
-            RenderObject::Texture_View* attachments;
+            RenderObject::ITextureView* attachments;
         };
 
         class CEFrameBuffer

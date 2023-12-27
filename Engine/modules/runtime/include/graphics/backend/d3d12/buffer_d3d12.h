@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/interface/buffer.h"
+#include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
 {
@@ -9,9 +10,16 @@ namespace Cyber
         class CERenderDevice_D3D12;
     }
 
+
     namespace RenderObject
     {
-        class CYBER_GRAPHICS_API Buffer_D3D12 : public Buffer
+        // Buffer Interface
+        struct CYBER_GRAPHICS_API IBuffer_D3D12 : public IBuffer
+        {
+            
+        };
+
+        class CYBER_GRAPHICS_API Buffer_D3D12_Impl : public Buffer<EngineD3D12ImplTraits>
         {
         public:
             /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress

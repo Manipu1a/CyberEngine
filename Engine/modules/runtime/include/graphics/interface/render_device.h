@@ -6,21 +6,34 @@
 #include "texture_view.h"
 #include "buffer.h"
 #include "frame_buffer.h"
+#include "render_pass.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
+        // Render device interface
+        struct CYBER_GRAPHICS_API IRenderDevice
+        {
+
+        };
+
         struct CYBER_GRAPHICS_API RenderDeviceCreateDesc
         {
             bool bDisablePipelineCache;
             eastl::vector<RHIQueueGroupDesc> queue_groups;
             uint32_t queue_group_count;
         };
-
-        class CYBER_GRAPHICS_API CERenderDevice
+        
+        template<typename EngineImplTraits>
+        class CYBER_GRAPHICS_API CERenderDevice : public RenderObjectBase<typename EngineImplTraits::RenderDeviceInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using TextureImplType = typename EngineImplTraits::TextureImplType;
+            using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
+            using BufferImplType = typename EngineImplTraits::BufferImplType;
+            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+
             CERenderDevice(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
             {
                 this->adapter = adapter;
@@ -182,38 +195,38 @@ namespace Cyber
             }
 
             // Resource APIs
-            virtual RenderObject::Texture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
+            virtual TextureViewImplType* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
             {
                 cyber_core_assert(false, "Empty implement create_texture_view!");
                 return nullptr;
             }
-            virtual void free_texture_view(RenderObject::Texture_View* view)
+            virtual void free_texture_view(TextureViewImplType* view)
             {
                 cyber_core_assert(false, "Empty implement free_texture_view!");
             }
-            virtual RenderObject::Texture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) 
+            virtual TextureImplType* create_texture(const RenderObject::TextureCreateDesc& textureDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_texture!");
                 return nullptr;
             }
-            virtual void free_texture(RenderObject::Texture* texture)
+            virtual void free_texture(TextureImplType* texture)
             {
                 cyber_core_assert(false, "Empty implement free_texture!");
             }
-            virtual RenderObject::Buffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) 
+            virtual BufferImplType* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_buffer!");
                 return nullptr;
             }
-            virtual void free_buffer(RenderObject::Buffer* buffer)
+            virtual void free_buffer(BufferImplType* buffer)
             {
                 cyber_core_assert(false, "Empty implement free_buffer!");
             }
-            virtual void map_buffer(RenderObject::Buffer* buffer, const RHIBufferRange* range)
+            virtual void map_buffer(BufferImplType* buffer, const RHIBufferRange* range)
             {
                 cyber_core_assert(false, "Empty implement map_buffer!");
             }
-            virtual void unmap_buffer(RenderObject::Buffer* buffer)
+            virtual void unmap_buffer(BufferImplType* buffer)
             {
                 cyber_core_assert(false, "Empty implement unmap_buffer!");
             }
@@ -243,9 +256,13 @@ namespace Cyber
                 cyber_core_assert(false, "Empty implement cmd_resource_barrier!");
             }
             // Render Pass
-            
+            virtual CERenderPass* create_render_pass(const RenderPassDesc& renderPassDesc)
+            {
+                cyber_core_assert(false, "Empty implement create_render_pass!");
+                return nullptr;
+            }
 
-            virtual RHIRenderPassEncoder* cmd_begin_render_pass(RHICommandBuffer* cmd, const RHIRenderPassDesc& beginRenderPassDesc)
+            virtual RHIRenderPassEncoder* cmd_begin_render_pass(RHICommandBuffer* cmd, const RenderPassDesc& beginRenderPassDesc)
             {
                 cyber_core_assert(false, "Empty implement cmd_begin_render_pass!");
                 return nullptr;
@@ -270,11 +287,11 @@ namespace Cyber
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_pipeline!");
             }
-            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, RenderObject::Buffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, BufferImplType** buffers,const uint32_t* strides, const uint32_t* offsets)
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_vertex_buffer!");
             }
-            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, RenderObject::Buffer* buffer, uint32_t index_stride, uint64_t offset)
+            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, BufferImplType* buffer, uint32_t index_stride, uint64_t offset)
             {
                 cyber_core_assert(false, "Empty implement render_encoder_bind_index_buffer!");
             }
@@ -299,10 +316,9 @@ namespace Cyber
                 cyber_core_assert(false, "Empty implement render_encoder_draw_indexed_instanced!");
             }
 
-            friend RenderObject::Texture;
-            friend RenderObject::Texture_View;
-            friend RenderObject::Buffer;
-
+            friend TextureImplType;
+            friend TextureViewImplType;
+            friend BufferImplType;
         };
     }
 }

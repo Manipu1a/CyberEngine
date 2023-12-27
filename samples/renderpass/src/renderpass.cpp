@@ -144,7 +144,7 @@ namespace Cyber
             // attachment 3 - final color
             constexpr uint32_t num_attachments = 3;
 
-            RenderPassAttachmentDesc attachments[num_attachments] = {};
+            RenderObject::RenderPassAttachmentDesc attachments[num_attachments] = {};
             attachments[0].format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM;
             attachments[0].load_action = RHI_LOAD_ACTION_CLEAR;
             attachments[0].store_action = RHI_STORE_ACTION_STORE;
@@ -164,21 +164,21 @@ namespace Cyber
             attachments[2].final_state = RHI_RESOURCE_STATE_RENDER_TARGET;
 
             constexpr uint32_t num_subpasses = 2;
-            RenderSubpassDesc subpasses[num_subpasses] = {};
+            RenderObject::RenderSubpassDesc subpasses[num_subpasses] = {};
             // subpass 0 attachments
-            AttachmentReference rt_attachment_ref0[] = 
+            RenderObject::AttachmentReference rt_attachment_ref0[] = 
             {
                 {0, RHI_RESOURCE_STATE_RENDER_TARGET}
             };
 
-            AttachmentReference depth_attachment_ref0 = {1, RHI_RESOURCE_STATE_DEPTH_WRITE};
+            RenderObject::AttachmentReference depth_attachment_ref0 = {1, RHI_RESOURCE_STATE_DEPTH_WRITE};
             // subpass 1 attachments
-            AttachmentReference rt_attachment_ref1[] =
+            RenderObject::AttachmentReference rt_attachment_ref1[] =
             {
                 {2, RHI_RESOURCE_STATE_RENDER_TARGET}
             };
-            AttachmentReference depth_attachment_ref1 = { 1, RHI_RESOURCE_STATE_DEPTH_WRITE };
-            AttachmentReference input_attachment_ref1[] = 
+            RenderObject::AttachmentReference depth_attachment_ref1 = { 1, RHI_RESOURCE_STATE_DEPTH_WRITE };
+            RenderObject::AttachmentReference input_attachment_ref1[] = 
             {
                 { 0, RHI_RESOURCE_STATE_SHADER_RESOURCE }
             };
@@ -193,42 +193,66 @@ namespace Cyber
             subpasses[1].input_attachment_count = _countof(input_attachment_ref1);
             subpasses[1].input_attachments = input_attachment_ref1;
 
-            RHIRenderPassDesc renderpass_desc;
+            RenderObject::RenderPassDesc renderpass_desc;
             renderpass_desc.attachments = attachments;
             renderpass_desc.attachment_count = num_attachments;
             renderpass_desc.subpass_count = num_subpasses;
             renderpass_desc.subpasses = subpasses;
 
+            render_pass = device->create_render_pass(renderpass_desc);
+            cyber_assert(render_pass != nullptr, "create render pass failed");
         }
 
         void RenderPassApp::create_resource()
         {
+            const auto& rp_desc = render_pass->get_create_desc();
+            
+            // Create color texture
             RenderObject::TextureCreateDesc texture_desc = {
-                .name = CYBER_UTF8("backbuffer"),
+                .name = CYBER_UTF8("color"),
                 .width = getWindow()->getWidth(),
                 .height = getWindow()->getHeight(),
                 .depth = 1,
                 .array_size = 1,
                 .mip_levels = 1,
-                .clear_value = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f },
+                .clear_value = { 0.0f, 0.0f, 0.0f, 1.000000000f },
                 .descriptors = RHI_DESCRIPTOR_TYPE_UNDEFINED,
-                .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
+                .format = rp_desc.attachments[0].format,
                 .start_state = RHI_RESOURCE_STATE_RENDER_TARGET | RHI_RESOURCE_STATE_SHADER_RESOURCE,
             };
 
-            base_color_texture = device->create_texture(texture_desc);
+            if(gbuffer.base_color_texture != nullptr)
+                gbuffer.base_color_texture = device->create_texture(texture_desc);
+
+            // Create depth texture
+            texture_desc.name = CYBER_UTF8("depth zbuffer");
+            texture_desc.format = rp_desc.attachments[1].format;
+            texture_desc.clear_value = {1.0f, 1.0f, 1.0f, 1.0f};
+
+            if(gbuffer.depth_texture != nullptr)
+                gbuffer.depth_texture = device->create_texture(texture_desc);
+
+            // Create final color texture
+            texture_desc.name = CYBER_UTF8("final color");
+            texture_desc.format = rp_desc.attachments[2].format;
+            texture_desc.clear_value = { 0.0f, 0.0f, 0.0f, 1.0f };
+
+            if(gbuffer.final_color_texture != nullptr)
+                gbuffer.final_color_texture = device->create_texture(texture_desc);
+
+            /*
             RenderObject::TextureViewCreateDesc view_desc = {
-                .name = CYBER_UTF8("backbuffer_view"),
-                .texture = base_color_texture,
+                .name = CYBER_UTF8("color_view"),
+                .texture = gbuffer.base_color_texture,
                 .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
                 .usages = RHI_TVU_RTV_DSV,
                 .aspects = RHI_TVA_COLOR,
                 .dimension = RHI_TEX_DIMENSION_2D,
                 .array_layer_count = 1
-            };
+            };*/
 
-            auto base_color_tex_view = device->create_texture_view(view_desc);
-            
+            //auto base_color_tex_view = device->create_texture_view(view_desc);
+
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),
                 .render_pass = nullptr,
@@ -270,7 +294,7 @@ namespace Cyber
                 .write_stencil = 0
             };
 
-            RHIRenderPassDesc rp_desc = {
+            RenderObject::RenderPassDesc rp_desc = {
                 /*
                 .sample_count = RHI_SAMPLE_COUNT_1,
                 .color_attachments = &screen_attachment,
@@ -297,7 +321,7 @@ namespace Cyber
             screen_attachment.load_action = RHI_LOAD_ACTION_LOAD;
             depth_attachment.depth_load_action = RHI_LOAD_ACTION_LOAD;
             depth_attachment.stencil_load_action = RHI_LOAD_ACTION_LOAD;
-            RHIRenderPassDesc ui_rp_desc = {
+            RenderObject::RenderPassDesc ui_rp_desc = {
                 //.sample_count = RHI_SAMPLE_COUNT_1,
                 //.color_attachments = &screen_attachment,
                 //.depth_stencil_attachment = &depth_attachment,

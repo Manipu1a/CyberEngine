@@ -1,18 +1,21 @@
 #pragma once
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
+#include "render_object.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        class CERenderDevice;
-        class Texture;
+        //class CERenderDevice;
+        struct CYBER_GRAPHICS_API ITextureView
+        {
+
+        };
 
         struct CYBER_GRAPHICS_API TextureViewCreateDesc
         {
             const char8_t* name;
-            Texture* texture;
             ERHIFormat format;
             ERHITextureViewUsages usages;
             ERHITextureViewAspect aspects;
@@ -23,18 +26,19 @@ namespace Cyber
             uint32_t mip_level_count;
         };
 
-
-        class CYBER_GRAPHICS_API Texture_View
+        template<typename EngineImplTraits>
+        class CYBER_GRAPHICS_API Texture_View : public RenderObjectBase<typename EngineImplTraits::TextureViewInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
 
             const TextureViewCreateDesc get_create_desc() const { return create_desc; }
         protected:
             TextureViewCreateDesc create_desc;
-            RenderObject::CERenderDevice* device;
 
-            friend class RenderObject::CERenderDevice;
+            RenderDeviceImplType* device;
 
+            friend RenderDeviceImplType;
         };
     }
 }

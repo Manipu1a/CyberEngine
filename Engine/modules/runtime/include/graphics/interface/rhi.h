@@ -18,12 +18,10 @@ namespace Cyber
     
     namespace RenderObject
     {
-        class CEDeviceContext;
-        class CERenderDevice;
-        class Texture;
-        class Texture_View;
-        class Buffer;
-        class Buffer_View;
+        class IRenderDevice;
+        class ITexture;
+        class ITextureView;
+        class IBuffer;
     }
 
     typedef uint32_t RHIQueueIndex;
@@ -66,12 +64,12 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIFence
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
     };
 
     struct CYBER_GRAPHICS_API RHISemaphore
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
     };
 
     /// Shaders
@@ -111,13 +109,13 @@ namespace Cyber
 
     struct RHIRootSignaturePool
     {
-        RenderObject::CEDeviceContext* device_context;
+        RenderObject::IRenderDevice* device_context;
         ERHIPipelineType mPipelineType;
     };
 
     struct CYBER_GRAPHICS_API RHIRootSignature
     {
-        RenderObject::CEDeviceContext* device_context;
+        RenderObject::IRenderDevice* device_context;
         RHIParameterTable* parameter_tables;
         uint32_t parameter_table_count;
         RHIShaderResource* push_constants;
@@ -137,7 +135,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIRenderPipeline
     {
-        RenderObject::CERenderDevice* device;
+        RenderObject::IRenderDevice* device;
         RHIRootSignature* root_signature;
     };
     /// Shader Reflection
@@ -235,7 +233,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIShaderLibrary
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
         char8_t* pName;
         RHIShaderReflection* entry_reflections;
         uint32_t entry_count;
@@ -267,11 +265,11 @@ namespace Cyber
         {
             const void** ptrs;
             /// Array of texture descriptors (srv and uav textures)
-            RenderObject::Texture_View** textures;
+            RenderObject::ITextureView** textures;
             /// Array of sampler descriptors
             struct RHISampler** samplers;
             /// Array of buffer descriptors (srv uav and cbv buffers)
-            RenderObject::Buffer** buffers;
+            RenderObject::IBuffer** buffers;
             /// Array of pipeline descriptors
             RHIRenderPipeline** render_pipelines;
 
@@ -295,7 +293,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIBufferBarrier
     {
-        RenderObject::Buffer* buffer;
+        RenderObject::IBuffer* buffer;
         ERHIResourceState src_state;
         ERHIResourceState dst_state;
         uint8_t queue_acquire : 1;
@@ -309,7 +307,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHITextureBarrier
     {
-        RenderObject::Texture* texture;
+        RenderObject::ITexture* texture;
         ERHIResourceState src_state;
         ERHIResourceState dst_state;
         uint8_t queue_acquire : 1;
@@ -375,7 +373,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIQueue
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
         ERHIQueueType mType;
         RHIQueueIndex mIdex;
     };
@@ -387,7 +385,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHICommandBuffer
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
         Cyber::Ref<RHICommandPool> pPool;
         ERHIPipelineType mCurrentDispatch;
     };
@@ -396,17 +394,17 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIQueryPool
     {
-        RenderObject::CERenderDevice* pDevice;
+        RenderObject::IRenderDevice* pDevice;
         uint32_t mCount;
     };
 
     struct CYBER_GRAPHICS_API RHISwapChain
     {
-        RenderObject::Texture** mBackBufferSRVs;
-        RenderObject::Texture_View** mBackBufferSRVViews;
+        RenderObject::ITexture** mBackBufferSRVs;
+        RenderObject::ITextureView** mBackBufferSRVViews;
         uint32_t mBufferSRVCount;
-        RenderObject::Texture* mBackBufferDSV;
-        RenderObject::Texture_View* mBackBufferDSVView;
+        RenderObject::ITexture* mBackBufferDSV;
+        RenderObject::ITextureView* mBackBufferDSVView;
     };
 
     struct CYBER_GRAPHICS_API CommandPoolCreateDesc
@@ -498,8 +496,8 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIColorAttachment
     {
-        RenderObject::Texture_View* view;
-        RenderObject::Texture_View* resolve_view;
+        RenderObject::ITextureView* view;
+        RenderObject::ITextureView* resolve_view;
         ERHILoadAction load_action;
         ERHIStoreAction store_action;
         ERHIClearValue clear_value;
@@ -507,7 +505,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API RHIDepthStencilAttachment
     {
-        RenderObject::Texture_View* view;
+        RenderObject::ITextureView* view;
         ERHILoadAction depth_load_action;
         ERHIStoreAction depth_store_action;
         float clear_depth;
@@ -518,53 +516,6 @@ namespace Cyber
         uint8_t write_stencil;
     };
 
-    struct CYBER_GRAPHICS_API RenderPassAttachmentDesc
-    {
-        ERHIFormat format;
-        uint8_t sample_count;
-        ERHILoadAction load_action;
-        ERHIStoreAction store_action;
-        ERHILoadAction stencil_load_action;
-        ERHIStoreAction stencil_store_action;
-        ERHIResourceState initial_state;
-        ERHIResourceState final_state;
-    };
-
-    struct CYBER_GRAPHICS_API AttachmentReference
-    {
-        uint32_t attachment_index;
-        ERHIResourceState state;
-    };
-
-    struct CYBER_GRAPHICS_API RenderSubpassDesc
-    {
-        ERHITextureSampleCount sample_count;
-        uint32_t input_attachment_count;
-        const AttachmentReference* input_attachments;
-        const AttachmentReference* depth_stencil_attachment;
-        uint32_t render_target_count;
-        const AttachmentReference* render_target_attachments;
-    };
-
-    struct CYBER_GRAPHICS_API SubpassDependencyDesc
-    {
-        uint32_t src_subpass;
-        uint32_t dst_subpass;
-        ERHIPipelineStageFlags src_stage_mask;
-        ERHIPipelineStageFlags dst_stage_mask;
-        ERHIAccessFlags src_access_mask;
-        ERHIAccessFlags dst_access_mask;
-    };
-
-    struct CYBER_GRAPHICS_API RHIRenderPassDesc
-    {
-        const char8_t* name;
-        uint32_t attachment_count;
-        const RenderPassAttachmentDesc* attachments;
-        uint32_t subpass_count;
-        const char8_t* const* subpass_names;
-        RenderSubpassDesc* subpasses;
-    };
 
     struct CYBER_GRAPHICS_API RHIBlendStateCreateDesc
     {

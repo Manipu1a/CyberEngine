@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/interface/texture_view.h"
+#include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
 {
@@ -8,11 +9,16 @@ namespace Cyber
     {
         class CERenderDevice_D3D12;
 
-        class CYBER_GRAPHICS_API Texture_View_D3D12 : public Texture_View
+        struct ITextureView_D3D12 : public ITextureView
+        {
+
+        };
+
+        class TextureView_D3D12_Impl : public Texture_View<EngineD3D12ImplTraits>
         {
         public:
-            Texture_View_D3D12() = default;
-            virtual ~Texture_View_D3D12() = default;
+            TextureView_D3D12_Impl();
+            virtual ~TextureView_D3D12_Impl();
 
         protected:
             D3D12_CPU_DESCRIPTOR_HANDLE mDxDescriptorHandles;
