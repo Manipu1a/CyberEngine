@@ -60,7 +60,6 @@ namespace Cyber
             const TextureCreateDesc& get_create_desc() { return create_desc; }
         protected:
             virtual TextureViewImplType* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
-
         protected:
             uint32_t mWidth;
             uint32_t mHeight;

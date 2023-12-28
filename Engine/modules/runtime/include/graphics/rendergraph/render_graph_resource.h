@@ -74,10 +74,10 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Buffer;
             }
-            RenderObject::Buffer* GetBuffer();
+            RenderObject::IBuffer* GetBuffer();
 
             RGBufferCreateDesc create_desc;
-            RenderObject::Buffer* buffer;
+            RenderObject::IBuffer* buffer;
         };
 
         class RGTexture : public RGRenderResource
@@ -87,10 +87,10 @@ namespace Cyber
             {
                 resource_type = ERGResourceType::Texture;
             }
-            RenderObject::Texture* GetTexture();
+            RenderObject::ITexture* GetTexture();
 
             RGTextureCreateDesc create_desc;
-            RenderObject::Texture* texture;
+            RenderObject::ITexture* texture;
             struct TextureNode* texture_node;
         };
         
@@ -184,7 +184,7 @@ namespace Cyber
 
         struct BufferNode : public ResourceNode
         {
-            RenderObject::Buffer* buffer;
+            RenderObject::IBuffer* buffer;
         };
  
         struct TextureNode : public ResourceNode
@@ -193,7 +193,7 @@ namespace Cyber
             {
             }
 
-            RenderObject::Texture* texture;
+            RenderObject::ITexture* texture;
         };
 
         struct TextureEdge : public RenderGraphEdge

@@ -18,7 +18,7 @@ namespace Cyber
 
         }
 
-        void GUIApplication::initialize(RenderObject::CERenderDevice* device, HWND hwnd)
+        void GUIApplication::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
         {
             RenderObject::CERenderDevice_D3D12* device_d3d12 = static_cast<RenderObject::CERenderDevice_D3D12*>(device);
             D3D12_DESCRIPTOR_HEAP_DESC desc = {};

@@ -14,7 +14,7 @@ namespace Cyber
             GUIApplication();
             ~GUIApplication();
 
-            void initialize(RenderObject::CERenderDevice* device, HWND hwnd);
+            void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
             void run();
             void update(RHIRenderPassEncoder* encoder, float deltaTime);
             void finalize();

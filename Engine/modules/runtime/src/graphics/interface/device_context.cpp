@@ -4,7 +4,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        CEDeviceContext::CEDeviceContext(CERenderDevice* device)
+        CEDeviceContext::CEDeviceContext(IRenderDevice* device)
         {
             render_device = device;
         }
@@ -14,7 +14,7 @@ namespace Cyber
 
         }
 
-        void CEDeviceContext::BeginRenderPass(const RHIRenderPassDesc& desc)
+        void CEDeviceContext::BeginRenderPass(const RenderPassDesc& desc)
         {
 
         }

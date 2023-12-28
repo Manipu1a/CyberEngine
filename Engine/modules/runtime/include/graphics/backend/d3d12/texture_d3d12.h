@@ -31,6 +31,7 @@ namespace Cyber
             {
                 return native_resource;
             }
+            
             virtual void* get_native_texture() const override;
             virtual TextureView_D3D12_Impl* get_default_texture_view() const override;
         protected:

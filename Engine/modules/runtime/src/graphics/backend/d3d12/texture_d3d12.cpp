@@ -16,12 +16,13 @@ namespace Cyber
 
         TextureView_D3D12_Impl* Texture_D3D12_Impl::get_default_texture_view() const
         {
-
+            return nullptr;
         }
 
         TextureView_D3D12_Impl* Texture_D3D12_Impl::create_view_internal(const TextureViewCreateDesc& desc) const
         {
-            
+            auto* device = get_device();
+            return nullptr;
         }
     }
 }

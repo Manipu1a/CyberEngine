@@ -80,11 +80,11 @@ namespace Cyber
 
             virtual TextureViewImplType* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
             virtual void free_texture_view(TextureViewImplType* view) override;
-            virtual TexureImplType* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
-            virtual BufferImplType* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
-            virtual void free_buffer(BufferImplType* buffer) override;
-            virtual void map_buffer(BufferImplType* buffer, const RHIBufferRange* range) override;
-            virtual void unmap_buffer(BufferImplType* buffer) override;
+            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
+            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
+            virtual void free_buffer(IBuffer* buffer) override;
+            virtual void map_buffer(IBuffer* buffer, const RHIBufferRange* range) override;
+            virtual void unmap_buffer(IBuffer* buffer) override;
 
             virtual RHIShaderLibrary* create_shader_library(const struct RHIShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(RHIShaderLibrary* shaderLibrary) override;

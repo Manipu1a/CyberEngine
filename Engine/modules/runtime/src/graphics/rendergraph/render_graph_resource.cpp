@@ -5,7 +5,7 @@ namespace Cyber
 {
     namespace render_graph
     {
-        RenderObject::Buffer* RGBuffer::GetBuffer()
+        RenderObject::IBuffer* RGBuffer::GetBuffer()
         {
             if(buffer)
             {
@@ -21,7 +21,7 @@ namespace Cyber
             return buffer;
         }
 
-        RenderObject::Texture* RGTexture::GetTexture()
+        RenderObject::ITexture* RGTexture::GetTexture()
         {
             if(texture)
             {

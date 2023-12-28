@@ -8,22 +8,19 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        template<typename EngineImplTraits>
         class CYBER_GRAPHICS_API CEDeviceContext
         {
         public:
-            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            
-            CEDeviceContext(CERenderDevice* device);
+            CEDeviceContext(IRenderDevice* device);
             virtual ~CEDeviceContext();
 
         public:
             void BeginRenderPass(const RenderPassDesc& desc);
             void EndRenderPass();
 
-            RenderDeviceImplType* get_device() const { return render_device; }
+            IRenderDevice* get_device() const { return render_device; }
         protected:
-            RenderDeviceImplType* render_device;
+            IRenderDevice* render_device;
             RenderPassDesc active_render_pass_desc;
             CEFrameBuffer* bound_frame_buffer = nullptr;
         };

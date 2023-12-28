@@ -204,29 +204,29 @@ namespace Cyber
             {
                 cyber_core_assert(false, "Empty implement free_texture_view!");
             }
-            virtual TextureImplType* create_texture(const RenderObject::TextureCreateDesc& textureDesc) 
+            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_texture!");
                 return nullptr;
             }
-            virtual void free_texture(TextureImplType* texture)
+            virtual void free_texture(ITexture* texture)
             {
                 cyber_core_assert(false, "Empty implement free_texture!");
             }
-            virtual BufferImplType* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) 
+            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) 
             {
                 cyber_core_assert(false, "Empty implement create_buffer!");
                 return nullptr;
             }
-            virtual void free_buffer(BufferImplType* buffer)
+            virtual void free_buffer(IBuffer* buffer)
             {
                 cyber_core_assert(false, "Empty implement free_buffer!");
             }
-            virtual void map_buffer(BufferImplType* buffer, const RHIBufferRange* range)
+            virtual void map_buffer(IBuffer* buffer, const RHIBufferRange* range)
             {
                 cyber_core_assert(false, "Empty implement map_buffer!");
             }
-            virtual void unmap_buffer(BufferImplType* buffer)
+            virtual void unmap_buffer(IBuffer* buffer)
             {
                 cyber_core_assert(false, "Empty implement unmap_buffer!");
             }

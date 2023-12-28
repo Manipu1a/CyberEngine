@@ -122,7 +122,7 @@ namespace Cyber
         {
             RenderPassContext pass_context;
 
-            RHIRenderPassDesc beginRenderPassDesc = {};
+            //RenderPassDesc beginRenderPassDesc = {};
             //pass_context.encoder = rhi_cmd_begin_render_pass(frame_executors[0].gfx_cmd_buffer, beginRenderPassDesc);
 
             pass->pass_function(*this, pass_context);
