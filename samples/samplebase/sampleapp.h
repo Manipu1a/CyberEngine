@@ -23,7 +23,7 @@ namespace Cyber
             ///-------------------------------------
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
             static const uint32_t BACK_BUFFER_COUNT = 3;
-            RenderObject::CERenderDevice* device = nullptr;
+            RenderObject::IRenderDevice* device = nullptr;
             RHIInstance* instance = nullptr;
             RHIAdapter* adapter = nullptr;
             RHIFence* present_fence = nullptr;

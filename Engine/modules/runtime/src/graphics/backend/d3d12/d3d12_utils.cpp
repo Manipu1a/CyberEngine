@@ -325,7 +325,7 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_CreateDescriptorHeap(RenderObject::CERenderDevice_D3D12* device, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap)
+    void D3D12Util_CreateDescriptorHeap(RenderObject::RenderDevice_D3D12_Impl* device, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap)
     {
         uint32_t numDesciptors = pDesc.NumDescriptors;
         RHIDescriptorHeap_D3D12* pHeap = (RHIDescriptorHeap_D3D12*)cyber_calloc(1, sizeof(*pHeap));
@@ -370,7 +370,7 @@ namespace Cyber
         cyber_free(heap);
     }
 
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::CERenderDevice_D3D12* device)
+    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::RenderDevice_D3D12_Impl* device)
     {
         D3D12MA::ALLOCATOR_DESC desc = {};
         desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
@@ -538,7 +538,7 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_InitializeShaderReflection(RenderObject::CERenderDevice_D3D12* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
+    void D3D12Util_InitializeShaderReflection(RenderObject::RenderDevice_D3D12_Impl* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc)
     {
         ID3D12ShaderReflection* d3d12Reflection = nullptr;
         auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
@@ -627,35 +627,35 @@ namespace Cyber
         queue->pCommandQueue->Signal(fence, fenceValue);
     }
 
-    void D3D12Util_CreateCBV(RenderObject::CERenderDevice_D3D12* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateCBV(RenderObject::RenderDevice_D3D12_Impl* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
         device->GetD3D12Device()->CreateConstantBufferView(pCbvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateSRV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateSRV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
         device->GetD3D12Device()->CreateShaderResourceView(pResource, pSrvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateUAV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateUAV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
         device->GetD3D12Device()->CreateUnorderedAccessView(pResource, pCounterResource, pUavDesc, *pHandle);
     }
 
-    void D3D12Util_CreateRTV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateRTV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), 1).mCpu;
         device->GetD3D12Device()->CreateRenderTargetView(pResource, pRtvDesc, *pHandle);
     }
 
-    void D3D12Util_CreateDSV(RenderObject::CERenderDevice_D3D12* device, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
+    void D3D12Util_CreateDSV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
     {
         if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_DSV), 1).mCpu;

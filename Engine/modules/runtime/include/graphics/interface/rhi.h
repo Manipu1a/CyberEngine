@@ -109,13 +109,13 @@ namespace Cyber
 
     struct RHIRootSignaturePool
     {
-        RenderObject::IRenderDevice* device_context;
+        RenderObject::IRenderDevice* render_device;
         ERHIPipelineType mPipelineType;
     };
 
     struct CYBER_GRAPHICS_API RHIRootSignature
     {
-        RenderObject::IRenderDevice* device_context;
+        RenderObject::IRenderDevice* render_device;
         RHIParameterTable* parameter_tables;
         uint32_t parameter_table_count;
         RHIShaderResource* push_constants;

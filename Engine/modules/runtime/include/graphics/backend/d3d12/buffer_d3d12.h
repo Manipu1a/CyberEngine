@@ -7,7 +7,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class CERenderDevice_D3D12;
+        class RenderDevice_D3D12_Impl;
     }
 
 
@@ -36,7 +36,7 @@ namespace Cyber
             D3D12MA::Allocation* pDxAllocation;
 
         protected:
-            friend class RenderObject::CERenderDevice_D3D12;
+            friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 
     }

@@ -16,6 +16,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API TextureViewCreateDesc
         {
             const char8_t* name;
+            class ITexture* texture;
             ERHIFormat format;
             ERHITextureViewUsages usages;
             ERHITextureViewAspect aspects;

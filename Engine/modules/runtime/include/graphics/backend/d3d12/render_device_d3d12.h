@@ -14,16 +14,17 @@ namespace Cyber
             
         };
 
-        class CERenderDevice_D3D12 : public CERenderDevice<EngineD3D12ImplTraits>
+        class RenderDevice_D3D12_Impl : public RenderDeviceBase<EngineD3D12ImplTraits>
         {
         public:
+            using TRenderDeviceBase = RenderDeviceBase<EngineD3D12ImplTraits>;
             using TexureImplType = EngineD3D12ImplTraits::TextureImplType;
             using BufferImplType = EngineD3D12ImplTraits::BufferImplType;
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            CERenderDevice_D3D12(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
-            virtual ~CERenderDevice_D3D12();
+            RenderDevice_D3D12_Impl(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
+            virtual ~RenderDevice_D3D12_Impl();
         public:
             // Device APIs
             virtual void create_device(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
@@ -60,8 +61,8 @@ namespace Cyber
             virtual void render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
             virtual void render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
             virtual void render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline) override;
-            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, BufferImplType** buffers,const uint32_t* strides, const uint32_t* offsets) override;
-            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, BufferImplType* buffer, uint32_t index_stride, uint64_t offset) override;
+            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
+            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
             virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data) override;
             virtual void render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) override;
             virtual void render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) override;
@@ -78,8 +79,8 @@ namespace Cyber
             virtual RHIInstance* create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
             virtual void free_instance(RHIInstance* instance) override;
 
-            virtual TextureViewImplType* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
-            virtual void free_texture_view(TextureViewImplType* view) override;
+            virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
+            virtual void free_texture_view(ITextureView* view) override;
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
             virtual void free_buffer(IBuffer* buffer) override;

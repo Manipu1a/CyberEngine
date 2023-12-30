@@ -148,7 +148,7 @@ namespace Cyber
                     biCharacterMap.erase(trueSig);
                     trueSig->pool = nullptr;
                     trueSig->pool_next = nullptr;
-                    device_context->GetRenderDevice()->free_root_signature(trueSig);
+                    render_device->free_root_signature(trueSig);
                     return true;
                 }
                 iter->second--;
@@ -179,7 +179,7 @@ namespace Cyber
                 auto enforceDestroy = iter.first;
                 enforceDestroy->pool = nullptr;
                 enforceDestroy->pool_next = nullptr;
-                device_context->GetRenderDevice()->free_root_signature(enforceDestroy);
+                render_device->free_root_signature(enforceDestroy);
             }
         }
     private:

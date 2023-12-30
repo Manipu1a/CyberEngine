@@ -7,7 +7,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class CERenderDevice_D3D12;
+        class RenderDevice_D3D12_Impl;
 
         struct ITextureView_D3D12 : public ITextureView
         {
@@ -29,7 +29,7 @@ namespace Cyber
             /// Offset from mDxDescriptors for rtv descriptor handle
             D3D12_CPU_DESCRIPTOR_HANDLE mRtvDsvDescriptorHandle;
 
-            friend class RenderObject::CERenderDevice_D3D12;
+            friend class RenderObject::RenderDevice_D3D12_Impl;
         };
     }
 }

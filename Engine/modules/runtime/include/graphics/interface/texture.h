@@ -8,11 +8,6 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_GRAPHICS_API ITexture
-        {
-
-        };
-        
         struct CYBER_GRAPHICS_API TextureCreateDesc
         {
             /// Pointer to native texture handle if the texture does not own underlying resource
@@ -38,6 +33,14 @@ namespace Cyber
             ERHIResourceStates start_state;
         };
 
+
+        struct CYBER_GRAPHICS_API ITexture
+        {
+            const TextureCreateDesc& get_create_desc() const { return create_desc; }
+
+            TextureCreateDesc create_desc;
+        };
+
         template<typename EngineImplTraits>
         class CYBER_GRAPHICS_API Texture : public RenderObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
@@ -57,7 +60,6 @@ namespace Cyber
             virtual void* get_native_texture() const = 0;
 
             virtual TextureViewImplType* get_default_texture_view() const = 0;
-            const TextureCreateDesc& get_create_desc() { return create_desc; }
         protected:
             virtual TextureViewImplType* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
         protected:
@@ -76,7 +78,6 @@ namespace Cyber
             
             void* mNativeHandle;
 
-            TextureCreateDesc create_desc;
         };
     }
 }

@@ -12,7 +12,7 @@ namespace Cyber
         class Texture_D3D12_Impl;
         class TextureView_D3D12_Impl;
         class Buffer_D3D12_Impl;
-        class CERenderDevice_D3D12;
+        class RenderDevice_D3D12_Impl;
 
         struct EngineD3D12ImplTraits
         {
@@ -24,7 +24,7 @@ namespace Cyber
             using TextureImplType = Texture_D3D12_Impl;
             using TextureViewImplType = TextureView_D3D12_Impl;
             using BufferImplType = Buffer_D3D12_Impl;
-            using RenderDeviceImplType = CERenderDevice_D3D12;
+            using RenderDeviceImplType = RenderDevice_D3D12_Impl;
         };
     }
 }

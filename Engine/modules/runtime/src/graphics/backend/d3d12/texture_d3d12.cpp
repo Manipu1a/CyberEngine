@@ -4,7 +4,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        Texture_D3D12_Impl::Texture_D3D12_Impl(class CERenderDevice_D3D12* device) : TTextureBase(device)
+        Texture_D3D12_Impl::Texture_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TTextureBase(device)
         {
             
         }

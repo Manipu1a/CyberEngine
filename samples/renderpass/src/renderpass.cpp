@@ -26,7 +26,7 @@ namespace Cyber
             create_gfx_objects();
 
             // Create views
-            swap_chain->mBackBufferSRVViews = (RenderObject::Texture_View**)cyber_malloc(sizeof(RenderObject::Texture_View*) * swap_chain->mBufferSRVCount);
+            swap_chain->mBackBufferSRVViews = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * swap_chain->mBufferSRVCount);
             for(uint32_t i = 0; i < swap_chain->mBufferSRVCount; ++i)
             {
                 eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i

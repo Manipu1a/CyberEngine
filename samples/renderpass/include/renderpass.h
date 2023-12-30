@@ -11,7 +11,7 @@ namespace Cyber
 
     namespace RenderObject
     {
-        class Texture;
+        class ITexture;
         class CERenderPass;
         class CEFrameBuffer;
     };
@@ -49,9 +49,9 @@ namespace Cyber
 
             struct GBuffer
             {
-                RenderObject::Texture* base_color_texture = nullptr;
-                RenderObject::Texture* depth_texture = nullptr;
-                RenderObject::Texture* final_color_texture = nullptr;
+                RenderObject::ITexture* base_color_texture = nullptr;
+                RenderObject::ITexture* depth_texture = nullptr;
+                RenderObject::ITexture* final_color_texture = nullptr;
             } gbuffer;
         };
     }

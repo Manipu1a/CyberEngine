@@ -65,7 +65,7 @@ namespace Cyber
             return true;
         }
 
-        RHIShaderLibrary* add_shader(RenderObject::CERenderDevice* device, const ShaderLoadDesc& desc)
+        RHIShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
         {
             RHIShaderLibraryCreateDesc libraryDesc;
             

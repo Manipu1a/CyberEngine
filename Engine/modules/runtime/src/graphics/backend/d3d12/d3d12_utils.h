@@ -454,27 +454,27 @@ namespace Cyber
 
     void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* pInstance, uint32_t& count, bool& foundSoftwareAdapter);
 
-    void D3D12Util_CreateDescriptorHeap(RenderObject::CERenderDevice_D3D12* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
+    void D3D12Util_CreateDescriptorHeap(RenderObject::RenderDevice_D3D12_Impl* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
 
     void D3D12Util_FreeDescriptorHeap(struct RHIDescriptorHeap_D3D12* heap);
 
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::CERenderDevice_D3D12* pDevice);
+    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::RenderDevice_D3D12_Impl* pDevice);
 
-    void D3D12Util_InitializeShaderReflection(RenderObject::CERenderDevice_D3D12* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
+    void D3D12Util_InitializeShaderReflection(RenderObject::RenderDevice_D3D12_Impl* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
     
     void D3D12Util_FreeShaderReflection(RHIShaderLibrary_D3D12* library);
     
     void D3D12Util_SignalFence(RHIQueue_D3D12* queue, ID3D12Fence* fence, uint64_t fenceValue);
 
-    void D3D12Util_CreateCBV(RenderObject::CERenderDevice_D3D12* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+    void D3D12Util_CreateCBV(RenderObject::RenderDevice_D3D12_Impl* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
-    void D3D12Util_CreateSRV(RenderObject::CERenderDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+    void D3D12Util_CreateSRV(RenderObject::RenderDevice_D3D12_Impl* pDevice, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
-    void D3D12Util_CreateUAV(RenderObject::CERenderDevice_D3D12* pDevice, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+    void D3D12Util_CreateUAV(RenderObject::RenderDevice_D3D12_Impl* pDevice, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
-    void D3D12Util_CreateRTV(RenderObject::CERenderDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+    void D3D12Util_CreateRTV(RenderObject::RenderDevice_D3D12_Impl* pDevice, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
-    void D3D12Util_CreateDSV(RenderObject::CERenderDevice_D3D12* pDevice, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
+    void D3D12Util_CreateDSV(RenderObject::RenderDevice_D3D12_Impl* pDevice, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 
     D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc);
 
