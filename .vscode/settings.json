@@ -103,5 +103,8 @@
         "--background-index",
         "--header-insertion=never",
         "--completion-style=detailed"
-    ]
+    ],
+    "xmake.additionalConfigArguments": [
+        "--build_renderpass=true"
+      ]
 }
