@@ -240,7 +240,7 @@ namespace Cyber
             if(gbuffer.final_color_texture != nullptr)
                 gbuffer.final_color_texture = device->create_texture(texture_desc);
 
-            /*
+            
             RenderObject::TextureViewCreateDesc view_desc = {
                 .name = CYBER_UTF8("color_view"),
                 .texture = gbuffer.base_color_texture,
@@ -249,9 +249,9 @@ namespace Cyber
                 .aspects = RHI_TVA_COLOR,
                 .dimension = RHI_TEX_DIMENSION_2D,
                 .array_layer_count = 1
-            };*/
+            };
 
-            //auto base_color_tex_view = device->create_texture_view(view_desc);
+            auto base_color_tex_view = device->create_texture_view(view_desc);
 
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),

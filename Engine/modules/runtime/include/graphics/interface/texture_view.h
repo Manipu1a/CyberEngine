@@ -7,12 +7,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        //class CERenderDevice;
-        struct CYBER_GRAPHICS_API ITextureView
-        {
-
-        };
-
+        
         struct CYBER_GRAPHICS_API TextureViewCreateDesc
         {
             const char8_t* name;
@@ -27,16 +22,24 @@ namespace Cyber
             uint32_t mip_level_count;
         };
 
+        //class CERenderDevice;
+        struct CYBER_GRAPHICS_API ITextureView
+        {
+            TextureViewCreateDesc& get_create_desc() { return create_desc; }
+            TextureViewCreateDesc create_desc;
+        };
+
         template<typename EngineImplTraits>
         class CYBER_GRAPHICS_API Texture_View : public RenderObjectBase<typename EngineImplTraits::TextureViewInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-
-            const TextureViewCreateDesc get_create_desc() const { return create_desc; }
+            using TextureViewInterface = typename EngineImplTraits::TextureViewInterface;
+            using TTexture_View = RenderObjectBase<TextureViewInterface, RenderDeviceImplType>;
+            Texture_View(RenderDeviceImplType* device) : TTexture_View(device) { }
+            virtual ~Texture_View() {}
+            
         protected:
-            TextureViewCreateDesc create_desc;
-
             RenderDeviceImplType* device;
 
             friend RenderDeviceImplType;

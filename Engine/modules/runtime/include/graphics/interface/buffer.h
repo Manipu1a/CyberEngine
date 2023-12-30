@@ -54,7 +54,11 @@ namespace Cyber
         class CYBER_GRAPHICS_API Buffer : public RenderObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using BufferInterface = typename EngineImplTraits::BufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderObjectBase = RenderObjectBase<BufferInterface, RenderDeviceImplType>;
+
+            Buffer(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
 
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
             void* pCpuMappedAddress;
@@ -62,7 +66,6 @@ namespace Cyber
             uint64_t mDescriptors : 20;
             uint64_t mMemoryUsage : 3;
             uint64_t mNodeIndex : 4;
-            RenderDeviceImplType* device;
         protected:
             friend RenderDeviceImplType;
         };

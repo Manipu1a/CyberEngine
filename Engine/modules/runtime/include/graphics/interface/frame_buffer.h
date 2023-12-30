@@ -18,7 +18,7 @@ namespace Cyber
         class CEFrameBuffer
         {
         public:
-            
+            CEFrameBuffer() {}
         };
     }
 

@@ -239,7 +239,7 @@ namespace Cyber
 
     RenderObject::ITextureView* RenderDevice_D3D12_Impl::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
-        RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>();
+        RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>(this);
         tex_view->create_desc = viewDesc;
         RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.texture);
 
@@ -538,7 +538,7 @@ namespace Cyber
 
     RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& pDesc)
     {
-        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>();
+        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         D3D12_RESOURCE_DESC desc = {};
@@ -1379,7 +1379,7 @@ namespace Cyber
         dxSwapChain->mBackBufferSRVs = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            RenderObject::Texture_D3D12_Impl* Ts = cyber_new<RenderObject::Texture_D3D12_Impl>();
+            RenderObject::Texture_D3D12_Impl* Ts = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
             Ts->native_resource = backbuffers[i];
             Ts->allocation = nullptr;
             Ts->mIsCube = false;
@@ -1465,9 +1465,9 @@ namespace Cyber
         return dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
     }
 
-    CEFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
+    CEFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
     {
-        
+        return nullptr;
     }
 
     // for example 
@@ -2153,7 +2153,7 @@ namespace Cyber
     {
         RHIAdapter_D3D12* DxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
         
-        RenderObject::Buffer_D3D12_Impl* pBuffer = cyber_new<RenderObject::Buffer_D3D12_Impl>();
+        RenderObject::Buffer_D3D12_Impl* pBuffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this);
 
         uint64_t allocationSize = pDesc.mSize;
         // Align the buffer size to multiples of the dynamic uniform buffer minimum size

@@ -22,6 +22,11 @@ namespace Cyber
         class CYBER_GRAPHICS_API Buffer_D3D12_Impl : public Buffer<EngineD3D12ImplTraits>
         {
         public:
+            using TBufferBase = Buffer<EngineD3D12ImplTraits>;
+            using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
+
+            Buffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TBufferBase(device) {}
+
             /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress
             D3D12_GPU_VIRTUAL_ADDRESS mDxGpuAddress;
             /// Descriptor handle of the CBV in a CPU visible descriptor heap (applicable to BUFFER_USAGE_UNIFORM)
