@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
-
+#include "render_object.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -54,12 +54,17 @@ namespace Cyber
             RenderSubpassDesc* subpasses;
         };
 
-        class CYBER_GRAPHICS_API CERenderPass
+        struct CYBER_GRAPHICS_API IRenderPass
+        {
+            virtual const RenderPassDesc& get_create_desc() const = 0;
+        };
+
+        template<typename EngineImplTraits>
+        class CYBER_GRAPHICS_API RenderPassBase : public RenderObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             
-            const RenderPassDesc& get_create_desc() const { return desc; }
-            
+            virtual const RenderPassDesc& get_create_desc() const override { return desc; }
         protected:
             RenderPassDesc desc;
         };

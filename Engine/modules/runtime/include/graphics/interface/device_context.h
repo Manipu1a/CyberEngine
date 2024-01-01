@@ -22,7 +22,7 @@ namespace Cyber
         protected:
             IRenderDevice* render_device;
             RenderPassDesc active_render_pass_desc;
-            CEFrameBuffer* bound_frame_buffer = nullptr;
+            IFrameBuffer* bound_frame_buffer = nullptr;
         };
     }
 }

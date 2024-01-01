@@ -239,7 +239,6 @@ namespace Cyber
 
             if(gbuffer.final_color_texture != nullptr)
                 gbuffer.final_color_texture = device->create_texture(texture_desc);
-
             
             RenderObject::TextureViewCreateDesc view_desc = {
                 .name = CYBER_UTF8("color_view"),
@@ -251,16 +250,20 @@ namespace Cyber
                 .array_layer_count = 1
             };
 
-            auto base_color_tex_view = device->create_texture_view(view_desc);
+            RenderObject::ITextureView* views[] = 
+            {
+                gbuffer.base_color_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV),
+                gbuffer.depth_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV),
+                gbuffer.final_color_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV)
+            };
 
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .name = CYBER_UTF8("frame_buffer"),
                 .render_pass = nullptr,
-                .attachment_count = 1,
-                .attachments = base_color_tex_view
+                .attachment_count = 3,
+                .attachments = views
             };
             frame_buffer = device->create_frame_buffer(frame_buffer_desc);
-            
         }
 
         void RenderPassApp::raster_draw()

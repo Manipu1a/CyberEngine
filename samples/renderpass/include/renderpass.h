@@ -44,8 +44,8 @@ namespace Cyber
             RHIDescriptorSet* descriptor_set = nullptr;
             RHIRenderPipeline* pipeline = nullptr;
 
-            RenderObject::CERenderPass* render_pass = nullptr;
-            RenderObject::CEFrameBuffer* frame_buffer = nullptr;
+            RenderObject::IRenderPass* render_pass = nullptr;
+            RenderObject::IFrameBuffer* frame_buffer = nullptr;
 
             struct GBuffer
             {

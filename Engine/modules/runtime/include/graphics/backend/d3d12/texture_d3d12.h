@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/interface/texture.h"
+#include "graphics/interface/texture.hpp"
 #include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
@@ -18,6 +18,7 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
+            using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using TTextureBase = Texture<EngineD3D12ImplTraits>;
             
             Texture_D3D12_Impl(class RenderDevice_D3D12_Impl* device);
@@ -33,7 +34,8 @@ namespace Cyber
             }
 
             virtual void* get_native_texture() const override;
-            virtual TextureView_D3D12_Impl* get_default_texture_view() const override;
+            virtual ITextureView* get_default_texture_view() const override;
+
         protected:
             virtual TextureView_D3D12_Impl* create_view_internal(const TextureViewCreateDesc& desc) const override;
         protected:

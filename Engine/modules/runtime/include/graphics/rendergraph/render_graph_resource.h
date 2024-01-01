@@ -2,7 +2,7 @@
 #include "EASTL/map.h"
 #include "base_type.h"
 #include "render_graph.h"
-#include "interface/texture.h"
+#include "interface/texture.hpp"
 #include "interface/texture_view.h"
 #include "interface/buffer.h"
 #include "cyber_render_graph_config.h"

@@ -2,7 +2,7 @@
 
 #include "common/cyber_graphics_config.h"
 #include "interface/rhi.h"
-#include "texture.h"
+#include "texture.hpp"
 #include "texture_view.h"
 #include "buffer.h"
 #include "frame_buffer.h"
@@ -39,7 +39,7 @@ namespace Cyber
             virtual void free_swap_chain(RHISwapChain* pSwapChain) = 0;
             virtual void enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount) = 0;
             virtual uint32_t acquire_next_image(RHISwapChain* pSwapChain, const RHIAcquireNextDesc& acquireDesc) = 0;
-            virtual CEFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
+            virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             // Queue APIs
             virtual RHIQueue* get_queue(ERHIQueueType type, uint32_t index) = 0;
             virtual void submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc) = 0;
@@ -77,7 +77,7 @@ namespace Cyber
             virtual void cmd_end(RHICommandBuffer* cmd) = 0;
             virtual void cmd_resource_barrier(RHICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc) = 0;
             // Render Pass
-            virtual CERenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
+            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
             virtual RHIRenderPassEncoder* cmd_begin_render_pass(RHICommandBuffer* cmd, const RenderPassDesc& beginRenderPassDesc) = 0;
             virtual void cmd_end_render_pass(RHICommandBuffer* cmd) = 0;
             virtual void render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet) = 0;
