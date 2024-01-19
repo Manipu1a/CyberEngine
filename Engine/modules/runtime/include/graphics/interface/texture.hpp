@@ -66,7 +66,7 @@ namespace Cyber
                     reinterpret_cast<TextureViewImplType**>(&default_texture_views);
             }
 
-            ITextureView* get_default_texture_view(ERHITextureViewUsage view_type) const override
+            virtual ITextureView* get_default_texture_view(ERHITextureViewUsage view_type) const override
             {
                 const uint32_t num_default_views = 1;
                 return num_default_views > 1 ? 

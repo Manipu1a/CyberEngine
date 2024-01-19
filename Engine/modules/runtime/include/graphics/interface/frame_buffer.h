@@ -21,7 +21,7 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class FrameBufferBase : public RenderObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class FrameBufferBase : public RenderObjectBase<typename EngineImplTraits::FrameBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
@@ -29,7 +29,13 @@ namespace Cyber
             FrameBufferBase(RenderDeviceImplType* device);
 
             virtual ~FrameBufferBase() = default;
+
+            virtual const FrameBuffserDesc& get_create_desc() const
+            {
+                return create_desc;
+            }
         private:
+            FrameBuffserDesc create_desc;
             ITextureView** attachments = nullptr;
             IRenderPass* render_pass = nullptr;
         };

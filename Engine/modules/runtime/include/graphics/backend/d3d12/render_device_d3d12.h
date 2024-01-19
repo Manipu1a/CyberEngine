@@ -31,32 +31,32 @@ namespace Cyber
             virtual void free_device() override;
             // API Object APIs
             virtual RHISurface* surface_from_hwnd(HWND hwnd) override;
-            virtual RHIFence* create_fence() override;
-            virtual void wait_fences(RHIFence** fences, uint32_t fenceCount) override;
-            virtual void free_fence(RHIFence* fence) override;
-            virtual ERHIFenceStatus query_fence_status(RHIFence* fence) override;
-            virtual RHISwapChain* create_swap_chain(const RHISwapChainCreateDesc& swapchainDesc) override;
-            virtual void free_swap_chain(RHISwapChain* swapchain) override;
+            virtual IFence* create_fence() override;
+            virtual void wait_fences(IFence** fences, uint32_t fenceCount) override;
+            virtual void free_fence(IFence* fence) override;
+            virtual ERHIFenceStatus query_fence_status(IFence* fence) override;
+            virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
+            virtual void free_swap_chain(ISwapChain* swapchain) override;
             virtual void enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount) override;
-            virtual uint32_t acquire_next_image(RHISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc) override;
+            virtual uint32_t acquire_next_image(ISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             // Queue APIs
-            virtual RHIQueue* get_queue(ERHIQueueType type, uint32_t index) override;
-            virtual void submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc) override;
-            virtual void present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc) override;
-            virtual void wait_queue_idle(RHIQueue* queue) override;
-            virtual RHICommandPool* create_command_pool(RHIQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
-            virtual void reset_command_pool(RHICommandPool* pool) override;
-            virtual void free_command_pool(RHICommandPool* pool) override;
-            virtual RHICommandBuffer* create_command_buffer(RHICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
-            virtual void free_command_buffer(RHICommandBuffer* commandBuffer) override;
+            virtual IQueue* get_queue(ERHIQueueType type, uint32_t index) override;
+            virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
+            virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
+            virtual void wait_queue_idle(IQueue* queue) override;
+            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
+            virtual void reset_command_pool(ICommandPool* pool) override;
+            virtual void free_command_pool(ICommandPool* pool) override;
+            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
+            virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
 
-            virtual void cmd_begin(RHICommandBuffer* commandBuffer) override;
-            virtual void cmd_end(RHICommandBuffer* commandBuffer) override;
-            virtual void cmd_resource_barrier(RHICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc) override;
+            virtual void cmd_begin(ICommandBuffer* commandBuffer) override;
+            virtual void cmd_end(ICommandBuffer* commandBuffer) override;
+            virtual void cmd_resource_barrier(ICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc) override;
 
-            virtual RHIRenderPassEncoder* cmd_begin_render_pass(RHICommandBuffer* commandBuffer, const RenderPassDesc& beginRenderPassDesc) override;
-            virtual void cmd_end_render_pass(RHICommandBuffer* commandBuffer) override;
+            virtual RHIRenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const RenderPassDesc& beginRenderPassDesc) override;
+            virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
             virtual void render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet) override;
             virtual void render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
             virtual void render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;

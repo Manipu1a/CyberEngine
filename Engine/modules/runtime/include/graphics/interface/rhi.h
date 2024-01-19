@@ -22,25 +22,22 @@ namespace Cyber
         class ITexture;
         class ITextureView;
         class IBuffer;
+        class IFrameBuffer;
+        class ISwapChain;
+        class ISemaphore;
+        class IFence;
+        class ICommandPool;
+        class ICommandBuffer;
+        class IShaderResource;
+        class IShaderLibrary;
+        class IRootSignature;
+        class IRenderPass;
+        class IRootSignaturePool;
     }
 
     typedef uint32_t RHIQueueIndex;
-    struct RHIFence;
-    typedef Ref<RHIFence> FenceRHIRef;
     struct RHIInstance;
     typedef Ref<RHIInstance> InstanceRHIRef;
-    struct RHICommandPool;
-    struct RHIQueue;
-    typedef Ref<RHIQueue> QueueRHIRef;
-    typedef Ref<RHICommandPool> CommandPoolRef;
-    struct RHICommandBuffer;
-    typedef Ref<RHICommandBuffer> CommandBufferRef;
-    struct RHISwapChain;
-    typedef Ref<RHISwapChain> SwapChainRef;
-    struct RHIRootSignature;
-    typedef Ref<RHIRootSignature> RootSignatureRHIRef;
-    struct RHIShaderLibrary;
-    typedef Ref<RHIShaderLibrary> ShaderLibraryRHIRef;
     struct RHIDescriptorSet;
     typedef Ref<RHIDescriptorSet> DescriptorSetRHIRef;
 
@@ -50,7 +47,6 @@ namespace Cyber
         RHI_BACKEND_VULKAN,
         RHI_BACKEND_METAL
     } ERHIBackend;
-
 
     struct CYBER_GRAPHICS_API RHISurface
     {
@@ -62,29 +58,7 @@ namespace Cyber
         RHIInstance* pInstance = nullptr;
     };
 
-    struct CYBER_GRAPHICS_API RHIFence
-    {
-        RenderObject::IRenderDevice* pDevice;
-    };
-
-    struct CYBER_GRAPHICS_API RHISemaphore
-    {
-        RenderObject::IRenderDevice* pDevice;
-    };
-
     /// Shaders
-    struct CYBER_GRAPHICS_API RHIShaderResource
-    {
-        const char8_t* name;
-        uint64_t name_hash;
-        ERHIResourceType type;
-        ERHITextureDimension dimension;
-        uint32_t set;
-        uint32_t binding;
-        uint32_t size;
-        uint32_t offset;
-        ERHIShaderStages stages;
-    };
 
     struct CYBER_GRAPHICS_API RHIShaderVariable
     {
@@ -98,45 +72,17 @@ namespace Cyber
         const char* definition;
         const char* value;
     };
-
-    struct CYBER_GRAPHICS_API RHIParameterTable
-    {
-        // This should be stored here because shader could be destroyed after RS creation
-        RHIShaderResource* resources = nullptr;
-        uint32_t resource_count = 0;
-        uint32_t set_index = 0;
-    };
-
-    struct RHIRootSignaturePool
-    {
-        RenderObject::IRenderDevice* render_device;
-        ERHIPipelineType mPipelineType;
-    };
-
-    struct CYBER_GRAPHICS_API RHIRootSignature
-    {
-        RenderObject::IRenderDevice* render_device;
-        RHIParameterTable* parameter_tables;
-        uint32_t parameter_table_count;
-        RHIShaderResource* push_constants;
-        uint32_t push_constant_count;
-        RHIShaderResource* static_samplers;
-        uint32_t static_sampler_count;
-        ERHIPipelineType pipeline_type;
-        RHIRootSignaturePool* pool;
-        RHIRootSignature* pool_next;
-    };
     
     struct CYBER_GRAPHICS_API RHIDescriptorSet
     {
-        RHIRootSignature* root_signature;
+        RenderObject::IRootSignature* root_signature;
         uint32_t set_index;
     };
 
     struct CYBER_GRAPHICS_API RHIRenderPipeline
     {
         RenderObject::IRenderDevice* device;
-        RHIRootSignature* root_signature;
+        RenderObject::IRootSignature* root_signature;
     };
     /// Shader Reflection
     struct CYBER_GRAPHICS_API ShaderConstant
@@ -146,16 +92,6 @@ namespace Cyber
         uint32_t size;
     };
 
-    struct CYBER_GRAPHICS_API RHIVertexInput
-    {
-        // resource name
-        const char8_t* name;
-        const char8_t* semantics_name;
-        uint32_t semantics_index;
-        uint32_t binding;
-        ERHIFormat format;
-    };
-    
     struct CYBER_GRAPHICS_API ShaderByteCodeBuffer 
     {
         static CYBER_CONSTEXPR const uint32_t stack_size = 128u * 1024;
@@ -210,33 +146,6 @@ namespace Cyber
         {
             return !(*this < other);
         }
-    };
-
-    struct CYBER_GRAPHICS_API RHIShaderReflection
-    {
-        const char8_t* entry_name;
-        char* name_pool;
-        RHIVertexInput* vertex_inputs;
-        RHIShaderResource* shader_resources;
-        ERHIShaderStage shader_stage;
-        uint32_t name_pool_size;
-        uint32_t vertex_input_count;
-        uint32_t shader_resource_count;
-        uint32_t variable_count;
-
-        // Thread group size for compute shader
-        uint32_t num_threads_per_group;
-        // number of tessellation control point
-        uint32_t num_control_point;
-        uint32_t thread_group_sizes[3];
-    };
-
-    struct CYBER_GRAPHICS_API RHIShaderLibrary
-    {
-        RenderObject::IRenderDevice* pDevice;
-        char8_t* pName;
-        RHIShaderReflection* entry_reflections;
-        uint32_t entry_count;
     };
 
     struct CYBER_GRAPHICS_API RHIDescriptorData
@@ -332,21 +241,6 @@ namespace Cyber
         uint32_t texture_barrier_count;
     };
 
-    struct CYBER_GRAPHICS_API RHIInstanceCreateDesc
-    {
-        bool enable_debug_layer;
-        bool enable_gpu_based_validation;
-        bool enable_set_name;
-    };
-
-    // Objects
-    struct CYBER_GRAPHICS_API RHIInstance
-    {
-        ERHIBackend mBackend;
-        ERHINvAPI_Status mNvAPIStatus;
-        ERHIAGSReturenCode mAgsStatus;
-        bool mEnableSetName;
-    };
     /// Device Group
     struct CYBER_GRAPHICS_API RHIQueueGroupDesc
     {
@@ -371,26 +265,8 @@ namespace Cyber
         bool mIsCpu : 1;
     };
 
-    struct CYBER_GRAPHICS_API RHIQueue
-    {
-        RenderObject::IRenderDevice* pDevice;
-        ERHIQueueType mType;
-        RHIQueueIndex mIdex;
-    };
-
-    struct CYBER_GRAPHICS_API RHICommandPool
-    {
-        RHIQueue* pQueue;
-    };
-
-    struct CYBER_GRAPHICS_API RHICommandBuffer
-    {
-        RenderObject::IRenderDevice* pDevice;
-        Cyber::Ref<RHICommandPool> pPool;
-        ERHIPipelineType mCurrentDispatch;
-    };
-    using RHIRenderPassEncoder = RHICommandBuffer;
-    using RHIComputePassEncoder = RHICommandBuffer;
+    using RHIRenderPassEncoder = RenderObject::ICommandBuffer;
+    using RHIComputePassEncoder = RenderObject::ICommandBuffer;
 
     struct CYBER_GRAPHICS_API RHIQueryPool
     {
@@ -398,99 +274,22 @@ namespace Cyber
         uint32_t mCount;
     };
 
-    struct CYBER_GRAPHICS_API RHISwapChain
-    {
-        RenderObject::ITexture** mBackBufferSRVs;
-        RenderObject::ITextureView** mBackBufferSRVViews;
-        uint32_t mBufferSRVCount;
-        RenderObject::ITexture* mBackBufferDSV;
-        RenderObject::ITextureView* mBackBufferDSVView;
-    };
-
-    struct CYBER_GRAPHICS_API CommandPoolCreateDesc
-    {
-        uint32_t ___nothing_and_useless__;
-    };
-
-    struct CYBER_GRAPHICS_API CommandBufferCreateDesc
-    {
-        bool is_secondary : 1;
-    };
-
-    struct CYBER_GRAPHICS_API RHIQueueSubmitDesc
-    {
-        RHICommandBuffer** pCmds;
-        RHIFence* mSignalFence;
-        RHISemaphore** pWaitSemaphores;
-        RHISemaphore** pSignalSemaphores;
-        uint32_t mCmdsCount;
-        uint32_t mWaitSemaphoreCount;
-        uint32_t mSignalSemaphoreCount;
-    };
-
-    struct CYBER_GRAPHICS_API RHIQueuePresentDesc
-    {
-        RHISwapChain* swap_chain;
-        const RHISemaphore** wait_semaphores;
-        uint32_t wait_semaphore_count;
-        uint32_t index;
-    };
-
-    struct CYBER_GRAPHICS_API RHISwapChainCreateDesc
-    {
-        /// Present Queues
-        RHIQueue* mPresentQueue;
-        /// Present Queues Count
-        uint32_t mPresentQueueCount;
-        /// Number of backbuffers in the swapchain
-        uint32_t mImageCount;
-        /// Width of the swapchain
-        uint32_t mWidth;
-        /// Height of the swapchain 
-        uint32_t mHeight;
-        /// Format of the swapchain
-        ERHIFormat mFormat;
-        /// Surface
-        RHISurface* surface;
-        /// Set whether swapchain will be presented using vsync
-        bool mEnableVsync;
-        /// We can toogle to using FLIP model if app desires
-        bool mUseFlipSwapEffect;
-    };
-
     struct CYBER_GRAPHICS_API RHIAcquireNextDesc
     {
-        RHISemaphore* signal_semaphore;
-        RHIFence* fence;
+        RenderObject::ISemaphore* signal_semaphore;
+        RenderObject::IFence* fence;
     };
 
     struct CYBER_GRAPHICS_API RHIPipelineShaderCreateDesc
     {
-        RHIShaderLibrary* library;
+        RenderObject::IShaderLibrary* library;
         const char8_t* entry;
         ERHIShaderStage stage;
-    };
-
-    struct CYBER_GRAPHICS_API RHIRootSignaturePoolCreateDesc
-    {
-        const char8_t* name;
-    };
-
-    struct CYBER_GRAPHICS_API RHIRootSignatureCreateDesc
-    {
-        RHIPipelineShaderCreateDesc** shaders;
-        uint32_t shader_count;
-        RHISampler** static_samplers;
-        const char8_t* const* static_sampler_names;
-        uint32_t static_sampler_count;
-        const char8_t* const* push_constant_names;
-        uint32_t push_constant_count;
-        RHIRootSignaturePool* pool;
     };
     
     struct CYBER_GRAPHICS_API RHIDescriptorSetCreateDesc
     {
-        RHIRootSignature* root_signature;
+        RenderObject::IRootSignature* root_signature;
         uint32_t set_index;
     };
 
@@ -569,20 +368,6 @@ namespace Cyber
         bool enable_depth_clip : 1;
     };
 
-    struct CYBER_GRAPHICS_API RHIShaderLibraryCreateDesc
-    {
-        const char8_t* name;
-        const char8_t* entry_point;
-        const void* code;
-        uint32_t code_size;
-
-        ERHIShaderStage stage;
-        EShaderCompiler shader_compiler;
-        ERHIShaderTarget shader_target;
-        uint32_t shader_macro_count;
-        ShaderMacro* shader_macros;
-    };
-
     struct CYBER_GRAPHICS_API RHIVertexAttribute 
     {
         char8_t semantic_name[64];
@@ -600,28 +385,6 @@ namespace Cyber
         RHIVertexAttribute attributes[RHI_MAX_VERTEX_ATTRIBUTES];
     };
 
-    struct CYBER_GRAPHICS_API RHIRenderPipelineCreateDesc
-    {
-        RHIRootSignature* root_signature;
-        RHIPipelineShaderCreateDesc* vertex_shader;
-        RHIPipelineShaderCreateDesc* tesc_shader;
-        RHIPipelineShaderCreateDesc* tese_shader;
-        RHIPipelineShaderCreateDesc* geometry_shader;
-        RHIPipelineShaderCreateDesc* fragment_shader;
-        const RHIVertexLayout* vertex_layout;
-        RHIBlendStateCreateDesc* blend_state;
-        RHIDepthStateCreateDesc* depth_stencil_state;
-        RHIRasterizerStateCreateDesc* rasterizer_state;
-
-        const ERHIFormat* color_formats;
-        uint32_t render_target_count;
-        ERHITextureSampleCount sample_count;
-        uint32_t sample_quality;
-        ERHISlotMaskBit color_resolve_disable_mask;
-        ERHIFormat depth_stencil_format;
-        ERHIPrimitiveTopology prim_topology;
-        bool enable_indirect_command;
-    };
 
     #define RHI_SINGLE_GPU_NODE_COUNT 1
     #define RHI_SINGLE_GPU_NODE_MASK 1

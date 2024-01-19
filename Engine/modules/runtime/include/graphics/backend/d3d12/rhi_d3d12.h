@@ -142,15 +142,6 @@ namespace Cyber
         uint32_t mCount;
     };
 
-    struct RHISwapChain_D3D12 : public RHISwapChain 
-    {
-        IDXGISwapChain3* pDxSwapChain;
-        uint32_t mDxSyncInterval : 3;
-        uint32_t mFlags : 10;
-        uint32_t mImageCount : 3;
-        uint32_t mEnableVsync : 1;
-    };
-
     struct RHIRootSignature_D3D12 : public RHIRootSignature
     {
         ID3D12RootSignature* dxRootSignature;

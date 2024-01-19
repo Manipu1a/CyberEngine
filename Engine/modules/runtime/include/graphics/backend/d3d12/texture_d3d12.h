@@ -34,7 +34,6 @@ namespace Cyber
             }
 
             virtual void* get_native_texture() const override;
-            virtual ITextureView* get_default_texture_view() const override;
 
         protected:
             virtual TextureView_D3D12_Impl* create_view_internal(const TextureViewCreateDesc& desc) const override;

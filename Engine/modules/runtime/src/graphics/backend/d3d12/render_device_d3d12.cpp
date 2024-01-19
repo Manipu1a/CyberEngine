@@ -22,7 +22,7 @@
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/texture_view_d3d12.h"
 #include "graphics/backend/d3d12/buffer_d3d12.h"
-
+#include "graphics/backend/d3d12/swap_chain_d3d12.h"
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -865,7 +865,8 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
     {
-        RHISwapChain_D3D12* dx_swapchain = static_cast<RHISwapChain_D3D12*>(presentDesc.swap_chain);
+        SawpChain_D3D12_Impl* dx_swapchain = static_cast<SawpChain_D3D12_Impl*>(presentDesc.swap_chain);
+        
         HRESULT hr =  dx_swapchain->pDxSwapChain->Present(0, dx_swapchain->mFlags);
 
         if(FAILED(hr))
@@ -1320,11 +1321,11 @@ namespace Cyber
         Cmd->pDxCmdList->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
     }
 
-    RHISwapChain* RenderDevice_D3D12_Impl::create_swap_chain(const RHISwapChainCreateDesc& desc)
+    ISwapChain* RenderDevice_D3D12_Impl::create_swap_chain(const SwapChainDesc& desc)
     {
         RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance);
         const uint32_t buffer_count = desc.mImageCount;
-        RHISwapChain_D3D12* dxSwapChain = (RHISwapChain_D3D12*)cyber_calloc(1, sizeof(RHISwapChain_D3D12));
+        SawpChain_D3D12_Impl* dxSwapChain = (SawpChain_D3D12_Impl*)cyber_calloc(1, sizeof(RHISwapChain_D3D12));
         dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
@@ -1428,9 +1429,9 @@ namespace Cyber
         return dxSwapChain;
     }
 
-    void RenderDevice_D3D12_Impl::free_swap_chain(RHISwapChain* swapchain)
+    void RenderDevice_D3D12_Impl::free_swap_chain(ISwapChain* swapchain)
     {
-        RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
+        SawpChain_D3D12_Impl* dxSwapChain = static_cast<SawpChain_D3D12_Impl*>(swapchain);
         for(uint32_t i = 0;i < dxSwapChain->mBufferSRVCount; ++i)
         {
             RenderObject::Texture_D3D12_Impl* dxTexture = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->mBackBufferSRVs[i]);
@@ -1458,14 +1459,14 @@ namespace Cyber
         }
     }
 
-    uint32_t RenderDevice_D3D12_Impl::acquire_next_image(RHISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc)
+    uint32_t RenderDevice_D3D12_Impl::acquire_next_image(ISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc)
     {
-        RHISwapChain_D3D12* dxSwapChain = static_cast<RHISwapChain_D3D12*>(swapchain);
+        RenderObject::SawpChain_D3D12_Impl* dxSwapChain = static_cast<RenderObject::SawpChain_D3D12_Impl*>(swapchain);
         // On PC AquireNext is always true
         return dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
     }
 
-    CEFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
+    IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
     {
         return nullptr;
     }
