@@ -67,100 +67,6 @@ namespace Cyber
         D3D12_CPU_DESCRIPTOR_HANDLE BufferCBV;
     };
 
-    struct RHIInstance_D3D12 : public RHIInstance
-    {
-    #if defined(XBOX)
-    #elif defined(_WINDOWS)
-        struct IDXGIFactory6* pDXGIFactory;
-    #endif
-        struct ID3D12Debug* pDXDebug;
-        struct RHIAdapter_D3D12* pAdapters;
-        uint32_t mAdaptersCount;
-    };
-
-    struct RHIAdapter_D3D12 : public RHIAdapter
-    {
-        RHIAdapter_D3D12()
-        {
-            CB_CORE_INFO("RHIAdapter_D3D12::RHIAdapter_D3D12()");
-            pInstance = nullptr;
-        }
-    #if defined(XBOX)
-    #elif defined(_WINDOWS)
-        struct IDXGIAdapter4* pDxActiveGPU;
-    #endif
-        D3D_FEATURE_LEVEL mFeatureLevel;
-        RHIAdapterDetail mAdapterDetail;
-        bool mEnhanceBarrierSupported : 1;
-    };
-
-    struct RHIFence_D3D12 : public RHIFence
-    {
-    public:
-        ID3D12Fence* pDxFence;
-        HANDLE pDxWaitIdleFenceEvent;
-        uint64_t mFenceValue;
-        uint64_t mPadA;
-    };
-
-    /// DirectX12 does not have a concept of a semaphore. We emulate it using a fence.
-    struct RHISemaphore_D3D12 : public RHISemaphore
-    {
-        ID3D12Fence* dx_fence;
-        HANDLE dx_wait_idle_fence_event;
-        uint64_t fence_value;
-        uint64_t pad_a;
-    };
-
-    struct RHIQueue_D3D12: public RHIQueue
-    {
-        ID3D12CommandQueue* pCommandQueue;
-        RHIFence* pFence;
-    };
-
-    struct RHICommandPool_D3D12: public RHICommandPool
-    {
-        struct ID3D12CommandAllocator* pDxCmdAlloc;
-    };
-
-    struct RHICommandBuffer_D3D12: public RHICommandBuffer
-    {
-        ID3D12GraphicsCommandList* pDxCmdList;
-        // Cached in beginCmd to avoid fetching them during rendering
-        struct RHIDescriptorHeap_D3D12* pBoundHeaps[2];
-        D3D12_GPU_DESCRIPTOR_HANDLE mBoundHeapStartHandles[2];
-        // Command buffer state
-        const ID3D12RootSignature* pBoundRootSignature;
-        uint32_t mType;
-        uint32_t mNodeIndex;
-        RHICommandPool* pCmdPool;
-        D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS mSubResolveResource[RHI_MAX_MRT_COUNT];
-    };
-
-    struct RHIQueryPool_D3D12: public RHIQueryPool
-    {
-        uint32_t mCount;
-    };
-
-    struct RHIRootSignature_D3D12 : public RHIRootSignature
-    {
-        ID3D12RootSignature* dxRootSignature;
-        D3D12_ROOT_PARAMETER1 root_constant_parameter;
-        uint32_t root_parameter_index;
-    };
-
-    struct RHIDescriptorSet_D3D12 : public RHIDescriptorSet
-    {
-        /// Start handle to cbv srv uav descriptor table
-        uint64_t cbv_srv_uav_handle;
-        /// Stride of the cbv srv uav descriptor table (number of descriptors * descriptor size)
-        uint32_t cbv_srv_uav_stride;
-        /// Start handle to sampler descriptor table
-        uint64_t sampler_handle;
-        /// Stride of the sampler descriptor table (number of descriptors * descriptor size)
-        uint32_t sampler_stride;
-    };
-
     struct CD3DX12_DEFAULT {};
     extern const DECLSPEC_SELECTANY CD3DX12_DEFAULT D3D12_DEFAULT;
 
@@ -237,29 +143,7 @@ namespace Cyber
 
         ~CD3D12_RASTERIZER_DESC() {}
     };
-
-    struct RHIRenderPipeline_D3D12 : public RHIRenderPipeline
-    {
-        ID3D12PipelineState* pDxPipelineState;
-        ID3D12RootSignature* pDxRootSignature;
-        D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
-    };
-
-    struct RHISampler_D3D12 : public RHISampler
-    {
-        /// Description for creating the sampler descriptor for this sampler
-        D3D12_SAMPLER_DESC dxSamplerDesc;
-        /// Descriptor handle of the Sampler in a CPU visible descriptor heap
-        D3D12_CPU_DESCRIPTOR_HANDLE mDxHandle;
-    };
     
-    struct RHIShaderLibrary_D3D12 : public RHIShaderLibrary
-    {
-        ID3DBlob* shader_blob;
-        //struct IDxcBlobEncoding* shader_dxc_blob;
-        struct IDxcResult* shader_result;
-    };
-
     static const D3D_FEATURE_LEVEL d3d_feature_levels[] = 
     {
         D3D_FEATURE_LEVEL_12_1,

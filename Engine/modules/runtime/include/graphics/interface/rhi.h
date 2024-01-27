@@ -36,30 +36,15 @@ namespace Cyber
     }
 
     typedef uint32_t RHIQueueIndex;
-    struct RHIInstance;
-    typedef Ref<RHIInstance> InstanceRHIRef;
     struct RHIDescriptorSet;
     typedef Ref<RHIDescriptorSet> DescriptorSetRHIRef;
-
-    typedef enum ERHIBackend
-    {
-        RHI_BACKEND_D3D12,
-        RHI_BACKEND_VULKAN,
-        RHI_BACKEND_METAL
-    } ERHIBackend;
 
     struct CYBER_GRAPHICS_API RHISurface
     {
         HWND handle;
     };
 
-    struct CYBER_GRAPHICS_API RHIAdapter
-    {
-        RHIInstance* pInstance = nullptr;
-    };
-
     /// Shaders
-
     struct CYBER_GRAPHICS_API RHIShaderVariable
     {
         // Variable name 
@@ -75,8 +60,7 @@ namespace Cyber
     
     struct CYBER_GRAPHICS_API RHIDescriptorSet
     {
-        RenderObject::IRootSignature* root_signature;
-        uint32_t set_index;
+
     };
 
     struct CYBER_GRAPHICS_API RHIRenderPipeline
@@ -187,13 +171,7 @@ namespace Cyber
         };
         uint32_t count;
     };
-
-    struct CYBER_GRAPHICS_API RHISampler 
-    {
-
-    };
     
-
     struct CYBER_GRAPHICS_API RHIBufferRange
     {
         uint64_t offset;
@@ -248,31 +226,8 @@ namespace Cyber
         uint32_t queue_count;
     };
 
-    struct CYBER_GRAPHICS_API RHIAdapterDetail
-    {
-        uint32_t mUniformBufferAlignment;
-        uint32_t mUploadBufferTextureAlignment;
-        uint32_t mUploadBufferTextureRowAlignment;
-        uint32_t mMaxVertexInputBindings;
-        uint32_t mWaveLaneCount;
-        uint32_t mHostVisibleVRamBudget;
-        bool mSupportHostVisibleVRam : 1;
-        bool mMultiDrawIndirect : 1;
-        bool mSupportGeomShader : 1;
-        bool mSupportTessellation : 1;
-        bool mIsUma : 1;
-        bool mIsVirtual : 1;
-        bool mIsCpu : 1;
-    };
-
     using RHIRenderPassEncoder = RenderObject::ICommandBuffer;
     using RHIComputePassEncoder = RenderObject::ICommandBuffer;
-
-    struct CYBER_GRAPHICS_API RHIQueryPool
-    {
-        RenderObject::IRenderDevice* pDevice;
-        uint32_t mCount;
-    };
 
     struct CYBER_GRAPHICS_API RHIAcquireNextDesc
     {
@@ -280,13 +235,6 @@ namespace Cyber
         RenderObject::IFence* fence;
     };
 
-    struct CYBER_GRAPHICS_API RHIPipelineShaderCreateDesc
-    {
-        RenderObject::IShaderLibrary* library;
-        const char8_t* entry;
-        ERHIShaderStage stage;
-    };
-    
     struct CYBER_GRAPHICS_API RHIDescriptorSetCreateDesc
     {
         RenderObject::IRootSignature* root_signature;

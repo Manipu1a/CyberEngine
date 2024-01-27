@@ -23,11 +23,11 @@ namespace Cyber
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            RenderDevice_D3D12_Impl(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
+            RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
             virtual ~RenderDevice_D3D12_Impl();
         public:
             // Device APIs
-            virtual void create_device(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
+            virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
             virtual void free_device() override;
             // API Object APIs
             virtual RHISurface* surface_from_hwnd(HWND hwnd) override;
@@ -37,7 +37,7 @@ namespace Cyber
             virtual ERHIFenceStatus query_fence_status(IFence* fence) override;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
             virtual void free_swap_chain(ISwapChain* swapchain) override;
-            virtual void enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount) override;
+            virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) override;
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             // Queue APIs
@@ -63,21 +63,21 @@ namespace Cyber
             virtual void render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline) override;
             virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
             virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
-            virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data) override;
+            virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, IRootSignature* rs, const char8_t* name, const void* data) override;
             virtual void render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) override;
             virtual void render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) override;
             virtual void render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
             virtual void render_encoder_draw_indexed_instanced(RHIRenderPassEncoder*encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
             
-            virtual RHIRootSignature* create_root_signature(const RHIRootSignatureCreateDesc& rootSigDesc) override;
-            virtual void free_root_signature(RHIRootSignature* rootSignature) override;
+            virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
+            virtual void free_root_signature(IRootSignature* rootSignature) override;
             virtual RHIDescriptorSet* create_descriptor_set(const RHIDescriptorSetCreateDesc& dSetDesc) override;
             virtual void update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count) override;
 
-            virtual RHIRenderPipeline* create_render_pipeline(const RHIRenderPipelineCreateDesc& pipelineDesc) override;
+            virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) override;
             virtual void free_render_pipeline(RHIRenderPipeline* pipeline) override;
-            virtual RHIInstance* create_instance(const RHIInstanceCreateDesc& instanceDesc) override;
-            virtual void free_instance(RHIInstance* instance) override;
+            virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) override;
+            virtual void free_instance(IInstance* instance) override;
 
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
             virtual void free_texture_view(ITextureView* view) override;
@@ -87,8 +87,8 @@ namespace Cyber
             virtual void map_buffer(IBuffer* buffer, const RHIBufferRange* range) override;
             virtual void unmap_buffer(IBuffer* buffer) override;
 
-            virtual RHIShaderLibrary* create_shader_library(const struct RHIShaderLibraryCreateDesc& desc) override;
-            virtual void free_shader_library(RHIShaderLibrary* shaderLibrary) override;
+            virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
+            virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
 
             ID3D12Device* GetD3D12Device() { return pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return pResourceAllocator; }

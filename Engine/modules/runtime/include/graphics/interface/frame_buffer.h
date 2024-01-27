@@ -1,8 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "interface/texture_view.h"
-#include "render_pass.h"
-
+#include "render_object.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -10,9 +8,9 @@ namespace Cyber
         struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
             const char8_t* name;
-            IRenderPass* render_pass;
+            class IRenderPass* render_pass;
             uint32_t attachment_count;
-            RenderObject::ITextureView** attachments;
+            class ITextureView** attachments;
         };
         
         struct CYBER_GRAPHICS_API IFrameBuffer

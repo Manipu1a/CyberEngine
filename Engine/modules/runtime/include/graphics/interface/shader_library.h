@@ -1,6 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_pass.h"
+#include "render_object.h"
+#include "rhi.h"
 
 namespace Cyber
 {
@@ -8,7 +9,7 @@ namespace Cyber
     {
         class IShaderReflection;
 
-        struct CYBER_GRAPHICS_API RHIShaderLibraryCreateDesc
+        struct CYBER_GRAPHICS_API ShaderLibraryCreateDesc
         {
             const char8_t* name;
             const char8_t* entry_point;
@@ -24,7 +25,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IShaderLibrary
         {
-            
+            virtual const ShaderLibraryCreateDesc& get_create_desc() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -35,10 +36,16 @@ namespace Cyber
 
             ShaderLibraryBase(RenderDeviceImplType* device);
             virtual ~ShaderLibraryBase() = default;
+
+            virtual const ShaderLibraryCreateDesc& get_create_desc() const
+            {
+                return create_desc;
+            }
         protected:
             char8_t* pName;
             IShaderReflection* entry_reflections;
             uint32_t entry_count;
+            ShaderLibraryCreateDesc create_desc;
         };
     }
 

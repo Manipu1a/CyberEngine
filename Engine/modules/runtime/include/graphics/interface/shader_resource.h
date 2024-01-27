@@ -1,6 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_pass.h"
+#include "render_object.h"
+#include "rhi.h"
 
 namespace Cyber
 {

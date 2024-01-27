@@ -2,6 +2,14 @@
 #include "cyber_graphics_config.h"
 #include <stdint.h>
 
+
+typedef enum ERHIBackend
+{
+    RHI_BACKEND_D3D12,
+    RHI_BACKEND_VULKAN,
+    RHI_BACKEND_METAL
+} ERHIBackend;
+
 // enums
 typedef enum ERHINvAPI_Status
 {

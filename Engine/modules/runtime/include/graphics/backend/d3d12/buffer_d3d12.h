@@ -10,7 +10,6 @@ namespace Cyber
         class RenderDevice_D3D12_Impl;
     }
 
-
     namespace RenderObject
     {
         // Buffer Interface

@@ -13,6 +13,13 @@
 #include "command_pool.h"
 #include "semaphore.h"
 #include "fence.h"
+#include "Instance.h"
+#include "render_pipeline.h"
+#include "root_signature.h"
+#include "root_signature_pool.h"
+#include "shader_library.h"
+#include "shader_reflection.h"
+#include "adapter.h"
 
 namespace Cyber
 {
@@ -29,10 +36,10 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IRenderDevice
         {
             // Instance APIs
-            virtual RHIInstance* create_instance(const RHIInstanceCreateDesc& instanceDesc) = 0;
-            virtual void free_instance(RHIInstance* instance) = 0;
+            virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) = 0;
+            virtual void free_instance(IInstance* instance) = 0;
             // Device APIS
-            virtual void create_device(RHIAdapter* pAdapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
+            virtual void create_device(IAdapter* pAdapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
             virtual void free_device() = 0;
             // API Object APIs
             virtual RHISurface* surface_from_hwnd(HWND hwnd) = 0;
@@ -43,7 +50,7 @@ namespace Cyber
             virtual ERHIFenceStatus query_fence_status(IFence* pFence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
             virtual void free_swap_chain(ISwapChain* pSwapChain) = 0;
-            virtual void enum_adapters(RHIInstance* instance, RHIAdapter** adapters, uint32_t* adapterCount) = 0;
+            virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) = 0;
             virtual uint32_t acquire_next_image(ISwapChain* pSwapChain, const RHIAcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             // Queue APIs
@@ -59,11 +66,11 @@ namespace Cyber
             virtual ICommandBuffer* create_command_buffer(ICommandPool* pPool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
             virtual void free_command_buffer(ICommandBuffer* pCommandBuffer) = 0;
             /// RootSignature
-            virtual RHIRootSignature* create_root_signature(const RHIRootSignatureCreateDesc& rootSigDesc) = 0;
-            virtual void free_root_signature(RHIRootSignature* pRootSignature) = 0;
+            virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) = 0;
+            virtual void free_root_signature(IRootSignature* pRootSignature) = 0;
             virtual RHIDescriptorSet* create_descriptor_set(const RHIDescriptorSetCreateDesc& dSetDesc) = 0;
             virtual void update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count) = 0;
-            virtual RHIRenderPipeline* create_render_pipeline(const RHIRenderPipelineCreateDesc& pipelineDesc) = 0;
+            virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) = 0;
             virtual void free_render_pipeline(RHIRenderPipeline* pipeline) = 0;
             // Resource APIs
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
@@ -76,8 +83,8 @@ namespace Cyber
             virtual void unmap_buffer(IBuffer* buffer) = 0;
 
             // Shader
-            virtual RHIShaderLibrary* create_shader_library(const struct RHIShaderLibraryCreateDesc& desc) = 0;
-            virtual void free_shader_library(RHIShaderLibrary* shaderLibrary) = 0;
+            virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
+            virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;
             /// CMDS
             virtual void cmd_begin(ICommandBuffer* cmd) = 0;
             virtual void cmd_end(ICommandBuffer* cmd) = 0;
@@ -92,7 +99,7 @@ namespace Cyber
             virtual void render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline) = 0;
             virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) = 0;
             virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) = 0;
-            virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, RHIRootSignature* rs, const char8_t* name, const void* data) = 0;
+            virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, IRootSignature* rs, const char8_t* name, const void* data) = 0;
             virtual void render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) = 0;
             virtual void render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) = 0;
             virtual void render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex) = 0;
@@ -109,7 +116,7 @@ namespace Cyber
             using BufferImplType = typename EngineImplTraits::BufferImplType;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
 
-            RenderDeviceBase(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderObjectBase(nullptr)
+            RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderObjectBase(nullptr)
             {
                 this->adapter = adapter;
                 this->device_desc = deviceDesc;
@@ -121,7 +128,7 @@ namespace Cyber
             RenderDeviceBase() = default;
             
         protected:
-            RHIAdapter* adapter;
+            IAdapter* adapter;
             RenderDeviceCreateDesc device_desc;
 
         public:

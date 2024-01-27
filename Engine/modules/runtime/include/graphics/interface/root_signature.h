@@ -1,6 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_pass.h"
+#include "render_object.h"
+#include "rhi.h"
 
 namespace Cyber
 {
@@ -9,7 +10,7 @@ namespace Cyber
         class IShaderResource;
         class IRootSignaturePool;
         
-        struct CYBER_GRAPHICS_API RHIParameterTable
+        struct CYBER_GRAPHICS_API RootSignatureParameterTable
         {
             // This should be stored here because shader could be destroyed after RS creation
             RenderObject::IShaderResource* resources = nullptr;
@@ -19,7 +20,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API RootSignatureCreateDesc
         {
-            RHIPipelineShaderCreateDesc** shaders;
+            class PipelineShaderCreateDesc** shaders;
             uint32_t shader_count;
             RHISampler** static_samplers;
             const char8_t* const* static_sampler_names;
@@ -43,7 +44,7 @@ namespace Cyber
             RootSignatureBase(RenderDeviceImplType* device);
             virtual ~RootSignatureBase() = default;
         protected:
-            RHIParameterTable* parameter_tables;
+            RootSignatureParameterTable* parameter_tables;
             uint32_t parameter_table_count;
             class IShaderResource* push_constants;
             uint32_t push_constant_count;

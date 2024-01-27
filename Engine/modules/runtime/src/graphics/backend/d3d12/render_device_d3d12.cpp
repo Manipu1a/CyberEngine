@@ -23,6 +23,16 @@
 #include "graphics/backend/d3d12/texture_view_d3d12.h"
 #include "graphics/backend/d3d12/buffer_d3d12.h"
 #include "graphics/backend/d3d12/swap_chain_d3d12.h"
+#include "graphics/backend/d3d12/fence_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
+#include "graphics/backend/d3d12/instance_d3d12.h"
+#include "graphics/backend/d3d12/command_buffer_d3d12.h"
+#include "graphics/backend/d3d12/command_pool_d3d12.h"
+#include "graphics/backend/d3d12/frame_buffer_d3d12.h"
+#include "graphics/backend/d3d12/query_pool_d3d12.h"
+#include "graphics/backend/d3d12/queue_d3d12.h"
+
+
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -33,7 +43,7 @@ namespace Cyber
     {
     #define DECLARE_ZERO(type, var) type var = {};
 
-    RenderDevice_D3D12_Impl::RenderDevice_D3D12_Impl(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
+    RenderDevice_D3D12_Impl::RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
     {
         create_device(adapter, deviceDesc);
     }
@@ -43,10 +53,10 @@ namespace Cyber
         free_device();
     }
 
-    void RenderDevice_D3D12_Impl::create_device(RHIAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
+    void RenderDevice_D3D12_Impl::create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
     {
-        RHIAdapter_D3D12* dxAdapter = static_cast<RHIAdapter_D3D12*>(adapter);
-        RHIInstance_D3D12* dxInstance = static_cast<RHIInstance_D3D12*>(adapter->pInstance);
+        Adapter_D3D12_Impl* dxAdapter = static_cast<Adapter_D3D12_Impl*>(adapter);
+        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->pInstance);
         
         this->adapter = adapter;
 
@@ -700,9 +710,9 @@ namespace Cyber
         return pTexture;
     }
 
-    RHIInstance* RenderDevice_D3D12_Impl::create_instance(const RHIInstanceCreateDesc& instanceDesc)
+    IInstance* RenderDevice_D3D12_Impl::create_instance(const InstanceCreateDesc& instanceDesc)
     {
-        RHIInstance_D3D12* instance = cyber_new<RHIInstance_D3D12>();
+        Instance_D3D12_Impl* instance = cyber_new<Instance_D3D12_Impl>();
         // Initialize driver
         D3D12Util_InitializeEnvironment(instance);
         // Enable Debug Layer
@@ -732,9 +742,9 @@ namespace Cyber
         return instance;
     }
 
-    void RenderDevice_D3D12_Impl::free_instance(RHIInstance* instance)
+    void RenderDevice_D3D12_Impl::free_instance(IInstance* instance)
     {
-        RHIInstance_D3D12* dx_instance = static_cast<RHIInstance_D3D12*>(instance);
+        Instance_D3D12_Impl* dx_instance = static_cast<Instance_D3D12_Impl*>(instance);
         D3D12Util_DeInitializeEnvironment(dx_instance);
         if(dx_instance->mAdaptersCount > 0)
         {
@@ -775,9 +785,9 @@ namespace Cyber
         return surface;
     }
 
-    RHIFence* RenderDevice_D3D12_Impl::create_fence()
+    IFence* RenderDevice_D3D12_Impl::create_fence()
     {
-        RHIFence_D3D12* dxFence = cyber_new<RHIFence_D3D12>();
+        Fence_D3D12_Impl* dxFence = cyber_new<Fence_D3D12_Impl>();
         cyber_assert(dxFence, "Fence create failed!");
         CHECK_HRESULT(pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->pDxFence)));
         dxFence->mFenceValue = 0;
@@ -786,9 +796,9 @@ namespace Cyber
         return dxFence;
     }
 
-    ERHIFenceStatus RenderDevice_D3D12_Impl::query_fence_status(RHIFence* fence)
+    ERHIFenceStatus RenderDevice_D3D12_Impl::query_fence_status(IFence* fence)
     {
-        RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fence);
+        Fence_D3D12_Impl* dxFence = static_cast<Fence_D3D12_Impl*>(fence);
         uint64_t fenceValue = dxFence->pDxFence->GetCompletedValue();
         if(fenceValue < dxFence->mFenceValue)
             return RHI_FENCE_STATUS_INCOMPLETE;
@@ -796,12 +806,12 @@ namespace Cyber
             return RHI_FENCE_STATUS_COMPLETE;
     }
 
-    void RenderDevice_D3D12_Impl::wait_fences(RHIFence** fences, uint32_t fenceCount)
+    void RenderDevice_D3D12_Impl::wait_fences(IFence** fences, uint32_t fenceCount)
     {
         for(uint32_t i = 0; i < fenceCount; ++i)
         {
             ERHIFenceStatus fence_status = query_fence_status(fences[i]);
-            RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fences[i]);
+            Fence_D3D12_Impl* dxFence = static_cast<Fence_D3D12_Impl*>(fences[i]);
             uint64_t fence_value = dxFence->mFenceValue;
             if(fence_status == RHI_FENCE_STATUS_INCOMPLETE)
             {
@@ -811,26 +821,25 @@ namespace Cyber
         }
     }
 
-    void RenderDevice_D3D12_Impl::free_fence(RHIFence* fence)
+    void RenderDevice_D3D12_Impl::free_fence(IFence* fence)
     {
-        RHIFence_D3D12* dxFence = static_cast<RHIFence_D3D12*>(fence);
+        Fence_D3D12_Impl* dxFence = static_cast<Fence_D3D12_Impl*>(fence);
         SAFE_RELEASE(dxFence->pDxFence);
         CloseHandle(dxFence->pDxWaitIdleFenceEvent);
         cyber_delete(fence);
     }
 
-    RHIQueue* RenderDevice_D3D12_Impl::get_queue(ERHIQueueType type, uint32_t index)
+    IQueue* RenderDevice_D3D12_Impl::get_queue(ERHIQueueType type, uint32_t index)
     {
-        RHIQueue_D3D12* dxQueue = cyber_new<RHIQueue_D3D12>();
+        Queue_D3D12_Impl* dxQueue = cyber_new<Queue_D3D12_Impl>(this);
         dxQueue->pCommandQueue = ppCommandQueues[type][index];
         dxQueue->pFence = create_fence();
-        dxQueue->pDevice = this;
         return dxQueue;
     }
-    void RenderDevice_D3D12_Impl::submit_queue(RHIQueue* queue, const RHIQueueSubmitDesc& submitDesc)
+    void RenderDevice_D3D12_Impl::submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc)
     {
         uint32_t cmd_count = submitDesc.mCmdsCount;
-        RHIQueue_D3D12* dx_queue = static_cast<RHIQueue_D3D12*>(queue);
+        Queue_D3D12_Impl* dx_queue = static_cast<Queue_D3D12_Impl*>(queue);
         RHIFence_D3D12* dx_fence = static_cast<RHIFence_D3D12*>(submitDesc.mSignalFence);
 
         cyber_check(submitDesc.mCmdsCount > 0);
@@ -863,7 +872,7 @@ namespace Cyber
         }
     }
 
-    void RenderDevice_D3D12_Impl::present_queue(RHIQueue* queue, const RHIQueuePresentDesc& presentDesc)
+    void RenderDevice_D3D12_Impl::present_queue(IQueue* queue, const QueuePresentDesc& presentDesc)
     {
         SawpChain_D3D12_Impl* dx_swapchain = static_cast<SawpChain_D3D12_Impl*>(presentDesc.swap_chain);
         
@@ -877,7 +886,7 @@ namespace Cyber
             #endif
         }
     }
-    void RenderDevice_D3D12_Impl::wait_queue_idle(RHIQueue* queue)
+    void RenderDevice_D3D12_Impl::wait_queue_idle(IQueue* queue)
     {
         RHIQueue_D3D12* Queue = static_cast<RHIQueue_D3D12*>(queue);
         RHIFence_D3D12* Fence = static_cast<RHIFence_D3D12*>(Queue->pFence);

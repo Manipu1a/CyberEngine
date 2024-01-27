@@ -1,7 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "interface/texture_view.h"
-#include "render_pass.h"
+#include "render_object.h"
 
 namespace Cyber
 {
@@ -13,7 +12,7 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class SemaphoreBase : public RenderObjectBase<typename EngineImplTraits::CommandPoolInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class SemaphoreBase : public RenderObjectBase<typename EngineImplTraits::SemaphoreInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
