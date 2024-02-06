@@ -31,7 +31,7 @@ namespace Cyber
             struct IDXGIFactory6* pDXGIFactory;
         #endif
             struct ID3D12Debug* pDXDebug;
-            struct RHIAdapter_D3D12* pAdapters;
+            struct IAdapter* pAdapters;
             uint32_t mAdaptersCount;
 
         protected:

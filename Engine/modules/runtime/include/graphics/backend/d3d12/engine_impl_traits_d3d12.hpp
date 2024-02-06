@@ -22,6 +22,9 @@ namespace Cyber
         class IAdapter_D3D12;
         class IDescriptorSet_D3D12;
         class ISampler_D3D12;
+        class IShaderReflection_D3D12;
+        class IShaderLibrary_D3D12;
+        class IShaderResource_D3D12;
 
         class Texture_D3D12_Impl;
         class TextureView_D3D12_Impl;
@@ -41,6 +44,9 @@ namespace Cyber
         class Adapter_D3D12_Impl;
         class DescriptorSet_D3D12_Impl;
         class Sampler_D3D12_Impl;
+        class ShaderReflection_D3D12_Impl;
+        class ShaderLibrary_D3D12_Impl;
+        class ShaderResource_D3D12_Impl;
 
         struct EngineD3D12ImplTraits
         {
@@ -63,7 +69,9 @@ namespace Cyber
             using AdapterInterface = IAdapter_D3D12;
             using DescriptorSetInterface = IDescriptorSet_D3D12;
             using SamplerInterface = ISampler_D3D12;
-
+            using ShaderReflectionInterface = IShaderReflection_D3D12;
+            using ShaderLibraryInterface = IShaderLibrary_D3D12;
+            using ShaderResourceInterface = IShaderResource_D3D12;
             // Impl
             using TextureImplType = Texture_D3D12_Impl;
             using TextureViewImplType = TextureView_D3D12_Impl;
@@ -83,6 +91,9 @@ namespace Cyber
             using AdapterImplType = Adapter_D3D12_Impl;
             using DescriptorSetImplType = DescriptorSet_D3D12_Impl;
             using SamplerImplType = Sampler_D3D12_Impl;
+            using ShaderReflectionImplType = ShaderReflection_D3D12_Impl;
+            using ShaderLibraryImplType = ShaderLibrary_D3D12_Impl;
+            using ShaderResourceImplType = ShaderResource_D3D12_Impl;
         };
     }
 }

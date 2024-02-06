@@ -29,7 +29,7 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class ShaderLibraryBase : public RenderObjectBase<IShaderLibrary, typename EngineImplTraits::RenderDeviceImplType>
+        class ShaderLibraryBase : public RenderObjectBase<typename EngineImplTraits::ShaderLibraryInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
@@ -41,7 +41,6 @@ namespace Cyber
             {
                 return create_desc;
             }
-        protected:
             char8_t* pName;
             IShaderReflection* entry_reflections;
             uint32_t entry_count;

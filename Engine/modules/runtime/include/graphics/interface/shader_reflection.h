@@ -16,14 +16,14 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class ShaderReflectionBase : public RenderObjectBase<IShaderReflection, typename EngineImplTraits::RenderDeviceImplType>
+        class ShaderReflectionBase : public RenderObjectBase<typename EngineImplTraits::ShaderReflectionInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
 
             ShaderReflectionBase(RenderDeviceImplType* device);
             virtual ~ShaderReflectionBase() = default;
-        protected:
+            
             const char8_t* entry_name;
             char* name_pool;
             IVertexInput* vertex_inputs;

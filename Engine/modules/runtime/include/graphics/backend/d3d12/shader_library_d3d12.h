@@ -33,6 +33,5 @@ namespace Cyber
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
-
     }
 }

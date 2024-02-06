@@ -26,6 +26,18 @@ namespace Cyber
 
             Adapter_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TAdapterBase(device) {}
 
+            IDXGIAdapter4* get_native_adapter() const
+            {
+                return pDxActiveGPU;
+            }
+
+            void fill_adapter(const AdapterDetail& detail, D3D_FEATURE_LEVEL featureLevel, IDXGIAdapter4* adapter, bool enhanceBarrierSupported)
+            {
+                mAdapterDetail = detail;
+                mFeatureLevel = featureLevel;
+                pDxActiveGPU = adapter;
+                mEnhanceBarrierSupported = enhanceBarrierSupported;
+            }
         protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)

@@ -8,6 +8,14 @@
 #include <d3dcompiler.h>
 //#include "cyber_runtime.config.h"
 //#include "../../common/common_utils.h"
+#include "graphics/backend/d3d12/shader_library_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/queue_d3d12.h"
+#include "graphics/backend/d3d12/instance_d3d12.h"
+#include "graphics/backend/d3d12/shader_reflection_d3d12.h"
+#include "graphics/backend/d3d12/shader_resource_d3d12.h"
+#include "graphics/interface/vertex_input.h"
 
 namespace Cyber
 {
@@ -225,17 +233,17 @@ namespace Cyber
         dstHeap->pDevice->CopyDescriptorsSimple(1, {dstHeap->mStartHandle.mCpu.ptr + dstHandle + (index * dstHeap->mDescriptorSize)}, srcHandle, dstHeap->mType);
     }
 
-    void D3D12Util_InitializeEnvironment(RHIInstance* pInst)
+    void D3D12Util_InitializeEnvironment(RenderObject::Instance_D3D12_Impl* pInst)
     {
         
     }
 
-    void D3D12Util_DeInitializeEnvironment(RHIInstance* pInst)
+    void D3D12Util_DeInitializeEnvironment(RenderObject::Instance_D3D12_Impl* pInst)
     {
         
     }
 
-    void D3D12Util_Optionalenable_debug_layer(RHIInstance_D3D12* result, const RHIInstanceCreateDesc& instanceDesc)
+    void D3D12Util_Optionalenable_debug_layer(RenderObject::Instance_D3D12_Impl* result, const RenderObject::InstanceCreateDesc& instanceDesc)
     {
         if(instanceDesc.enable_debug_layer)
         {
@@ -259,7 +267,7 @@ namespace Cyber
         }
     }
 
-    void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* instance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
+    void D3D12Util_QueryAllAdapters(RenderObject::Instance_D3D12_Impl* instance, uint32_t& pCount, bool& pFoundSoftwareAdapter)
     {
         cyber_assert(instance->pAdapters == nullptr, "getProperGpuCount should be called only once!");
         cyber_assert(instance->mAdaptersCount == 0, "getProperGpuCount should be called only once!");
@@ -312,16 +320,13 @@ namespace Cyber
         }
 
         pCount = instance->mAdaptersCount;
-        instance->pAdapters = cyber_new_n<RHIAdapter_D3D12>(instance->mAdaptersCount);
-        CB_CORE_INFO("test");
+        instance->pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(instance->mAdaptersCount);
 
         for(uint32_t i = 0;i < pCount; i++)
         {
-            auto& adapter = instance->pAdapters[i];
+            RenderObject::Adapter_D3D12_Impl* pAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(&instance->pAdapters[i]);
             // Device Objects
-            adapter.pDxActiveGPU = dxgi_adapters[i];
-            adapter.mFeatureLevel = adapter_levels[i];
-            adapter.pInstance = instance;
+            pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
         }
     }
 
@@ -370,12 +375,12 @@ namespace Cyber
         cyber_free(heap);
     }
 
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::RenderDevice_D3D12_Impl* device)
+    void D3D12Util_CreateDMAAllocator(RenderObject::Instance_D3D12_Impl* pInstance, RenderObject::Adapter_D3D12_Impl* pAdapter, RenderObject::RenderDevice_D3D12_Impl* device)
     {
         D3D12MA::ALLOCATOR_DESC desc = {};
         desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
         desc.pDevice = device->GetD3D12Device();
-        desc.pAdapter = pAdapter->pDxActiveGPU;
+        desc.pAdapter = pAdapter->get_native_adapter();
 
         D3D12MA::ALLOCATION_CALLBACKS allocationCallbacks = {};
         allocationCallbacks.pAllocate = [](size_t size, size_t alignment, void*){
@@ -445,15 +450,15 @@ namespace Cyber
         RHI_FORMAT_R32G32B32A32_SFLOAT,
     };
 
-    CYBER_FORCE_INLINE void D3D12Util_ReflectionRecordShaderResource(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc,RHIShaderLibrary_D3D12* library)
+    CYBER_FORCE_INLINE void D3D12Util_ReflectionRecordShaderResource(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc, RenderObject::ShaderLibrary_D3D12_Impl* library)
     {
         // Get the number of bound resources
         library->entry_count = 1;
-        library->entry_reflections = (RHIShaderReflection*)cyber_calloc(library->entry_count, sizeof(RHIShaderReflection));
-        RHIShaderReflection* reflection = library->entry_reflections;
+        library->entry_reflections = (RenderObject::ShaderReflection_D3D12_Impl*)cyber_calloc(library->entry_count, sizeof(RenderObject::ShaderReflection_D3D12_Impl));
+        RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(library->entry_reflections);
         reflection->entry_name = D3DShaderEntryName;
         reflection->shader_resource_count = shaderDesc.BoundResources;
-        reflection->shader_resources = (RHIShaderResource*)cyber_calloc(shaderDesc.BoundResources, sizeof(RHIShaderResource));
+        reflection->shader_resources = (RenderObject::ShaderResource_D3D12_Impl*)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::ShaderResource_D3D12_Impl));
 
         // Count string sizes of the bound resources for the name pool
         for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -461,51 +466,53 @@ namespace Cyber
             D3D12_SHADER_INPUT_BIND_DESC bindDesc;
             d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
             const size_t source_len = strlen(bindDesc.Name);
-            reflection->shader_resources[i].name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1));
-            reflection->shader_resources[i].name_hash = graphics_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
+            RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(&reflection->shader_resources[i]);
+
+            resource->name = (char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1));
+            resource->name_hash = graphics_name_hash(bindDesc.Name, strlen(bindDesc.Name + 1));
             
             // We are very sure it's windows platform
-            strcpy_s((char*)reflection->shader_resources[i].name, source_len + 1, bindDesc.Name);
-            reflection->shader_resources[i].type = gD3D12_TO_DESCRIPTOR[bindDesc.Type];
-            reflection->shader_resources[i].set = bindDesc.Space;
-            reflection->shader_resources[i].binding = bindDesc.BindPoint;
-            reflection->shader_resources[i].size = bindDesc.BindCount;
-            reflection->shader_resources[i].stages = stage;
-            reflection->shader_resources[i].dimension = gD3D12_TO_TEXTURE_DIM[bindDesc.Dimension];
+            strcpy_s((char*)resource->name, source_len + 1, bindDesc.Name);
+            resource->type = gD3D12_TO_DESCRIPTOR[bindDesc.Type];
+            resource->set = bindDesc.Space;
+            resource->binding = bindDesc.BindPoint;
+            resource->size = bindDesc.BindCount;
+            resource->stages = stage;
+            resource->dimension = gD3D12_TO_TEXTURE_DIM[bindDesc.Dimension];
             if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)
             {
                 ID3D12ShaderReflectionConstantBuffer* buffer = d3d12Reflection->GetConstantBufferByName(bindDesc.Name);
                 cyber_assert(buffer, "D3D12 reflection failed : CBV not found!");
                 D3D12_SHADER_BUFFER_DESC bufferDesc;
                 buffer->GetDesc(&bufferDesc);
-                reflection->shader_resources[i].size = bufferDesc.Size;
+                resource->size = bufferDesc.Size;
             }
             // RWTyped is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for RWBuffer here
             if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
             {
-                reflection->shader_resources[i].type = RHI_RESOURCE_TYPE_RW_BUFFER;
+                resource->type = RHI_RESOURCE_TYPE_RW_BUFFER;
             }
             // Buffer<> is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for Buffer<> here
             if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
             {
-                reflection->shader_resources[i].type = RHI_RESOURCE_TYPE_BUFFER;
+                resource->type = RHI_RESOURCE_TYPE_BUFFER;
             }
         }
     }
 
-    CYBER_FORCE_INLINE void D3D12Util_CollectShaderReflectionData(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, RHIShaderLibrary_D3D12* library)
+    CYBER_FORCE_INLINE void D3D12Util_CollectShaderReflectionData(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, RenderObject::ShaderLibrary_D3D12_Impl* library)
     {
         D3D12_SHADER_DESC shaderDesc;
         d3d12Reflection->GetDesc(&shaderDesc);
         D3D12Util_ReflectionRecordShaderResource(d3d12Reflection, stage, shaderDesc, library);
-        RHIShaderReflection* reflection = library->entry_reflections;
+        RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(library->entry_reflections);
         reflection->shader_stage = stage;
 
         // Collect vertex inputs
         if(stage == RHI_SHADER_STAGE_VERT)
         {
             reflection->vertex_input_count = shaderDesc.InputParameters;
-            reflection->vertex_inputs = (RHIVertexInput*)cyber_calloc(reflection->vertex_input_count, sizeof(RHIVertexInput));
+            reflection->vertex_inputs = (RenderObject::VertexInputBase*)cyber_calloc(reflection->vertex_input_count, sizeof(RenderObject::VertexInputBase));
             // Count the string sizes of the vertex inputs for the name pool
             for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
             {

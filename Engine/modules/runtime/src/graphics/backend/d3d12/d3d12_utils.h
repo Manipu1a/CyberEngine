@@ -1,9 +1,16 @@
 #pragma once
 #include "graphics/backend/d3d12/rhi_d3d12.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
-
 namespace Cyber
 {
+    namespace RenderObject
+    {
+        class ShaderLibrary_D3D12_Impl;
+        class RenderDevice_D3D12_Impl;
+        class Queue_D3D12_Impl;
+        class Adapter_D3D12_Impl;
+    };
+
     #define CALC_SUBRESOURCE_INDEX(MipSlice, ArraySlice, PlaneSlice, MipLevels, ArraySize) (MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize)
 
     struct DescriptorHeapProperties
@@ -446,25 +453,25 @@ namespace Cyber
     void D3D12Util_ReturnDescriptorHandles(RHIDescriptorHeap_D3D12* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t count);
     void D3D12Util_CopyDescriptorHandle(RHIDescriptorHeap_D3D12* dstHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index);
 
-    void D3D12Util_InitializeEnvironment(RHIInstance* pInst);
+    void D3D12Util_InitializeEnvironment(RenderObject::Instance_D3D12_Impl* pInst);
 
-    void D3D12Util_DeInitializeEnvironment(RHIInstance* pInst);
+    void D3D12Util_DeInitializeEnvironment(RenderObject::Instance_D3D12_Impl* pInst);
 
-    void D3D12Util_Optionalenable_debug_layer(RHIInstance_D3D12* result, const RHIInstanceCreateDesc& instanceDesc);
+    void D3D12Util_Optionalenable_debug_layer(RenderObject::Instance_D3D12_Impl* result, const RenderObject::InstanceCreateDesc& instanceDesc);
 
-    void D3D12Util_QueryAllAdapters(RHIInstance_D3D12* pInstance, uint32_t& count, bool& foundSoftwareAdapter);
+    void D3D12Util_QueryAllAdapters(RenderObject::Instance_D3D12_Impl* pInstance, uint32_t& count, bool& foundSoftwareAdapter);
 
     void D3D12Util_CreateDescriptorHeap(RenderObject::RenderDevice_D3D12_Impl* pDevice, const D3D12_DESCRIPTOR_HEAP_DESC& pDesc, struct RHIDescriptorHeap_D3D12** ppDescHeap);
 
     void D3D12Util_FreeDescriptorHeap(struct RHIDescriptorHeap_D3D12* heap);
 
-    void D3D12Util_CreateDMAAllocator(RHIInstance_D3D12* pInstance, RHIAdapter_D3D12* pAdapter, RenderObject::RenderDevice_D3D12_Impl* pDevice);
+    void D3D12Util_CreateDMAAllocator(RenderObject::Instance_D3D12_Impl* pInstance, RenderObject::Adapter_D3D12_Impl* pAdapter, RenderObject::RenderDevice_D3D12_Impl* pDevice);
 
-    void D3D12Util_InitializeShaderReflection(RenderObject::RenderDevice_D3D12_Impl* device, RHIShaderLibrary_D3D12* library, const RHIShaderLibraryCreateDesc& desc);
+    void D3D12Util_InitializeShaderReflection(RenderObject::RenderDevice_D3D12_Impl* device, RenderObject::ShaderLibrary_D3D12_Impl* library, const RenderObject::ShaderLibraryCreateDesc& desc);
     
-    void D3D12Util_FreeShaderReflection(RHIShaderLibrary_D3D12* library);
+    void D3D12Util_FreeShaderReflection(RenderObject::ShaderLibrary_D3D12_Impl* library);
     
-    void D3D12Util_SignalFence(RHIQueue_D3D12* queue, ID3D12Fence* fence, uint64_t fenceValue);
+    void D3D12Util_SignalFence(RenderObject::Queue_D3D12_Impl* queue, ID3D12Fence* fence, uint64_t fenceValue);
 
     void D3D12Util_CreateCBV(RenderObject::RenderDevice_D3D12_Impl* pDevice, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle);
 

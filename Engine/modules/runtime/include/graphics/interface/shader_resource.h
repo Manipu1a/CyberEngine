@@ -21,7 +21,7 @@ namespace Cyber
 
             ShaderResourceBase(RenderDeviceImplType* device);
             virtual ~ShaderResourceBase() = default;
-        protected:
+            
             const char8_t* name;
             uint64_t name_hash;
             ERHIResourceType type;
