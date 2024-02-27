@@ -26,6 +26,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IShaderLibrary
         {
             virtual const ShaderLibraryCreateDesc& get_create_desc() const = 0;
+            virtual void free_reflection() = 0;
         };
 
         template<typename EngineImplTraits>

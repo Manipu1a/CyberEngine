@@ -22,51 +22,7 @@ namespace Cyber
                 p_var = NULL;       \
             }
     #endif
-
-    /************************************************************************/
-    // Descriptor Heap Structures
-    /************************************************************************/
-
-    struct DescriptorHandle
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE mCpu;
-        D3D12_GPU_DESCRIPTOR_HANDLE mGpu;
-    };
-
-    /// CPU Visible Heap to store all the resources needing CPU read / write operations - Textures/Buffers/RTV
-    struct RHIDescriptorHeap_D3D12
-    {
-        /// DX Heap
-        ID3D12DescriptorHeap* pCurrentHeap;
-
-        ID3D12Device* pDevice;
-        D3D12_CPU_DESCRIPTOR_HANDLE* pHandles;
-        /// Start position in the heap
-        DescriptorHandle mStartHandle;
-        /// Free List used for CPU only descriptor heaps
-        eastl::vector<DescriptorHandle> mFreeList;
-        // Bitmask to track free regions (set bit means occupied)
-        uint32_t* pFlags;
-        /// Description
-        D3D12_DESCRIPTOR_HEAP_DESC mDesc;
-        D3D12_DESCRIPTOR_HEAP_TYPE mType;
-        uint32_t mNumDescriptors;
-        /// Descriptor Increment Size
-        uint32_t mDescriptorSize;
-        // Usage
-        uint32_t mUsedDescriptors;
-    };
-
-    struct RHIEmptyDescriptors_D3D12
-    {
-        D3D12_CPU_DESCRIPTOR_HANDLE Sampler;
-        D3D12_CPU_DESCRIPTOR_HANDLE TextureSRV[RHI_TEX_DIMENSION_COUNT];
-        D3D12_CPU_DESCRIPTOR_HANDLE TextureUAV[RHI_TEX_DIMENSION_COUNT];
-        D3D12_CPU_DESCRIPTOR_HANDLE BufferSRV;
-        D3D12_CPU_DESCRIPTOR_HANDLE BufferUAV;
-        D3D12_CPU_DESCRIPTOR_HANDLE BufferCBV;
-    };
-
+    
     struct CD3DX12_DEFAULT {};
     extern const DECLSPEC_SELECTANY CD3DX12_DEFAULT D3D12_DEFAULT;
 

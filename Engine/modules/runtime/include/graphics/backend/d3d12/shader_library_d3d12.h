@@ -2,6 +2,7 @@
 
 #include "engine_impl_traits_d3d12.hpp"
 #include "interface/shader_library.h"
+#include <d3d12shader.h>
 
 namespace Cyber
 {
@@ -26,10 +27,16 @@ namespace Cyber
 
             ShaderLibrary_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TShaderLibraryBase(device) {}
 
+            virtual void free_reflection() override final;
+
+            void Initialize_shader_reflection(const RenderObject::ShaderLibraryCreateDesc& desc);
+
+            void collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage);
+
+            void reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc);
         protected:
-            ID3DBlob* shader_blob;
-            //struct IDxcBlobEncoding* shader_dxc_blob;
-            struct IDxcResult* shader_result;
+            ID3DBlob* m_pShaderBlob;
+            struct IDxcResult* m_pShaderResult;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

@@ -90,46 +90,48 @@ namespace Cyber
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
 
-            ID3D12Device* GetD3D12Device() { return pDxDevice; }
-            class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return pResourceAllocator; }
-            RHIDescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return mCPUDescriptorHeaps[heap_type]; }
+            ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
+            class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
+            RHIDescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_CPUDescriptorHeaps[heap_type]; }
 
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetSamplerHeaps() { return mSamplerHeaps; }
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return mCbvSrvUavHeaps; }
-            struct RHIEmptyDescriptors_D3D12* GetNullDescriptors() { return pNullDescriptors; }
-            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return ppCommandQueues; }
-            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return pCommandQueueCounts; }
-            IDXGIFactory6* GetDXGIFactory() { return pDXGIFactory; }
-            IDXGIAdapter4* GetDXActiveGPU() { return pDxActiveGPU; }
-            ID3D12PipelineLibrary* GetPipelineLibrary() { return pPipelineLibrary; }
-            void* GetPSOCacheData() { return pPSOCacheData; }
-            ID3D12Debug* GetDxDebug() { return pDxDebug; }
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_SamplerHeaps; }
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_CbvSrvUavHeaps; }
+            struct RHIEmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
+            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_ppCommandQueues; }
+            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_CommandQueueCounts; }
+            IDXGIFactory6* GetDXGIFactory() { return m_pDXGIFactory; }
+            IDXGIAdapter4* GetDXActiveGPU() { return m_pDxActiveGPU; }
+            ID3D12PipelineLibrary* GetPipelineLibrary() { return m_pPipelineLibrary; }
+            void* GetPSOCacheData() { return m_pPSOCacheData; }
+            ID3D12Debug* GetDxDebug() { return m_pDxDebug; }
+
+            void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
 
         protected:
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
 
-            class D3D12MA::Allocator* pResourceAllocator;
+            class D3D12MA::Allocator* m_pResourceAllocator;
 
             // API specific descriptor heap and memory allocator
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCPUDescriptorHeaps;
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mSamplerHeaps;
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> mCbvSrvUavHeaps;
-            struct RHIEmptyDescriptors_D3D12* pNullDescriptors;
-            eastl::map<uint32_t, ID3D12CommandQueue**> ppCommandQueues;
-            eastl::map<uint32_t, uint32_t> pCommandQueueCounts;
-            IDXGIFactory6* pDXGIFactory;
-            IDXGIAdapter4* pDxActiveGPU;
-            ID3D12Device* pDxDevice;
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_CPUDescriptorHeaps;
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_SamplerHeaps;
+            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_CbvSrvUavHeaps;
+            struct RHIEmptyDescriptors_D3D12* m_pNullDescriptors;
+            eastl::map<uint32_t, ID3D12CommandQueue**> m_ppCommandQueues;
+            eastl::map<uint32_t, uint32_t> m_CommandQueueCounts;
+            IDXGIFactory6* m_pDXGIFactory;
+            IDXGIAdapter4* m_pDxActiveGPU;
+            ID3D12Device* m_pDxDevice;
 
             // PSO Cache
-            ID3D12PipelineLibrary* pPipelineLibrary;
-            void* pPSOCacheData;
+            ID3D12PipelineLibrary* m_pPipelineLibrary;
+            void* m_pPSOCacheData;
             
-            uint64_t mPadA;
-            ID3D12Debug* pDxDebug;
+            uint64_t m_PadA;
+            ID3D12Debug* m_pDxDebug;
             #if defined (_WINDOWS)
-                ID3D12InfoQueue* pDxDebugValidation;
+                ID3D12InfoQueue* m_pDxDebugValidation;
             #endif
 
             friend TextureImplType;

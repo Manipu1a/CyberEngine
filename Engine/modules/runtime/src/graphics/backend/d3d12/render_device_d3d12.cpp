@@ -2547,6 +2547,28 @@ namespace Cyber
         }
         cyber_delete(shaderLibrary);
     }
+    
+    void RenderDevice_D3D12_Impl::create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter)
+    {
+        D3D12MA::ALLOCATOR_DESC desc = {};
+        desc.Flags = D3D12MA::ALLOCATOR_FLAG_NONE;
+        desc.pDevice = GetD3D12Device();
+        desc.pAdapter = adapter->get_native_adapter();
+
+        D3D12MA::ALLOCATION_CALLBACKS allocationCallbacks = {};
+        allocationCallbacks.pAllocate = [](size_t size, size_t alignment, void*){
+            return cyber_memalign(size, alignment);
+        };
+        allocationCallbacks.pFree = [](void* ptr, void*){
+            cyber_free(ptr);
+        };
+        desc.pAllocationCallbacks = &allocationCallbacks;
+        desc.Flags |= D3D12MA::ALLOCATOR_FLAG_MSAA_TEXTURES_ALWAYS_COMMITTED;
+        if(!SUCCEEDED(D3D12MA::CreateAllocator(&desc, &m_pResourceAllocator)))
+        {
+            cyber_assert(false, "DMA Allocator Create Failed!");
+        }
+    }
 
     HRESULT RenderDevice_D3D12_Impl::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)
     {
