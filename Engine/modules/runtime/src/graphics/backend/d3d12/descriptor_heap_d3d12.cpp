@@ -107,5 +107,50 @@ namespace Cyber
             // copy
             m_pDevice->CopyDescriptorsSimple(1, {m_StartHandle.mCpu.ptr + dstHandle + (index * m_DescriptorSize)}, srcHandle, mType);
         }
+
+        void DescriptorHeap_D3D12::create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap)
+        {
+            uint32_t numDesciptors = desc.NumDescriptors;
+            DescriptorHeap_D3D12* heap = (DescriptorHeap_D3D12*)cyber_calloc(1, sizeof(*heap));
+            // TODO thread safety
+
+            heap->pDevice = device->GetD3D12Device();
+
+            // Keep 32 aligned for easy remove
+            //numDesciptors = cyber_round_up(numDesciptors, 32);
+
+            D3D12_DESCRIPTOR_HEAP_DESC Desc = desc;
+            Desc.NumDescriptors = numDesciptors;
+            heap->m_Desc = Desc;
+
+            if(!SUCCEEDED(device->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_ARGS(&heap->m_pCurrentHeap))))
+            {
+                cyber_assert(false, "DescriptorHeap Create Failed!");
+            }
+            
+            heap->mStartHandle.mCpu = heap->pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
+            if(heap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+            {
+                heap->mStartHandle.mGpu = heap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+            }
+            heap->mDescriptorSize = device->GetD3D12Device()->GetDescriptorHandleIncrementSize(heap->m_Desc.Type);
+            if(Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+            {
+                heap->pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+            }
+
+            *destHeap = heap;
+        }
+
+        void DescriptorHeap_D3D12::free()
+        {
+            SAFE_RELEASE(m_pCurrentHeap);
+
+            m_FreeList.~vector();
+
+            cyber_free(m_pHandles);
+            cyber_free(this);
+            delete this;
+        }
     }
 }

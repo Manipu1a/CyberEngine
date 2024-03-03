@@ -15,7 +15,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IInstance
         {
-            
+            virtual const InstanceCreateDesc get_create_desc() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -23,14 +23,28 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderObjectBase = RenderObjectBase<typename EngineImplTraits::InstanceInterface, typename EngineImplTraits::RenderDeviceImplType>;
 
-            InstanceBase(RenderDeviceImplType* device);
+            InstanceBase(RenderDeviceImplType* device, const InstanceCreateDesc& desc) : TRenderObjectBase(device), m_Desc(desc)
+            {
+                m_Backend = device->get_backend();
+                m_NvAPIStatus = device->get_nvapi_status();
+                m_AgsStatus = device->get_ags_status();
+                m_EnableSetName = desc.enable_set_name;
+            }
+
             virtual ~InstanceBase() = default;
+
+            virtual const InstanceCreateDesc get_create_desc() const
+            {
+                return m_Desc;
+            }
         protected:
-            ERHIBackend mBackend;
-            ERHINvAPI_Status mNvAPIStatus;
-            ERHIAGSReturenCode mAgsStatus;
-            bool mEnableSetName;
+            InstanceCreateDesc m_Desc;
+            ERHIBackend m_Backend;
+            ERHINvAPI_Status m_NvAPIStatus;
+            ERHIAGSReturenCode m_AgsStatus;
+            bool m_EnableSetName;
         };
     }
 }

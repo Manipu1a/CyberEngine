@@ -90,6 +90,12 @@ namespace Cyber
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
 
+            // create view
+            void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+            void create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+            void create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+            void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
             RHIDescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_CPUDescriptorHeaps[heap_type]; }

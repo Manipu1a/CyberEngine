@@ -25,14 +25,18 @@ namespace Cyber
             using TInstanceBase = InstanceBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Instance_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TInstanceBase(device) {}
+            Instance_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const InstanceCreateDesc& desc) : TInstanceBase(device, desc) {}
+
+            void optional_enable_debug_layer();
+            void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter);
+        protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)
-            struct IDXGIFactory6* pDXGIFactory;
+            struct IDXGIFactory6* m_pDXGIFactory;
         #endif
-            struct ID3D12Debug* pDXDebug;
-            struct IAdapter* pAdapters;
-            uint32_t mAdaptersCount;
+            struct ID3D12Debug* m_pDXDebug;
+            struct IAdapter* m_pAdapters;
+            uint32_t m_AdaptersCount;
 
         protected:
             friend class RenderObject::RenderDevice_D3D12_Impl;

@@ -42,6 +42,8 @@ namespace Cyber
             QueueBase(RenderDeviceImplType* device);
 
             virtual ~QueueBase() = default;
+
+            virtual void signal_fence(class IFence* fence, uint64_t value) override;
         protected:
             ERHIQueueType mType;
             RHIQueueIndex mIdex;

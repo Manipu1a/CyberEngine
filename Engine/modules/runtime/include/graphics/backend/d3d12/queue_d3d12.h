@@ -25,9 +25,11 @@ namespace Cyber
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
             Queue_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TQueueBase(device) {}
+
+            virtual void signal_fence(class IFence* fence, uint64_t value) override;
         protected:
-            ID3D12CommandQueue* pCommandQueue;
-            IFence* pFence;
+            ID3D12CommandQueue* m_pCommandQueue;
+            IFence* m_pFence;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

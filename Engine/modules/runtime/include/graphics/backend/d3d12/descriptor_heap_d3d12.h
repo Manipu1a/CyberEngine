@@ -15,12 +15,18 @@ namespace Cyber
         class DescriptorHeap_D3D12
         {
         public:
+
             DescriptorHandle consume_descriptor_handles(uint32_t descriptorCount);
             
             void free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount);
 
             void copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64& dstHandle, uint32_t index);
 
+            static void create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap);
+
+            void free();
+            
+        protected:
             /// DX Heap
             ID3D12DescriptorHeap* m_pCurrentHeap;
             ID3D12Device* m_pDevice;
