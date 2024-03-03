@@ -450,6 +450,7 @@ namespace Cyber
     #endif
 
     DescriptorHandle D3D12Util_ConsumeDescriptorHandles(RHIDescriptorHeap_D3D12* pHeap, uint32_t descriptorCount);
+    
     void D3D12Util_ReturnDescriptorHandles(RHIDescriptorHeap_D3D12* heap, D3D12_CPU_DESCRIPTOR_HANDLE handle, uint32_t count);
     void D3D12Util_CopyDescriptorHandle(RHIDescriptorHeap_D3D12* dstHeap, const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index);
 

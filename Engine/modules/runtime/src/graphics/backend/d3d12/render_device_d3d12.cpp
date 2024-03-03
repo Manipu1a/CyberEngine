@@ -2579,5 +2579,34 @@ namespace Cyber
     {
         return pDxDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
     }
+
+    void RenderDevice_D3D12_Impl::create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    {
+        if(destHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            *destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).consume_descriptor_handles(1).mCpu;
+        GetD3D12Device()->CreateConstantBufferView(desc, *destHandle);
+    }
+
+    void RenderDevice_D3D12_Impl::create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    {
+        if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).consume_descriptor_handles(1).mCpu;
+        GetD3D12Device()->CreateShaderResourceView(resource, desc, destHandle);
+    }
+
+    void RenderDevice_D3D12_Impl::create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    {
+        if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).consume_descriptor_handles(1).mCpu;
+        GetD3D12Device()->CreateUnorderedAccessView(resource, counterResource, desc, destHandle);
+    }
+
+    void RenderDevice_D3D12_Impl::create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    {
+        if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
+            destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).consume_descriptor_handles(1).mCpu;
+        GetD3D12Device()->CreateRenderTargetView(resource, desc, destHandle);
+    }
+
     }
 }

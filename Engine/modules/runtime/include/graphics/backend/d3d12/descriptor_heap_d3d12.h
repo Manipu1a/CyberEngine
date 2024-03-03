@@ -1,5 +1,6 @@
 #pragma once
-
+#include "d3d12.config.h"
+#include "EASTL/vector.h"
 
 namespace Cyber
 {

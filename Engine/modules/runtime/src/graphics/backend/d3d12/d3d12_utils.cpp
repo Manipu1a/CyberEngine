@@ -31,46 +31,6 @@ namespace Cyber
         
     }
 
-    void D3D12Util_SignalFence(RHIQueue_D3D12* queue, ID3D12Fence* fence, uint64_t fenceValue)
-    {
-        queue->pCommandQueue->Signal(fence, fenceValue);
-    }
-
-    void D3D12Util_CreateCBV(RenderObject::RenderDevice_D3D12_Impl* device, const D3D12_CONSTANT_BUFFER_VIEW_DESC* pCbvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
-    {
-        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
-        device->GetD3D12Device()->CreateConstantBufferView(pCbvDesc, *pHandle);
-    }
-
-    void D3D12Util_CreateSRV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_SHADER_RESOURCE_VIEW_DESC* pSrvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
-    {
-        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
-        device->GetD3D12Device()->CreateShaderResourceView(pResource, pSrvDesc, *pHandle);
-    }
-
-    void D3D12Util_CreateUAV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, ID3D12Resource* pCounterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* pUavDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
-    {
-        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1).mCpu;
-        device->GetD3D12Device()->CreateUnorderedAccessView(pResource, pCounterResource, pUavDesc, *pHandle);
-    }
-
-    void D3D12Util_CreateRTV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_RENDER_TARGET_VIEW_DESC* pRtvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
-    {
-        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), 1).mCpu;
-        device->GetD3D12Device()->CreateRenderTargetView(pResource, pRtvDesc, *pHandle);
-    }
-
-    void D3D12Util_CreateDSV(RenderObject::RenderDevice_D3D12_Impl* device, ID3D12Resource* pResource, const D3D12_DEPTH_STENCIL_VIEW_DESC* pDsvDesc, D3D12_CPU_DESCRIPTOR_HANDLE* pHandle)
-    {
-        if(pHandle->ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
-            *pHandle = D3D12Util_ConsumeDescriptorHandles(device->GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_DSV), 1).mCpu;
-        device->GetD3D12Device()->CreateDepthStencilView(pResource, pDsvDesc, *pHandle);
-    }
-
     D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc)
     {
         int blendDescIndex = 0;
@@ -98,6 +58,7 @@ namespace Cyber
         }
         return ret;
     }
+    
     D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RHIRasterizerStateCreateDesc* pDesc)
     {
         cyber_check(pDesc->fill_mode < RHI_FILL_MODE_COUNT);

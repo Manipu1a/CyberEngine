@@ -8,6 +8,8 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class DescriptorHeap_D3D12;
+
         // Render device interface
         struct CYBER_GRAPHICS_API IRenderDevice_D3D12 : public IRenderDevice
         {
@@ -98,10 +100,10 @@ namespace Cyber
 
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
-            RHIDescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_CPUDescriptorHeaps[heap_type]; }
+            class DescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_CPUDescriptorHeaps[heap_type]; }
 
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_SamplerHeaps; }
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_CbvSrvUavHeaps; }
+            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_SamplerHeaps; }
+            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_CbvSrvUavHeaps; }
             struct RHIEmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
             eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_ppCommandQueues; }
             eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_CommandQueueCounts; }
@@ -120,9 +122,9 @@ namespace Cyber
             class D3D12MA::Allocator* m_pResourceAllocator;
 
             // API specific descriptor heap and memory allocator
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_CPUDescriptorHeaps;
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_SamplerHeaps;
-            eastl::map<uint32_t, RHIDescriptorHeap_D3D12*> m_CbvSrvUavHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CPUDescriptorHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_SamplerHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CbvSrvUavHeaps;
             struct RHIEmptyDescriptors_D3D12* m_pNullDescriptors;
             eastl::map<uint32_t, ID3D12CommandQueue**> m_ppCommandQueues;
             eastl::map<uint32_t, uint32_t> m_CommandQueueCounts;
