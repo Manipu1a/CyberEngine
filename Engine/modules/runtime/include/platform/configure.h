@@ -36,3 +36,13 @@
 #else
 #define RUNTIME_EXTERN_C
 #endif
+
+#define CYBER_TYPED_ENUM(EnumName, EnumType) \
+    enum class EnumName : EnumType
+
+#define CYBER_BEGIN_NAMESPACE(Name) \
+    namespace Name                  \
+    {                               
+#define CYBER_END_NAMESPACE(Name)   \
+    }
+

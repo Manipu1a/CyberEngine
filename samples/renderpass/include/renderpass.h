@@ -14,12 +14,11 @@ namespace Cyber
         class ITexture;
         class CERenderPass;
         class CEFrameBuffer;
+        class IDescriptorSet;
     };
 
     namespace Samples
     {
-
-
         class RenderPassApp : public SampleApp
         {
         public:
@@ -40,9 +39,9 @@ namespace Cyber
             void draw_ui();
             void finalize();
         protected:
-            RHIRootSignature* root_signature = nullptr;
-            RHIDescriptorSet* descriptor_set = nullptr;
-            RHIRenderPipeline* pipeline = nullptr;
+            RenderObject::IRootSignature* root_signature = nullptr;
+            RenderObject::IDescriptorSet* descriptor_set = nullptr;
+            RenderObject::IRenderPipeline* pipeline = nullptr;
 
             RenderObject::IRenderPass* render_pass = nullptr;
             RenderObject::IFrameBuffer* frame_buffer = nullptr;
