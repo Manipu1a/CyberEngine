@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/backend/d3d12/rhi_d3d12.h"
+#include "graphics/backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
 
 namespace Cyber
@@ -368,7 +368,7 @@ namespace Cyber
         return stageCount > 1 ? D3D12_SHADER_VISIBILITY_ALL : res;
     }
 
-    static const D3D12_BLEND_OP gDx12BlendOpTranlator[RHI_BLEND_MODE_COUNT] = 
+    static const D3D12_BLEND_OP gDx12BlendOpTranlator[BLEND_MODE_COUNT] = 
     {
         D3D12_BLEND_OP_ADD,
         D3D12_BLEND_OP_SUBTRACT,
@@ -377,7 +377,7 @@ namespace Cyber
         D3D12_BLEND_OP_MAX,
     };
 
-    static const D3D12_BLEND gDx12BlendConstantTranslator[RHI_BLEND_CONST_COUNT] = 
+    static const D3D12_BLEND gDx12BlendConstantTranslator[BLEND_CONSTANT_COUNT] = 
     {
         D3D12_BLEND_ZERO,
         D3D12_BLEND_ONE,
@@ -394,18 +394,18 @@ namespace Cyber
         D3D12_BLEND_INV_BLEND_FACTOR,
     };
 
-    static const D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE gDx12PassBeginOpTranslator[RHI_LOAD_ACTION_COUNT] = {
+    static const D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE gDx12PassBeginOpTranslator[LOAD_ACTION_COUNT] = {
         D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_DISCARD,
         D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_PRESERVE,
         D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE_CLEAR,
     };
 
-    static const D3D12_RENDER_PASS_ENDING_ACCESS_TYPE gDx12PassEndOpTranslator[RHI_STORE_ACTION_COUNT] = {
+    static const D3D12_RENDER_PASS_ENDING_ACCESS_TYPE gDx12PassEndOpTranslator[STORE_ACTION_COUNT] = {
         D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_PRESERVE,
         D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_DISCARD,
     };
 
-    static const D3D12_STENCIL_OP gDx12StencilOpTranslator[RHI_STENCIL_OP_COUNT] = 
+    static const D3D12_STENCIL_OP gDx12StencilOpTranslator[STENCIL_OP_COUNT] = 
     {
         D3D12_STENCIL_OP_KEEP,
         D3D12_STENCIL_OP_ZERO,
@@ -417,20 +417,20 @@ namespace Cyber
         D3D12_STENCIL_OP_DECR_SAT,
     };
 
-    static const D3D12_CULL_MODE gDx12CullModeTranslator[RHI_CULL_MODE_COUNT] = 
+    static const D3D12_CULL_MODE gDx12CullModeTranslator[CULL_MODE_COUNT] = 
     {
         D3D12_CULL_MODE_NONE,
         D3D12_CULL_MODE_FRONT,
         D3D12_CULL_MODE_BACK,
     };
 
-    static const D3D12_FILL_MODE gDx12FillModeTranslator[RHI_FILL_MODE_COUNT] = 
+    static const D3D12_FILL_MODE gDx12FillModeTranslator[FILL_MODE_COUNT] = 
     {
         D3D12_FILL_MODE_SOLID,
         D3D12_FILL_MODE_WIREFRAME,
     };
 
-    static const D3D12_COMPARISON_FUNC gDx12ComparisonFuncTranslator[RHI_CMP_COUNT] = 
+    static const D3D12_COMPARISON_FUNC gDx12ComparisonFuncTranslator[CMP_COUNT] = 
     {
         D3D12_COMPARISON_FUNC_NEVER,
         D3D12_COMPARISON_FUNC_LESS,

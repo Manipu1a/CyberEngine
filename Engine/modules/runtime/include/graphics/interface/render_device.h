@@ -2,7 +2,7 @@
 
 #include "common/cyber_graphics_config.h"
 #include "interface/graphics_types.h"
-#include "texture.hpp"
+#include "texture.h"
 #include "texture_view.h"
 #include "buffer.h"
 #include "frame_buffer.h"
@@ -20,6 +20,7 @@
 #include "shader_library.h"
 #include "shader_reflection.h"
 #include "adapter.h"
+#include "descriptor_set.h"
 
 namespace Cyber
 {

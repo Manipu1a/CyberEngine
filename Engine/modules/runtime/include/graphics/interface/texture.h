@@ -25,7 +25,7 @@ namespace Cyber
             DESCRIPTOR_TYPE descriptors;
             TEXTURE_CREATE_FLAG flags;
             /// Number of multisamples per pixel (currently Textures created with mUsage TEXTURE_USAGE_SAMPLED_IMAGE only support SAMPLE_COUNT_1)
-            ERHITextureSampleCount sample_count;
+            TEXTURE_SAMPLE_COUNT sample_count;
             /// The image quality level. The higher the quality, the lower the performance. The valid range is between zero and the value appropriate for mSampleCount
             uint32_t sample_quality;
             /// Image format
@@ -37,7 +37,6 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API ITexture
         {
-            virtual ITextureView* get_default_texture_view(ERHITextureViewUsage view_type) const = 0;
             virtual const TextureCreateDesc& get_create_desc() const = 0;
         };
 
@@ -67,7 +66,7 @@ namespace Cyber
                     reinterpret_cast<TextureViewImplType**>(&m_pDefaultTextureViews);
             }
 
-            virtual ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const override
+            ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const
             {
                 const uint32_t num_default_views = 1;
                 return num_default_views > 1 ? 
@@ -79,14 +78,13 @@ namespace Cyber
             {
                 return create_desc;
             }
-            
-            TextureCreateDesc create_desc;
+
         protected:
             virtual TextureViewImplType* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
-            
+
             void create_default_views()
             {
-                cyber_assert(default_texture_views == nullptr, "Default texture views already created");
+                cyber_assert(m_pDefaultTextureViews == nullptr, "Default texture views already created");
 
                 const uint32_t num_default_views = 1;
 
@@ -95,21 +93,21 @@ namespace Cyber
 
                 if(num_default_views > 1)
                 {
-                    default_texture_views = cyber_malloc(sizeof(TextureViewImplType*) * num_default_views);
+                    m_pDefaultTextureViews = cyber_malloc(sizeof(TextureViewImplType*) * num_default_views);
                 }
 
                 auto** default_views = get_default_texture_views_array();
 
                 uint32_t default_view_index = 0;
 
-                auto CreateDefaultView = [&](ERHITextureViewUsage Usage)
+                auto CreateDefaultView = [&](TEXTURE_VIEW_USAGE Usage)
                 {
                     TextureViewCreateDesc view_desc = {};
                     view_desc.texture = this;
                     view_desc.format = create_desc.format;
                     view_desc.usages = Usage;
-                    view_desc.aspects = ERHITextureViewAspect::RHI_TVA_COLOR;
-                    view_desc.dimension = ERHITextureDimension::RHI_TEX_DIMENSION_2D;
+                    view_desc.aspects = TEXTURE_VIEW_ASPECT::TVA_COLOR;
+                    view_desc.dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
                     view_desc.base_array_layer = 0;
                     view_desc.array_layer_count = 1;
                     view_desc.base_mip_level = 0;
@@ -120,19 +118,19 @@ namespace Cyber
                     default_views[default_view_index++] = view;
                 };
 
-                if(create_desc.start_state & ERHIResourceState::RHI_RESOURCE_STATE_RENDER_TARGET)
+                if(create_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
                 {
-                    CreateDefaultView(ERHITextureViewUsage::RHI_TVU_SRV);
+                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_SRV);
                 }
                 
-                if(create_desc.start_state & ERHIResourceState::RHI_RESOURCE_STATE_DEPTH_WRITE || create_desc.start_state & ERHIResourceState::RHI_RESOURCE_STATE_SHADER_RESOURCE)
+                if(create_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_DEPTH_WRITE || create_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE)
                 {
-                    CreateDefaultView(ERHITextureViewUsage::RHI_TVU_RTV_DSV);
+                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_RTV_DSV);
                 }
 
-                if(create_desc.start_state & ERHIResourceState::RHI_RESOURCE_STATE_UNORDERED_ACCESS)
+                if(create_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
                 {
-                    CreateDefaultView(ERHITextureViewUsage::RHI_TVU_UAV);
+                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_UAV);
                 }
 
                 cyber_assert(default_view_index == num_default_views, "Not all default views were created");
@@ -154,6 +152,8 @@ namespace Cyber
             
             void* m_pNativeHandle;
             void* m_pDefaultTextureViews;
+
+            TextureCreateDesc create_desc;
         };
     }
 }

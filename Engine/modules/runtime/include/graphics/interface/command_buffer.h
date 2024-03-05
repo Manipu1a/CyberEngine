@@ -2,6 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
 #include "render_object.h"
+#include "interface/graphics_types.h"
 
 namespace Cyber
 {
@@ -28,7 +29,7 @@ namespace Cyber
             virtual ~CommandBufferBase() = default;
         protected:
             class ICommandPool* pPool;
-            ERHIPipelineType mCurrentDispatch;
+            PIPELINE_TYPE mCurrentDispatch;
         };
     }
 

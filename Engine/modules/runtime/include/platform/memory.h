@@ -72,6 +72,16 @@ static T* cyber_new_n(size_t count, Args&&... args)
 #define cyber_free(ptr) _cyber_free(ptr)
 #endif
 
+
+#ifndef SAFE_RELEASE
+    #define SAFE_RELEASE(p_var) \
+        if(p_var)               \
+        {                       \
+            p_var->Release();   \
+            p_var = NULL;       \
+        }
+#endif
+    
 template <typename T>
 void cyber_delete(T* ptr) CYBER_NOEXCEPT
 {
@@ -101,6 +111,8 @@ void cyber_free_map(T& container) CYBER_NOEXCEPT
     }
     container.clear();
 }
+
+
 
 template<class T>
 struct cyber_stl_allocator

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "flag_enums.h"
+
 #define DECLARE_ZERO(type, var) type var = {};
 
 
@@ -38,11 +40,18 @@
 #endif
 
 #define CYBER_TYPED_ENUM(EnumName, EnumType) \
-    enum class EnumName : EnumType
+    enum EnumName : EnumType
 
 #define CYBER_BEGIN_NAMESPACE(Name) \
     namespace Name                  \
     {                               
 #define CYBER_END_NAMESPACE(Name)   \
     }
+
+#define CB_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
+
+#define BIT(x) (1 << x)
+
+#define IID_ARGS IID_PPV_ARGS
+
 

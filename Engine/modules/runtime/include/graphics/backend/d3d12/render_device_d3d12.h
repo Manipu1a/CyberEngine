@@ -1,7 +1,7 @@
 #pragma once
 
 #include "interface/render_device.h"
-#include "backend/d3d12/rhi_d3d12.h"
+#include "backend/d3d12/graphics_types_d3d12.h"
 #include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
@@ -25,18 +25,22 @@ namespace Cyber
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
+            RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
+            {
+                create_device(adapter, deviceDesc);
+            }
+
             virtual ~RenderDevice_D3D12_Impl();
         public:
             // Device APIs
             virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
             virtual void free_device() override;
             // API Object APIs
-            virtual RHISurface* surface_from_hwnd(HWND hwnd) override;
+            virtual Surface* surface_from_hwnd(HWND hwnd) override;
             virtual IFence* create_fence() override;
             virtual void wait_fences(IFence** fences, uint32_t fenceCount) override;
             virtual void free_fence(IFence* fence) override;
-            virtual ERHIFenceStatus query_fence_status(IFence* fence) override;
+            virtual FENCE_STATUS query_fence_status(IFence* fence) override;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
             virtual void free_swap_chain(ISwapChain* swapchain) override;
             virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) override;

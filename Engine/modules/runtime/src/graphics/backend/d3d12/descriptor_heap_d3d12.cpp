@@ -1,4 +1,6 @@
 #include "backend/d3d12/descriptor_heap_d3d12.h"
+#include "platform/memory.h"
+#include "backend/d3d12/graphics_types_d3d12.h"
 
 namespace Cyber
 {
@@ -20,7 +22,7 @@ namespace Cyber
                     }
                     SAFE_RELEASE(m_pCurrentHeap);
                     m_pDevice->CreateDescriptorHeap(&desc, IID_ARGS(&m_pCurrentHeap));
-                    mDesc = desc;
+                    m_Desc = desc;
                     m_StartHandle.mCpu = m_pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
                     m_StartHandle.mGpu = m_pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
 
@@ -35,12 +37,12 @@ namespace Cyber
                     //copy new heap to pHeap
                     //TODO: copy shader-visible heap may slow
                     m_pDevice->CopyDescriptors(
-                        1, &m_StartHandle.mCpu, &usedDescriptors, m_UsedDescriptors, pHandles, rangeSized, mDesc.Type);
+                        1, &m_StartHandle.mCpu, &usedDescriptors, m_UsedDescriptors, m_pHandles, rangeSized, m_Desc.Type);
                     D3D12_CPU_DESCRIPTOR_HANDLE* pNewHandles = 
-                        (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(mDesc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-                    memcpy(pNewHandles, pHandles, m_UsedDescriptors * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
-                    cyber_free(pHandles);
-                    pHandles = pNewHandles;
+                        (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(m_Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+                    memcpy(pNewHandles, m_pHandles, m_UsedDescriptors * sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+                    cyber_free(m_pHandles);
+                    m_pHandles = pNewHandles;
                 }
                 else if(m_FreeList.size() >= descriptorCount)
                 {
@@ -57,7 +59,7 @@ namespace Cyber
                     {
                         size_t index = i - 1;
                         DescriptorHandle DescHandle = m_FreeList[index];
-                        if(DescHandle.mCpu.ptr + mDescriptorSize == m_FreeList[i].mCpu.ptr)
+                        if(DescHandle.mCpu.ptr + m_DescriptorSize == m_FreeList[i].mCpu.ptr)
                         {
                             ++freeCount;
                         }
@@ -105,7 +107,7 @@ namespace Cyber
             // fill dest heap
             m_pHandles[(dstHandle / m_DescriptorSize) + index] = srcHandle;
             // copy
-            m_pDevice->CopyDescriptorsSimple(1, {m_StartHandle.mCpu.ptr + dstHandle + (index * m_DescriptorSize)}, srcHandle, mType);
+            m_pDevice->CopyDescriptorsSimple(1, {m_StartHandle.mCpu.ptr + dstHandle + (index * m_DescriptorSize)}, srcHandle, m_Type);
         }
 
         void DescriptorHeap_D3D12::create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap)
@@ -114,7 +116,7 @@ namespace Cyber
             DescriptorHeap_D3D12* heap = (DescriptorHeap_D3D12*)cyber_calloc(1, sizeof(*heap));
             // TODO thread safety
 
-            heap->pDevice = device->GetD3D12Device();
+            heap->m_pDevice = device;
 
             // Keep 32 aligned for easy remove
             //numDesciptors = cyber_round_up(numDesciptors, 32);
@@ -123,20 +125,20 @@ namespace Cyber
             Desc.NumDescriptors = numDesciptors;
             heap->m_Desc = Desc;
 
-            if(!SUCCEEDED(device->GetD3D12Device()->CreateDescriptorHeap(&Desc, IID_ARGS(&heap->m_pCurrentHeap))))
+            if(!SUCCEEDED(device->CreateDescriptorHeap(&Desc, IID_ARGS(&heap->m_pCurrentHeap))))
             {
                 cyber_assert(false, "DescriptorHeap Create Failed!");
             }
             
-            heap->mStartHandle.mCpu = heap->pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
-            if(heap->mDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+            heap->m_StartHandle.mCpu = heap->m_pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
+            if(heap->m_Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
             {
-                heap->mStartHandle.mGpu = heap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+                heap->m_StartHandle.mGpu = heap->m_pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
             }
-            heap->mDescriptorSize = device->GetD3D12Device()->GetDescriptorHandleIncrementSize(heap->m_Desc.Type);
+            heap->m_DescriptorSize = device->GetDescriptorHandleIncrementSize(heap->m_Desc.Type);
             if(Desc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
             {
-                heap->pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
+                heap->m_pHandles = (D3D12_CPU_DESCRIPTOR_HANDLE*)cyber_calloc(Desc.NumDescriptors, sizeof(D3D12_CPU_DESCRIPTOR_HANDLE));
             }
 
             *destHeap = heap;

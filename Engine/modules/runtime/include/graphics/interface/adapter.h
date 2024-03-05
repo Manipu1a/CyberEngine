@@ -32,13 +32,15 @@ namespace Cyber
         class AdapterBase : public RenderObjectBase<typename EngineImplTraits::AdapterInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using AdapterInterface = typename EngineImplTraits::BufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderObjectBase = RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
 
-            AdapterBase(RenderDeviceImplType* device);
+            AdapterBase(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
 
             virtual ~AdapterBase() = default;
         protected:
-            class IInstance* pInstance = nullptr;
+            class IInstance* m_pInstance = nullptr;
         };
     }
 

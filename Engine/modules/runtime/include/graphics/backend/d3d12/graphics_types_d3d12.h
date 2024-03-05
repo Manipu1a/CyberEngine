@@ -8,21 +8,11 @@
 namespace Cyber
 {
     typedef int32_t DxDescriptorID;
-    #define IID_ARGS IID_PPV_ARGS
     #define D3D12_DESCRIPTOR_ID_NONE (D3D12_CPU_DESCRIPTOR_HANDLE{(size_t)~0})
 
     #define D3D12_GPU_VIRTUAL_ADDRESS_NULL ((D3D12_GPU_VIRTUAL_ADDRESS)0)
     #define D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN ((D3D12_GPU_VIRTUAL_ADDRESS)-1)
 
-    #ifndef SAFE_RELEASE
-        #define SAFE_RELEASE(p_var) \
-            if(p_var)               \
-            {                       \
-                p_var->Release();   \
-                p_var = NULL;       \
-            }
-    #endif
-    
     struct CD3DX12_DEFAULT {};
     extern const DECLSPEC_SELECTANY CD3DX12_DEFAULT D3D12_DEFAULT;
 
@@ -108,7 +98,7 @@ namespace Cyber
         D3D_FEATURE_LEVEL_11_0
     };
 
-    static const D3D12_COMMAND_LIST_TYPE gDx12CmdTypeTranslator[RHI_QUEUE_TYPE_COUNT] = {
+    static const D3D12_COMMAND_LIST_TYPE gDx12CmdTypeTranslator[(uint8_t)QUEUE_TYPE::QUEUE_TYPE_COUNT] = {
         D3D12_COMMAND_LIST_TYPE_DIRECT,
         D3D12_COMMAND_LIST_TYPE_COMPUTE,
         D3D12_COMMAND_LIST_TYPE_COPY

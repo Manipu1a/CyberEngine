@@ -50,7 +50,7 @@ namespace Cyber
             uint32_t push_constant_count;
             class IShaderResource* static_samplers;
             uint32_t static_sampler_count;
-            ERHIPipelineType pipeline_type;
+            PIPELINE_TYPE pipeline_type;
             class IRootSignaturePool* pool;
             IRootSignature* pool_next;
         };

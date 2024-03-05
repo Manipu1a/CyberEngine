@@ -31,6 +31,7 @@
 #include "graphics/backend/d3d12/frame_buffer_d3d12.h"
 #include "graphics/backend/d3d12/query_pool_d3d12.h"
 #include "graphics/backend/d3d12/queue_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
 
 
 #pragma comment(lib, "d3d12.lib")
@@ -43,20 +44,15 @@ namespace Cyber
     {
     #define DECLARE_ZERO(type, var) type var = {};
 
-    RenderDevice_D3D12_Impl::RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
-    {
-        create_device(adapter, deviceDesc);
-    }
-    
     RenderDevice_D3D12_Impl::~RenderDevice_D3D12_Impl()
     {
         free_device();
     }
 
-    void RenderDevice_D3D12_Impl::create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
+    void RenderDevice_D3D12_Impl::create_device(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
     {
-        Adapter_D3D12_Impl* dxAdapter = static_cast<Adapter_D3D12_Impl*>(adapter);
-        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->pInstance);
+        RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(adapter);
+        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->m_pInstance);
         
         this->adapter = adapter;
 
@@ -219,7 +215,7 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::free_device()
     {
-        for(uint32_t i = 0; i < RHI_QUEUE_TYPE_COUNT; ++i)
+        for(uint32_t i = 0; i < QUEUE_TYPE::QUEUE_TYPE_COUNT; ++i)
         {
             ERHIQueueType type;
             for(uint32_t j = 0; j < pCommandQueueCounts[i]; ++j)

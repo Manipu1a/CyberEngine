@@ -10,7 +10,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API SwapChainDesc
         {
             /// Present Queues
-            class RHIQueue* mPresentQueue;
+            class IQueue* mPresentQueue;
             /// Present Queues Count
             uint32_t mPresentQueueCount;
             /// Number of backbuffers in the swapchain
@@ -20,7 +20,7 @@ namespace Cyber
             /// Height of the swapchain 
             uint32_t mHeight;
             /// Format of the swapchain
-            ERHIFormat mFormat;
+            TEXTURE_FORMAT mFormat;
             /// Surface
             class RHISurface* surface;
             /// Set whether swapchain will be presented using vsync
