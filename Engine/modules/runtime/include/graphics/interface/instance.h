@@ -41,9 +41,9 @@ namespace Cyber
             }
         protected:
             InstanceCreateDesc m_Desc;
-            ERHIBackend m_Backend;
-            ERHINvAPI_Status m_NvAPIStatus;
-            ERHIAGSReturenCode m_AgsStatus;
+            GRAPHICS_BACKEND m_Backend;
+            NVAPI_STATUS m_NvAPIStatus;
+            AGS_RETURN_CODE m_AgsStatus;
             bool m_EnableSetName;
         };
     }

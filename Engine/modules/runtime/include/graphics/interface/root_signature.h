@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "render_object.h"
-#include "rhi.h"
+#include "graphics_types.h"
 
 namespace Cyber
 {
@@ -22,7 +22,7 @@ namespace Cyber
         {
             class PipelineShaderCreateDesc** shaders;
             uint32_t shader_count;
-            RHISampler** static_samplers;
+            ISampler** static_samplers;
             const char8_t* const* static_sampler_names;
             uint32_t static_sampler_count;
             const char8_t* const* push_constant_names;

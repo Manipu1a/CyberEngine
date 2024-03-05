@@ -1,4 +1,5 @@
 #include "backend/d3d12/queue_d3d12.h"
+#include "backend/d3d12/fence_d3d12.h"
 
 namespace Cyber
 {

@@ -40,10 +40,10 @@ namespace Cyber
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
             virtual void free_swap_chain(ISwapChain* swapchain) override;
             virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) override;
-            virtual uint32_t acquire_next_image(ISwapChain* swapchain, const RHIAcquireNextDesc& acquireDesc) override;
+            virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             // Queue APIs
-            virtual IQueue* get_queue(ERHIQueueType type, uint32_t index) override;
+            virtual IQueue* get_queue(QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
             virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
             virtual void wait_queue_idle(IQueue* queue) override;
@@ -55,29 +55,29 @@ namespace Cyber
 
             virtual void cmd_begin(ICommandBuffer* commandBuffer) override;
             virtual void cmd_end(ICommandBuffer* commandBuffer) override;
-            virtual void cmd_resource_barrier(ICommandBuffer* cmd, const RHIResourceBarrierDesc& barrierDesc) override;
+            virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) override;
 
-            virtual RHIRenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const RenderPassDesc& beginRenderPassDesc) override;
+            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const RenderPassDesc& beginRenderPassDesc) override;
             virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
-            virtual void render_encoder_bind_descriptor_set(RHIRenderPassEncoder* encoder, RHIDescriptorSet* descriptorSet) override;
-            virtual void render_encoder_set_viewport(RHIRenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
-            virtual void render_encoder_set_scissor(RHIRenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
-            virtual void render_encoder_bind_pipeline(RHIRenderPassEncoder* encoder, RHIRenderPipeline* pipeline) override;
-            virtual void render_encoder_bind_vertex_buffer(RHIRenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
-            virtual void render_encoder_bind_index_buffer(RHIRenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
-            virtual void render_encoder_push_constants(RHIRenderPassEncoder* encoder, IRootSignature* rs, const char8_t* name, const void* data) override;
-            virtual void render_encoder_draw(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) override;
-            virtual void render_encoder_draw_instanced(RHIRenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) override;
-            virtual void render_encoder_draw_indexed(RHIRenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
-            virtual void render_encoder_draw_indexed_instanced(RHIRenderPassEncoder*encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
+            virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
+            virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
+            virtual void render_encoder_set_scissor(RenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
+            virtual void render_encoder_bind_pipeline(RenderPassEncoder* encoder, IRenderPipeline* pipeline) override;
+            virtual void render_encoder_bind_vertex_buffer(RenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
+            virtual void render_encoder_bind_index_buffer(RenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
+            virtual void render_encoder_push_constants(RenderPassEncoder* encoder, IRootSignature* rs, const char8_t* name, const void* data) override;
+            virtual void render_encoder_draw(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) override;
+            virtual void render_encoder_draw_instanced(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) override;
+            virtual void render_encoder_draw_indexed(RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
+            virtual void render_encoder_draw_indexed_instanced(RenderPassEncoder*encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
             
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
             virtual void free_root_signature(IRootSignature* rootSignature) override;
-            virtual RHIDescriptorSet* create_descriptor_set(const RHIDescriptorSetCreateDesc& dSetDesc) override;
-            virtual void update_descriptor_set(RHIDescriptorSet* set, const RHIDescriptorData* updateDesc, uint32_t count) override;
+            virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) override;
+            virtual void update_descriptor_set(IDescriptorSet* set, const DescriptorData* updateDesc, uint32_t count) override;
 
             virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) override;
-            virtual void free_render_pipeline(RHIRenderPipeline* pipeline) override;
+            virtual void free_render_pipeline(IRenderPipeline* pipeline) override;
             virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) override;
             virtual void free_instance(IInstance* instance) override;
 
@@ -86,7 +86,7 @@ namespace Cyber
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
             virtual void free_buffer(IBuffer* buffer) override;
-            virtual void map_buffer(IBuffer* buffer, const RHIBufferRange* range) override;
+            virtual void map_buffer(IBuffer* buffer, const BufferRange* range) override;
             virtual void unmap_buffer(IBuffer* buffer) override;
 
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
@@ -113,6 +113,7 @@ namespace Cyber
             void* GetPSOCacheData() { return m_pPSOCacheData; }
             ID3D12Debug* GetDxDebug() { return m_pDxDebug; }
 
+            
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
 
         protected:

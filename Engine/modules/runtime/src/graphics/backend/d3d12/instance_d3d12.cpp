@@ -1,4 +1,6 @@
 #include "backend/d3d12/instance_d3d12.h"
+#include "interface/graphics_types.h"
+#include "EASTL/vector.h"
 
 namespace Cyber
 {

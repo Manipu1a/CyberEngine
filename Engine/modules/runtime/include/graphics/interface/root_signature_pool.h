@@ -31,7 +31,7 @@ namespace Cyber
                 return create_desc;
             }
         protected:
-            ERHIPipelineType pipeline_type;
+            PIPELINE_TYPE pipeline_type;
             RootSignaturePoolCreateDesc create_desc;
         };
     }

@@ -2,13 +2,13 @@
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
 #include "render_object.h"
-
+#include "interface/graphics_types.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        typedef uint32_t RHIQueueIndex;
+        typedef uint32_t QueueIndex;
         
         struct CYBER_GRAPHICS_API QueueSubmitDesc
         {
@@ -45,8 +45,8 @@ namespace Cyber
 
             virtual void signal_fence(class IFence* fence, uint64_t value) override;
         protected:
-            ERHIQueueType mType;
-            RHIQueueIndex mIdex;
+            QUEUE_TYPE m_Type;
+            QueueIndex m_Idex;
         };
     }
 

@@ -31,7 +31,7 @@ namespace Cyber
         
     }
 
-    D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const RHIBlendStateCreateDesc* pDesc)
+    D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const BlendStateCreateDesc* pDesc)
     {
         int blendDescIndex = 0;
         D3D12_BLEND_DESC ret = {};
@@ -59,7 +59,7 @@ namespace Cyber
         return ret;
     }
     
-    D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RHIRasterizerStateCreateDesc* pDesc)
+    D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RasterizerStateCreateDesc* pDesc)
     {
         cyber_check(pDesc->fill_mode < RHI_FILL_MODE_COUNT);
         cyber_check(pDesc->cull_mode < RHI_CULL_MODE_COUNT);
@@ -79,7 +79,7 @@ namespace Cyber
         return ret;
     }
 
-    D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const RHIDepthStateCreateDesc* pDesc)
+    D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const DepthStateCreateDesc* pDesc)
     {
         cyber_check(pDesc->depth_func < RHI_CMP_COUNT);
         cyber_check(pDesc->stencil_front_func < RHI_CMP_COUNT);
@@ -108,16 +108,16 @@ namespace Cyber
         return ret;
     }
 
-    D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(ERHIPrimitiveTopology topology)
+    D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(PRIMITIVE_TOPOLOGY topology)
     {
         switch(topology)
         {
-            case RHI_PRIM_TOPO_POINT_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
-            case RHI_PRIM_TOPO_LINE_LIST:
-            case RHI_PRIM_TOPO_LINE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
-            case RHI_PRIM_TOPO_TRIANGLE_LIST:
-            case RHI_PRIM_TOPO_TRIANGLE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-            case RHI_PRIM_TOPO_PATCH_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_POINT_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_LINE_LIST:
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_LINE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_TRIANGLE_LIST:
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_TRIANGLE_STRIP: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+            case PRIMITIVE_TOPOLOGY::PRIM_TOPO_PATCH_LIST: return D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
         }
         cyber_check(false);
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;

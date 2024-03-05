@@ -1,7 +1,7 @@
 #include "common_utils.h"
 #include <EASTL/vector.h>
 #include "common/flags.h"
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include "interface/device_context.h"
 #include "parallel_hashmap/phmap.h"
 #include "platform/memory.h"

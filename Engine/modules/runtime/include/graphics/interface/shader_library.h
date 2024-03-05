@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "render_object.h"
-#include "rhi.h"
+#include "graphics_types.h"
 
 namespace Cyber
 {
@@ -16,9 +16,9 @@ namespace Cyber
             const void* code;
             uint32_t code_size;
 
-            ERHIShaderStage stage;
-            EShaderCompiler shader_compiler;
-            ERHIShaderTarget shader_target;
+            SHADER_STAGE stage;
+            SHADER_COMPILER shader_compiler;
+            SHADER_TARGET shader_target;
             uint32_t shader_macro_count;
             ShaderMacro* shader_macros;
         };

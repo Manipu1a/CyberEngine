@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine_impl_traits_d3d12.hpp"
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include "interface/command_buffer.h"
 
 namespace Cyber

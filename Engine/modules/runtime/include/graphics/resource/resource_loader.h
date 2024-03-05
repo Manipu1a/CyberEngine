@@ -1,6 +1,6 @@
 #pragma once
 
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include <stdint.h>
 
 namespace Cyber

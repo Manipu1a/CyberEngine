@@ -9,10 +9,10 @@
 
 namespace Cyber
 {
-    #define RHI_MAX_VERTEX_ATTRIBUTES 15
-    #define RHI_MAX_VERTEX_BINDINGS 15
-    #define RHI_MAX_MRT_COUNT 8u
-    #define RHI_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
+    #define GRAPHICS_MAX_VERTEX_ATTRIBUTES 15
+    #define GRAPHICS_MAX_VERTEX_BINDINGS 15
+    #define GRAPHICS_MAX_MRT_COUNT 8u
+    #define GRAPHICS_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
     
 
     namespace RenderObject
@@ -35,9 +35,6 @@ namespace Cyber
     }
 
     typedef uint32_t QueueIndex;
-    struct DescriptorSet;
-    typedef Ref<DescriptorSet> DescriptorSetRHIRef;
-
     
     CYBER_TYPED_ENUM(GRAPHICS_BACKEND, uint8_t)
     {
@@ -200,7 +197,6 @@ namespace Cyber
         TCF_USABLE_MAX = 0x40000,
         TCF_MAX_ENUM_BIT = 0x7FFFFFFF
     };
-    typedef uint32_t RHITextureCreationFlag;
 
     CYBER_TYPED_ENUM(TEXTURE_SAMPLE_COUNT, uint8_t)
     {
@@ -719,25 +715,25 @@ namespace Cyber
 
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_STATE, uint32_t)
     {
-        RESOURCE_STATE_UNDEFINED = 0,
-        RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1,
-        RESOURCE_STATE_INDEX_BUFFER = 0x2,
-        RESOURCE_STATE_RENDER_TARGET = 0x4,
-        RESOURCE_STATE_UNORDERED_ACCESS = 0x8,
-        RESOURCE_STATE_DEPTH_WRITE = 0x10,
-        RESOURCE_STATE_DEPTH_READ = 0x20,
-        RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40,
-        RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80,
-        RESOURCE_STATE_SHADER_RESOURCE = 0x40 | 0x80,
-        RESOURCE_STATE_STREAM_OUT = 0x100,
-        RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200,
-        RESOURCE_STATE_COPY_DEST = 0x400,
-        RESOURCE_STATE_COPY_SOURCE = 0x800,
-        RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
-        RESOURCE_STATE_PRESENT = 0x1000,
-        RESOURCE_STATE_COMMON = 0x2000,
-        RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
-        RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
+        GRAPHICS_RESOURCE_STATE_UNDEFINED = 0,
+        GRAPHICS_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1,
+        GRAPHICS_RESOURCE_STATE_INDEX_BUFFER = 0x2,
+        GRAPHICS_RESOURCE_STATE_RENDER_TARGET = 0x4,
+        GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS = 0x8,
+        GRAPHICS_RESOURCE_STATE_DEPTH_WRITE = 0x10,
+        GRAPHICS_RESOURCE_STATE_DEPTH_READ = 0x20,
+        GRAPHICS_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40,
+        GRAPHICS_RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80,
+        GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE = 0x40 | 0x80,
+        GRAPHICS_RESOURCE_STATE_STREAM_OUT = 0x100,
+        GRAPHICS_RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200,
+        GRAPHICS_RESOURCE_STATE_COPY_DEST = 0x400,
+        GRAPHICS_RESOURCE_STATE_COPY_SOURCE = 0x800,
+        GRAPHICS_RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
+        GRAPHICS_RESOURCE_STATE_PRESENT = 0x1000,
+        GRAPHICS_RESOURCE_STATE_COMMON = 0x2000,
+        GRAPHICS_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
+        GRAPHICS_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
     };
 
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_MEMORY_USAGE, uint32_t)
@@ -831,7 +827,7 @@ namespace Cyber
         /// RTV / DSV per depth slice
         GRAPHICS_RESOURCE_TYPE_RENDER_TARGET_DEPTH_SLICES = (GRAPHICS_RESOURCE_TYPE_RENDER_TARGET_ARRAY_SLICES << 1),
         GRAPHICS_RESOURCE_TYPE_RAY_TRACING = (GRAPHICS_RESOURCE_TYPE_RENDER_TARGET_DEPTH_SLICES << 1),
-    #if defined (RHI_USE_VULKAN)
+    #if defined (GRAPHICS_USE_VULKAN)
         /// Subpass input (descriptor type only available in Vulkan)
         RESOURCE_TYPE_INPUT_ATTACHMENT = (RESOURCE_TYPE_RAY_TRACING << 1),
         RESOURCE_TYPE_TEXEL_BUFFER = (RESOURCE_TYPE_INPUT_ATTACHMENT << 1),
@@ -857,21 +853,21 @@ namespace Cyber
     // Same value as Vulkan Enumeration Bits.
     CYBER_TYPED_ENUM(SHADER_STAGE, uint32_t)
     {
-        RHI_SHADER_STAGE_NONE = 0,
-        RHI_SHADER_STAGE_VERT = 0X00000001,
-        RHI_SHADER_STAGE_TESC = 0X00000002,
-        RHI_SHADER_STAGE_TESE = 0X00000004,
-        RHI_SHADER_STAGE_GEOM = 0X00000008,
-        RHI_SHADER_STAGE_FRAG = 0X00000010,
-        RHI_SHADER_STAGE_COMPUTE = 0X00000020,
-        RHI_SHADER_STAGE_AMPLIFICATION = 0X00000040,
-        RHI_SHADER_STAGE_MESH = 0X00000080,
-        RHI_SHADER_STAGE_RAYTRACING = 0X00000100,
+        SHADER_STAGE_NONE = 0,
+        SHADER_STAGE_VERT = 0X00000001,
+        SHADER_STAGE_TESC = 0X00000002,
+        SHADER_STAGE_TESE = 0X00000004,
+        SHADER_STAGE_GEOM = 0X00000008,
+        SHADER_STAGE_FRAG = 0X00000010,
+        SHADER_STAGE_COMPUTE = 0X00000020,
+        SHADER_STAGE_AMPLIFICATION = 0X00000040,
+        SHADER_STAGE_MESH = 0X00000080,
+        SHADER_STAGE_RAYTRACING = 0X00000100,
 
-        RHI_SHADER_STAGE_ALL_GRAPHCIS = (uint32_t)RHI_SHADER_STAGE_VERT | (uint32_t)RHI_SHADER_STAGE_TESC | (uint32_t)RHI_SHADER_STAGE_GEOM | (uint32_t)RHI_SHADER_STAGE_FRAG,
-        RHI_SHADER_STAGE_HULL = RHI_SHADER_STAGE_TESC,
-        RHI_SHADER_STAGE_DOMAIN = RHI_SHADER_STAGE_TESE,
-        RHI_SHADER_STAGE_COUNT = 6,
+        SHADER_STAGE_ALL_GRAPHCIS = (uint32_t)SHADER_STAGE_VERT | (uint32_t)SHADER_STAGE_TESC | (uint32_t)SHADER_STAGE_GEOM | (uint32_t)SHADER_STAGE_FRAG,
+        SHADER_STAGE_HULL = SHADER_STAGE_TESC,
+        SHADER_STAGE_DOMAIN = SHADER_STAGE_TESE,
+        SHADER_STAGE_COUNT = 6,
     };
 
     CYBER_TYPED_ENUM(SHADER_TARGET, uint8_t)
@@ -905,13 +901,13 @@ namespace Cyber
 
     CYBER_TYPED_ENUM(PRIMITIVE_TOPOLOGY, uint8_t)
     {
-        RHI_PRIM_TOPO_POINT_LIST = 0,
-        RHI_PRIM_TOPO_LINE_LIST,
-        RHI_PRIM_TOPO_LINE_STRIP,
-        RHI_PRIM_TOPO_TRIANGLE_LIST,
-        RHI_PRIM_TOPO_TRIANGLE_STRIP,
-        RHI_PRIM_TOPO_PATCH_LIST,
-        RHI_PRIM_TOPO_COUNT,
+        PRIM_TOPO_POINT_LIST = 0,
+        PRIM_TOPO_LINE_LIST,
+        PRIM_TOPO_LINE_STRIP,
+        PRIM_TOPO_TRIANGLE_LIST,
+        PRIM_TOPO_TRIANGLE_STRIP,
+        PRIM_TOPO_PATCH_LIST,
+        PRIM_TOPO_COUNT,
     };
 
     CYBER_TYPED_ENUM(BLEND_MODE, uint8_t)
@@ -1219,7 +1215,7 @@ namespace Cyber
             float depth;
             uint32_t stencil;
         };
-    };
+    } GRAPHICS_CLEAR_VALUE;
     
     static const GRAPHICS_CLEAR_VALUE fastclear_0000 = {
         {0.f, 0.f, 0.f, 0.f}
@@ -1355,7 +1351,7 @@ namespace Cyber
             /// Array of texture descriptors (srv and uav textures)
             RenderObject::ITextureView** textures;
             /// Array of sampler descriptors
-            struct RHISampler** samplers;
+            struct ISampler** samplers;
             /// Array of buffer descriptors (srv uav and cbv buffers)
             RenderObject::IBuffer** buffers;
             /// Array of pipeline descriptors
@@ -1387,7 +1383,7 @@ namespace Cyber
         } d3d12;
     };
 
-    struct CYBER_GRAPHICS_API RHITextureBarrier
+    struct CYBER_GRAPHICS_API TextureBarrier
     {
         RenderObject::ITexture* texture;
         GRAPHICS_RESOURCE_STATE src_state;
@@ -1406,37 +1402,37 @@ namespace Cyber
         } d3d12;
     };
 
-    struct CYBER_GRAPHICS_API RHIResourceBarrierDesc
+    struct CYBER_GRAPHICS_API ResourceBarrierDesc
     {
         const BufferBarrier* buffer_barriers;
         uint32_t buffer_barrier_count;
-        const RHITextureBarrier* texture_barriers;
+        const TextureBarrier* texture_barriers;
         uint32_t texture_barrier_count;
     };
 
     /// Device Group
-    struct CYBER_GRAPHICS_API RHIQueueGroupDesc
+    struct CYBER_GRAPHICS_API QueueGroupDesc
     {
         QUEUE_TYPE queue_type;
         uint32_t queue_count;
     };
 
-    using RHIRenderPassEncoder = RenderObject::ICommandBuffer;
-    using RHIComputePassEncoder = RenderObject::ICommandBuffer;
+    using RenderPassEncoder = RenderObject::ICommandBuffer;
+    using ComputePassEncoder = RenderObject::ICommandBuffer;
 
-    struct CYBER_GRAPHICS_API RHIAcquireNextDesc
+    struct CYBER_GRAPHICS_API AcquireNextDesc
     {
         RenderObject::ISemaphore* signal_semaphore;
         RenderObject::IFence* fence;
     };
 
-    struct CYBER_GRAPHICS_API RHIDescriptorSetCreateDesc
+    struct CYBER_GRAPHICS_API DescriptorSetCreateDesc
     {
         RenderObject::IRootSignature* root_signature;
         uint32_t set_index;
     };
 
-    struct CYBER_GRAPHICS_API RHIColorAttachment
+    struct CYBER_GRAPHICS_API ColorAttachment
     {
         RenderObject::ITextureView* view;
         RenderObject::ITextureView* resolve_view;
@@ -1445,7 +1441,7 @@ namespace Cyber
         GRAPHICS_CLEAR_VALUE clear_value;
     };
 
-    struct CYBER_GRAPHICS_API RHIDepthStencilAttachment
+    struct CYBER_GRAPHICS_API DepthStencilAttachment
     {
         RenderObject::ITextureView* view;
         LOAD_ACTION depth_load_action;
@@ -1458,30 +1454,29 @@ namespace Cyber
         uint8_t write_stencil;
     };
 
-
-    struct CYBER_GRAPHICS_API RHIBlendStateCreateDesc
+    struct CYBER_GRAPHICS_API BlendStateCreateDesc
     {
         /// Source blend factor per render target
-        BLEND_CONSTANT src_factors[RHI_MAX_MRT_COUNT];
+        BLEND_CONSTANT src_factors[GRAPHICS_MAX_MRT_COUNT];
         /// Destination blend factor per render target
-        BLEND_CONSTANT dst_factors[RHI_MAX_MRT_COUNT];
+        BLEND_CONSTANT dst_factors[GRAPHICS_MAX_MRT_COUNT];
         /// Source blend alpha factor per render target
-        BLEND_CONSTANT src_alpha_factors[RHI_MAX_MRT_COUNT];
+        BLEND_CONSTANT src_alpha_factors[GRAPHICS_MAX_MRT_COUNT];
         /// Destination blend alpha factor per render target
-        BLEND_CONSTANT dst_alpha_factors[RHI_MAX_MRT_COUNT];
+        BLEND_CONSTANT dst_alpha_factors[GRAPHICS_MAX_MRT_COUNT];
         /// Blend mode per render target
-        BLEND_MODE blend_modes[RHI_MAX_MRT_COUNT];
+        BLEND_MODE blend_modes[GRAPHICS_MAX_MRT_COUNT];
         /// Blend alpha mode per render target
-        BLEND_MODE blend_alpha_modes[RHI_MAX_MRT_COUNT];
+        BLEND_MODE blend_alpha_modes[GRAPHICS_MAX_MRT_COUNT];
         /// Color write mask per render target
-        int32_t masks[RHI_MAX_MRT_COUNT];
+        int32_t masks[GRAPHICS_MAX_MRT_COUNT];
         /// Enable alpha to coverage
         bool alpha_to_coverage : 1;
         /// Set whether each render target has an unique blend function. When false the blend function in slot 0 will be used for all render targets.
         bool independent_blend : 1;
     };
 
-    struct CYBER_GRAPHICS_API RHIDepthStateCreateDesc
+    struct CYBER_GRAPHICS_API DepthStateCreateDesc
     {
         bool depth_test : 1;
         bool depth_write : 1;
@@ -1499,7 +1494,7 @@ namespace Cyber
         STENCIL_OPERATION stencil_back_pass_op;   
     };
 
-    struct CYBER_GRAPHICS_API RHIRasterizerStateCreateDesc
+    struct CYBER_GRAPHICS_API RasterizerStateCreateDesc
     {  
         CULL_MODE cull_mode;
         int32_t depth_bias;
@@ -1511,7 +1506,7 @@ namespace Cyber
         bool enable_depth_clip : 1;
     };
 
-    struct CYBER_GRAPHICS_API RHIVertexAttribute 
+    struct CYBER_GRAPHICS_API VertexAttribute 
     {
         char8_t semantic_name[64];
         uint32_t array_size;
@@ -1522,14 +1517,13 @@ namespace Cyber
         VERTEX_INPUT_RATE input_rate;
     };
 
-    struct CYBER_GRAPHICS_API RHIVertexLayout
+    struct CYBER_GRAPHICS_API VertexLayout
     {
         uint32_t attribute_count;
-        RHIVertexAttribute attributes[RHI_MAX_VERTEX_ATTRIBUTES];
+        VertexAttribute attributes[GRAPHICS_MAX_VERTEX_ATTRIBUTES];
     };
 
-
-    #define RHI_SINGLE_GPU_NODE_COUNT 1
-    #define RHI_SINGLE_GPU_NODE_MASK 1
-    #define RHI_SINGLE_GPU_NODE_INDEX 0
+    #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1
+    #define GRAPHICS_SINGLE_GPU_NODE_MASK 1
+    #define GRAPHICS_SINGLE_GPU_NODE_INDEX 0
 }

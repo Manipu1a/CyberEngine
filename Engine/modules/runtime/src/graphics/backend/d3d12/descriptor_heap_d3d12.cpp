@@ -4,7 +4,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(uint32_t DescriptorCount)
+        DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(uint32_t descriptorCount)
         {
             if(m_UsedDescriptors + descriptorCount > m_Desc.NumDescriptors)
             {
@@ -100,7 +100,7 @@ namespace Cyber
             }
         }
 
-        void DescriptorHeap_D3D12::copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64& dstHandle, uint32_t index)
+        void DescriptorHeap_D3D12::copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index)
         {
             // fill dest heap
             m_pHandles[(dstHandle / m_DescriptorSize) + index] = srcHandle;

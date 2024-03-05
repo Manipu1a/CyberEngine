@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include "render_object.h"
 
 
@@ -12,7 +12,7 @@ namespace Cyber
         {
             class IShaderLibrary* library;
             const char8_t* entry;
-            ERHIShaderStage stage;
+            SHADER_STAGE stage;
         };
 
         struct CYBER_GRAPHICS_API RenderPipelineCreateDesc
@@ -23,18 +23,18 @@ namespace Cyber
             PipelineShaderCreateDesc* tese_shader;
             PipelineShaderCreateDesc* geometry_shader;
             PipelineShaderCreateDesc* fragment_shader;
-            const RHIVertexLayout* vertex_layout;
-            RHIBlendStateCreateDesc* blend_state;
-            RHIDepthStateCreateDesc* depth_stencil_state;
-            RHIRasterizerStateCreateDesc* rasterizer_state;
+            const VertexLayout* vertex_layout;
+            BlendStateCreateDesc* blend_state;
+            DepthStateCreateDesc* depth_stencil_state;
+            RasterizerStateCreateDesc* rasterizer_state;
 
-            const ERHIFormat* color_formats;
+            const TEXTURE_FORMAT* color_formats;
             uint32_t render_target_count;
-            ERHITextureSampleCount sample_count;
+            TEXTURE_SAMPLE_COUNT sample_count;
             uint32_t sample_quality;
-            ERHISlotMaskBit color_resolve_disable_mask;
-            ERHIFormat depth_stencil_format;
-            ERHIPrimitiveTopology prim_topology;
+            SLOT_MASK_BIT color_resolve_disable_mask;
+            TEXTURE_FORMAT depth_stencil_format;
+            PRIMITIVE_TOPOLOGY prim_topology;
             bool enable_indirect_command;
         };
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include "EASTL/map.h"
 #include <d3d12.h>
 #include <dxgi1_4.h>

@@ -1,6 +1,7 @@
 #pragma once
 #include "d3d12.config.h"
 #include "EASTL/vector.h"
+#include "interface/graphics_types.h"
 
 namespace Cyber
 {
@@ -21,7 +22,7 @@ namespace Cyber
             
             void free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount);
 
-            void copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64& dstHandle, uint32_t index);
+            void copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index);
 
             static void create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap);
 
@@ -51,8 +52,8 @@ namespace Cyber
         struct EmptyDescriptors_D3D12
         {
             D3D12_CPU_DESCRIPTOR_HANDLE Sampler;
-            D3D12_CPU_DESCRIPTOR_HANDLE TextureSRV[RHI_TEX_DIMENSION_COUNT];
-            D3D12_CPU_DESCRIPTOR_HANDLE TextureUAV[RHI_TEX_DIMENSION_COUNT];
+            D3D12_CPU_DESCRIPTOR_HANDLE TextureSRV[TEXTURE_DIMENSION::GRAPHCIS_TEX_DIMENSION_COUNT - 1];
+            D3D12_CPU_DESCRIPTOR_HANDLE TextureUAV[TEXTURE_DIMENSION::GRAPHCIS_TEX_DIMENSION_COUNT - 1];
             D3D12_CPU_DESCRIPTOR_HANDLE BufferSRV;
             D3D12_CPU_DESCRIPTOR_HANDLE BufferUAV;
             D3D12_CPU_DESCRIPTOR_HANDLE BufferCBV;

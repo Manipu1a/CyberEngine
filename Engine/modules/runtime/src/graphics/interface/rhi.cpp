@@ -1,4 +1,4 @@
-#include "interface/rhi.h"
+#include "interface/graphics_types.h"
 #include "backend/d3d12/rhi_d3d12.h"
 #include "platform/memory.h"
 

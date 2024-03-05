@@ -3,6 +3,7 @@
 #include "common/flags.h"
 #include "texture_view.h"
 #include "render_object.h"
+#include "interface/graphics_types.h"
 
 namespace Cyber
 {
@@ -20,17 +21,17 @@ namespace Cyber
             uint32_t array_size;
             uint32_t mip_levels;
             /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
-            ERHIClearValue clear_value;
-            ERHIDescriptorType descriptors;
-            RHITextureCreationFlag flags;
+            GRAPHICS_CLEAR_VALUE clear_value;
+            DESCRIPTOR_TYPE descriptors;
+            TEXTURE_CREATE_FLAG flags;
             /// Number of multisamples per pixel (currently Textures created with mUsage TEXTURE_USAGE_SAMPLED_IMAGE only support SAMPLE_COUNT_1)
             ERHITextureSampleCount sample_count;
             /// The image quality level. The higher the quality, the lower the performance. The valid range is between zero and the value appropriate for mSampleCount
             uint32_t sample_quality;
             /// Image format
-            ERHIFormat format;
+            TEXTURE_FORMAT format;
             /// What state will the texture get created in
-            ERHIResourceStates start_state;
+            GRAPHICS_RESOURCE_STATE start_state;
         };
 
 
@@ -62,16 +63,16 @@ namespace Cyber
             {
                 const uint32_t num_default_views = 1;
                 return num_default_views > 1 ? 
-                    reinterpret_cast<TextureViewImplType**>(default_texture_views) : 
-                    reinterpret_cast<TextureViewImplType**>(&default_texture_views);
+                    reinterpret_cast<TextureViewImplType**>(m_pDefaultTextureViews) : 
+                    reinterpret_cast<TextureViewImplType**>(&m_pDefaultTextureViews);
             }
 
-            virtual ITextureView* get_default_texture_view(ERHITextureViewUsage view_type) const override
+            virtual ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const override
             {
                 const uint32_t num_default_views = 1;
                 return num_default_views > 1 ? 
-                    reinterpret_cast<TextureViewImplType**>(default_texture_views)[static_cast<uint32_t>(view_type)] : 
-                    reinterpret_cast<TextureViewImplType*>(default_texture_views);
+                    reinterpret_cast<TextureViewImplType**>(m_pDefaultTextureViews)[static_cast<uint32_t>(view_type)] : 
+                    reinterpret_cast<TextureViewImplType*>(m_pDefaultTextureViews);
             }
 
             virtual const TextureCreateDesc& get_create_desc() const override
@@ -138,21 +139,21 @@ namespace Cyber
             }
             
         protected:
-            uint32_t mWidth;
-            uint32_t mHeight;
-            uint32_t mDepth;
-            uint32_t mArraySize;
-            uint32_t mMipLevels;
-            uint32_t mFormat;
+            uint32_t m_Width;
+            uint32_t m_Height;
+            uint32_t m_Depth;
+            uint32_t m_ArraySize;
+            uint32_t m_MipLevels;
+            uint32_t m_Format;
             /// Flags specifying which aspects (COLOR,DEPTH,STENCIL) are included in the pVkImageView
-            uint32_t mAspectMask;
-            uint32_t mNodeIndex;
-            uint32_t mIsCube;
-            uint32_t mIsDedicated;
-            uint32_t mOwnsImage;
+            uint32_t m_AspectMask;
+            uint32_t m_NodeIndex;
+            uint32_t m_IsCube;
+            uint32_t m_IsDedicated;
+            uint32_t m_OwnsImage;
             
-            void* mNativeHandle;
-            void* default_texture_views;
+            void* m_pNativeHandle;
+            void* m_pDefaultTextureViews;
         };
     }
 }

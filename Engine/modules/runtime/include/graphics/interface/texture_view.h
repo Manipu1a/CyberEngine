@@ -2,6 +2,7 @@
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
 #include "render_object.h"
+#include "interface/graphics_types.h"
 
 namespace Cyber
 {
@@ -12,10 +13,10 @@ namespace Cyber
         {
             const char8_t* name;
             class ITexture* texture;
-            ERHIFormat format;
-            ERHITextureViewUsages usages;
-            ERHITextureViewAspect aspects;
-            ERHITextureDimension dimension;
+            TEXTURE_FORMAT format;
+            TEXTURE_VIEW_USAGE usages;
+            TEXTURE_VIEW_ASPECT aspects;
+            TEXTURE_DIMENSION dimension;
             uint32_t base_array_layer;
             uint32_t array_layer_count;
             uint32_t base_mip_level;
@@ -25,8 +26,7 @@ namespace Cyber
         //class CERenderDevice;
         struct CYBER_GRAPHICS_API ITextureView
         {
-            TextureViewCreateDesc& get_create_desc() { return create_desc; }
-            TextureViewCreateDesc create_desc;
+            virtual const TextureViewCreateDesc& get_create_desc() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -39,8 +39,13 @@ namespace Cyber
             Texture_View(RenderDeviceImplType* device) : TTexture_View(device) { }
             virtual ~Texture_View() {}
             
+            virtual const TextureViewCreateDesc& get_create_desc() override
+            {
+                return m_CreateDesc;
+            }
         protected:
-            RenderDeviceImplType* device;
+            RenderDeviceImplType* m_pDevice;
+            TextureViewCreateDesc m_CreateDesc;
 
             friend RenderDeviceImplType;
         };

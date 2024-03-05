@@ -8,50 +8,50 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API RenderPassAttachmentDesc
         {
-            ERHIFormat format;
-            uint8_t sample_count;
-            ERHILoadAction load_action;
-            ERHIStoreAction store_action;
-            ERHILoadAction stencil_load_action;
-            ERHIStoreAction stencil_store_action;
-            ERHIResourceState initial_state;
-            ERHIResourceState final_state;
+            TEXTURE_FORMAT m_Format;
+            uint8_t m_SampleCount;
+            LOAD_ACTION m_LoadAction;
+            STORE_ACTION m_StoreAction;
+            LOAD_ACTION m_StencilLoadAction;
+            STORE_ACTION m_StencilStoreAction;
+            GRAPHICS_RESOURCE_STATE m_InitialState;
+            GRAPHICS_RESOURCE_STATE m_FinalState;
         };
 
         struct CYBER_GRAPHICS_API AttachmentReference
         {
-            uint32_t attachment_index;
-            ERHIResourceState state;
+            uint32_t m_AttachmentIndex;
+            GRAPHICS_RESOURCE_STATE m_State;
         };
 
         struct CYBER_GRAPHICS_API RenderSubpassDesc
         {
-            ERHITextureSampleCount sample_count;
-            uint32_t input_attachment_count;
-            const AttachmentReference* input_attachments;
-            const AttachmentReference* depth_stencil_attachment;
-            uint32_t render_target_count;
-            const AttachmentReference* render_target_attachments;
+            TEXTURE_SAMPLE_COUNT m_SampleCount;
+            uint32_t m_InputAttachmentCount;
+            const AttachmentReference* m_pInputAttachments;
+            const AttachmentReference* m_pDepthStencilAttachment;
+            uint32_t m_RenderTargetCount;
+            const AttachmentReference* m_pRenderTargetAttachments;
         };
 
         struct CYBER_GRAPHICS_API SubpassDependencyDesc
         {
-            uint32_t src_subpass;
-            uint32_t dst_subpass;
-            ERHIPipelineStageFlags src_stage_mask;
-            ERHIPipelineStageFlags dst_stage_mask;
-            ERHIAccessFlags src_access_mask;
-            ERHIAccessFlags dst_access_mask;
+            uint32_t m_SrcSubpass;
+            uint32_t m_DstSubpass;
+            PIPELINE_STAGE_FLAG m_SrcStageMask;
+            PIPELINE_STAGE_FLAG m_DstStageMask;
+            ACCESS_FLAG m_SrcAccessMask;
+            ACCESS_FLAG m_DstAccessMask;
         };
 
         struct CYBER_GRAPHICS_API RenderPassDesc
         {
-            const char8_t* name;
-            uint32_t attachment_count;
-            const RenderPassAttachmentDesc* attachments;
-            uint32_t subpass_count;
-            const char8_t* const* subpass_names;
-            RenderSubpassDesc* subpasses;
+            const char8_t* m_Name;
+            uint32_t m_AttachmentCount;
+            const RenderPassAttachmentDesc* m_pAttachments;
+            uint32_t m_SubpassCount;
+            const char8_t* const* m_SubpassNames;
+            RenderSubpassDesc* m_pSubpasses;
         };
 
         struct CYBER_GRAPHICS_API IRenderPass

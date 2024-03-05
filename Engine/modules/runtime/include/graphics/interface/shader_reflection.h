@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "render_object.h"
-#include "rhi.h"
+#include "graphics_types.h"
 
 namespace Cyber
 {
@@ -28,7 +28,7 @@ namespace Cyber
             char* name_pool;
             IVertexInput* vertex_inputs;
             RenderObject::IShaderResource* shader_resources;
-            ERHIShaderStage shader_stage;
+            SHADER_STAGE shader_stage;
             uint32_t name_pool_size;
             uint32_t vertex_input_count;
             uint32_t shader_resource_count;
