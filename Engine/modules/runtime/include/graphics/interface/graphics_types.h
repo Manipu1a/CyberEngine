@@ -837,6 +837,8 @@ namespace Cyber
     #endif
     };
 
+    DEFINE_ENUM_FLAG_OPERATORS(GRAPHICS_RESOURCE_TYPE);
+    
     CYBER_TYPED_ENUM(TEXTURE_VIEW_USAGE, uint8_t)
     {
         TVU_SRV = 0x01,

@@ -1,19 +1,23 @@
-#include "common_utils.h"
+#include "graphics_utils.h"
 #include "EASTL/vector.h"
 #include <stdint.h>
 #include <string.h>
 #include "containers/btree.h"
 #include <EASTL/sort.h>
+#include "interface/shader_resource.h"
+#include "interface/root_signature.h"
+#include "interface/render_pipeline.h"
+#include "interface/shader_reflection.h"
 
 namespace Cyber 
 {
-    bool graphics_util_shader_resource_is_root_constant(const IShaderResource& resource, const RootSignatureCreateDesc& desc)
+    bool graphics_util_shader_resource_is_root_constant(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
     {
-        if(resource.type == RHI_RESOURCE_TYPE_PUSH_CONTANT)
+        if(resource->get_type() == GRAPHICS_RESOURCE_TYPE::GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT)
             return true;
         for(uint32_t i = 0;i < desc.push_constant_count; ++i)
         {
-            if(strcmp((char*)resource.name, (char*)desc.push_constant_names[i]) == 0)
+            if(strcmp((char*)resource->get_name(), (char*)desc.push_constant_names[i]) == 0)
             {
                 return true;
             }
@@ -21,29 +25,29 @@ namespace Cyber
         return false;
     }
 
-    bool graphics_util_shader_resource_is_static_sampler(const IShaderResource& resource, const RootSignatureCreateDesc& desc)
+    bool graphics_util_shader_resource_is_static_sampler(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
     {
         for(uint32_t i = 0; i < desc.static_sampler_count; ++i)
         {
-            if(strcmp((char*)resource.name, (char*)desc.static_sampler_names[i]) == 0)
+            if(strcmp((char*)resource->get_name(), (char*)desc.static_sampler_names[i]) == 0)
             {
-                return resource.type == RHI_RESOURCE_TYPE_SAMPLER;
+                return resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER;
             }
         }
         return false;
     }
     
-    void graphics_util_init_root_signature_tables(IRootSignature* rootSignature, const struct RootSignatureCreateDesc& desc)
+    void graphics_util_init_root_signature_tables(IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
-        RHIShaderReflection* entery_reflection[32] = {0};
+        RenderObject::IShaderReflection* entery_reflection[32] = {0};
         // Pick shader reflection data
         for(uint32_t i = 0; i < desc.shader_count; ++i)
         {
-            const RHIPipelineShaderCreateDesc* shader_desc = desc.shaders[i];
+            const RenderObject::PipelineShaderCreateDesc* shader_desc = desc.shaders[i];
             // Find shader reflection data
             for(uint32_t j = 0; j < shader_desc->library->entry_count; ++j)
             {
-                RHIShaderReflection& temp_entry_reflection = shader_desc->library->entry_reflections[j];
+                IShaderReflection& temp_entry_reflection = shader_desc->library->entry_reflections[j];
                 if(strcmp((char*)shader_desc->entry, (char*)temp_entry_reflection.entry_name) == 0)
                 {
                     entery_reflection[i] = &temp_entry_reflection;
@@ -58,7 +62,7 @@ namespace Cyber
         }
 
         // Collect all resources
-        rootSignature->pipeline_type = RHI_PIPELINE_TYPE_NONE;
+        rootSignature->pipeline_type = PIPELINE_TYPE_NONE;
         eastl::vector<RHIShaderResource> all_resources;
         eastl::vector<RHIShaderResource> all_push_constants;
         eastl::vector<RHIShaderResource> all_static_samplers;
