@@ -34,7 +34,7 @@ namespace Cyber
         public:
             using AdapterInterface = typename EngineImplTraits::BufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderObjectBase = RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
+            using TRenderObjectBase = typename RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
 
             AdapterBase(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
 

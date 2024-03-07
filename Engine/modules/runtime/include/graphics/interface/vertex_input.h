@@ -1,7 +1,8 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "render_object.h"
-#include "common/flags.h"
+#include "interface/graphics_types.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -63,12 +64,12 @@ namespace Cyber
                 return this->binding;
             }
 
-            CYBER_FORCE_INLINE void set_format(ERHIFormat format)
+            CYBER_FORCE_INLINE void set_format(TEXTURE_FORMAT format)
             {
                 this->format = format;
             }
 
-            CYBER_FORCE_INLINE ERHIFormat get_format() const
+            CYBER_FORCE_INLINE TEXTURE_FORMAT get_format() const
             {
                 return this->format;
             }
@@ -83,7 +84,7 @@ namespace Cyber
             const char8_t* semantics_name;
             uint32_t semantics_index;
             uint32_t binding;
-            ERHIFormat format;
+            TEXTURE_FORMAT format;
         };
     }
 

@@ -1,4 +1,4 @@
-#include "common_utils.h"
+#include "graphics_utils.h"
 #include <EASTL/vector.h>
 #include "common/flags.h"
 #include "interface/graphics_types.h"
@@ -189,24 +189,24 @@ namespace Cyber
         phmap::flat_hash_map<RHIRootSignature*, uint32_t> counterMap;
     };
 
-    RHIRootSignaturePool* rhi_util_create_root_signature_pool(const RHIRootSignaturePoolCreateDesc& desc)
+    IRootSignaturePool* graphics_util_create_root_signature_pool(const RootSignaturePoolCreateDesc& desc)
     {
-        return cyber_new<RHIRootSignaturePoolImpl>(desc.name);
+        return cyber_new<IRootSignaturePoolImpl>(desc.name);
     }
 
-    RHIRootSignature* rhi_util_try_allocate_signature(RHIRootSignaturePool* pool, RHIRootSignature* RSTables, const struct RHIRootSignatureCreateDesc& desc)
+    RHIRootSignature* graphics_util_try_allocate_signature(IRootSignaturePool* pool, IRootSignature* RSTables, const struct RootSignatureCreateDesc& desc)
     {
         return static_cast<RHIRootSignaturePoolImpl*>(pool)->try_allocate(RSTables, &desc);
     }
-    bool rhi_util_add_signature(RHIRootSignaturePool* pool, RHIRootSignature* sig, const RHIRootSignatureCreateDesc& desc)
+    bool graphics_util_add_signature(IRootSignaturePool* pool, IRootSignature* sig, const RootSignatureCreateDesc& desc)
     {
         return static_cast<RHIRootSignaturePoolImpl*>(pool)->insert(sig, &desc);
     }
-    bool rhi_util_pool_free_signature(RHIRootSignaturePool* pool, RHIRootSignature* signature)
+    bool graphics_util_pool_free_signature(IRootSignaturePool* pool, IRootSignature* signature)
     {
         return static_cast<RHIRootSignaturePoolImpl*>(pool)->deallocate(signature);
     }
-    void rhi_util_free_root_signature_pool(Ref<RHIRootSignaturePool> pool)
+    void graphics_util_free_root_signature_pool(Ref<IRootSignaturePool> pool)
     {
         auto P = static_cast<RHIRootSignaturePoolImpl*>(pool.get());
         cyber_delete(P);

@@ -31,9 +31,9 @@ namespace Cyber
 
             void Initialize_shader_reflection(const RenderObject::ShaderLibraryCreateDesc& desc);
 
-            void collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage);
+            void collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage);
 
-            void reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc);
+            void reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage, const D3D12_SHADER_DESC& shaderDesc);
         protected:
             ID3DBlob* m_pShaderBlob;
             struct IDxcResult* m_pShaderResult;

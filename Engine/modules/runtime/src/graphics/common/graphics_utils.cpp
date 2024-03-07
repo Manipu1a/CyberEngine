@@ -7,7 +7,7 @@
 
 namespace Cyber 
 {
-    bool rhi_util_shader_resource_is_root_constant(const RHIShaderResource& resource, const RHIRootSignatureCreateDesc& desc)
+    bool graphics_util_shader_resource_is_root_constant(const IShaderResource& resource, const RootSignatureCreateDesc& desc)
     {
         if(resource.type == RHI_RESOURCE_TYPE_PUSH_CONTANT)
             return true;
@@ -21,7 +21,7 @@ namespace Cyber
         return false;
     }
 
-    bool rhi_util_shader_resource_is_static_sampler(const RHIShaderResource& resource, const RHIRootSignatureCreateDesc& desc)
+    bool graphics_util_shader_resource_is_static_sampler(const IShaderResource& resource, const RootSignatureCreateDesc& desc)
     {
         for(uint32_t i = 0; i < desc.static_sampler_count; ++i)
         {
@@ -33,7 +33,7 @@ namespace Cyber
         return false;
     }
     
-    void rhi_util_init_root_signature_tables(RHIRootSignature* rootSignature, const struct RHIRootSignatureCreateDesc& desc)
+    void graphics_util_init_root_signature_tables(IRootSignature* rootSignature, const struct RootSignatureCreateDesc& desc)
     {
         RHIShaderReflection* entery_reflection[32] = {0};
         // Pick shader reflection data
@@ -194,7 +194,7 @@ namespace Cyber
         }
     }
 
-    void rhi_util_free_root_signature_tables(struct RHIRootSignature* rootSignature)
+    void graphics_util_free_root_signature_tables(struct IRootSignature* rootSignature)
     {
         // free resources
         if(rootSignature->parameter_tables)
@@ -246,7 +246,7 @@ namespace Cyber
 
     }
 
-    eastl::string GetHLSLProfileString(ERHIShaderStage stage, ShaderVersion version)
+    eastl::string GetHLSLProfileString(SHADER_STAGE stage, ShaderVersion version)
     {
         eastl::string shader_profile;
 

@@ -37,7 +37,7 @@ namespace Cyber
         D3D12_BLEND_DESC ret = {};
         ret.AlphaToCoverageEnable = (BOOL)pDesc->alpha_to_coverage;
         ret.IndependentBlendEnable = TRUE;
-        for(int i = 0; i < RHI_MAX_MRT_COUNT;++i)
+        for(int i = 0; i < GRAPHICS_MAX_MRT_COUNT;++i)
         {
             BOOL blendEnable = (gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]] != D3D12_BLEND_ZERO) ||
                                 (gDx12BlendConstantTranslator[pDesc->src_alpha_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_alpha_factors[blendDescIndex]] != D3D12_BLEND_ZERO);
@@ -61,13 +61,13 @@ namespace Cyber
     
     D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RasterizerStateCreateDesc* pDesc)
     {
-        cyber_check(pDesc->fill_mode < RHI_FILL_MODE_COUNT);
-        cyber_check(pDesc->cull_mode < RHI_CULL_MODE_COUNT);
-        cyber_check(pDesc->front_face == RHI_FRONT_FACE_COUNTER_CLOCKWISE || pDesc->front_face == RHI_FRONT_FACE_CLOCKWISE);
+        cyber_check(pDesc->fill_mode < FILL_MODE_COUNT);
+        cyber_check(pDesc->cull_mode < CULL_MODE_COUNT);
+        cyber_check(pDesc->front_face == FRONT_FACE_COUNTER_CLOCKWISE || pDesc->front_face == FRONT_FACE_CLOCKWISE);
         D3D12_RASTERIZER_DESC ret = {};
         ret.FillMode = gDx12FillModeTranslator[pDesc->fill_mode];
         ret.CullMode = gDx12CullModeTranslator[pDesc->cull_mode];
-        ret.FrontCounterClockwise = (pDesc->front_face == RHI_FRONT_FACE_COUNTER_CLOCKWISE);
+        ret.FrontCounterClockwise = (pDesc->front_face == FRONT_FACE_COUNTER_CLOCKWISE);
         ret.DepthBias = pDesc->depth_bias;
         ret.DepthBiasClamp = 0.0f;
         ret.SlopeScaledDepthBias = pDesc->slope_scaled_depth_bias;
@@ -81,14 +81,14 @@ namespace Cyber
 
     D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const DepthStateCreateDesc* pDesc)
     {
-        cyber_check(pDesc->depth_func < RHI_CMP_COUNT);
-        cyber_check(pDesc->stencil_front_func < RHI_CMP_COUNT);
-        cyber_check(pDesc->stencil_front_fail_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_front_pass_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_front_depth_fail_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_back_fail_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_back_pass_op < RHI_STENCIL_OP_COUNT);
-        cyber_check(pDesc->stencil_back_depth_fail_op < RHI_STENCIL_OP_COUNT);
+        cyber_check(pDesc->depth_func < CMP_COUNT);
+        cyber_check(pDesc->stencil_front_func < CMP_COUNT);
+        cyber_check(pDesc->stencil_front_fail_op < STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_front_pass_op < STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_front_depth_fail_op < STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_fail_op < STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_pass_op < STENCIL_OP_COUNT);
+        cyber_check(pDesc->stencil_back_depth_fail_op < STENCIL_OP_COUNT);
 
         D3D12_DEPTH_STENCIL_DESC ret = {};
         ret.DepthEnable = pDesc->depth_test ? TRUE : FALSE;

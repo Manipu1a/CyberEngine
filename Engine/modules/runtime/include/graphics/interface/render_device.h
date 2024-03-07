@@ -119,8 +119,8 @@ namespace Cyber
 
             RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderObjectBase(nullptr)
             {
-                this->adapter = adapter;
-                this->device_desc = deviceDesc;
+                this->m_pAdapter = adapter;
+                this->m_DeviceDesc = deviceDesc;
             }
             virtual ~RenderDeviceBase()
             {
@@ -129,8 +129,8 @@ namespace Cyber
             RenderDeviceBase() = default;
             
         protected:
-            IAdapter* adapter;
-            RenderDeviceCreateDesc device_desc;
+            IAdapter* m_pAdapter;
+            RenderDeviceCreateDesc m_DeviceDesc;
 
         public:
             friend TextureImplType;

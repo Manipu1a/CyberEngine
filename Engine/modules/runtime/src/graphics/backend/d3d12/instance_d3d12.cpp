@@ -1,6 +1,8 @@
 #include "backend/d3d12/instance_d3d12.h"
-#include "interface/graphics_types.h"
 #include "EASTL/vector.h"
+#include "backend/d3d12/graphics_types_d3d12.h"
+#include "backend/d3d12/adapter_d3d12.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -52,7 +54,7 @@ namespace Cyber
                 // Ignore Microsoft Driver
                 if(!(desc.Flags & DXGI_ADAPTER_FLAG3_SOFTWARE))
                 {
-                    uint32_t level_c = RHI_ARRAY_LEN(d3d_feature_levels);
+                    uint32_t level_c = GRAPHICS_ARRAY_LEN(d3d_feature_levels);
 
                     for(uint32_t level = 0;level < level_c;++level)
                     {
@@ -83,11 +85,11 @@ namespace Cyber
             }
 
             count = m_AdaptersCount;
-            m_pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(mAdaptersCount);
+            m_pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(m_AdaptersCount);
 
             for(uint32_t i = 0;i < count; i++)
             {
-                RenderObject::Adapter_D3D12_Impl* pAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(&instance->pAdapters[i]);
+                RenderObject::Adapter_D3D12_Impl* pAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(&m_pAdapters[i]);
                 // Device Objects
                 pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
             }

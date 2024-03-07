@@ -54,15 +54,15 @@ namespace Cyber
         RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(adapter);
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->m_pInstance);
         
-        this->adapter = adapter;
+        this->m_pAdapter = adapter;
 
-        if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->pDxActiveGPU, dxAdapter->mFeatureLevel, IID_PPV_ARGS(&pDxDevice))))
+        if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->m_pDxActiveGPU, dxAdapter->m_FeatureLevel, IID_PPV_ARGS(&m_pDxDevice))))
         {
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
         }
 
         // Create Requested Queues
-        pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
+        m_pNullDescriptors = (RHIEmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RHIEmptyDescriptors_D3D12));
 
         for(uint32_t i = 0u; i < deviceDesc.queue_group_count;i++)
         {

@@ -31,6 +31,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IQueue
         {
+            virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -43,7 +44,6 @@ namespace Cyber
 
             virtual ~QueueBase() = default;
 
-            virtual void signal_fence(class IFence* fence, uint64_t value) override;
         protected:
             QUEUE_TYPE m_Type;
             QueueIndex m_Idex;
