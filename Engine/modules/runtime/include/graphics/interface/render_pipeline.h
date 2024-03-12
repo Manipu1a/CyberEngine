@@ -47,12 +47,15 @@ namespace Cyber
         class RenderPipelineBase : public RenderObjectBase<typename EngineImplTraits::RenderPipelineInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using RenderPipelineInterface = typename EngineImplTraits::RenderPipelineInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderPipelineBase = typename RenderPipelineBase<RenderPipelineInterface, RenderDeviceImplType>;
 
-            RenderPipelineBase(RenderDeviceImplType* device);
+            RenderPipelineBase(RenderDeviceImplType* device, const RenderPipelineCreateDesc& desc) : TRenderPipelineBase(device), m_desc(desc) {  };
             virtual ~RenderPipelineBase() = default;
-        protected:
 
+        protected:
+            RenderPipelineCreateDesc m_desc;
         };
     }
 

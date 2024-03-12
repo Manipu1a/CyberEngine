@@ -14,13 +14,15 @@ namespace Cyber
         class QueryPoolBase : public RenderObjectBase<typename EngineImplTraits::QueryPoolInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using QueryPoolInterface = typename EngineImplTraits::QueryPoolInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TQueryPoolBase = typename QueryPoolBase<QueryPoolInterface, RenderDeviceImplType>;
 
-            QueryPoolBase(RenderDeviceImplType* device);
+            QueryPoolBase(RenderDeviceImplType* device) : TQueryPoolBase(device) {  };
 
             virtual ~QueryPoolBase() = default;
         protected:
-            uint32_t mCount;
+            uint32_t m_count;
         };
     }
 

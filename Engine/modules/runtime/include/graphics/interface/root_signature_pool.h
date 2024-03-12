@@ -9,7 +9,7 @@ namespace Cyber
         
         struct CYBER_GRAPHICS_API RootSignaturePoolCreateDesc
         {
-            const char8_t* name;
+            const char8_t* m_name;
         };
 
         struct CYBER_GRAPHICS_API IRootSignaturePool
@@ -21,18 +21,20 @@ namespace Cyber
         class RootSignaturePoolBase : public RenderObjectBase<typename EngineImplTraits::RootSignaturePoolInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using RootSignaturePoolInterface = typename EngineImplTraits::RootSignaturePoolInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRootSignaturePoolBase = typename RootSignaturePoolBase<RootSignaturePoolInterface, RenderDeviceImplType>;
 
-            RootSignaturePoolBase(RenderDeviceImplType* device);
+            RootSignaturePoolBase(RenderDeviceImplType* device, const RootSignaturePoolCreateDesc& desc) : TRootSignaturePoolBase(device), m_desc(desc) {  };
             virtual ~RootSignaturePoolBase() = default;
 
             virtual RootSignaturePoolCreateDesc get_create_desc() const
             {
-                return create_desc;
+                return m_desc;
             }
         protected:
-            PIPELINE_TYPE pipeline_type;
-            RootSignaturePoolCreateDesc create_desc;
+            PIPELINE_TYPE m_pipelineType;
+            RootSignaturePoolCreateDesc m_desc;
         };
     }
 

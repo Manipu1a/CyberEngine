@@ -10,7 +10,7 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API CommandBufferCreateDesc
         {
-            bool is_secondary : 1;
+            bool m_isSecondary : 1;
         };
 
         struct CYBER_GRAPHICS_API ICommandBuffer
@@ -22,14 +22,17 @@ namespace Cyber
         class CommandBufferBase : public RenderObjectBase<typename EngineImplTraits::CommandBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using CommandBufferInterface = typename EngineImplTraits::CommandBufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TCommandBufferBase = typename CommandBufferBase<CommandBufferInterface, RenderDeviceImplType>;
 
-            CommandBufferBase(RenderDeviceImplType* device);
+            CommandBufferBase(RenderDeviceImplType* device, const commandBufferDesc& desc) : TCommandBufferBase(device), m_desc(desc) {  };
 
             virtual ~CommandBufferBase() = default;
         protected:
-            class ICommandPool* pPool;
-            PIPELINE_TYPE mCurrentDispatch;
+            CommandBufferCreateDesc m_desc;
+            class ICommandPool* m_pPool;
+            PIPELINE_TYPE m_currentDispatch;
         };
     }
 

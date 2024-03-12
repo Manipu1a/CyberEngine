@@ -10,9 +10,9 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API InstanceCreateDesc
         {
-            bool enable_debug_layer;
-            bool enable_gpu_based_validation;
-            bool enable_set_name;
+            bool m_enableDebugLayer;
+            bool m_enableGpuBasedValidation;
+            bool m_enableSetName;
         };
 
         struct CYBER_GRAPHICS_API IInstance
@@ -24,29 +24,30 @@ namespace Cyber
         class InstanceBase : public RenderObjectBase<typename EngineImplTraits::InstanceInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using InstanceInterface = typename EngineImplTraits::InstanceInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderObjectBase = RenderObjectBase<typename EngineImplTraits::InstanceInterface, typename EngineImplTraits::RenderDeviceImplType>;
+            using TInstancetBase = typename RenderObjectBase<InstanceInterface, RenderDeviceImplType>;
 
-            InstanceBase(RenderDeviceImplType* device, const InstanceCreateDesc& desc) : TRenderObjectBase(device), m_Desc(desc)
+            InstanceBase(RenderDeviceImplType* device, const InstanceCreateDesc& desc) : TInstancetBase(device), m_Desc(desc)
             {
-                m_Backend = device->get_backend();
-                m_NvAPIStatus = device->get_nvapi_status();
-                m_AgsStatus = device->get_ags_status();
-                m_EnableSetName = desc.enable_set_name;
+                m_backend = device->get_backend();
+                m_nvAPIStatus = device->get_nvapi_status();
+                m_agsStatus = device->get_ags_status();
+                m_enableSetName = desc.enable_set_name;
             }
 
             virtual ~InstanceBase() = default;
 
             virtual const InstanceCreateDesc get_create_desc() const
             {
-                return m_Desc;
+                return m_desc;
             }
         protected:
-            InstanceCreateDesc m_Desc;
-            GRAPHICS_BACKEND m_Backend;
-            NVAPI_STATUS m_NvAPIStatus;
-            AGS_RETURN_CODE m_AgsStatus;
-            bool m_EnableSetName;
+            InstanceCreateDesc m_desc;
+            GRAPHICS_BACKEND m_backend;
+            NVAPI_STATUS m_nvAPIStatus;
+            AGS_RETURN_CODE m_agsStatus;
+            bool m_enableSetName;
         };
     }
 }

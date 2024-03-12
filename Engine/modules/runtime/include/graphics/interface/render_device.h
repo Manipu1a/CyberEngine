@@ -28,9 +28,9 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API RenderDeviceCreateDesc
         {
-            bool bDisablePipelineCache;
-            eastl::vector<QueueGroupDesc> queue_groups;
-            uint32_t queue_group_count;
+            bool m_disablePipelineCache;
+            eastl::vector<QueueGroupDesc> m_queueGroups;
+            uint32_t m_queueGroupCount;
         };
         
         // Render device interface
@@ -40,19 +40,19 @@ namespace Cyber
             virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) = 0;
             virtual void free_instance(IInstance* instance) = 0;
             // Device APIS
-            virtual void create_device(IAdapter* pAdapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
+            virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
             virtual void free_device() = 0;
             // API Object APIs
             virtual Surface* surface_from_hwnd(HWND hwnd) = 0;
-            virtual void free_surface(Surface* pSurface) = 0;
+            virtual void free_surface(Surface* surface) = 0;
             virtual IFence* create_fence() = 0;
             virtual void wait_fences(IFence** fences, uint32_t fenceCount) = 0;
             virtual void free_fence(IFence* fence) = 0;
-            virtual FENCE_STATUS query_fence_status(IFence* pFence) = 0;
+            virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
-            virtual void free_swap_chain(ISwapChain* pSwapChain) = 0;
+            virtual void free_swap_chain(ISwapChain* swapChain) = 0;
             virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) = 0;
-            virtual uint32_t acquire_next_image(ISwapChain* pSwapChain, const AcquireNextDesc& acquireDesc) = 0;
+            virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             // Queue APIs
             virtual IQueue* get_queue(QUEUE_TYPE type, uint32_t index) = 0;
@@ -61,14 +61,14 @@ namespace Cyber
             virtual void wait_queue_idle(IQueue* queue) = 0;
             virtual void free_queue(IQueue* queue) = 0;
             // Command APIs
-            virtual ICommandPool* create_command_pool(IQueue* pQueue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
-            virtual void reset_command_pool(ICommandPool* pPool) = 0;
-            virtual void free_command_pool(ICommandPool* pPool) = 0;
-            virtual ICommandBuffer* create_command_buffer(ICommandPool* pPool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
-            virtual void free_command_buffer(ICommandBuffer* pCommandBuffer) = 0;
+            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
+            virtual void reset_command_pool(ICommandPool* pool) = 0;
+            virtual void free_command_pool(ICommandPool* pool) = 0;
+            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
+            virtual void free_command_buffer(ICommandBuffer* CommandBuffer) = 0;
             /// RootSignature
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) = 0;
-            virtual void free_root_signature(IRootSignature* pRootSignature) = 0;
+            virtual void free_root_signature(IRootSignature* rootSignature) = 0;
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) = 0;
             virtual void update_descriptor_set(IDescriptorSet* set, const DescriptorData* updateDesc, uint32_t count) = 0;
             virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) = 0;
@@ -111,16 +111,16 @@ namespace Cyber
         class CYBER_GRAPHICS_API RenderDeviceBase : public RenderObjectBase<typename EngineImplTraits::RenderDeviceInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
-            using TRenderObjectBase = RenderObjectBase<typename EngineImplTraits::RenderDeviceInterface, typename EngineImplTraits::RenderDeviceImplType>;
             using TextureImplType = typename EngineImplTraits::TextureImplType;
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
             using BufferImplType = typename EngineImplTraits::BufferImplType;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderDeviceBase = typename RenderObjectBase<RenderDeviceImplType, RenderDeviceImplType>;
 
-            RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderObjectBase(nullptr)
+            RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(nullptr)
             {
                 this->m_pAdapter = adapter;
-                this->m_DeviceDesc = deviceDesc;
+                this->m_desc = deviceDesc;
             }
             virtual ~RenderDeviceBase()
             {
@@ -130,7 +130,7 @@ namespace Cyber
             
         protected:
             IAdapter* m_pAdapter;
-            RenderDeviceCreateDesc m_DeviceDesc;
+            RenderDeviceCreateDesc m_desc;
 
         public:
             friend TextureImplType;

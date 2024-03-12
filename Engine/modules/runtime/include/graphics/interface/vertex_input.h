@@ -18,9 +18,11 @@ namespace Cyber
         class VertexInputBase : public RenderObjectBase<typename EngineImplTraits::VertexInputInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using VertexInputInterface = typename EngineImplTraits::VertexInputInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TVertexInputBase = typename VertexInputBase<VertexInputInterface, RenderDeviceImplType>;
 
-            VertexInputBase(RenderDeviceImplType* device);
+            VertexInputBase(RenderDeviceImplType* device) : TVertexInputBase(device) {  };
             
             virtual ~VertexInputBase() = default;
 

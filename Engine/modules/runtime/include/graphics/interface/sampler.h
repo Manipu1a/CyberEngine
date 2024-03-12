@@ -15,9 +15,11 @@ namespace Cyber
         class SamplerBase : public RenderObjectBase<typename EngineImplTraits::SamplerInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using SamplerInterface = typename EngineImplTraits::SamplerInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TSamplerBase = typename SamplerBase<SamplerInterface, RenderDeviceImplType>;
 
-            SamplerBase(RenderDeviceImplType* device);
+            SamplerBase(RenderDeviceImplType* device) : TSamplerBase(device) {  };
             virtual ~SamplerBase() = default;
         protected:
             

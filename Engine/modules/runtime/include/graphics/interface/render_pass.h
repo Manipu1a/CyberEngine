@@ -8,49 +8,49 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API RenderPassAttachmentDesc
         {
-            TEXTURE_FORMAT m_Format;
-            uint8_t m_SampleCount;
-            LOAD_ACTION m_LoadAction;
-            STORE_ACTION m_StoreAction;
-            LOAD_ACTION m_StencilLoadAction;
-            STORE_ACTION m_StencilStoreAction;
-            GRAPHICS_RESOURCE_STATE m_InitialState;
-            GRAPHICS_RESOURCE_STATE m_FinalState;
+            TEXTURE_FORMAT m_format;
+            uint8_t m_sampleCount;
+            LOAD_ACTION m_loadAction;
+            STORE_ACTION m_storeAction;
+            LOAD_ACTION m_stencilLoadAction;
+            STORE_ACTION m_stencilStoreAction;
+            GRAPHICS_RESOURCE_STATE m_initialState;
+            GRAPHICS_RESOURCE_STATE m_finalState;
         };
 
         struct CYBER_GRAPHICS_API AttachmentReference
         {
-            uint32_t m_AttachmentIndex;
-            GRAPHICS_RESOURCE_STATE m_State;
+            uint32_t m_attachmentIndex;
+            GRAPHICS_RESOURCE_STATE m_state;
         };
 
         struct CYBER_GRAPHICS_API RenderSubpassDesc
         {
-            TEXTURE_SAMPLE_COUNT m_SampleCount;
-            uint32_t m_InputAttachmentCount;
+            TEXTURE_SAMPLE_COUNT m_sampleCount;
+            uint32_t m_inputAttachmentCount;
             const AttachmentReference* m_pInputAttachments;
             const AttachmentReference* m_pDepthStencilAttachment;
-            uint32_t m_RenderTargetCount;
+            uint32_t m_renderTargetCount;
             const AttachmentReference* m_pRenderTargetAttachments;
         };
 
         struct CYBER_GRAPHICS_API SubpassDependencyDesc
         {
-            uint32_t m_SrcSubpass;
-            uint32_t m_DstSubpass;
-            PIPELINE_STAGE_FLAG m_SrcStageMask;
-            PIPELINE_STAGE_FLAG m_DstStageMask;
-            ACCESS_FLAG m_SrcAccessMask;
-            ACCESS_FLAG m_DstAccessMask;
+            uint32_t m_srcSubpass;
+            uint32_t m_dstSubpass;
+            PIPELINE_STAGE_FLAG m_srcStageMask;
+            PIPELINE_STAGE_FLAG m_dstStageMask;
+            ACCESS_FLAG m_srcAccessMask;
+            ACCESS_FLAG m_dstAccessMask;
         };
 
         struct CYBER_GRAPHICS_API RenderPassDesc
         {
-            const char8_t* m_Name;
-            uint32_t m_AttachmentCount;
+            const char8_t* m_name;
+            uint32_t m_attachmentCount;
             const RenderPassAttachmentDesc* m_pAttachments;
-            uint32_t m_SubpassCount;
-            const char8_t* const* m_SubpassNames;
+            uint32_t m_subpassCount;
+            const char8_t* const* m_subpassNames;
             RenderSubpassDesc* m_pSubpasses;
         };
 
@@ -60,13 +60,20 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API RenderPassBase : public RenderObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API RenderPassBase : public RenderObjectBase<typename EngineImplTraits::RenderPassInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
-            
-            virtual const RenderPassDesc& get_create_desc() const override { return desc; }
+            using RenderPassInterface = typename EngineImplTraits::RenderPassInterface;
+            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRenderPassBase = typename RenderObjectBase<RenderPassInterface, RenderDeviceImplType>;
+
+            RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device), m_desc(desc)
+            {
+            }
+
+            virtual const RenderPassDesc& get_create_desc() const override { return m_desc; }
         protected:
-            RenderPassDesc desc;
+            RenderPassDesc m_desc;
         };
     }
 }

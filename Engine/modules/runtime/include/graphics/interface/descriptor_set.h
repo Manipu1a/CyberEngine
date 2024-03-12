@@ -15,14 +15,15 @@ namespace Cyber
         class DescriptorSetBase : public RenderObjectBase<typename EngineImplTraits::DescriptorSetInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using DescriptorSetInterface = typename EngineImplTraits::DescriptorSetInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-
-            DescriptorSetBase(RenderDeviceImplType* device);
+            using TDescriptorSetBase = typename DescriptorSetBase<DescriptorSetInterface, RenderDeviceImplType>;
+            DescriptorSetBase(RenderDeviceImplType* device) : TDescriptorSetBase(device) {  };
 
             virtual ~DescriptorSetBase() = default;
         protected:
-            class IRootSignature* root_signature;
-            uint32_t set_index;
+            class IRootSignature* m_pRootSignature;
+            uint32_t m_setIndex;
         };
     }
 

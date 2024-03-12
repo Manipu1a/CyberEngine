@@ -39,20 +39,35 @@ namespace Cyber
         class RootSignatureBase : public RenderObjectBase<typename EngineImplTraits::RootSignatureInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using RootSignatureInterface = typename EngineImplTraits::RootSignatureInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TRootSignatureBase = typename RootSignatureBase<RootSignatureInterface, RenderDeviceImplType>;
 
-            RootSignatureBase(RenderDeviceImplType* device);
+            RootSignatureBase(RenderDeviceImplType* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device), m_desc(desc)
+            {
+                m_pParameterTables = nullptr;
+                m_parameterTableCount = 0;
+                m_pPushConstants = nullptr;
+                m_pushConstantCount = 0;
+                m_pStaticSamplers = nullptr;
+                m_staticSamplerCount = 0;
+                m_pPool = desc.pool;
+                m_pipelineType = PIPELINE_TYPE_GRAPHICS;
+                m_pPoolNext = nullptr;
+            }
+
             virtual ~RootSignatureBase() = default;
         protected:
-            RootSignatureParameterTable* parameter_tables;
-            uint32_t parameter_table_count;
-            class IShaderResource* push_constants;
-            uint32_t push_constant_count;
-            class IShaderResource* static_samplers;
-            uint32_t static_sampler_count;
-            PIPELINE_TYPE pipeline_type;
-            class IRootSignaturePool* pool;
-            IRootSignature* pool_next;
+            RootSignatureParameterTable* m_pParameterTables;
+            uint32_t m_parameterTableCount;
+            class IShaderResource* m_pPushConstants;
+            uint32_t m_pushConstantCount;
+            class IShaderResource* m_pStaticSamplers;
+            uint32_t m_staticSamplerCount;
+            PIPELINE_TYPE m_pipelineType;
+            class IRootSignaturePool* m_pPool;
+            IRootSignature* m_pPoolNext;
+            RootSignatureCreateDesc m_desc;
         };
     }
 

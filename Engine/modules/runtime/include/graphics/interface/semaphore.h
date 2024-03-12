@@ -15,9 +15,11 @@ namespace Cyber
         class SemaphoreBase : public RenderObjectBase<typename EngineImplTraits::SemaphoreInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using SemaphoreInterface = typename EngineImplTraits::SemaphoreInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TSemaphoreBase = typename SemaphoreBase<SemaphoreInterface, RenderDeviceImplType>;
 
-            SemaphoreBase(RenderDeviceImplType* device);
+            SemaphoreBase(RenderDeviceImplType* device) : TSemaphoreBase(device) {  };
             virtual ~SemaphoreBase() = default;
         protected:
         

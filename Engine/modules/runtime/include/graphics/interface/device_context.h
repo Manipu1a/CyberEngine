@@ -20,9 +20,9 @@ namespace Cyber
 
             IRenderDevice* get_device() const { return render_device; }
         protected:
-            IRenderDevice* render_device;
-            RenderPassDesc active_render_pass_desc;
-            IFrameBuffer* bound_frame_buffer = nullptr;
+            IRenderDevice* m_pRenderDevice;
+            RenderPassDesc m_activeRenderPassDesc;
+            IFrameBuffer* m_pBoundFrameBuffer = nullptr;
         };
     }
 }

@@ -33,19 +33,29 @@ namespace Cyber
         class ShaderLibraryBase : public RenderObjectBase<typename EngineImplTraits::ShaderLibraryInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using ShaderLibraryInterface = typename EngineImplTraits::ShaderLibraryInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TShaderLibraryBase = typename ShaderLibraryBase<ShaderLibraryInterface, RenderDeviceImplType>;
 
-            ShaderLibraryBase(RenderDeviceImplType* device);
+            ShaderLibraryBase(RenderDeviceImplType* device, const ShaderLibraryCreateDesc& desc) : TShaderLibraryBase(device), m_desc(desc)
+            {
+                m_name = desc.name;
+                m_pEntryReflections = nullptr;
+                m_entryCount = 0;
+            }
+
             virtual ~ShaderLibraryBase() = default;
 
             virtual const ShaderLibraryCreateDesc& get_create_desc() const
             {
-                return create_desc;
+                return m_desc;
             }
-            char8_t* pName;
-            IShaderReflection* entry_reflections;
-            uint32_t entry_count;
-            ShaderLibraryCreateDesc create_desc;
+
+        protected:
+            char8_t* m_name;
+            IShaderReflection* m_pEntryReflections;
+            uint32_t m_entryCount;
+            ShaderLibraryCreateDesc m_desc;
         };
     }
 

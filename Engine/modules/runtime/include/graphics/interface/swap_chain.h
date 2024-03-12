@@ -38,23 +38,25 @@ namespace Cyber
         class SwapChainBase : public RenderObjectBase<typename EngineImplTraits::SwapChainInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using SwapChainInterface = typename EngineImplTraits::SwapChainInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TSwapChainBase = typename SwapChainBase<SwapChainInterface, RenderDeviceImplType>;
 
-            SwapChainBase(RenderDeviceImplType* device);
+            SwapChainBase(RenderDeviceImplType* device) : TSwapChainBase(device) {  };
 
             virtual ~SwapChainBase() = default;
 
             virtual const SwapChainDesc& get_create_desc() const
             {
-                return create_desc;
+                return m_desc;
             }
         protected:
-            SwapChainDesc create_desc;
-            RenderObject::ITexture** mBackBufferSRVs;
-            RenderObject::ITextureView** mBackBufferSRVViews;
-            uint32_t mBufferSRVCount;
-            RenderObject::ITexture* mBackBufferDSV;
-            RenderObject::ITextureView* mBackBufferDSVView;
+            SwapChainDesc m_desc;
+            RenderObject::ITexture** m_ppBackBufferSRVs;
+            RenderObject::ITextureView** m_ppBackBufferSRVViews;
+            uint32_t m_bufferSRVCount;
+            RenderObject::ITexture* m_pBackBufferDSV;
+            RenderObject::ITextureView* m_pBackBufferDSVView;
         };
     }
 

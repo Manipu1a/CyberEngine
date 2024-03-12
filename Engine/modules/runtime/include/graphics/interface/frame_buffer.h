@@ -7,10 +7,10 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
-            const char8_t* name;
-            class IRenderPass* render_pass;
-            uint32_t attachment_count;
-            class ITextureView** attachments;
+            const char8_t* m_name;
+            class IRenderPass* m_pRenderPass;
+            uint32_t m_attachmentCount;
+            class ITextureView** m_ppAttachments;
         };
         
         struct CYBER_GRAPHICS_API IFrameBuffer
@@ -22,20 +22,26 @@ namespace Cyber
         class FrameBufferBase : public RenderObjectBase<typename EngineImplTraits::FrameBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using FrameBufferInterface = typename EngineImplTraits::FrameBufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TFrameBufferBase = typename FrameBufferBase<FrameBufferInterface, RenderDeviceImplType>;
 
-            FrameBufferBase(RenderDeviceImplType* device);
+            FrameBufferBase(RenderDeviceImplType* device, const FrameBuffserDesc& desc) : TFrameBufferBase(device), m_desc(desc)
+            {
+                m_ppAttachments = desc.m_ppAttachments;
+                m_pRenderPass = desc.m_pRenderPass;
+            }
 
             virtual ~FrameBufferBase() = default;
 
             virtual const FrameBuffserDesc& get_create_desc() const
             {
-                return create_desc;
+                return m_desc;
             }
         private:
-            FrameBuffserDesc create_desc;
-            ITextureView** attachments = nullptr;
-            IRenderPass* render_pass = nullptr;
+            FrameBuffserDesc m_desc;
+            ITextureView** m_ppAttachments = nullptr;
+            IRenderPass* m_pRenderPass = nullptr;
         };
     }
 

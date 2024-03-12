@@ -11,16 +11,16 @@ namespace Cyber
         
         struct CYBER_GRAPHICS_API TextureViewCreateDesc
         {
-            const char8_t* name;
-            class ITexture* texture;
-            TEXTURE_FORMAT format;
-            TEXTURE_VIEW_USAGE usages;
-            TEXTURE_VIEW_ASPECT aspects;
-            TEXTURE_DIMENSION dimension;
-            uint32_t base_array_layer;
-            uint32_t array_layer_count;
-            uint32_t base_mip_level;
-            uint32_t mip_level_count;
+            const char8_t* m_name;
+            class ITexture* m_pTexture;
+            TEXTURE_FORMAT m_format;
+            TEXTURE_VIEW_USAGE m_usages;
+            TEXTURE_VIEW_ASPECT m_aspects;
+            TEXTURE_DIMENSION m_dimension;
+            uint32_t m_baseArrayLayer;
+            uint32_t m_arrayLayerCount;
+            uint32_t m_baseMipLevel;
+            uint32_t m_mipLevelCount;
         };
 
         //class CERenderDevice;
@@ -35,17 +35,19 @@ namespace Cyber
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TextureViewInterface = typename EngineImplTraits::TextureViewInterface;
-            using TTexture_View = RenderObjectBase<TextureViewInterface, RenderDeviceImplType>;
-            Texture_View(RenderDeviceImplType* device) : TTexture_View(device) { }
+            using TTexture_View = typename RenderObjectBase<TextureViewInterface, RenderDeviceImplType>;
+
+            Texture_View(RenderDeviceImplType* device, const TextureViewCreateDesc& desc) : TTexture_View(device), m_desc(desc)
+            {
+            }
             virtual ~Texture_View() {}
             
             virtual const TextureViewCreateDesc& get_create_desc() override
             {
-                return m_CreateDesc;
+                return m_desc;
             }
         protected:
-            RenderDeviceImplType* m_pDevice;
-            TextureViewCreateDesc m_CreateDesc;
+            TextureViewCreateDesc m_desc;
 
             friend RenderDeviceImplType;
         };

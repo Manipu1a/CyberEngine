@@ -8,19 +8,19 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API AdapterDetail
         {
-            uint32_t mUniformBufferAlignment;
-            uint32_t mUploadBufferTextureAlignment;
-            uint32_t mUploadBufferTextureRowAlignment;
-            uint32_t mMaxVertexInputBindings;
-            uint32_t mWaveLaneCount;
-            uint32_t mHostVisibleVRamBudget;
-            bool mSupportHostVisibleVRam : 1;
-            bool mMultiDrawIndirect : 1;
-            bool mSupportGeomShader : 1;
-            bool mSupportTessellation : 1;
-            bool mIsUma : 1;
-            bool mIsVirtual : 1;
-            bool mIsCpu : 1;
+            uint32_t m_uniformBufferAlignment;
+            uint32_t m_uniformBufferTextureAlignment;
+            uint32_t m_uploadBufferTextureRowPitchAlignment;
+            uint32_t m_maxVertexInputBindings;
+            uint32_t m_waveLaneCount;
+            uint32_t m_hostVisibleVRamBudget;
+            bool m_supportHostVisibleVRam : 1;
+            bool m_multiDrawIndirect : 1;
+            bool m_supportGeomShader : 1;
+            bool m_supportTessellation : 1;
+            bool m_isUma : 1;
+            bool m_isVirtual : 1;
+            bool m_isCpu : 1;
         };
 
         struct CYBER_GRAPHICS_API IAdapter
@@ -34,7 +34,7 @@ namespace Cyber
         public:
             using AdapterInterface = typename EngineImplTraits::AdapterInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderObjectBase = RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
+            using TRenderObjectBase = typename RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
 
             AdapterBase(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
 

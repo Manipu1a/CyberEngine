@@ -19,11 +19,15 @@ namespace Cyber
         class ShaderReflectionBase : public RenderObjectBase<typename EngineImplTraits::ShaderReflectionInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using ShaderReflectionInterface = typename EngineImplTraits::ShaderReflectionInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TShaderReflectionBase = typename ShaderReflectionBase<ShaderReflectionInterface, RenderDeviceImplType>;
 
-            ShaderReflectionBase(RenderDeviceImplType* device);
+            ShaderReflectionBase(RenderDeviceImplType* device) : TShaderReflectionBase(device) {  };
+            
             virtual ~ShaderReflectionBase() = default;
             
+        protected:
             const char8_t* entry_name;
             char* name_pool;
             IVertexInput* vertex_inputs;

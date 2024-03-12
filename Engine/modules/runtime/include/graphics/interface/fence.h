@@ -16,8 +16,10 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using FenceInterface = typename EngineImplTraits::FenceInterface;
+            using TFenceBase = typename FenceBase<FenceInterface, RenderDeviceImplType>;
 
-            FenceBase(RenderDeviceImplType* device);
+            FenceBase(RenderDeviceImplType* device) : TFenceBase(device) {  };
             virtual ~FenceBase() = default;
         protected:
         

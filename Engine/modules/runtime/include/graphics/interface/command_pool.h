@@ -20,14 +20,16 @@ namespace Cyber
         class CommandPoolBase : public RenderObjectBase<typename EngineImplTraits::CommandPoolInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
+            using CommandPoolInterface = typename EngineImplTraits::CommandPoolInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using TCommandPoolBase = typename CommandPoolBase<CommandPoolInterface, RenderDeviceImplType>;
 
-            CommandPoolBase(RenderDeviceImplType* device);
+            CommandPoolBase(RenderDeviceImplType* device, const CommandPoolCreateDesc& desc) : TCommandPoolBase(device), m_desc(desc) {  };
 
             virtual ~CommandPoolBase() = default;
         protected:
-            class IQueue* pQueue;
-            CommandPoolCreateDesc create_desc;
+            class IQueue* m_pQueue;
+            CommandPoolCreateDesc m_desc;
         };
     }
 
