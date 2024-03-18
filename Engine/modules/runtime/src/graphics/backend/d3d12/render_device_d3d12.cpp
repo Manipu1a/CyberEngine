@@ -257,40 +257,40 @@ namespace Cyber
 
         if(handleCount > 0)
         {
-            DescriptorHeap_D3D12* heap = mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-            tex_view->mDxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(heap, 1).mCpu;
-            tex_view->mSrvDescriptorOffset = 0;
-            uint64_t current_offset_cursor = tex_view->mSrvDescriptorOffset;
+            DescriptorHeap_D3D12* heap = m_CPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+            tex_view->m_DxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(heap, 1).mCpu;
+            tex_view->m_SrvDescriptorOffset = 0;
+            uint64_t current_offset_cursor = tex_view->m_SrvDescriptorOffset;
             // Create SRV
             if(usages & TVU_SRV)
             {
-                D3D12_CPU_DESCRIPTOR_HANDLE srv = { tex_view->mDxDescriptorHandles.ptr + tex_view->mSrvDescriptorOffset };
+                D3D12_CPU_DESCRIPTOR_HANDLE srv = { tex_view->mDxDescriptorHandles.ptr + tex_view->m_SrvDescriptorOffset };
                 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-                srvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
+                srvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
                 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                switch (viewDesc.dimension)
+                switch (viewDesc.m_dimension)
                 {
                     case TEX_DIMENSION_1D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-                        srvDesc.Texture1D.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.Texture1D.MostDetailedMip = viewDesc.base_mip_level;
+                        srvDesc.Texture1D.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.Texture1D.MostDetailedMip = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_1D_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-                        srvDesc.Texture1DArray.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.Texture1DArray.MostDetailedMip = viewDesc.base_mip_level;
-                        srvDesc.Texture1DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        srvDesc.Texture1DArray.ArraySize = viewDesc.array_layer_count;
+                        srvDesc.Texture1DArray.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.Texture1DArray.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        srvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                        srvDesc.Texture2D.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.Texture2D.MostDetailedMip = viewDesc.base_mip_level;
+                        srvDesc.Texture2D.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.Texture2D.MostDetailedMip = viewDesc.m_baseMipLevel;
                         srvDesc.Texture2D.PlaneSlice = 0;
                         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
                     }
@@ -298,10 +298,10 @@ namespace Cyber
                     case TEX_DIMENSION_2D_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                        srvDesc.Texture2DArray.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.Texture2DArray.MostDetailedMip = viewDesc.base_mip_level;
-                        srvDesc.Texture2DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        srvDesc.Texture2DArray.ArraySize = viewDesc.array_layer_count;
+                        srvDesc.Texture2DArray.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.Texture2DArray.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        srvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
                         srvDesc.Texture2DArray.PlaneSlice = 0;
                         srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
                     }
@@ -314,31 +314,31 @@ namespace Cyber
                     case TEX_DIMENSION_2DMS_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                        srvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.base_array_layer;
-                        srvDesc.Texture2DMSArray.ArraySize = viewDesc.array_layer_count;
+                        srvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        srvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_3D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-                        srvDesc.Texture3D.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.Texture3D.MostDetailedMip = viewDesc.base_mip_level;
+                        srvDesc.Texture3D.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.Texture3D.MostDetailedMip = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_CUBE:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                        srvDesc.TextureCube.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.TextureCube.MostDetailedMip = viewDesc.base_mip_level;
+                        srvDesc.TextureCube.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.TextureCube.MostDetailedMip = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_CUBE_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-                        srvDesc.TextureCubeArray.MipLevels = viewDesc.mip_level_count;
-                        srvDesc.TextureCubeArray.MostDetailedMip = viewDesc.base_mip_level;
-                        srvDesc.TextureCubeArray.First2DArrayFace = viewDesc.base_array_layer;
-                        srvDesc.TextureCubeArray.NumCubes = viewDesc.array_layer_count;
+                        srvDesc.TextureCubeArray.MipLevels = viewDesc.m_mipLevelCount;
+                        srvDesc.TextureCubeArray.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.TextureCubeArray.First2DArrayFace = viewDesc.m_baseArrayLayer;
+                        srvDesc.TextureCubeArray.NumCubes = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     default:
@@ -355,46 +355,46 @@ namespace Cyber
                 current_offset_cursor += heap->mDescriptorSize * 1;
                 D3D12_CPU_DESCRIPTOR_HANDLE uav = { tex_view->mDxDescriptorHandles.ptr + tex_view->mUavDescriptorOffset };
                 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-                uavDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
-                cyber_assert(viewDesc.mip_level_count <= 1, "UAVs can only be created for a single mip level");
-                switch(viewDesc.dimension)
+                uavDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
+                cyber_assert(viewDesc.m_mipLevelCount <= 1, "UAVs can only be created for a single mip level");
+                switch(viewDesc.m_dimension)
                 {
                     case RHI_TEX_DIMENSION_1D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-                        uavDesc.Texture1D.MipSlice = viewDesc.base_mip_level;
+                        uavDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case RHI_TEX_DIMENSION_1D_ARRAY:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-                        uavDesc.Texture1DArray.MipSlice = viewDesc.base_mip_level;
-                        uavDesc.Texture1DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        uavDesc.Texture1DArray.ArraySize = viewDesc.array_layer_count;
+                        uavDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        uavDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        uavDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-                        uavDesc.Texture2D.MipSlice = viewDesc.base_mip_level;
+                        uavDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
                         uavDesc.Texture2D.PlaneSlice = 0;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2D_ARRAY:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-                        uavDesc.Texture2DArray.MipSlice = viewDesc.base_mip_level;
-                        uavDesc.Texture2DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        uavDesc.Texture2DArray.ArraySize = viewDesc.array_layer_count;
+                        uavDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        uavDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        uavDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
                         uavDesc.Texture2DArray.PlaneSlice = 0;
                     }
                     break;
                     case RHI_TEX_DIMENSION_3D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-                        uavDesc.Texture3D.MipSlice = viewDesc.base_mip_level;
+                        uavDesc.Texture3D.MipSlice = viewDesc.m_baseMipLevel;
                         uavDesc.Texture3D.FirstWSlice = 0;
-                        uavDesc.Texture3D.WSize = viewDesc.array_layer_count;
+                        uavDesc.Texture3D.WSize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     default:
@@ -408,42 +408,42 @@ namespace Cyber
         // Create RTV
         if(usages & RHI_TVU_RTV_DSV)
         {
-            const bool isDSV = FormatUtil_IsDepthStencilFormat(viewDesc.format);
+            const bool isDSV = FormatUtil_IsDepthStencilFormat(viewDesc.m_format);
 
             if(isDSV)
             {
                 DescriptorHeap_D3D12* dsv_heap = mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
                 tex_view->mRtvDsvDescriptorHandle = DescriptorHeap_D3D12::consume_descriptor_handles(dsv_heap, 1).mCpu;
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, false);
+                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, false);
                 switch (viewDesc.dimension)
                 {
                     case RHI_TEX_DIMENSION_1D:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
-                        dsvDesc.Texture1D.MipSlice = viewDesc.base_mip_level;
+                        dsvDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case RHI_TEX_DIMENSION_1D_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-                        dsvDesc.Texture1DArray.MipSlice = viewDesc.base_mip_level;
-                        dsvDesc.Texture1DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        dsvDesc.Texture1DArray.ArraySize = viewDesc.array_layer_count;
+                        dsvDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        dsvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        dsvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2D:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-                        dsvDesc.Texture2D.MipSlice = viewDesc.base_mip_level;
+                        dsvDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2D_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                        dsvDesc.Texture2DArray.MipSlice = viewDesc.base_mip_level;
-                        dsvDesc.Texture2DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        dsvDesc.Texture2DArray.ArraySize = viewDesc.array_layer_count;
+                        dsvDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        dsvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        dsvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2DMS:
@@ -454,8 +454,8 @@ namespace Cyber
                     case RHI_TEX_DIMENSION_2DMS_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-                        dsvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.base_array_layer;
-                        dsvDesc.Texture2DMSArray.ArraySize = viewDesc.array_layer_count;
+                        dsvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        dsvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     default:
@@ -469,27 +469,27 @@ namespace Cyber
                 DescriptorHeap_D3D12* rtv_heap = mCPUDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV];
                 tex_view->mRtvDsvDescriptorHandle = DescriptorHeap_D3D12::consume_descriptor_handles(rtv_heap, 1).mCpu;
                 D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-                rtvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
-                switch(viewDesc.dimension)
+                rtvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
+                switch(viewDesc.m_dimension)
                 {
                     case RHI_TEX_DIMENSION_1D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
-                        rtvDesc.Texture1D.MipSlice = viewDesc.base_mip_level;
+                        rtvDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
                     }
                     break;
                     case RHI_TEX_DIMENSION_1D_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-                        rtvDesc.Texture1DArray.MipSlice = viewDesc.base_mip_level;
-                        rtvDesc.Texture1DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        rtvDesc.Texture1DArray.ArraySize = viewDesc.array_layer_count;
+                        rtvDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        rtvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        rtvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-                        rtvDesc.Texture2D.MipSlice = viewDesc.base_mip_level;
+                        rtvDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
                         rtvDesc.Texture2D.PlaneSlice = 0;
                     }
                     break;
@@ -501,25 +501,25 @@ namespace Cyber
                     case RHI_TEX_DIMENSION_2D_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                        rtvDesc.Texture2DArray.MipSlice = viewDesc.base_mip_level;
-                        rtvDesc.Texture2DArray.FirstArraySlice = viewDesc.base_array_layer;
-                        rtvDesc.Texture2DArray.ArraySize = viewDesc.array_layer_count;
+                        rtvDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
+                        rtvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        rtvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
                         rtvDesc.Texture2DArray.PlaneSlice = 0;
                     }
                     break;
                     case RHI_TEX_DIMENSION_2DMS_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                        rtvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.base_array_layer;
-                        rtvDesc.Texture2DMSArray.ArraySize = viewDesc.array_layer_count;
+                        rtvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
+                        rtvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     case RHI_TEX_DIMENSION_3D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-                        rtvDesc.Texture3D.MipSlice = viewDesc.base_mip_level;
-                        rtvDesc.Texture3D.FirstWSlice = viewDesc.base_array_layer;
-                        rtvDesc.Texture3D.WSize = viewDesc.array_layer_count;
+                        rtvDesc.Texture3D.MipSlice = viewDesc.m_baseMipLevel;
+                        rtvDesc.Texture3D.FirstWSlice = viewDesc.m_baseArrayLayer;
+                        rtvDesc.Texture3D.WSize = viewDesc.m_arrayLayerCount;
                     }
                     break;
                     default:
