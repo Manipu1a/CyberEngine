@@ -2,7 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
 #include "texture_view.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -41,14 +41,14 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API Texture : public RenderObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API Texture : public DeviceObjectBase<typename EngineImplTraits::TextureInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using TextureInterface = typename EngineImplTraits::TextureInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
 
-            using TTextureBase = typename RenderObjectBase<TextureInterface, RenderDeviceImplType>;
+            using TTextureBase = typename DeviceObjectBase<TextureInterface, RenderDeviceImplType>;
 
             Texture(RenderDeviceImplType* device) : TTextureBase(device) { }
             virtual ~Texture() = default;

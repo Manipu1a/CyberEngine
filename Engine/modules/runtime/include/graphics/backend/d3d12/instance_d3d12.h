@@ -2,6 +2,7 @@
 
 #include "graphics/interface/instance.h"
 #include "engine_impl_traits_d3d12.hpp"
+#include "render_device_d3d12.h"
 
 namespace Cyber
 {

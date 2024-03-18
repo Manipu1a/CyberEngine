@@ -1,7 +1,7 @@
 #pragma once
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -52,14 +52,14 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API Buffer : public RenderObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API Buffer : public DeviceObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using BufferInterface = typename EngineImplTraits::BufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderObjectBase = typename RenderObjectBase<BufferInterface, RenderDeviceImplType>;
+            using TBufferBase = typename DeviceObjectBase<BufferInterface, RenderDeviceImplType>;
 
-            Buffer(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
+            Buffer(RenderDeviceImplType* device) : TBufferBase(device) {}
 
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
             void* m_pCpuMappedAddress;

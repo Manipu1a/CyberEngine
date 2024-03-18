@@ -24,7 +24,7 @@ namespace Cyber
             using TCommandPoolBase = CommandPoolBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            CommandPool_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TCommandPoolBase(device) {}
+            CommandPool_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandPoolCreateDesc& desc) : TCommandPoolBase(device, desc) {}
 
         protected:
             struct ID3D12CommandAllocator* pDxCmdAlloc;

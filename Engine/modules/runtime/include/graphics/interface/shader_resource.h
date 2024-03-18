@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "graphics_types.h"
 
 namespace Cyber
@@ -38,12 +38,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class ShaderResourceBase : public RenderObjectBase<typename EngineImplTraits::ShaderResourceInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class ShaderResourceBase : public DeviceObjectBase<typename EngineImplTraits::ShaderResourceInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using ShaderResourceInterface = typename EngineImplTraits::ShaderResourceInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TShaderResourceBase = typename ShaderResourceBase<ShaderResourceInterface, RenderDeviceImplType>;
+            using TShaderResourceBase = typename DeviceObjectBase<ShaderResourceInterface, RenderDeviceImplType>;
 
             ShaderResourceBase(RenderDeviceImplType* device) : TShaderResourceBase(device) {  };
             virtual ~ShaderResourceBase() = default;
@@ -51,7 +51,7 @@ namespace Cyber
             CYBER_FORCE_INLINE void set_name(const char8_t* name)
             {
                 this->m_name = name;
-                this->m_nameHash = graphics_name_hash(name, strlen(name + 1));
+                this->m_nameHash = graphics_name_hash(name, std::char_traits<char8_t>::length(name)+1);
             }
 
             CYBER_FORCE_INLINE const char8_t* get_name() const
@@ -64,12 +64,12 @@ namespace Cyber
                 return this->m_nameHash;
             }
 
-            CYBER_FORCE_INLINE void set_type(GRAPHICS_RESOURCE_STATE type)
+            CYBER_FORCE_INLINE void set_type(GRAPHICS_RESOURCE_TYPE type)
             {
                 this->m_type = type;
             }
 
-            CYBER_FORCE_INLINE GRAPHICS_RESOURCE_STATE get_type() const
+            CYBER_FORCE_INLINE GRAPHICS_RESOURCE_TYPE get_type() const
             {
                 return this->m_type;
             }

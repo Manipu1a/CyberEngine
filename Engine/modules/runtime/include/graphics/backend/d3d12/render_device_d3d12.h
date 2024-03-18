@@ -32,6 +32,20 @@ namespace Cyber
 
             virtual ~RenderDevice_D3D12_Impl();
         public:
+            // Device interface
+            virtual GRAPHICS_BACKEND get_backend() const override
+            {
+                return GRAPHCIS_BACKEND_D3D12;
+            }
+            virtual NVAPI_STATUS get_nvapi_status() const override
+            {
+                return NVAPI_OK;
+            }
+            virtual AGS_RETURN_CODE get_ags_status() const override
+            {
+                return AGS_SUCCESS;
+            }
+
             // Device APIs
             virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
             virtual void free_device() override;
@@ -108,7 +122,7 @@ namespace Cyber
 
             eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_SamplerHeaps; }
             eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_CbvSrvUavHeaps; }
-            struct RHIEmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
+            struct EmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
             eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_ppCommandQueues; }
             eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_CommandQueueCounts; }
             IDXGIFactory6* GetDXGIFactory() { return m_pDXGIFactory; }
@@ -130,7 +144,7 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CPUDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_SamplerHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CbvSrvUavHeaps;
-            struct RHIEmptyDescriptors_D3D12* m_pNullDescriptors;
+            struct EmptyDescriptors_D3D12* m_pNullDescriptors;
             eastl::map<uint32_t, ID3D12CommandQueue**> m_ppCommandQueues;
             eastl::map<uint32_t, uint32_t> m_CommandQueueCounts;
             IDXGIFactory6* m_pDXGIFactory;

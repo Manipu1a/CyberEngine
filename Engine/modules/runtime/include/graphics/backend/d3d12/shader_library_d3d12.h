@@ -3,6 +3,7 @@
 #include "engine_impl_traits_d3d12.hpp"
 #include "interface/shader_library.h"
 #include <d3d12shader.h>
+#include <dxcapi.h>
 
 namespace Cyber
 {
@@ -25,7 +26,7 @@ namespace Cyber
             using TShaderLibraryBase = ShaderLibraryBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            ShaderLibrary_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TShaderLibraryBase(device) {}
+            ShaderLibrary_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const ShaderLibraryCreateDesc& desc) : TShaderLibraryBase(device, desc) {}
 
             virtual void free_reflection() override final;
 

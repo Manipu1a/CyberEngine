@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -19,14 +19,14 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CommandBufferBase : public RenderObjectBase<typename EngineImplTraits::CommandBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CommandBufferBase : public DeviceObjectBase<typename EngineImplTraits::CommandBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using CommandBufferInterface = typename EngineImplTraits::CommandBufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TCommandBufferBase = typename CommandBufferBase<CommandBufferInterface, RenderDeviceImplType>;
+            using TCommandBufferBase = typename DeviceObjectBase<CommandBufferInterface, RenderDeviceImplType>;
 
-            CommandBufferBase(RenderDeviceImplType* device, const commandBufferDesc& desc) : TCommandBufferBase(device), m_desc(desc) {  };
+            CommandBufferBase(RenderDeviceImplType* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device), m_desc(desc) {  };
 
             virtual ~CommandBufferBase() = default;
         protected:

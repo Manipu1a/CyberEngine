@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 
 namespace Cyber
 {
@@ -12,12 +12,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class DescriptorSetBase : public RenderObjectBase<typename EngineImplTraits::DescriptorSetInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class DescriptorSetBase : public DeviceObjectBase<typename EngineImplTraits::DescriptorSetInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using DescriptorSetInterface = typename EngineImplTraits::DescriptorSetInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TDescriptorSetBase = typename DescriptorSetBase<DescriptorSetInterface, RenderDeviceImplType>;
+            using TDescriptorSetBase = typename DeviceObjectBase<DescriptorSetInterface, RenderDeviceImplType>;
             DescriptorSetBase(RenderDeviceImplType* device) : TDescriptorSetBase(device) {  };
 
             virtual ~DescriptorSetBase() = default;

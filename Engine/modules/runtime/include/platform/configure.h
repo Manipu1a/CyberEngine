@@ -1,6 +1,7 @@
 #pragma once
 
 #include "flag_enums.h"
+#include "combaseapi.h"
 
 #define DECLARE_ZERO(type, var) type var = {};
 

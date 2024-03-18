@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "interface/texture_view.h"
-#include "render_object.h"
+#include "device_object.h"
 
 namespace Cyber
 {
@@ -35,12 +35,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class SwapChainBase : public RenderObjectBase<typename EngineImplTraits::SwapChainInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class SwapChainBase : public DeviceObjectBase<typename EngineImplTraits::SwapChainInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using SwapChainInterface = typename EngineImplTraits::SwapChainInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TSwapChainBase = typename SwapChainBase<SwapChainInterface, RenderDeviceImplType>;
+            using TSwapChainBase = typename DeviceObjectBase<SwapChainInterface, RenderDeviceImplType>;
 
             SwapChainBase(RenderDeviceImplType* device) : TSwapChainBase(device) {  };
 

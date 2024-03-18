@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -19,12 +19,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class FrameBufferBase : public RenderObjectBase<typename EngineImplTraits::FrameBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class FrameBufferBase : public DeviceObjectBase<typename EngineImplTraits::FrameBufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using FrameBufferInterface = typename EngineImplTraits::FrameBufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TFrameBufferBase = typename FrameBufferBase<FrameBufferInterface, RenderDeviceImplType>;
+            using TFrameBufferBase = typename DeviceObjectBase<FrameBufferInterface, RenderDeviceImplType>;
 
             FrameBufferBase(RenderDeviceImplType* device, const FrameBuffserDesc& desc) : TFrameBufferBase(device), m_desc(desc)
             {

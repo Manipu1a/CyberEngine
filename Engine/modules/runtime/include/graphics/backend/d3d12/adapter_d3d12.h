@@ -28,24 +28,35 @@ namespace Cyber
 
             IDXGIAdapter4* get_native_adapter() const
             {
-                return pDxActiveGPU;
+                return m_pDxActiveGPU;
+            }
+
+            D3D_FEATURE_LEVEL get_feature_level() const
+            {
+                return m_featureLevel;
+            }
+
+            const AdapterDetail& get_adapter_detail() const
+            {
+                return m_adapterDetail;
             }
 
             void fill_adapter(const AdapterDetail& detail, D3D_FEATURE_LEVEL featureLevel, IDXGIAdapter4* adapter, bool enhanceBarrierSupported)
             {
-                mAdapterDetail = detail;
-                mFeatureLevel = featureLevel;
-                pDxActiveGPU = adapter;
-                mEnhanceBarrierSupported = enhanceBarrierSupported;
+                m_adapterDetail = detail;
+                m_featureLevel = featureLevel;
+                m_pDxActiveGPU = adapter;
+                m_enhanceBarrierSupported = enhanceBarrierSupported;
             }
+
         protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)
-            struct IDXGIAdapter4* pDxActiveGPU;
+            struct IDXGIAdapter4* m_pDxActiveGPU;
         #endif
-            D3D_FEATURE_LEVEL mFeatureLevel;
-            AdapterDetail mAdapterDetail;
-            bool mEnhanceBarrierSupported : 1;
+            D3D_FEATURE_LEVEL m_featureLevel;
+            AdapterDetail m_adapterDetail;
+            bool m_enhanceBarrierSupported : 1;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

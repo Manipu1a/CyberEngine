@@ -735,7 +735,7 @@ namespace Cyber
         GRAPHICS_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
         GRAPHICS_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
     };
-    DEFINE_ENUM_FLAG_OPERATORS(GRAPHICS_RESOURCE_STATE);
+    DEFINE_FLAG_ENUM_OPERATORS(GRAPHICS_RESOURCE_STATE);
 
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_MEMORY_USAGE, uint32_t)
     {
@@ -837,7 +837,7 @@ namespace Cyber
     #endif
     };
 
-    DEFINE_ENUM_FLAG_OPERATORS(GRAPHICS_RESOURCE_TYPE);
+    DEFINE_FLAG_ENUM_OPERATORS(GRAPHICS_RESOURCE_TYPE);
     
     CYBER_TYPED_ENUM(TEXTURE_VIEW_USAGE, uint8_t)
     {
@@ -1416,8 +1416,8 @@ namespace Cyber
     /// Device Group
     struct CYBER_GRAPHICS_API QueueGroupDesc
     {
-        QUEUE_TYPE queue_type;
-        uint32_t queue_count;
+        QUEUE_TYPE m_queueType;
+        uint32_t m_queueCount;
     };
 
     using RenderPassEncoder = RenderObject::ICommandBuffer;

@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "common/flags.h"
 #include "interface/graphics_types.h"
 
@@ -21,19 +21,19 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class InstanceBase : public RenderObjectBase<typename EngineImplTraits::InstanceInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class InstanceBase : public DeviceObjectBase<typename EngineImplTraits::InstanceInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using InstanceInterface = typename EngineImplTraits::InstanceInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TInstancetBase = typename RenderObjectBase<InstanceInterface, RenderDeviceImplType>;
+            using TInstancetBase = typename DeviceObjectBase<InstanceInterface, RenderDeviceImplType>;
 
-            InstanceBase(RenderDeviceImplType* device, const InstanceCreateDesc& desc) : TInstancetBase(device), m_Desc(desc)
+            InstanceBase(RenderDeviceImplType* device, const InstanceCreateDesc& desc) : TInstancetBase(device), m_desc(desc)
             {
                 m_backend = device->get_backend();
                 m_nvAPIStatus = device->get_nvapi_status();
                 m_agsStatus = device->get_ags_status();
-                m_enableSetName = desc.enable_set_name;
+                m_enableSetName = desc.m_enableSetName;
             }
 
             virtual ~InstanceBase() = default;

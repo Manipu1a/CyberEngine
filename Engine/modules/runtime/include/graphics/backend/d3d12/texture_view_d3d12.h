@@ -20,7 +20,7 @@ namespace Cyber
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
             using TTextureViewBase = Texture_View<EngineD3D12ImplTraits>;
 
-            TextureView_D3D12_Impl(class RenderDevice_D3D12_Impl* device);
+            TextureView_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const TextureViewCreateDesc& desc) : TTextureViewBase(device, desc) {  }
             virtual ~TextureView_D3D12_Impl();
 
         protected:

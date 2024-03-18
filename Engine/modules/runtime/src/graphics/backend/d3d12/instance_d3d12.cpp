@@ -10,23 +10,23 @@ namespace Cyber
     {
         void Instance_D3D12_Impl::optional_enable_debug_layer()
         {
-            if(m_Desc.enable_debug_layer)
+            if(m_desc.m_enableDebugLayer)
             {
                 if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&m_pDXDebug))))
                 {
                     m_pDXDebug->EnableDebugLayer();
-                    if(m_Desc.enable_gpu_based_validation)
+                    if(m_desc.m_enableGpuBasedValidation)
                     {
                         ID3D12Debug1* pDebug1 = nullptr;
                         if(SUCCEEDED(m_pDXDebug->QueryInterface(IID_PPV_ARGS(&pDebug1))))
                         {
-                            pDebug1->SetEnableGPUBasedValidation(m_Desc.enable_gpu_based_validation);
+                            pDebug1->SetEnableGPUBasedValidation(m_desc.m_enableGpuBasedValidation);
                             pDebug1->Release();
                         }
                     }
                 }
             }
-            else if(m_Desc.enable_gpu_based_validation)
+            else if(m_desc.m_enableGpuBasedValidation)
             {
                 cyber_warn(false, "D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
             }

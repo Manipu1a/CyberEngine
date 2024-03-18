@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 
 namespace Cyber
 {
@@ -11,12 +11,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class QueryPoolBase : public RenderObjectBase<typename EngineImplTraits::QueryPoolInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class QueryPoolBase : public DeviceObjectBase<typename EngineImplTraits::QueryPoolInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using QueryPoolInterface = typename EngineImplTraits::QueryPoolInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TQueryPoolBase = typename QueryPoolBase<QueryPoolInterface, RenderDeviceImplType>;
+            using TQueryPoolBase = typename DeviceObjectBase<QueryPoolInterface, RenderDeviceImplType>;
 
             QueryPoolBase(RenderDeviceImplType* device) : TQueryPoolBase(device) {  };
 

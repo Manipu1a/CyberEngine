@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 #include "platform/memory.h"
 
@@ -15,12 +15,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class VertexInputBase : public RenderObjectBase<typename EngineImplTraits::VertexInputInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class VertexInputBase : public DeviceObjectBase<typename EngineImplTraits::VertexInputInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using VertexInputInterface = typename EngineImplTraits::VertexInputInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TVertexInputBase = typename VertexInputBase<VertexInputInterface, RenderDeviceImplType>;
+            using TVertexInputBase = typename DeviceObjectBase<VertexInputInterface, RenderDeviceImplType>;
 
             VertexInputBase(RenderDeviceImplType* device) : TVertexInputBase(device) {  };
             

@@ -6,7 +6,7 @@ namespace Cyber
     {
         CEDeviceContext::CEDeviceContext(IRenderDevice* device)
         {
-            render_device = device;
+            m_pRenderDevice = device;
         }
 
         CEDeviceContext::~CEDeviceContext()

@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "interface/graphics_types.h"
-#include "render_object.h"
+#include "device_object.h"
 
 
 namespace Cyber
@@ -44,12 +44,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class RenderPipelineBase : public RenderObjectBase<typename EngineImplTraits::RenderPipelineInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class RenderPipelineBase : public DeviceObjectBase<typename EngineImplTraits::RenderPipelineInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderPipelineInterface = typename EngineImplTraits::RenderPipelineInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderPipelineBase = typename RenderPipelineBase<RenderPipelineInterface, RenderDeviceImplType>;
+            using TRenderPipelineBase = typename DeviceObjectBase<RenderPipelineInterface, RenderDeviceImplType>;
 
             RenderPipelineBase(RenderDeviceImplType* device, const RenderPipelineCreateDesc& desc) : TRenderPipelineBase(device), m_desc(desc) {  };
             virtual ~RenderPipelineBase() = default;

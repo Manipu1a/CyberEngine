@@ -6,11 +6,6 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        Texture_D3D12_Impl::Texture_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TTextureBase(device)
-        {
-            
-        }
-
         void* Texture_D3D12_Impl::get_native_texture() const
         {
             return native_resource;

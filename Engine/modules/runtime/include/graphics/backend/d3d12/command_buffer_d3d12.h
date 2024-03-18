@@ -25,7 +25,7 @@ namespace Cyber
             using TCommandBufferBase = CommandBufferBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TCommandBufferBase(device) {}
+            CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device, desc) {}
 
         protected:
             ID3D12GraphicsCommandList* pDxCmdList;
@@ -37,7 +37,7 @@ namespace Cyber
             uint32_t mType;
             uint32_t mNodeIndex;
             ICommandPool* pCmdPool;
-            D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS mSubResolveResource[RHI_MAX_MRT_COUNT];
+            D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS mSubResolveResource[GRAPHICS_MAX_MRT_COUNT];
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

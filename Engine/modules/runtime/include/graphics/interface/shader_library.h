@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "graphics_types.h"
 
 namespace Cyber
@@ -30,12 +30,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class ShaderLibraryBase : public RenderObjectBase<typename EngineImplTraits::ShaderLibraryInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class ShaderLibraryBase : public DeviceObjectBase<typename EngineImplTraits::ShaderLibraryInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using ShaderLibraryInterface = typename EngineImplTraits::ShaderLibraryInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TShaderLibraryBase = typename ShaderLibraryBase<ShaderLibraryInterface, RenderDeviceImplType>;
+            using TShaderLibraryBase = typename DeviceObjectBase<ShaderLibraryInterface, RenderDeviceImplType>;
 
             ShaderLibraryBase(RenderDeviceImplType* device, const ShaderLibraryCreateDesc& desc) : TShaderLibraryBase(device), m_desc(desc)
             {
@@ -52,7 +52,7 @@ namespace Cyber
             }
 
         protected:
-            char8_t* m_name;
+            const char8_t* m_name;
             IShaderReflection* m_pEntryReflections;
             uint32_t m_entryCount;
             ShaderLibraryCreateDesc m_desc;

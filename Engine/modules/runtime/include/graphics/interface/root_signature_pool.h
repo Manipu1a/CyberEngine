@@ -1,6 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "render_pass.h"
+#include "device_object.h"
 
 namespace Cyber
 {
@@ -18,12 +19,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class RootSignaturePoolBase : public RenderObjectBase<typename EngineImplTraits::RootSignaturePoolInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class RootSignaturePoolBase : public DeviceObjectBase<typename EngineImplTraits::RootSignaturePoolInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RootSignaturePoolInterface = typename EngineImplTraits::RootSignaturePoolInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRootSignaturePoolBase = typename RootSignaturePoolBase<RootSignaturePoolInterface, RenderDeviceImplType>;
+            using TRootSignaturePoolBase = typename DeviceObjectBase<RootSignaturePoolInterface, RenderDeviceImplType>;
 
             RootSignaturePoolBase(RenderDeviceImplType* device, const RootSignaturePoolCreateDesc& desc) : TRootSignaturePoolBase(device), m_desc(desc) {  };
             virtual ~RootSignaturePoolBase() = default;

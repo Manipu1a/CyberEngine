@@ -16,10 +16,10 @@ namespace Cyber
 
             void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
             void run();
-            void update(RHIRenderPassEncoder* encoder, float deltaTime);
+            void update(RenderPassEncoder* encoder, float deltaTime);
             void finalize();
 
-            struct Cyber::RHIDescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;
+            struct RenderObject::DescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;
         };
     }
 }

@@ -5,10 +5,8 @@
 #include "containers/btree.h"
 #include <EASTL/sort.h>
 #include "interface/shader_resource.h"
-#include "interface/root_signature.h"
 #include "interface/render_pipeline.h"
-#include "interface/shader_reflection.h"
-
+#include "interface/shader_reflection.hpp"
 namespace Cyber 
 {
     bool graphics_util_shader_resource_is_root_constant(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)

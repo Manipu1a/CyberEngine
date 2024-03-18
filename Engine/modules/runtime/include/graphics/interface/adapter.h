@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 
 namespace Cyber
 {
@@ -25,20 +25,26 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IAdapter
         {
-            
+            virtual IInstance* get_instance() const = 0;
         };
 
         template<typename EngineImplTraits>
-        class AdapterBase : public RenderObjectBase<typename EngineImplTraits::AdapterInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class AdapterBase : public DeviceObjectBase<typename EngineImplTraits::AdapterInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using AdapterInterface = typename EngineImplTraits::AdapterInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderObjectBase = typename RenderObjectBase<AdapterInterface, RenderDeviceImplType>;
+            using TRenderObjectBase = typename DeviceObjectBase<AdapterInterface, RenderDeviceImplType>;
 
             AdapterBase(RenderDeviceImplType* device) : TRenderObjectBase(device) {}
 
             virtual ~AdapterBase() = default;
+
+            virtual IInstance* get_instance() const override final
+            {
+                return m_pInstance;
+            }
+            
         protected:
             class IInstance* m_pInstance = nullptr;
         };

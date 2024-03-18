@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -35,12 +35,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class QueueBase : public RenderObjectBase<typename EngineImplTraits::QueueInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class QueueBase : public DeviceObjectBase<typename EngineImplTraits::QueueInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using QueueInterface = typename EngineImplTraits::QueueInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TQueueBase = typename QueueBase<QueueInterface, RenderDeviceImplType>;
+            using TQueueBase = typename DeviceObjectBase<QueueInterface, RenderDeviceImplType>;
 
             QueueBase(RenderDeviceImplType* device) : TQueueBase(device) {  };
 

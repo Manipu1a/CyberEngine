@@ -24,7 +24,7 @@ namespace Cyber
         struct ShaderStageLoadDesc
         {
             const char8_t* file_name;
-            ERHIShaderStage stage;
+            SHADER_STAGE stage;
             eastl::vector<ShaderMacro> macros;
             uint32_t macro_count;
             const char8_t* entry_point_name;
@@ -34,11 +34,11 @@ namespace Cyber
         struct ShaderLoadDesc
         {
             ShaderStageLoadDesc stage_load_desc;
-            ERHIShaderTarget target;
+            SHADER_TARGET target;
             const ShaderConstant* pConstants;
             uint32_t constant_count;
         };
 
-        CYBER_RUNTIME_API RHIShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc);
+        CYBER_RUNTIME_API class IShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc);
     }
 }

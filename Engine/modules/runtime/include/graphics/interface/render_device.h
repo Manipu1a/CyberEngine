@@ -2,7 +2,7 @@
 
 #include "common/cyber_graphics_config.h"
 #include "interface/graphics_types.h"
-#include "texture.h"
+#include "texture.hpp"
 #include "texture_view.h"
 #include "buffer.h"
 #include "frame_buffer.h"
@@ -18,9 +18,11 @@
 #include "root_signature.h"
 #include "root_signature_pool.h"
 #include "shader_library.h"
-#include "shader_reflection.h"
+#include "shader_reflection.hpp"
 #include "adapter.h"
 #include "descriptor_set.h"
+#include "object_base.h"
+
 
 namespace Cyber
 {
@@ -36,6 +38,11 @@ namespace Cyber
         // Render device interface
         struct CYBER_GRAPHICS_API IRenderDevice
         {
+            // interface
+            virtual GRAPHICS_BACKEND get_backend() const = 0;
+            virtual NVAPI_STATUS get_nvapi_status() const = 0;
+            virtual AGS_RETURN_CODE get_ags_status() const = 0;
+
             // Instance APIs
             virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) = 0;
             virtual void free_instance(IInstance* instance) = 0;
@@ -108,25 +115,22 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API RenderDeviceBase : public RenderObjectBase<typename EngineImplTraits::RenderDeviceInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API RenderDeviceBase : public ObjectBase<typename EngineImplTraits::RenderDeviceInterface>
         {
         public:
             using TextureImplType = typename EngineImplTraits::TextureImplType;
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
             using BufferImplType = typename EngineImplTraits::BufferImplType;
-            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderDeviceBase = typename RenderObjectBase<RenderDeviceImplType, RenderDeviceImplType>;
+            using RenderDeviceInterface = typename EngineImplTraits::RenderDeviceInterface;
+            using TRenderDeviceBase = typename ObjectBase<RenderDeviceInterface>;
 
-            RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(nullptr)
+            RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(), m_desc(deviceDesc)
             {
                 this->m_pAdapter = adapter;
-                this->m_desc = deviceDesc;
             }
             virtual ~RenderDeviceBase()
             {
             }
-        private:
-            RenderDeviceBase() = default;
             
         protected:
             IAdapter* m_pAdapter;

@@ -18,7 +18,7 @@ namespace Cyber
             void BeginRenderPass(const RenderPassDesc& desc);
             void EndRenderPass();
 
-            IRenderDevice* get_device() const { return render_device; }
+            IRenderDevice* get_device() const { return m_pRenderDevice; }
         protected:
             IRenderDevice* m_pRenderDevice;
             RenderPassDesc m_activeRenderPassDesc;

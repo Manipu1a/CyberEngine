@@ -6,6 +6,13 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(DescriptorHeap_D3D12* dst, uint32_t descriptorCount)
+        {
+            cyber_check(dst);
+            
+            return dst->consume_descriptor_handles(descriptorCount);
+        }
+
         DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(uint32_t descriptorCount)
         {
             if(m_UsedDescriptors + descriptorCount > m_Desc.NumDescriptors)

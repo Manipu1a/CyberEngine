@@ -63,7 +63,7 @@ namespace Cyber
         struct RenderPassContext
         {
         public:
-            RHIRenderPassEncoder* encoder;
+            RenderPassEncoder* encoder;
         };
     }
 }

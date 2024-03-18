@@ -17,7 +17,8 @@ namespace Cyber
         class DescriptorHeap_D3D12
         {
         public:
-
+            static DescriptorHandle consume_descriptor_handles(DescriptorHeap_D3D12* dst, uint32_t descriptorCount);
+            
             DescriptorHandle consume_descriptor_handles(uint32_t descriptorCount);
             
             void free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount);

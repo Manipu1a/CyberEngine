@@ -4,27 +4,28 @@
 #include "backend/d3d12/shader_resource_d3d12.h"
 #include "platform/memory.h"
 #include "interface/graphics_types.h"
-
+#include <d3dcompiler.h>
+\
 namespace Cyber
 {
     namespace RenderObject
     {
         // Shader Reflection
         const char8_t* D3DShaderEntryName = u8"D3D12";
-        static GRAPHCIS_RESOURCE_TYPE gD3D12_TO_DESCRIPTOR[] = {
-            GRAPHCIS_RESOURCE_TYPE_UNIFORM_BUFFER,   // D3D_SIT_CBUFFER
-            GRAPHCIS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_TBUFFER
-            GRAPHCIS_RESOURCE_TYPE_TEXTURE,          // D3D_SIT_TEXTURE
-            GRAPHCIS_RESOURCE_TYPE_SAMPLER,          // D3D_SIT_SAMPLER
-            GRAPHCIS_RESOURCE_TYPE_RW_TEXTURE,       // D3D_SIT_UAV_RWTYPED
-            GRAPHCIS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_STRUCTURED
-            GRAPHCIS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_RWSTRUCTURED
-            GRAPHCIS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_BYTEADDRESS
-            GRAPHCIS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_RWBYTEADDRESS
-            GRAPHCIS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_APPEND_STRUCTURED
-            GRAPHCIS_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_CONSUME_STRUCTURED
-            GRAPHCIS_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER
-            GRAPHCIS_RESOURCE_TYPE_RAY_TRACING,     // D3D_SIT_RTACCELERATIONSTRUCTURE
+        static GRAPHICS_RESOURCE_TYPE gD3D12_TO_DESCRIPTOR[] = {
+            GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER,   // D3D_SIT_CBUFFER
+            GRAPHICS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_TBUFFER
+            GRAPHICS_RESOURCE_TYPE_TEXTURE,          // D3D_SIT_TEXTURE
+            GRAPHICS_RESOURCE_TYPE_SAMPLER,          // D3D_SIT_SAMPLER
+            GRAPHICS_RESOURCE_TYPE_RW_TEXTURE,       // D3D_SIT_UAV_RWTYPED
+            GRAPHICS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_STRUCTURED
+            GRAPHICS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_RWSTRUCTURED
+            GRAPHICS_RESOURCE_TYPE_BUFFER,           // D3D_SIT_BYTEADDRESS
+            GRAPHICS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_RWBYTEADDRESS
+            GRAPHICS_RESOURCE_TYPE_RW_BUFFER,        // D3D_SIT_UAV_APPEND_STRUCTURED
+            GRAPHICS_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_CONSUME_STRUCTURED
+            GRAPHICS_RESOURCE_TYPE_RW_BUFFER,       // D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER
+            GRAPHICS_RESOURCE_TYPE_RAY_TRACING,     // D3D_SIT_RTACCELERATIONSTRUCTURE
         };
 
         static TEXTURE_DIMENSION gD3D12_TO_TEXTURE_DIM[D3D_SRV_DIMENSION_BUFFEREX + 1] = {
@@ -43,22 +44,22 @@ namespace Cyber
         };
 
         static TEXTURE_FORMAT gD3D12_TO_VERTEX_FORMAT[] = {
-            FORMAT_UNDEFINED,
-            FORMAT_R32_UINT,
-            FORMAT_R32_SINT,
-            FORMAT_R32_SFLOAT,
+            TEXTURE_FORMAT_UNDEFINED,
+            TEXTURE_FORMAT_R32_UINT,
+            TEXTURE_FORMAT_R32_SINT,
+            TEXTURE_FORMAT_R32_SFLOAT,
 
-            FORMAT_R32G32_UINT,
-            FORMAT_R32G32_SINT,
-            FORMAT_R32G32_SFLOAT,
+            TEXTURE_FORMAT_R32G32_UINT,
+            TEXTURE_FORMAT_R32G32_SINT,
+            TEXTURE_FORMAT_R32G32_SFLOAT,
 
-            FORMAT_R32G32B32_UINT,
-            FORMAT_R32G32B32_SINT,
-            FORMAT_R32G32B32_SFLOAT,
+            TEXTURE_FORMAT_R32G32B32_UINT,
+            TEXTURE_FORMAT_R32G32B32_SINT,
+            TEXTURE_FORMAT_R32G32B32_SFLOAT,
 
-            FORMAT_R32G32B32A32_UINT,
-            FORMAT_R32G32B32A32_SINT,
-            FORMAT_R32G32B32A32_SFLOAT,
+            TEXTURE_FORMAT_R32G32B32A32_UINT,
+            TEXTURE_FORMAT_R32G32B32A32_SINT,
+            TEXTURE_FORMAT_R32G32B32A32_SFLOAT,
         };
 
         #if !defined (XBOX) && defined (_WIN32)
@@ -137,7 +138,7 @@ namespace Cyber
             }
         }
 
-        void LoadDxcDLL()
+        void D3D12Util_LoadDxcDLL()
         {
             DxcLoader.Load();
 
@@ -178,25 +179,11 @@ namespace Cyber
 
         void ShaderLibrary_D3D12_Impl::free_reflection()
         {
-            if(entry_reflections)
+            if(m_pEntryReflections)
             {
-                RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(entry_reflections);
-                if(reflection->vertex_inputs)
-                {
-                    for(uint32_t i = 0; i < reflection->vertex_input_count; ++i)
-                    {
-                        reflection->vertex_inputs[i].free();
-                    }
-                    cyber_free(reflection->vertex_inputs);
-                }
-                if(reflection->shader_resources)
-                {
-                    for(uint32_t i = 0; i < reflection->shader_resource_count; ++i)
-                    {
-                        reflection->shader_resources[i].free();
-                    }
-                    cyber_free(reflection->shader_resources);
-                }
+                RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
+                reflection->free_vertex_inputs();
+                reflection->free_shader_resources();
                 cyber_free(reflection);
             }
         }
@@ -260,19 +247,18 @@ namespace Cyber
             d3d12Reflection->Release();
         }
 
-        void ShaderLibrary_D3D12_Impl::collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage)
+        void ShaderLibrary_D3D12_Impl::collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage)
         {
             D3D12_SHADER_DESC shaderDesc;
             d3d12Reflection->GetDesc(&shaderDesc);
             reflection_record_shader_resource(d3d12Reflection, stage, shaderDesc);
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(entry_reflections);
-            reflection->shader_stage = stage;
-
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
+            reflection->set_shader_stage(stage);
             // Collect vertex inputs
-            if(stage == RHI_SHADER_STAGE_VERT)
+            if(stage == SHADER_STAGE_VERT)
             {
-                reflection->vertex_input_count = shaderDesc.InputParameters;
-                auto vertex_inputs = (RenderObject::VertexInput_D3D12_Impl*)cyber_calloc(reflection->vertex_input_count, sizeof(RenderObject::VertexInput_D3D12_Impl));
+                reflection->set_vertex_input_count(shaderDesc.InputParameters);
+                auto vertex_inputs = (RenderObject::VertexInput_D3D12_Impl*)cyber_calloc(shaderDesc.InputParameters, sizeof(RenderObject::VertexInput_D3D12_Impl));
                 // Count the string sizes of the vertex inputs for the name pool
                 for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
                 {
@@ -295,26 +281,29 @@ namespace Cyber
                     const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
                     vertex_inputs[i].set_format(gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)]);
                 }
-                reflection->vertex_inputs = vertex_inputs;
+                reflection->set_vertex_inputs(vertex_inputs);
             }
-            else if(stage == RHI_SHADER_STAGE_COMPUTE)
+            else if(stage == SHADER_STAGE_COMPUTE)
             {
+                uint32_t thread_group_sizes[3];
                 d3d12Reflection->GetThreadGroupSize(
-                    &reflection->thread_group_sizes[0], 
-                    &reflection->thread_group_sizes[1], 
-                    &reflection->thread_group_sizes[2]);
+                    &thread_group_sizes[0], 
+                    &thread_group_sizes[1], 
+                    &thread_group_sizes[2]);
+                
+                reflection->set_thread_group_sizes(thread_group_sizes[0], thread_group_sizes[1], thread_group_sizes[2]);
             }
         }
 
-        void ShaderLibrary_D3D12_Impl::reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, ERHIShaderStage stage, const D3D12_SHADER_DESC& shaderDesc)
+        void ShaderLibrary_D3D12_Impl::reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage, const D3D12_SHADER_DESC& shaderDesc)
         {
             // Get the number of bound resources
-            entry_count = 1;
-            entry_reflections = (RenderObject::ShaderReflection_D3D12_Impl*)cyber_calloc(entry_count, sizeof(RenderObject::ShaderReflection_D3D12_Impl));
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(entry_reflections);
-            reflection->entry_name = D3DShaderEntryName;
-            reflection->shader_resource_count = shaderDesc.BoundResources;
-            reflection->shader_resources = (RenderObject::ShaderResource_D3D12_Impl*)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::ShaderResource_D3D12_Impl));
+            m_entryCount = 1;
+            m_pEntryReflections = (RenderObject::ShaderReflection_D3D12_Impl*)cyber_calloc(m_entryCount, sizeof(RenderObject::ShaderReflection_D3D12_Impl));
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
+            reflection->set_entry_name(D3DShaderEntryName);
+            reflection->set_shader_resource_count(shaderDesc.BoundResources);
+            auto shader_resources = (RenderObject::ShaderResource_D3D12_Impl*)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::ShaderResource_D3D12_Impl));
 
             // Count string sizes of the bound resources for the name pool
             for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -322,7 +311,7 @@ namespace Cyber
                 D3D12_SHADER_INPUT_BIND_DESC bindDesc;
                 d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
                 const size_t source_len = strlen(bindDesc.Name);
-                RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(&reflection->shader_resources[i]);
+                RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(&shader_resources[i]);
 
                 resource->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1)));
                 
@@ -333,7 +322,7 @@ namespace Cyber
                 resource->set_binding(bindDesc.BindPoint);
                 resource->set_size(bindDesc.BindCount);
                 resource->set_stages(stage);
-                resource->set_dimension(RHI_TEX_DIMENSION_UNDEFINED);
+                resource->set_dimension(TEX_DIMENSION_UNDEFINED);
                 if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)
                 {
                     ID3D12ShaderReflectionConstantBuffer* buffer = d3d12Reflection->GetConstantBufferByName(bindDesc.Name);
@@ -345,13 +334,15 @@ namespace Cyber
                 // RWTyped is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for RWBuffer here
                 if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_UAV_RWTYPED && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
                 {
-                    resource->set_type(RHI_RESOURCE_TYPE_RW_BUFFER);
+                    resource->set_type(GRAPHICS_RESOURCE_TYPE_RW_BUFFER);
                 }
                 // Buffer<> is considered as DESCRIPTOR_TYPE_TEXTURE by default so we handle the case for Buffer<> here
                 if(bindDesc.Type == D3D_SHADER_INPUT_TYPE::D3D_SIT_TEXTURE && bindDesc.Dimension == D3D_SRV_DIMENSION_BUFFER)
                 {
-                    resource->set_type(RHI_RESOURCE_TYPE_BUFFER);
+                    resource->set_type(GRAPHICS_RESOURCE_TYPE_BUFFER);
                 }
+
+                reflection->set_shader_resources( shader_resources );
             }
         }
     }

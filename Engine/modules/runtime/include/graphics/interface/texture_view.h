@@ -1,7 +1,7 @@
 #pragma once
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -30,12 +30,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API Texture_View : public RenderObjectBase<typename EngineImplTraits::TextureViewInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API Texture_View : public DeviceObjectBase<typename EngineImplTraits::TextureViewInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TextureViewInterface = typename EngineImplTraits::TextureViewInterface;
-            using TTexture_View = typename RenderObjectBase<TextureViewInterface, RenderDeviceImplType>;
+            using TTexture_View = typename DeviceObjectBase<TextureViewInterface, RenderDeviceImplType>;
 
             Texture_View(RenderDeviceImplType* device, const TextureViewCreateDesc& desc) : TTexture_View(device), m_desc(desc)
             {

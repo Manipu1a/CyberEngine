@@ -1,6 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "render_object.h"
+#include "device_object.h"
 #include "graphics_types.h"
 
 namespace Cyber
@@ -36,12 +36,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class RootSignatureBase : public RenderObjectBase<typename EngineImplTraits::RootSignatureInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class RootSignatureBase : public DeviceObjectBase<typename EngineImplTraits::RootSignatureInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RootSignatureInterface = typename EngineImplTraits::RootSignatureInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRootSignatureBase = typename RootSignatureBase<RootSignatureInterface, RenderDeviceImplType>;
+            using TRootSignatureBase = typename DeviceObjectBase<RootSignatureInterface, RenderDeviceImplType>;
 
             RootSignatureBase(RenderDeviceImplType* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device), m_desc(desc)
             {

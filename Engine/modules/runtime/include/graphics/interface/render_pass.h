@@ -1,7 +1,7 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
-#include "render_object.h"
+#include "device_object.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -60,12 +60,12 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API RenderPassBase : public RenderObjectBase<typename EngineImplTraits::RenderPassInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API RenderPassBase : public DeviceObjectBase<typename EngineImplTraits::RenderPassInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using RenderPassInterface = typename EngineImplTraits::RenderPassInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderPassBase = typename RenderObjectBase<RenderPassInterface, RenderDeviceImplType>;
+            using TRenderPassBase = typename DeviceObjectBase<RenderPassInterface, RenderDeviceImplType>;
 
             RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device), m_desc(desc)
             {

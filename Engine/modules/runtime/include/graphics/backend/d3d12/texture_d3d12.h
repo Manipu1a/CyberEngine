@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/interface/texture.h"
+#include "graphics/interface/texture.hpp"
 #include "engine_impl_traits_d3d12.hpp"
 #include "texture_view_d3d12.h"
 
