@@ -22,7 +22,7 @@ namespace Cyber
             /// Format of the swapchain
             TEXTURE_FORMAT mFormat;
             /// Surface
-            class RHISurface* surface;
+            class Surface* surface;
             /// Set whether swapchain will be presented using vsync
             bool mEnableVsync;
             /// We can toogle to using FLIP model if app desires

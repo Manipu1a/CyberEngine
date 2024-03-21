@@ -18,7 +18,7 @@ namespace Cyber
         {
         public:
             static DescriptorHandle consume_descriptor_handles(DescriptorHeap_D3D12* dst, uint32_t descriptorCount);
-            
+
             DescriptorHandle consume_descriptor_handles(uint32_t descriptorCount);
             
             void free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount);
@@ -29,25 +29,49 @@ namespace Cyber
 
             void free();
             
+            ID3D12DescriptorHeap* get_heap() const
+            {
+                return m_pCurrentHeap;
+            }
+            
+            CYBER_FORCE_INLINE uint32_t get_descriptor_size() const
+            {
+                return m_descriptorSize;
+            }
+
+            CYBER_FORCE_INLINE uint32_t get_used_descriptors() const
+            {
+                return m_usedDescriptors;
+            }
+
+            CYBER_FORCE_INLINE uint32_t get_num_descriptors() const
+            {
+                return m_numDescriptors;
+            }
+
+            CYBER_FORCE_INLINE D3D12_DESCRIPTOR_HEAP_TYPE get_type() const
+            {
+                return m_type;
+            }
         protected:
             /// DX Heap
             ID3D12DescriptorHeap* m_pCurrentHeap;
             ID3D12Device* m_pDevice;
             D3D12_CPU_DESCRIPTOR_HANDLE* m_pHandles;
             /// Start position in the heap
-            DescriptorHandle m_StartHandle;
+            DescriptorHandle m_startHandle;
             /// Free List used for CPU only descriptor heaps
-            eastl::vector<DescriptorHandle> m_FreeList;
+            eastl::vector<DescriptorHandle> m_freeList;
             // Bitmask to track free regions (set bit means occupied)
             uint32_t* m_pFlags;
             /// Description
-            D3D12_DESCRIPTOR_HEAP_DESC m_Desc;
-            D3D12_DESCRIPTOR_HEAP_TYPE m_Type;
-            uint32_t m_NumDescriptors;
+            D3D12_DESCRIPTOR_HEAP_DESC m_heapDesc;
+            D3D12_DESCRIPTOR_HEAP_TYPE m_type;
+            uint32_t m_numDescriptors;
             /// Descriptor Increment Size
-            uint32_t m_DescriptorSize;
+            uint32_t m_descriptorSize;
             // Usage
-            uint32_t m_UsedDescriptors;
+            uint32_t m_usedDescriptors;
         };
 
         struct EmptyDescriptors_D3D12

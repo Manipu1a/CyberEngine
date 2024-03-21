@@ -27,17 +27,40 @@ namespace Cyber
 
             CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device, desc) {}
 
+            virtual ~CommandBuffer_D3D12_Impl() = default;
+
+            ID3D12GraphicsCommandList* get_dx_cmd_list() const { return m_pDxCmdList; }
+            void set_dx_cmd_list(ID3D12GraphicsCommandList* cmdList) { m_pDxCmdList = cmdList; }
+
+            struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
+            void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap) { m_pBoundHeaps[index] = heap; }
+
+            D3D12_GPU_DESCRIPTOR_HANDLE get_bound_heap_start_handle(uint32_t index) const { return m_boundHeapStartHandles[index]; }
+            void set_bound_heap_start_handle(uint32_t index, D3D12_GPU_DESCRIPTOR_HANDLE handle) { m_boundHeapStartHandles[index] = handle; }
+
+            const ID3D12RootSignature* get_bound_root_signature() const { return m_pBoundRootSignature; }
+            void set_bound_root_signature(const ID3D12RootSignature* rootSignature) { m_pBoundRootSignature = rootSignature; }
+
+            uint32_t get_type() const { return m_type; }
+            void set_type(uint32_t type) { m_type = type; }
+
+            uint32_t get_node_index() const { return m_nodeIndex; }
+            void set_node_index(uint32_t nodeIndex) { m_nodeIndex = nodeIndex; }
+
+            ICommandPool* get_cmd_pool() const { return m_pCmdPool; }
+            void set_cmd_pool(ICommandPool* cmdPool) { m_pCmdPool = cmdPool; }
+            
         protected:
-            ID3D12GraphicsCommandList* pDxCmdList;
+            ID3D12GraphicsCommandList* m_pDxCmdList;
             // Cached in beginCmd to avoid fetching them during rendering
-            struct RHIDescriptorHeap_D3D12* pBoundHeaps[2];
-            D3D12_GPU_DESCRIPTOR_HANDLE mBoundHeapStartHandles[2];
+            struct DescriptorHeap_D3D12* m_pBoundHeaps[2];
+            D3D12_GPU_DESCRIPTOR_HANDLE m_boundHeapStartHandles[2];
             // Command buffer state
-            const ID3D12RootSignature* pBoundRootSignature;
-            uint32_t mType;
-            uint32_t mNodeIndex;
-            ICommandPool* pCmdPool;
-            D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS mSubResolveResource[GRAPHICS_MAX_MRT_COUNT];
+            const ID3D12RootSignature* m_pBoundRootSignature;
+            uint32_t m_type;
+            uint32_t m_nodeIndex;
+            ICommandPool* m_pCmdPool;
+            D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS m_subResolveResource[GRAPHICS_MAX_MRT_COUNT];
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

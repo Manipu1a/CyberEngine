@@ -181,10 +181,13 @@ namespace Cyber
         {
             if(m_pEntryReflections)
             {
-                RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
-                reflection->free_vertex_inputs();
-                reflection->free_shader_resources();
-                cyber_free(reflection);
+                for(uint32_t i = 0; i < m_entryCount; ++i)
+                {
+                    RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections[i]);
+                    reflection->free_vertex_inputs();
+                    reflection->free_shader_resources();
+                    cyber_free(reflection);
+                }
             }
         }
 
@@ -252,7 +255,8 @@ namespace Cyber
             D3D12_SHADER_DESC shaderDesc;
             d3d12Reflection->GetDesc(&shaderDesc);
             reflection_record_shader_resource(d3d12Reflection, stage, shaderDesc);
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
+
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections[m_entryCount++]);
             reflection->set_shader_stage(stage);
             // Collect vertex inputs
             if(stage == SHADER_STAGE_VERT)
@@ -299,11 +303,11 @@ namespace Cyber
         {
             // Get the number of bound resources
             m_entryCount = 1;
-            m_pEntryReflections = (RenderObject::ShaderReflection_D3D12_Impl*)cyber_calloc(m_entryCount, sizeof(RenderObject::ShaderReflection_D3D12_Impl));
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections);
+            m_pEntryReflections = (RenderObject::IShaderReflection**)cyber_calloc(m_entryCount, sizeof(RenderObject::IShaderReflection*));
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = cyber_new<RenderObject::ShaderReflection_D3D12_Impl>();
             reflection->set_entry_name(D3DShaderEntryName);
             reflection->set_shader_resource_count(shaderDesc.BoundResources);
-            auto shader_resources = (RenderObject::ShaderResource_D3D12_Impl*)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::ShaderResource_D3D12_Impl));
+            auto shader_resources = (RenderObject::IShaderResource**)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::IShaderResource*));
 
             // Count string sizes of the bound resources for the name pool
             for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -311,7 +315,8 @@ namespace Cyber
                 D3D12_SHADER_INPUT_BIND_DESC bindDesc;
                 d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
                 const size_t source_len = strlen(bindDesc.Name);
-                RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(&shader_resources[i]);
+                shader_resources[i] = cyber_new<RenderObject::ShaderResource_D3D12_Impl>();
+                RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(shader_resources[i]);
 
                 resource->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1)));
                 
@@ -344,6 +349,8 @@ namespace Cyber
 
                 reflection->set_shader_resources( shader_resources );
             }
+
+            m_pEntryReflections[0] = reflection;
         }
     }
 }

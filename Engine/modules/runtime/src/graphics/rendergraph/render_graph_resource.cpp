@@ -53,9 +53,9 @@ namespace Cyber
         }
 
         RGRenderPass& RGRenderPass::add_render_target(uint32_t mrt_index, RGTextureRef texture,
-             ERHILoadAction load_action, 
-             ERHIClearValue clear_color, 
-             ERHIStoreAction store_action) CYBER_NOEXCEPT
+             LOAD_ACTION load_action, 
+             GRAPHICS_CLEAR_VALUE clear_color, 
+             STORE_ACTION store_action) CYBER_NOEXCEPT
         {
             render_targets[mrt_index] = texture;
 
@@ -74,10 +74,10 @@ namespace Cyber
         }
 
         RGRenderPass& RGRenderPass::set_depthstencil(RGDepthStencilRef depthstencil, 
-            ERHILoadAction depth_load_action, 
-            ERHIStoreAction depth_store_action,
-            ERHILoadAction stencil_load_action, 
-            ERHIStoreAction stencil_store_action) CYBER_NOEXCEPT
+            LOAD_ACTION depth_load_action, 
+            STORE_ACTION depth_store_action,
+            LOAD_ACTION stencil_load_action, 
+            STORE_ACTION stencil_store_action) CYBER_NOEXCEPT
         {
             this->dload_action = depth_load_action;
             this->dstore_action = depth_store_action;
@@ -87,7 +87,7 @@ namespace Cyber
             return *this;
         }
 
-        RGRenderPass& RGRenderPass::set_pipeline(RHIRenderPipeline* pipeline) CYBER_NOEXCEPT
+        RGRenderPass& RGRenderPass::set_pipeline(IRenderPipeline* pipeline) CYBER_NOEXCEPT
         {
             this->pipeline = pipeline;
             return *this;

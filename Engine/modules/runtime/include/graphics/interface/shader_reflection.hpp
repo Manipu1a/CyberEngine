@@ -24,8 +24,9 @@ namespace Cyber
 
             virtual void free_vertex_inputs() const = 0;
 
-            virtual RenderObject::IShaderResource* get_shader_resources() const = 0;
-            virtual void set_shader_resources(RenderObject::IShaderResource* resources) = 0;
+            virtual RenderObject::IShaderResource** get_shader_resources() const = 0;
+            virtual RenderObject::IShaderResource* get_shader_resource(uint32_t index) const = 0;
+            virtual void set_shader_resources(RenderObject::IShaderResource** resources) = 0;
 
             virtual void free_shader_resources() const = 0;
 
@@ -87,26 +88,31 @@ namespace Cyber
                 }
             }
 
-            virtual RenderObject::IShaderResource* get_shader_resources() const override final 
+            virtual RenderObject::IShaderResource** get_shader_resources() const override final 
             {
-                return m_pShaderResources;
+                return m_ppShaderResources;
             }
 
-            virtual void set_shader_resources(RenderObject::IShaderResource* resources) override final
+            virtual RenderObject::IShaderResource* get_shader_resource(uint32_t index) const override final
             {
-                m_pShaderResources = resources;
+                return m_ppShaderResources[index];
+            }
+            
+            virtual void set_shader_resources(RenderObject::IShaderResource** resources) override final
+            {
+                m_ppShaderResources = resources;
             }
 
             virtual void free_shader_resources() const override final
             {
-                if(m_pShaderResources)
+                if(m_ppShaderResources)
                 {
                     for(uint32_t i = 0; i < m_shaderResourceCount; i++)
                     {
-                        m_pShaderResources[i].free();
+                        m_ppShaderResources[i]->free();
                     }
 
-                    cyber_free(m_pShaderResources);
+                    cyber_free(m_ppShaderResources);
                 }
             }
             
@@ -166,7 +172,7 @@ namespace Cyber
             const char8_t* m_entryName;
             char* m_namePool;
             IVertexInput* m_pVertexInputs;
-            RenderObject::IShaderResource* m_pShaderResources;
+            RenderObject::IShaderResource** m_ppShaderResources;
             SHADER_STAGE m_shaderStage;
             uint32_t m_namePoolSize;
             uint32_t m_vertexInputCount;

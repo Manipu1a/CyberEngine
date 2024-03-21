@@ -7,6 +7,8 @@
 #include "interface/shader_resource.h"
 #include "interface/render_pipeline.h"
 #include "interface/shader_reflection.hpp"
+#include "interface/shader_library.h"
+
 namespace Cyber 
 {
     bool graphics_util_shader_resource_is_root_constant(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
@@ -34,8 +36,7 @@ namespace Cyber
         }
         return false;
     }
-    
-    void graphics_util_init_root_signature_tables(IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
+    void graphics_util_init_root_signature_tables(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
         RenderObject::IShaderReflection* entery_reflection[32] = {0};
         // Pick shader reflection data
@@ -43,61 +44,62 @@ namespace Cyber
         {
             const RenderObject::PipelineShaderCreateDesc* shader_desc = desc.shaders[i];
             // Find shader reflection data
-            for(uint32_t j = 0; j < shader_desc->library->entry_count; ++j)
+            for(uint32_t j = 0; j < shader_desc->m_library->get_entry_count(); ++j)
             {
-                IShaderReflection& temp_entry_reflection = shader_desc->library->entry_reflections[j];
-                if(strcmp((char*)shader_desc->entry, (char*)temp_entry_reflection.entry_name) == 0)
+                RenderObject::IShaderReflection* temp_entry_reflection = shader_desc->m_library->get_entry_reflection(j);
+                if(strcmp((char*)shader_desc->m_entry, (char*)temp_entry_reflection->get_entry_name()) == 0)
                 {
-                    entery_reflection[i] = &temp_entry_reflection;
+                    entery_reflection[i] = temp_entry_reflection;
                     break;
                 }
             }
             if(entery_reflection[i] == nullptr)
             {
                 // If we didn't find the entry point, use the first one
-                entery_reflection[i] = &shader_desc->library->entry_reflections[0];
+                entery_reflection[i] = shader_desc->m_library->get_entry_reflection(0);
             }
         }
 
         // Collect all resources
-        rootSignature->pipeline_type = PIPELINE_TYPE_NONE;
-        eastl::vector<RHIShaderResource> all_resources;
-        eastl::vector<RHIShaderResource> all_push_constants;
-        eastl::vector<RHIShaderResource> all_static_samplers;
+        rootSignature->set_pipeline_type(PIPELINE_TYPE_NONE);
+        eastl::vector<RenderObject::IShaderResource*> all_resources;
+        eastl::vector<RenderObject::IShaderResource*> all_push_constants;
+        eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
         for(uint32_t i = 0; i < desc.shader_count; ++i)
         {
-            RHIShaderReflection* reflection = entery_reflection[i];
-            for(uint32_t j = 0; j < reflection->shader_resource_count; ++j)
+            RenderObject::IShaderReflection* reflection = entery_reflection[i];
+            for(uint32_t j = 0; j < reflection->get_shader_resource_count(); ++j)
             {
                 // root constant and static sampler are unique
-                RHIShaderResource& resource = reflection->shader_resources[j];
-                if(rhi_util_shader_resource_is_root_constant(resource, desc))
+                RenderObject::IShaderResource* resource = reflection->get_shader_resource(j);
+                if(graphics_util_shader_resource_is_root_constant(resource, desc))
                 {
                     bool coincided = false;
                     for(auto& root_constant : all_push_constants)
                     {
-                        if(root_constant.name_hash == resource.name_hash &&
-                            root_constant.set == resource.set &&
-                            root_constant.binding == resource.binding &&
-                            root_constant.size == resource.size)
+                        if(root_constant->get_name_hash() == resource->get_name_hash() &&
+                            root_constant->get_set() == resource->get_set() &&
+                            root_constant->get_binding() == resource->get_binding() &&
+                            root_constant->get_size() == resource->get_size())
                         {
-                            root_constant.stages |= resource.stages;
+                            root_constant.stages |= resource->get_stages();
                             coincided = true;
                         }
                     }
                     if(!coincided)
                         all_push_constants.push_back(resource);
                 }
-                else if(rhi_util_shader_resource_is_static_sampler(resource, desc))
+                else if(graphics_util_shader_resource_is_static_sampler(resource, desc))
                 {
                     bool coincided = false;
                     for(auto& static_sampler : all_static_samplers)
                     {
-                        if(static_sampler.name_hash == resource.name_hash &&
-                            static_sampler.set == resource.set &&
-                            static_sampler.binding == resource.binding)
+                        if(static_sampler->get_name_hash() == resource->get_name_hash() &&
+                            static_sampler>get_set() == resource->get_set() &&
+                            static_sampler->get_binding() == resource->get_binding())
                         {
-                            static_sampler.stages |= resource.stages;
+                            auto stages = static_sampler->get_stages() | resource->get_stages();
+                            static_sampler->set_stages(stages);
                             coincided = true;
                         }
                     }
@@ -111,63 +113,65 @@ namespace Cyber
             }
 
             // Merge pipeline type
-            if(reflection->shader_stage & RHI_SHADER_STAGE_COMPUTE)
-                rootSignature->pipeline_type = RHI_PIPELINE_TYPE_COMPUTE;
-            else if(reflection->shader_stage & RHI_SHADER_STAGE_RAYTRACING)
-                rootSignature->pipeline_type = RHI_PIPELINE_TYPE_RAYTRACING;
+            if(reflection->get_shader_stage() & SHADER_STAGE_COMPUTE)
+                rootSignature->set_pipeline_type(PIPELINE_TYPE_COMPUTE);
+            else if(reflection->get_shader_stage() & SHADER_STAGE_RAYTRACING)
+                rootSignature->set_pipeline_type(PIPELINE_TYPE_RAYTRACING);
             else
-                rootSignature->pipeline_type = RHI_PIPELINE_TYPE_GRAPHICS; 
+                rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
         }
 
         // Merge root constants
         Cyber::btree_set<uint32_t> valid_sets;
-        eastl::vector<RHIShaderResource> rst_resources;
+        eastl::vector<RenderObject::IShaderResource*> rst_resources;
         rst_resources.reserve(all_resources.size());
         for(auto& shader_resource : all_resources)
         {
             bool coincided = false;
             for(auto& rst_resource : rst_resources)
             {
-                if( rst_resource.set == shader_resource.set &&
-                    rst_resource.binding == shader_resource.binding &&
-                    rst_resource.type == shader_resource.type)
+                if( rst_resource->get_set() == shader_resource->get_set() &&
+                    rst_resource->get_binding() == shader_resource->get_binding() &&
+                    rst_resource->get_type() == shader_resource->get_type())
                 {
-                    rst_resource.stages |= shader_resource.stages;
+                    auto stages = rst_resource->get_stages();
+                    stages |= shader_resource->get_stages();
+                    rst_resource->set_stages(stages);
                     coincided = true;
                 }
             }
             if(!coincided)
             {
-                valid_sets.insert(shader_resource.set);
+                valid_sets.insert(shader_resource->get_set());
                 rst_resources.emplace_back(shader_resource);
             }
         }
-        eastl::stable_sort(rst_resources.begin(), rst_resources.end(), [](const RHIShaderResource& lhs, const RHIShaderResource& rhs){
-            if(lhs.set == rhs.set)
-                return lhs.binding < rhs.binding;
-            return lhs.set < rhs.set;
+        eastl::stable_sort(rst_resources.begin(), rst_resources.end(), [](const RenderObject::IShaderResource* lhs, const RenderObject::IShaderResource* rhs){
+            if(lhs->get_set() == rhs->get_set())
+                return lhs->get_binding() < rhs->get_binding();
+            return lhs->get_set() < rhs->get_set;
         });
         // Slice
-        rootSignature->parameter_table_count = (uint32_t)valid_sets.size();
-        rootSignature->parameter_tables = (RHIParameterTable*)cyber_calloc( rootSignature->parameter_table_count,sizeof(RHIParameterTable));
+        rootSignature->m_parameterTableCount = (uint32_t)valid_sets.size();
+        rootSignature->m_parameterTables = (RootSignatureParameterTable*)cyber_calloc( rootSignature->m_parameterTableCount,sizeof(RootSignatureParameterTable));
         uint32_t table_index = 0;
         for(auto&& set_index : valid_sets)
         {
-            RHIParameterTable& table = rootSignature->parameter_tables[table_index];
+            RootSignatureParameterTable& table = rootSignature->m_parameterTables[table_index];
             table.set_index = set_index;
             table.resource_count = 0;
             // 计算每个set的资源数量
             for(auto& rst_resource : rst_resources)
             {
-                if(rst_resource.set == set_index)
+                if(rst_resource->get_set() == set_index)
                     ++table.resource_count;
             }
-            table.resources = (RHIShaderResource*)cyber_calloc(table.resource_count, sizeof(RHIShaderResource));
+            table.resources = (RenderObject::IShaderResource*)cyber_calloc(table.resource_count, sizeof(RenderObject::IShaderResource));
             // 将参数按照set分组存入table
             uint32_t slot_index = 0;
             for(auto&& rst_resource : rst_resources)
             {
-                if(rst_resource.set == set_index)
+                if(rst_resource->get_set() == set_index)
                 {
                     table.resources[slot_index] = rst_resource;
                     ++slot_index;
@@ -176,39 +180,39 @@ namespace Cyber
             ++table_index;
         }
         // push constants
-        rootSignature->push_constant_count = (uint32_t)all_push_constants.size();
-        rootSignature->push_constants = (RHIShaderResource*)cyber_calloc(rootSignature->push_constant_count, sizeof(RHIShaderResource));
-        for(uint32_t i = 0; i < rootSignature->push_constant_count; ++i)
+        rootSignature->m_pushConstantCount = (uint32_t)all_push_constants.size();
+        rootSignature->m_pushConstants = (RenderObject::IShaderResource**)cyber_calloc(rootSignature->m_pushConstantCount, sizeof(RenderObject::IShaderResource*));
+        for(uint32_t i = 0; i < rootSignature->m_pushConstantCount; ++i)
         {
-            rootSignature->push_constants[i] = all_push_constants[i];
+            rootSignature->m_pushConstants[i] = all_push_constants[i];
         }
         // static samplers
-        eastl::stable_sort(all_static_samplers.begin(), all_static_samplers.end(), [](const RHIShaderResource& lhs, const RHIShaderResource& rhs){
-            if(lhs.set == rhs.set)
-                return lhs.binding < rhs.binding;
-            return lhs.set < rhs.set;
+        eastl::stable_sort(all_static_samplers.begin(), all_static_samplers.end(), [](const RenderObject::IShaderResource* lhs, const RenderObject::IShaderResource* rhs){
+            if(lhs->get_set() == rhs->get_set())
+                return lhs->get_binding() < rhs->get_binding();
+            return lhs->get_set() < rhs->get_set();
         });
-        rootSignature->static_sampler_count = (uint32_t)all_static_samplers.size();
-        rootSignature->static_samplers = (RHIShaderResource*)cyber_calloc(rootSignature->static_sampler_count, sizeof(RHIShaderResource));
-        for(uint32_t i = 0; i < rootSignature->static_sampler_count; ++i)
+        rootSignature->m_staticSamplerCount = (uint32_t)all_static_samplers.size();
+        rootSignature->m_staticSamplers = (RenderObject::IShaderResource**)cyber_calloc(rootSignature->m_staticSamplerCount, sizeof(RenderObject::IShaderResource*));
+        for(uint32_t i = 0; i < rootSignature->m_staticSamplerCount; ++i)
         {
-            rootSignature->static_samplers[i] = all_static_samplers[i];
+            rootSignature->m_staticSamplers[i] = all_static_samplers[i];
         }
     }
 
     void graphics_util_free_root_signature_tables(struct IRootSignature* rootSignature)
     {
         // free resources
-        if(rootSignature->parameter_tables)
+        if(rootSignature->m_parameterTables)
         {
-            for(uint32_t i = 0; i < rootSignature->parameter_table_count; ++i)
+            for(uint32_t i = 0; i < rootSignature->m_parameterTableCount; ++i)
             {
-                RHIParameterTable& table = rootSignature->parameter_tables[i];
+                RHIParameterTable& table = rootSignature->m_parameterTables[i];
                 if(table.resources)
                 {
                     for(uint32_t binding = 0; binding < table.resource_count; ++binding)
                     {
-                        RHIShaderResource& binding_to_free = table.resources[binding];
+                        RenderObject::IShaderResource& binding_to_free = table.resources[binding];
                         if(binding_to_free.name != nullptr)
                         {
                             cyber_free((char8_t*)binding_to_free.name);
@@ -217,33 +221,33 @@ namespace Cyber
                     cyber_free(table.resources);
                 }
             }
-            cyber_free(rootSignature->parameter_tables);
+            cyber_free(rootSignature->m_parameterTables);
         }
         // free constant
-        if(rootSignature->push_constants)
+        if(rootSignature->m_pushConstants)
         {
-            for(uint32_t i = 0;i < rootSignature->push_constant_count; ++i)
+            for(uint32_t i = 0;i < rootSignature->m_pushConstantCount; ++i)
             {
-                RHIShaderResource& binding_to_free = rootSignature->push_constants[i];
+                RenderObject::IShaderResource* binding_to_free = rootSignature->m_pushConstants[i];
                 if(binding_to_free.name != nullptr)
                 {
                     cyber_free((char8_t*)binding_to_free.name);
                 }
             }
-            cyber_free(rootSignature->push_constants);
+            cyber_free(rootSignature->m_pushConstants);
         }
         // free static samplers
-        if(rootSignature->static_samplers)
+        if(rootSignature->m_staticSamplers)
         {
-            for(uint32_t i = 0;i < rootSignature->static_sampler_count; ++i)
+            for(uint32_t i = 0;i < rootSignature->m_staticSamplerCount; ++i)
             {
-                RHIShaderResource& binding_to_free = rootSignature->static_samplers[i];
+                RenderObject::IShaderResource* binding_to_free = rootSignature->m_staticSamplers[i];
                 if(binding_to_free.name != nullptr)
                 {
                     cyber_free((char8_t*)binding_to_free.name);
                 }
             }
-            cyber_free(rootSignature->static_samplers);
+            cyber_free(rootSignature->m_staticSamplers);
         }
 
     }
@@ -254,14 +258,14 @@ namespace Cyber
 
         switch(stage)
         {
-            case RHI_SHADER_STAGE_VERT: shader_profile = "vs"; break;
-            case RHI_SHADER_STAGE_FRAG: shader_profile = "ps"; break;
-            case RHI_SHADER_STAGE_GEOM: shader_profile = "gs"; break;
-            case RHI_SHADER_STAGE_COMPUTE: shader_profile = "cs"; break;
-            case RHI_SHADER_STAGE_TESC: shader_profile = "hs"; break;
-            case RHI_SHADER_STAGE_DOMAIN: shader_profile = "ds"; break;
-            case RHI_SHADER_STAGE_MESH: shader_profile = "ms"; break;
-            case RHI_SHADER_STAGE_RAYTRACING: shader_profile = "lib"; break;
+            case SHADER_STAGE_VERT: shader_profile = "vs"; break;
+            case SHADER_STAGE_FRAG: shader_profile = "ps"; break;
+            case SHADER_STAGE_GEOM: shader_profile = "gs"; break;
+            case SHADER_STAGE_COMPUTE: shader_profile = "cs"; break;
+            case SHADER_STAGE_TESC: shader_profile = "hs"; break;
+            case SHADER_STAGE_DOMAIN: shader_profile = "ds"; break;
+            case SHADER_STAGE_MESH: shader_profile = "ms"; break;
+            case SHADER_STAGE_RAYTRACING: shader_profile = "lib"; break;
             default:
             {
                 CB_WARN("Unknown shader type");

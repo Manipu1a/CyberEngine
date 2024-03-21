@@ -2,7 +2,7 @@
 #include "graphics/backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/interface/render_device.h"
 #include "cyber_runtime.config.h"
-
+#include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 
 namespace Cyber
 {

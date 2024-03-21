@@ -28,8 +28,10 @@ namespace Cyber
 
             Instance_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const InstanceCreateDesc& desc) : TInstanceBase(device, desc) {}
 
-            void optional_enable_debug_layer();
-            void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter);
+            virtual void initialize_environment() override final;
+            virtual void de_initialize_environment() override final;
+            virtual void optional_enable_debug_layer() override final;
+            virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
         protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)
@@ -37,7 +39,7 @@ namespace Cyber
         #endif
             struct ID3D12Debug* m_pDXDebug;
             struct IAdapter* m_pAdapters;
-            uint32_t m_AdaptersCount;
+            uint32_t m_adaptersCount;
 
         protected:
             friend class RenderObject::RenderDevice_D3D12_Impl;

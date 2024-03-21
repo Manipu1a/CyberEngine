@@ -1,7 +1,7 @@
 #pragma once
 #include "graphics/interface/graphics_types.h"
 #include "interface/root_signature.h"
-
+#include "interface/root_signature_pool.h"
 
 namespace Cyber
 {

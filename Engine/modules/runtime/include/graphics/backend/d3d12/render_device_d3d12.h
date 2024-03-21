@@ -1,5 +1,5 @@
 #pragma once
-
+#include "d3d12.config.h"
 #include "interface/render_device.h"
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "engine_impl_traits_d3d12.hpp"
@@ -113,18 +113,19 @@ namespace Cyber
             // create view
             void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
             void create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+            void create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
             void create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
             void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
 
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
-            class DescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_CPUDescriptorHeaps[heap_type]; }
+            class DescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_cpuDescriptorHeaps[heap_type]; }
 
-            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_SamplerHeaps; }
-            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_CbvSrvUavHeaps; }
+            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_samplerHeaps; }
+            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_cbvSrvUavHeaps; }
             struct EmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
-            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_ppCommandQueues; }
-            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_CommandQueueCounts; }
+            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_commandQueues; }
+            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_commandQueueCounts; }
             IDXGIFactory6* GetDXGIFactory() { return m_pDXGIFactory; }
             IDXGIAdapter4* GetDXActiveGPU() { return m_pDxActiveGPU; }
             ID3D12PipelineLibrary* GetPipelineLibrary() { return m_pPipelineLibrary; }
@@ -141,12 +142,12 @@ namespace Cyber
             class D3D12MA::Allocator* m_pResourceAllocator;
 
             // API specific descriptor heap and memory allocator
-            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CPUDescriptorHeaps;
-            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_SamplerHeaps;
-            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_CbvSrvUavHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;
+            eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
             struct EmptyDescriptors_D3D12* m_pNullDescriptors;
-            eastl::map<uint32_t, ID3D12CommandQueue**> m_ppCommandQueues;
-            eastl::map<uint32_t, uint32_t> m_CommandQueueCounts;
+            eastl::map<uint32_t, ID3D12CommandQueue**> m_commandQueues;
+            eastl::map<uint32_t, uint32_t> m_commandQueueCounts;
             IDXGIFactory6* m_pDXGIFactory;
             IDXGIAdapter4* m_pDxActiveGPU;
             ID3D12Device* m_pDxDevice;

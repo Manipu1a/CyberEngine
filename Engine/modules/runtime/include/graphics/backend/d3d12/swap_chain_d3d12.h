@@ -14,14 +14,14 @@ namespace Cyber
 
         };
 
-        class CYBER_GRAPHICS_API SawpChain_D3D12_Impl final : public SwapChainBase<EngineD3D12ImplTraits>
+        class CYBER_GRAPHICS_API SwapChain_D3D12_Impl final : public SwapChainBase<EngineD3D12ImplTraits>
         {
         public:
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
             
-            SawpChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device);
+            SwapChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device);
 
-            virtual ~SawpChain_D3D12_Impl()
+            virtual ~SwapChain_D3D12_Impl()
             {
 
             }

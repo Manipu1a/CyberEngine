@@ -8,6 +8,16 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        void Instance_D3D12_Impl::initialize_environment()
+        {
+
+        }
+
+        void Instance_D3D12_Impl::de_initialize_environment()
+        {
+            
+        }
+
         void Instance_D3D12_Impl::optional_enable_debug_layer()
         {
             if(m_desc.m_enableDebugLayer)
@@ -35,7 +45,7 @@ namespace Cyber
         void Instance_D3D12_Impl::query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter)
         {
             cyber_assert(m_pAdapters == nullptr, "getProperGpuCount should be called only once!");
-            cyber_assert(m_AdaptersCount == 0, "getProperGpuCount should be called only once!");
+            cyber_assert(m_adaptersCount == 0, "getProperGpuCount should be called only once!");
 
             IDXGIAdapter* _adapter = nullptr;
             eastl::vector<IDXGIAdapter4*> dxgi_adapters;
@@ -66,7 +76,7 @@ namespace Cyber
                             if(SUCCEEDED(hres))
                             {
                                 SAFE_RELEASE(tempAdapter);
-                                m_AdaptersCount++;
+                                m_adaptersCount++;
                                 // Add ref
                                 {
                                     dxgi_adapters.push_back(adapter);
@@ -84,8 +94,8 @@ namespace Cyber
                 }
             }
 
-            count = m_AdaptersCount;
-            m_pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(m_AdaptersCount);
+            count = m_adaptersCount;
+            m_pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(m_adaptersCount);
 
             for(uint32_t i = 0;i < count; i++)
             {

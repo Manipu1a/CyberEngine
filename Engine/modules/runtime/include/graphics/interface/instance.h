@@ -18,6 +18,12 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IInstance
         {
             virtual const InstanceCreateDesc get_create_desc() const = 0;
+            virtual void optional_enable_debug_layer() = 0;
+            virtual void initialize_environment() = 0;
+            virtual void de_initialize_environment() = 0;
+            virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) = 0;
+
+            virtual void free() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -41,6 +47,11 @@ namespace Cyber
             virtual const InstanceCreateDesc get_create_desc() const
             {
                 return m_desc;
+            }
+
+            virtual void free() override
+            {
+                delete this;
             }
         protected:
             InstanceCreateDesc m_desc;

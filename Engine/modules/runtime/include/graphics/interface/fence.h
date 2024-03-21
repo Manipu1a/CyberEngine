@@ -8,7 +8,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IFence
         {
-            
+            virtual uint64_t get_fence_value() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -21,8 +21,13 @@ namespace Cyber
 
             FenceBase(RenderDeviceImplType* device) : TFenceBase(device) {  };
             virtual ~FenceBase() = default;
+
+            virtual uint64_t get_fence_value() const override
+            {
+                return m_fenceValue;
+            }
         protected:
-        
+            uint64_t m_fenceValue;
         };
     }
 

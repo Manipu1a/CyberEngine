@@ -10,9 +10,9 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API PipelineShaderCreateDesc
         {
-            class IShaderLibrary* library;
-            const char8_t* entry;
-            SHADER_STAGE stage;
+            class IShaderLibrary* m_library;
+            const char8_t* m_entry;
+            SHADER_STAGE m_stage;
         };
 
         struct CYBER_GRAPHICS_API RenderPipelineCreateDesc

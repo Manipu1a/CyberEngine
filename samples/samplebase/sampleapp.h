@@ -31,7 +31,7 @@ namespace Cyber
             RHICommandPool* pool = nullptr;
             RHICommandBuffer* cmd = nullptr;
             RHISwapChain* swap_chain = nullptr;
-            RHISurface* surface = nullptr;
+            Surface* surface = nullptr;
             RHIFence* present_swmaphore = nullptr; 
             uint32_t backbuffer_index = 0;
 

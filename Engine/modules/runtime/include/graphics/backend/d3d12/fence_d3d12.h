@@ -29,9 +29,8 @@ namespace Cyber
             ID3D12Fence* get_native_fence() const { return m_pDxFence; }
         protected:
             ID3D12Fence* m_pDxFence;
-            HANDLE m_DxWaitIdleFenceEvent;
-            uint64_t m_FenceValue;
-            uint64_t m_PadA;
+            HANDLE m_dxWaitIdleFenceEvent;
+            uint64_t m_padA;
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

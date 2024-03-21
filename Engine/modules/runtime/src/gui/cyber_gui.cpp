@@ -3,8 +3,10 @@
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
 #include "platform/memory.h"
-#include "platform/config.h"
+#include "platform/configure.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/command_buffer_d3d12.h"
+
 
 namespace Cyber
 {
@@ -27,8 +29,9 @@ namespace Cyber
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             desc.NodeMask = 0;
-            g_imguiSrvDescHeap = cyber_new<DescriptorHeap_D3D12>();
-            CHECK_HRESULT(device_d3d12->GetD3D12Device()->CreateDescriptorHeap(&desc, IID_ARGS(&g_imguiSrvDescHeap->pCurrentHeap)));
+            g_imguiSrvDescHeap = cyber_new<RenderObject::DescriptorHeap_D3D12>();
+            auto native_heap = g_imguiSrvDescHeap->get_heap();
+            CHECK_HRESULT(device_d3d12->GetD3D12Device()->CreateDescriptorHeap(&desc, IID_ARGS(&native_heap)));
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
@@ -44,9 +47,9 @@ namespace Cyber
             ImGui_ImplWin32_Init(hwnd);
             
             ImGui_ImplDX12_Init(device_d3d12->GetD3D12Device(), 3,
-                DXGI_FORMAT_R8G8B8A8_UNORM, g_imguiSrvDescHeap->pCurrentHeap,
-                g_imguiSrvDescHeap->pCurrentHeap->GetCPUDescriptorHandleForHeapStart(),
-                g_imguiSrvDescHeap->pCurrentHeap->GetGPUDescriptorHandleForHeapStart());
+                DXGI_FORMAT_R8G8B8A8_UNORM, native_heap,
+                native_heap->GetCPUDescriptorHandleForHeapStart(),
+                native_heap->GetGPUDescriptorHandleForHeapStart());
                 
 
         }
@@ -54,7 +57,7 @@ namespace Cyber
         {
 
         }
-        void GUIApplication::update(RHIRenderPassEncoder* encoder, float deltaTime)
+        void GUIApplication::update(RenderObject::RenderPassEncoder* encoder, float deltaTime)
         {
             // Start the Dear ImGui frame
             ImGui_ImplDX12_NewFrame();
@@ -65,12 +68,10 @@ namespace Cyber
 
             // Rendering
             ImGui::Render();
-            RHICommandBuffer_D3D12* Cmd = static_cast<RHICommandBuffer_D3D12*>(encoder);
-            ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->pCurrentHeap };
-            Cmd->pDxCmdList->SetDescriptorHeaps(1, GuidescriptorHeaps);
+            CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+            ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
+            Cmd->m_pDxCmdList->SetDescriptorHeaps(1, GuidescriptorHeaps);
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->pDxCmdList);
-
-            
         }
 
         void GUIApplication::finalize()

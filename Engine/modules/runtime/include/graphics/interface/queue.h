@@ -32,6 +32,8 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IQueue
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
+            virtual QUEUE_TYPE get_type() const = 0;
+            virtual QueueIndex get_index() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -46,6 +48,15 @@ namespace Cyber
 
             virtual ~QueueBase() = default;
 
+            CYBER_FORCE_INLINE virtual QUEUE_TYPE get_type() const override
+            {
+                return m_type;
+            }
+
+            CYBER_FORCE_INLINE virtual QueueIndex get_index() const override
+            {
+                return m_index;
+            }
         protected:
             QUEUE_TYPE m_type;
             QueueIndex m_index;

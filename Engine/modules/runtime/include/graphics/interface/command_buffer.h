@@ -15,7 +15,9 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API ICommandBuffer
         {
-            
+            virtual CommandBufferCreateDesc get_create_desc() = 0;
+            virtual ICommandPool* get_pool() = 0;
+            virtual PIPELINE_TYPE get_current_dispatch() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -29,6 +31,22 @@ namespace Cyber
             CommandBufferBase(RenderDeviceImplType* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device), m_desc(desc) {  };
 
             virtual ~CommandBufferBase() = default;
+
+            virtual CommandBufferCreateDesc get_create_desc() override
+            {
+                return m_desc;
+            }
+
+            virtual ICommandPool* get_pool() override
+            {
+                return m_pPool;
+            }
+
+            virtual PIPELINE_TYPE get_current_dispatch() override
+            {
+                return m_currentDispatch;
+            }
+            
         protected:
             CommandBufferCreateDesc m_desc;
             class ICommandPool* m_pPool;

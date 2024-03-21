@@ -24,13 +24,13 @@ namespace Cyber
             virtual ~TextureView_D3D12_Impl();
 
         protected:
-            D3D12_CPU_DESCRIPTOR_HANDLE mDxDescriptorHandles;
+            D3D12_CPU_DESCRIPTOR_HANDLE m_dxDescriptorHandles;
             /// Offset from mDxDescriptors for srv descriptor handle
-            uint8_t mSrvDescriptorOffset;
+            uint8_t m_srvDescriptorOffset;
             /// Offset from mDxDescriptors for uav descriptor handle
-            uint8_t mUavDescriptorOffset;
+            uint8_t m_uavDescriptorOffset;
             /// Offset from mDxDescriptors for rtv descriptor handle
-            D3D12_CPU_DESCRIPTOR_HANDLE mRtvDsvDescriptorHandle;
+            D3D12_CPU_DESCRIPTOR_HANDLE m_rtvDsvDescriptorHandle;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

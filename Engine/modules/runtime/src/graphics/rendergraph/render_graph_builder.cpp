@@ -1,7 +1,7 @@
 #include "rendergraph/render_graph_builder.h"
 #include "platform/memory.h"
 #include "rendergraph/render_graph.h"
-
+#include "interface/queue.h"
 namespace Cyber
 {
     namespace render_graph
@@ -16,18 +16,18 @@ namespace Cyber
 
         }
         
-        RenderGraphBuilder& RenderGraphBuilder::backend_api(ERHIBackend backend) CYBER_NOEXCEPT
+        RenderGraphBuilder& RenderGraphBuilder::backend_api(GRAPHICS_BACKEND backend) CYBER_NOEXCEPT
         {
             return *this;
         }
 
-        RenderGraphBuilder& RenderGraphBuilder::with_device(RHIDevice* device) CYBER_NOEXCEPT
+        RenderGraphBuilder& RenderGraphBuilder::with_device(RenderObject::IRenderDevice* device) CYBER_NOEXCEPT
         {
             this->device = device;
             return *this;
         }
 
-        RenderGraphBuilder& RenderGraphBuilder::with_queue(RHIQueue* queue) CYBER_NOEXCEPT
+        RenderGraphBuilder& RenderGraphBuilder::with_queue(RenderObject::IQueue* queue) CYBER_NOEXCEPT
         {
             this->gfx_queue = queue;
             return *this;

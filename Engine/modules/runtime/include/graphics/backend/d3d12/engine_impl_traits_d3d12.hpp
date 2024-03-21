@@ -31,7 +31,7 @@ namespace Cyber
         class TextureView_D3D12_Impl;
         class Buffer_D3D12_Impl;
         class RenderDevice_D3D12_Impl;
-        class SawpChain_D3D12_Impl;
+        class SwapChain_D3D12_Impl;
         class FrameBuffer_D3D12_Impl;
         class CommandBuffer_D3D12_Impl;
         class CommandPool_D3D12_Impl;
@@ -81,7 +81,7 @@ namespace Cyber
             using TextureViewImplType = TextureView_D3D12_Impl;
             using BufferImplType = Buffer_D3D12_Impl;
             using RenderDeviceImplType = RenderDevice_D3D12_Impl;
-            using SwapChainImplType = SawpChain_D3D12_Impl;
+            using SwapChainImplType = SwapChain_D3D12_Impl;
             using FrameBufferImplType = FrameBuffer_D3D12_Impl;
             using CommandBufferImplType = CommandBuffer_D3D12_Impl;
             using CommandPoolImplType = CommandPool_D3D12_Impl;

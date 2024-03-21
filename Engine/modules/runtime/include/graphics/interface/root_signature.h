@@ -32,7 +32,18 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IRootSignature
         {
-            
+            virtual RootSignatureParameterTable** get_parameter_tables() const = 0;
+            virtual uint32_t get_parameter_table_count() const = 0;
+            virtual class IShaderResource** get_push_constants() const = 0;
+            virtual uint32_t get_push_constant_count() const = 0;
+            virtual class IShaderResource** get_static_samplers() const = 0;
+            virtual uint32_t get_static_sampler_count() const = 0;
+            virtual PIPELINE_TYPE get_pipeline_type() const = 0;
+            virtual void set_pipeline_type(PIPELINE_TYPE type) = 0;
+            virtual IRootSignaturePool* get_pool() const = 0;
+            virtual IRootSignature* get_pool_next() const = 0;
+
+            virtual RootSignatureCreateDesc get_desc() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -45,7 +56,7 @@ namespace Cyber
 
             RootSignatureBase(RenderDeviceImplType* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device), m_desc(desc)
             {
-                m_pParameterTables = nullptr;
+                m_ppParameterTables = nullptr;
                 m_parameterTableCount = 0;
                 m_pPushConstants = nullptr;
                 m_pushConstantCount = 0;
@@ -57,15 +68,72 @@ namespace Cyber
             }
 
             virtual ~RootSignatureBase() = default;
+
+            virtual RootSignatureParameterTable** get_parameter_tables() const override
+            {
+                return m_ppParameterTables;
+            }
+
+            virtual uint32_t get_parameter_table_count() const override
+            {
+                return m_parameterTableCount;
+            }
+
+            virtual class IShaderResource** get_push_constants() const override
+            {
+                return m_pPushConstants;
+            }
+
+            virtual uint32_t get_push_constant_count() const override
+            {
+                return m_pushConstantCount;
+            }
+
+            virtual class IShaderResource** get_static_samplers() const override
+            {
+                return m_pStaticSamplers;
+            }
+
+            virtual uint32_t get_static_sampler_count() const override
+            {
+                return m_staticSamplerCount;
+            }
+
+            virtual PIPELINE_TYPE get_pipeline_type() const override
+            {
+                return m_pipelineType;
+            }
+
+            virtual void set_pipeline_type(PIPELINE_TYPE type) override
+            {
+                m_pipelineType = type;
+            }
+            
+            virtual IRootSignaturePool* get_pool() const override
+            {
+                return m_pPool;
+            }
+
+            virtual IRootSignature* get_pool_next() const override
+            {
+                return m_pPoolNext;
+            }
+
+            virtual RootSignatureCreateDesc get_desc() const override
+            {
+                return m_desc;
+            }
+
+
         protected:
-            RootSignatureParameterTable* m_pParameterTables;
+            RootSignatureParameterTable** m_ppParameterTables;
             uint32_t m_parameterTableCount;
-            class IShaderResource* m_pPushConstants;
+            class IShaderResource** m_pPushConstants;
             uint32_t m_pushConstantCount;
-            class IShaderResource* m_pStaticSamplers;
+            class IShaderResource** m_pStaticSamplers;
             uint32_t m_staticSamplerCount;
             PIPELINE_TYPE m_pipelineType;
-            class IRootSignaturePool* m_pPool;
+            class IRootSignaturePool** m_pPool;
             IRootSignature* m_pPoolNext;
             RootSignatureCreateDesc m_desc;
         };

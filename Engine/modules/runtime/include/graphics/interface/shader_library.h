@@ -27,6 +27,10 @@ namespace Cyber
         {
             virtual const ShaderLibraryCreateDesc& get_create_desc() const = 0;
             virtual void free_reflection() = 0;
+
+            virtual IShaderReflection* get_entry_reflection(uint32_t index) = 0;
+            virtual IShaderReflection** get_entry_reflections() = 0;
+            virtual uint32_t get_entry_count() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -51,9 +55,24 @@ namespace Cyber
                 return m_desc;
             }
 
+            virtual IShaderReflection* get_entry_reflection(uint32_t index)
+            {
+                return m_pEntryReflections[index];
+            }
+
+            virtual IShaderReflection** get_entry_reflections()
+            {
+                return m_pEntryReflections;
+            }
+
+            virtual uint32_t get_entry_count() const
+            {
+                return m_entryCount;
+            }
+
         protected:
             const char8_t* m_name;
-            IShaderReflection* m_pEntryReflections;
+            IShaderReflection** m_pEntryReflections;
             uint32_t m_entryCount;
             ShaderLibraryCreateDesc m_desc;
         };

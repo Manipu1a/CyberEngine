@@ -121,32 +121,32 @@ namespace Cyber
 
         public:
             RGRenderPass& add_render_target(uint32_t mrt_index, RGTextureRef texture,
-             ERHILoadAction load_action = RHI_LOAD_ACTION_CLEAR, 
-             ERHIClearValue clear_color = fastclear_0000, 
-             ERHIStoreAction store_action = RHI_STORE_ACTION_STORE) CYBER_NOEXCEPT;
+            LOAD_ACTION load_action = LOAD_ACTION_CLEAR, 
+            GRAPHICS_CLEAR_VALUE clear_color = fastclear_0000, 
+            STORE_ACTION store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
             RGRenderPass& set_depthstencil(RGDepthStencilRef depthstencil, 
-            ERHILoadAction depth_load_action = RHI_LOAD_ACTION_CLEAR, 
-            ERHIStoreAction depth_store_action = RHI_STORE_ACTION_STORE,
-            ERHILoadAction stencil_load_action = RHI_LOAD_ACTION_CLEAR, 
-            ERHIStoreAction stencil_store_action = RHI_STORE_ACTION_STORE) CYBER_NOEXCEPT;
+            LOAD_ACTION depth_load_action = LOAD_ACTION_CLEAR, 
+            STORE_ACTION depth_store_action = STORE_ACTION_STORE,
+            LOAD_ACTION stencil_load_action = LOAD_ACTION_CLEAR, 
+            STORE_ACTION stencil_store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
-            RGRenderPass& set_pipeline(RHIRenderPipeline* pipeline) CYBER_NOEXCEPT;
+            RGRenderPass& set_pipeline(class IRenderPipeline* pipeline) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGTextureRef texture) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGBufferRef buffer) CYBER_NOEXCEPT;
 
-            RHIRenderPipeline* pipeline;
+            class IRenderPipeline* pipeline;
             eastl::map<uint32_t, RGTextureRef> render_targets;
             eastl::map<const char8_t*, RGTextureRef> input_textures;
             eastl::map<const char8_t*, RGBufferRef> input_buffers;
 
-            ERHILoadAction dload_action;
-            ERHIStoreAction dstore_action;
-            ERHILoadAction sload_action;
-            ERHIStoreAction sstore_action;
+            LOAD_ACTION dload_action;
+            STORE_ACTION dstore_action;
+            LOAD_ACTION sload_action;
+            STORE_ACTION sstore_action;
 
-            eastl::vector<ERHILoadAction> mrt_load_actions;
-            eastl::vector<ERHIStoreAction> mrt_store_actions;
+            eastl::vector<LOAD_ACTION> mrt_load_actions;
+            eastl::vector<STORE_ACTION> mrt_store_actions;
 
             uint32_t num_render_target = 0;
             const char8_t* pass_name;
