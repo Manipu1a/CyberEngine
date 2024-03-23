@@ -82,7 +82,8 @@ namespace Cyber
                             root_constant->get_binding() == resource->get_binding() &&
                             root_constant->get_size() == resource->get_size())
                         {
-                            root_constant.stages |= resource->get_stages();
+                            auto stages = root_constant->get_stages() | resource->get_stages();
+                            root_constant->set_stages(stages);
                             coincided = true;
                         }
                     }
@@ -95,7 +96,7 @@ namespace Cyber
                     for(auto& static_sampler : all_static_samplers)
                     {
                         if(static_sampler->get_name_hash() == resource->get_name_hash() &&
-                            static_sampler>get_set() == resource->get_set() &&
+                            static_sampler->get_set() == resource->get_set() &&
                             static_sampler->get_binding() == resource->get_binding())
                         {
                             auto stages = static_sampler->get_stages() | resource->get_stages();
@@ -149,42 +150,41 @@ namespace Cyber
         eastl::stable_sort(rst_resources.begin(), rst_resources.end(), [](const RenderObject::IShaderResource* lhs, const RenderObject::IShaderResource* rhs){
             if(lhs->get_set() == rhs->get_set())
                 return lhs->get_binding() < rhs->get_binding();
-            return lhs->get_set() < rhs->get_set;
+            return lhs->get_set() < rhs->get_set();
         });
         // Slice
-        rootSignature->m_parameterTableCount = (uint32_t)valid_sets.size();
-        rootSignature->m_parameterTables = (RootSignatureParameterTable*)cyber_calloc( rootSignature->m_parameterTableCount,sizeof(RootSignatureParameterTable));
+        rootSignature->set_parameter_tables((RenderObject::RootSignatureParameterTable*)cyber_calloc( (uint32_t)valid_sets.size(),sizeof(RenderObject::RootSignatureParameterTable)), (uint32_t)valid_sets.size());
         uint32_t table_index = 0;
         for(auto&& set_index : valid_sets)
         {
-            RootSignatureParameterTable& table = rootSignature->m_parameterTables[table_index];
-            table.set_index = set_index;
-            table.resource_count = 0;
+            RenderObject::RootSignatureParameterTable* table = rootSignature->get_parameter_table(table_index);
+            table->set_index = set_index;
+            table->resource_count = 0;
             // 计算每个set的资源数量
             for(auto& rst_resource : rst_resources)
             {
                 if(rst_resource->get_set() == set_index)
-                    ++table.resource_count;
+                    ++table->resource_count;
             }
-            table.resources = (RenderObject::IShaderResource*)cyber_calloc(table.resource_count, sizeof(RenderObject::IShaderResource));
+            table->resources = (RenderObject::IShaderResource*)cyber_calloc(table->resource_count, sizeof(RenderObject::IShaderResource));
             // 将参数按照set分组存入table
             uint32_t slot_index = 0;
             for(auto&& rst_resource : rst_resources)
             {
                 if(rst_resource->get_set() == set_index)
                 {
-                    table.resources[slot_index] = rst_resource;
+                    table->resources[slot_index] = rst_resource;
                     ++slot_index;
                 }
             }
             ++table_index;
         }
         // push constants
-        rootSignature->m_pushConstantCount = (uint32_t)all_push_constants.size();
-        rootSignature->m_pushConstants = (RenderObject::IShaderResource**)cyber_calloc(rootSignature->m_pushConstantCount, sizeof(RenderObject::IShaderResource*));
-        for(uint32_t i = 0; i < rootSignature->m_pushConstantCount; ++i)
+        uint32_t push_constant_count = (uint32_t)all_push_constants.size();
+        rootSignature->set_push_constants((RenderObject::IShaderResource**)cyber_calloc(push_constant_count, sizeof(RenderObject::IShaderResource*)), push_constant_count);
+        for(uint32_t i = 0; i < push_constant_count; ++i)
         {
-            rootSignature->m_pushConstants[i] = all_push_constants[i];
+            rootSignature->set_push_constant(all_push_constants[i], i);
         }
         // static samplers
         eastl::stable_sort(all_static_samplers.begin(), all_static_samplers.end(), [](const RenderObject::IShaderResource* lhs, const RenderObject::IShaderResource* rhs){
@@ -192,64 +192,17 @@ namespace Cyber
                 return lhs->get_binding() < rhs->get_binding();
             return lhs->get_set() < rhs->get_set();
         });
-        rootSignature->m_staticSamplerCount = (uint32_t)all_static_samplers.size();
-        rootSignature->m_staticSamplers = (RenderObject::IShaderResource**)cyber_calloc(rootSignature->m_staticSamplerCount, sizeof(RenderObject::IShaderResource*));
-        for(uint32_t i = 0; i < rootSignature->m_staticSamplerCount; ++i)
+        uint32_t static_sampler_count = (uint32_t)all_static_samplers.size();
+        rootSignature->set_static_samplers((RenderObject::IShaderResource**)cyber_calloc(static_sampler_count, sizeof(RenderObject::IShaderResource*)), static_sampler_count);
+        for(uint32_t i = 0; i < static_sampler_count; ++i)
         {
-            rootSignature->m_staticSamplers[i] = all_static_samplers[i];
+            rootSignature->set_static_sampler(all_static_samplers[i], i);
         }
     }
 
-    void graphics_util_free_root_signature_tables(struct IRootSignature* rootSignature)
+    void graphics_util_free_root_signature_tables(struct RenderObject::IRootSignature* rootSignature)
     {
-        // free resources
-        if(rootSignature->m_parameterTables)
-        {
-            for(uint32_t i = 0; i < rootSignature->m_parameterTableCount; ++i)
-            {
-                RHIParameterTable& table = rootSignature->m_parameterTables[i];
-                if(table.resources)
-                {
-                    for(uint32_t binding = 0; binding < table.resource_count; ++binding)
-                    {
-                        RenderObject::IShaderResource& binding_to_free = table.resources[binding];
-                        if(binding_to_free.name != nullptr)
-                        {
-                            cyber_free((char8_t*)binding_to_free.name);
-                        }
-                    }
-                    cyber_free(table.resources);
-                }
-            }
-            cyber_free(rootSignature->m_parameterTables);
-        }
-        // free constant
-        if(rootSignature->m_pushConstants)
-        {
-            for(uint32_t i = 0;i < rootSignature->m_pushConstantCount; ++i)
-            {
-                RenderObject::IShaderResource* binding_to_free = rootSignature->m_pushConstants[i];
-                if(binding_to_free.name != nullptr)
-                {
-                    cyber_free((char8_t*)binding_to_free.name);
-                }
-            }
-            cyber_free(rootSignature->m_pushConstants);
-        }
-        // free static samplers
-        if(rootSignature->m_staticSamplers)
-        {
-            for(uint32_t i = 0;i < rootSignature->m_staticSamplerCount; ++i)
-            {
-                RenderObject::IShaderResource* binding_to_free = rootSignature->m_staticSamplers[i];
-                if(binding_to_free.name != nullptr)
-                {
-                    cyber_free((char8_t*)binding_to_free.name);
-                }
-            }
-            cyber_free(rootSignature->m_staticSamplers);
-        }
-
+        rootSignature->free();
     }
 
     eastl::string GetHLSLProfileString(SHADER_STAGE stage, ShaderVersion version)

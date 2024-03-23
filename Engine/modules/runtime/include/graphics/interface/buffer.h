@@ -12,6 +12,9 @@ namespace Cyber
         // Buffer Interface
         struct CYBER_GRAPHICS_API IBuffer
         {
+            virtual void* get_mapped_data() = 0;
+            virtual uint64_t get_size() const = 0;
+            virtual uint64_t get_descriptors() const = 0;
             
         };
 
@@ -61,13 +64,16 @@ namespace Cyber
 
             Buffer(RenderDeviceImplType* device) : TBufferBase(device) {}
 
+
+        protected:
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
             void* m_pCpuMappedAddress;
             uint64_t m_size : 32;
             uint64_t m_descriptors : 20;
             uint64_t m_memoryUsage : 3;
             uint64_t m_nodeIndex : 4;
-        protected:
+            BufferCreateDesc m_desc;
+
             friend RenderDeviceImplType;
         };
     }

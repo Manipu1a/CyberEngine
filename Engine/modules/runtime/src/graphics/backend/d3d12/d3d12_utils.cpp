@@ -2,7 +2,6 @@
 //#include "platform/configure.h"
 //#include <winnt.h>
 #include <d3d12.h>
-#include <dxcapi.h>
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
 #include "platform/memory.h"
@@ -122,4 +121,88 @@ namespace Cyber
         cyber_check(false);
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
+
+#if !defined (XBOX) && defined (_WIN32)
+    static D3D12Util_DXCLoader DxcLoader;
+
+    void TestModel()
+    {
+        auto procDxcCreateInstance = DxcLoader.Get();
+        DxcLoader.shader_model_major = 6;
+        constexpr char TestShader[] = R"(
+        float4 main() : SV_Target0
+        {
+            return float4(0.0, 0.0, 0.0, 0.0);
+        }
+        )";
+
+        IDxcLibrary* pLibrary = nullptr;
+        IDxcCompiler* pCompiler = nullptr;
+        procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pLibrary));
+        procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler));
+
+        IDxcBlobEncoding* pSource = nullptr;
+        pLibrary->CreateBlobWithEncodingFromPinned(TestShader, sizeof(TestShader), 0, &pSource);
+
+        eastl::vector<const wchar_t*> DxilArgs;
+
+        for(uint32_t MinorVer = 1;;++MinorVer)
+        {
+            eastl::wstring Profile(eastl::wstring::CtorSprintf(), L"ps_6_%d" , MinorVer);
+            IDxcOperationResult* pdxcResult = nullptr;
+            auto hr = pCompiler->Compile(pSource, L"", L"main", Profile.c_str(), !DxilArgs.empty() ? DxilArgs.data() : nullptr, (uint32_t)DxilArgs.size(), nullptr, 0, nullptr, &pdxcResult);
+            if(FAILED(hr))
+            {
+                break;
+            }
+
+            HRESULT status = E_FAIL;
+            if(FAILED(pdxcResult->GetStatus(&status)))
+            {
+                break;
+            }
+            if(FAILED(status))
+            {
+                break;
+            }
+
+            DxcLoader.shader_model_minor = MinorVer;
+        }
+    }
+
+    void d3d12_util_load_dxc_dll()
+    {
+        DxcLoader.Load();
+
+        auto procDxcCreateInstance = DxcLoader.Get();
+        TestModel();
+
+        if(procDxcCreateInstance)
+        {
+            IDxcValidator* pValidator = nullptr;
+            if(SUCCEEDED(procDxcCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(&pValidator))))
+            {
+                IDxcVersionInfo* pVersionInfo;
+                if(SUCCEEDED(pValidator->QueryInterface(IID_PPV_ARGS(&pVersionInfo))))
+                {
+                    pVersionInfo->GetVersion(&DxcLoader.mMajorVersion, &DxcLoader.mMinorVersion);
+
+                }
+            }
+            CB_INFO("Loaded DX Shader Compiler {0}.{1}. Max supported shader model: {2}.{3}", DxcLoader.mMajorVersion, DxcLoader.mMinorVersion, DxcLoader.shader_model_major, DxcLoader.shader_model_minor);
+        }
+    }
+    void d3d12_util_unload_dxc_dll()
+    {
+        DxcLoader.Unload();
+    }
+    DxcCreateInstanceProc d3d12_util_get_dxc_create_instance_proc()
+    {
+        if(DxcLoader.pDxcCreateInstance == nullptr)
+        {
+            d3d12_util_load_dxc_dll();
+        }
+        return DxcLoader.Get();
+    }
+#endif
 }

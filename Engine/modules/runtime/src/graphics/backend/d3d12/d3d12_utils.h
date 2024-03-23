@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
+#include <dxcapi.h>
 
 namespace Cyber
 {
@@ -449,4 +450,36 @@ namespace Cyber
     D3D12_DEPTH_STENCIL_DESC D3D12Util_TranslateDepthStencilState(const DepthStateCreateDesc* pDesc);
 
     D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(PRIMITIVE_TOPOLOGY topology);
+
+    #if !defined (XBOX) && defined (_WIN32)
+        struct D3D12Util_DXCLoader
+        {
+            void Load()
+            {
+                dxcLibrary = LoadLibrary(L"dxcompiler.dll");
+                pDxcCreateInstance = (void*)::GetProcAddress((HMODULE)dxcLibrary, "DxcCreateInstance");
+            }
+            void Unload()
+            {
+                pDxcCreateInstance = nullptr;
+                ::FreeLibrary(dxcLibrary);
+            }
+
+            DxcCreateInstanceProc Get()
+            {
+                return (DxcCreateInstanceProc)pDxcCreateInstance;
+            }
+
+            HMODULE dxcLibrary;
+            void* pDxcCreateInstance;
+            uint32_t mMajorVersion;
+            uint32_t mMinorVersion;
+            uint32_t shader_model_major;
+            uint32_t shader_model_minor;
+        };
+
+        void d3d12_util_load_dxc_dll();
+        void d3d12_util_unload_dxc_dll();
+        DxcCreateInstanceProc d3d12_util_get_dxc_create_instance_proc();
+    #endif
 }

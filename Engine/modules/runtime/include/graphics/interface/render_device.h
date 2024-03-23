@@ -15,7 +15,7 @@
 #include "fence.h"
 #include "Instance.h"
 #include "render_pipeline.h"
-#include "root_signature.h"
+#include "root_signature.hpp"
 #include "root_signature_pool.h"
 #include "shader_library.h"
 #include "shader_reflection.hpp"

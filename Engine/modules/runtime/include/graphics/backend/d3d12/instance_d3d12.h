@@ -32,13 +32,15 @@ namespace Cyber
             virtual void de_initialize_environment() override final;
             virtual void optional_enable_debug_layer() override final;
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
+
+            virtual void free() override final;
         protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)
             struct IDXGIFactory6* m_pDXGIFactory;
         #endif
             struct ID3D12Debug* m_pDXDebug;
-            struct IAdapter* m_pAdapters;
+            struct IAdapter** m_pAdapters;
             uint32_t m_adaptersCount;
 
         protected:

@@ -26,6 +26,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IAdapter
         {
             virtual IInstance* get_instance() const = 0;
+            virtual void free() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -45,6 +46,10 @@ namespace Cyber
                 return m_pInstance;
             }
             
+            virtual void free() override final
+            {
+                delete this;
+            }
         protected:
             class IInstance* m_pInstance = nullptr;
         };

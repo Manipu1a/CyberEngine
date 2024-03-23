@@ -5,7 +5,7 @@
 #include "platform/memory.h"
 #include "interface/graphics_types.h"
 #include <d3dcompiler.h>
-\
+#include "d3d12_utils.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -62,121 +62,6 @@ namespace Cyber
             TEXTURE_FORMAT_R32G32B32A32_SFLOAT,
         };
 
-        #if !defined (XBOX) && defined (_WIN32)
-        struct RHIUtil_DXCLoader
-        {
-            void Load()
-            {
-                dxcLibrary = LoadLibrary(L"dxcompiler.dll");
-                pDxcCreateInstance = (void*)::GetProcAddress((HMODULE)dxcLibrary, "DxcCreateInstance");
-
-            }
-            void Unload()
-            {
-                pDxcCreateInstance = nullptr;
-                ::FreeLibrary(dxcLibrary);
-            }
-
-            DxcCreateInstanceProc Get()
-            {
-                return (DxcCreateInstanceProc)pDxcCreateInstance;
-            }
-            HMODULE dxcLibrary;
-            void* pDxcCreateInstance;
-            uint32_t mMajorVersion;
-            uint32_t mMinorVersion;
-            uint32_t shader_model_major;
-            uint32_t shader_model_minor;
-        };
-
-        //void* RHIUtil_DXCLoader::pDxcCreateInstance = nullptr;
-        //HMODULE RHIUtil_DXCLoader::dxcLibrary = nullptr;
-        static RHIUtil_DXCLoader DxcLoader;
-        
-        void TestModel()
-        {
-            auto procDxcCreateInstance = DxcLoader.Get();
-            DxcLoader.shader_model_major = 6;
-            constexpr char TestShader[] = R"(
-            float4 main() : SV_Target0
-            {
-                return float4(0.0, 0.0, 0.0, 0.0);
-            }
-            )";
-
-            IDxcLibrary* pLibrary = nullptr;
-            IDxcCompiler* pCompiler = nullptr;
-            procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pLibrary));
-            procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler));
-
-            IDxcBlobEncoding* pSource = nullptr;
-            pLibrary->CreateBlobWithEncodingFromPinned(TestShader, sizeof(TestShader), 0, &pSource);
-
-            eastl::vector<const wchar_t*> DxilArgs;
-
-            for(uint32_t MinorVer = 1;;++MinorVer)
-            {
-                eastl::wstring Profile(eastl::wstring::CtorSprintf(), L"ps_6_%d" , MinorVer);
-                IDxcOperationResult* pdxcResult = nullptr;
-                auto hr = pCompiler->Compile(pSource, L"", L"main", Profile.c_str(), !DxilArgs.empty() ? DxilArgs.data() : nullptr, (uint32_t)DxilArgs.size(), nullptr, 0, nullptr, &pdxcResult);
-                if(FAILED(hr))
-                {
-                    break;
-                }
-
-                HRESULT status = E_FAIL;
-                if(FAILED(pdxcResult->GetStatus(&status)))
-                {
-                    break;
-                }
-                if(FAILED(status))
-                {
-                    break;
-                }
-
-                DxcLoader.shader_model_minor = MinorVer;
-            }
-        }
-
-        void D3D12Util_LoadDxcDLL()
-        {
-            DxcLoader.Load();
-
-            auto procDxcCreateInstance = DxcLoader.Get();
-            TestModel();
-
-            if(procDxcCreateInstance)
-            {
-                IDxcValidator* pValidator = nullptr;
-                if(SUCCEEDED(procDxcCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(&pValidator))))
-                {
-                    IDxcVersionInfo* pVersionInfo;
-                    if(SUCCEEDED(pValidator->QueryInterface(IID_PPV_ARGS(&pVersionInfo))))
-                    {
-                        pVersionInfo->GetVersion(&DxcLoader.mMajorVersion, &DxcLoader.mMinorVersion);
-
-                    }
-                }
-                CB_INFO("Loaded DX Shader Compiler {0}.{1}. Max supported shader model: {2}.{3}", DxcLoader.mMajorVersion, DxcLoader.mMinorVersion, DxcLoader.shader_model_major, DxcLoader.shader_model_minor);
-                //LOG_INFO_MESSAGE("Loaded DX Shader Compiler ", m_MajorVer, ".", m_MinorVer, ". Max supported shader model: ", m_MaxShaderModel.Major, '.', m_MaxShaderModel.Minor);
-            }
-        }
-
-        void D3D12Util_UnloadDxcDLL()
-        {
-            DxcLoader.Unload();
-        }
-
-        DxcCreateInstanceProc D3D12Util_GetDxcCreateInstanceProc()
-        {
-            if(DxcLoader.pDxcCreateInstance == nullptr)
-            {
-                D3D12Util_LoadDxcDLL();
-            }
-            return DxcLoader.Get();
-        }
-        #endif
-
         void ShaderLibrary_D3D12_Impl::free_reflection()
         {
             if(m_pEntryReflections)
@@ -194,7 +79,7 @@ namespace Cyber
         void ShaderLibrary_D3D12_Impl::Initialize_shader_reflection(const RenderObject::ShaderLibraryCreateDesc& desc)
         {
             ID3D12ShaderReflection* d3d12Reflection = nullptr;
-            auto procDxcCreateInstance = D3D12Util_GetDxcCreateInstanceProc();
+            auto procDxcCreateInstance = d3d12_util_get_dxc_create_instance_proc();
 
             bool bUseDXC = false;
             switch(desc.shader_compiler)

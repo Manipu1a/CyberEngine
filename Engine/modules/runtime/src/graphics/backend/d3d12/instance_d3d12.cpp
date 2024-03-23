@@ -3,6 +3,7 @@
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "backend/d3d12/adapter_d3d12.h"
 #include "platform/memory.h"
+#include "d3d12_utils.h"
 
 namespace Cyber
 {
@@ -95,14 +96,52 @@ namespace Cyber
             }
 
             count = m_adaptersCount;
-            m_pAdapters = cyber_new_n<RenderObject::Adapter_D3D12_Impl>(m_adaptersCount);
+            m_pAdapters = (RenderObject::IAdapter**)cyber_calloc(m_adaptersCount, sizeof(RenderObject::IAdapter*));
 
             for(uint32_t i = 0;i < count; i++)
             {
-                RenderObject::Adapter_D3D12_Impl* pAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(&m_pAdapters[i]);
+                RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>();
                 // Device Objects
                 pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
+                m_pAdapters[i] = pAdapter;
             }
+        }
+
+        void Instance_D3D12_Impl::free()
+        {
+            de_initialize_environment();
+            if(m_adaptersCount > 0)
+            {
+                for(uint32_t i = 0;i < m_adaptersCount; i++)
+                {
+                    m_pAdapters[i]->free();
+                }
+            }
+            cyber_free(m_pAdapters);
+            SAFE_RELEASE(m_pDXGIFactory);
+            if(m_pDXDebug)
+            {
+                SAFE_RELEASE(m_pDXDebug);
+            }
+
+        #if !defined (XBOX) && defined (_WIN32)
+            d3d12_util_unload_dxc_dll();
+        #endif
+
+        #ifdef _DEBUG
+            {
+                IDXGIDebug1* dxgiDebug = nullptr;
+                if(SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+                {
+                    dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+                }
+                SAFE_RELEASE(dxgiDebug);
+            }
+        #endif
+
+            TInstanceBase::free();
+
+            delete this;
         }
     }
 }

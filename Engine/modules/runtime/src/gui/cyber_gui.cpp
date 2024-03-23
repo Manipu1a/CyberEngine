@@ -57,7 +57,7 @@ namespace Cyber
         {
 
         }
-        void GUIApplication::update(RenderObject::RenderPassEncoder* encoder, float deltaTime)
+        void GUIApplication::update(RenderPassEncoder* encoder, float deltaTime)
         {
             // Start the Dear ImGui frame
             ImGui_ImplDX12_NewFrame();
@@ -68,10 +68,10 @@ namespace Cyber
 
             // Rendering
             ImGui::Render();
-            CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+            RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
-            Cmd->m_pDxCmdList->SetDescriptorHeaps(1, GuidescriptorHeaps);
-            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->pDxCmdList);
+            Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
+            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
         }
 
         void GUIApplication::finalize()
