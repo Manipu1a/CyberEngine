@@ -34,6 +34,20 @@ namespace Cyber
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
 
             virtual void free() override final;
+
+        #if defined(XBOX)
+        #elif defined(_WINDOWS)
+            struct IDXGIFactory6* get_dxgi_factory() const { return m_pDXGIFactory; }
+            void set_dxgi_factory(struct IDXGIFactory6* factory) { m_pDXGIFactory = factory; }
+        #endif  
+            struct ID3D12Debug* get_dx_debug() const { return m_pDXDebug; }
+            void set_dx_debug(struct ID3D12Debug* debug) { m_pDXDebug = debug; }
+
+            struct IAdapter** get_adapters() const { return m_pAdapters; }
+            void set_adapters(struct IAdapter** adapters) { m_pAdapters = adapters; }
+
+            uint32_t get_adapters_count() const { return m_adaptersCount; }
+            void set_adapters_count(uint32_t count) { m_adaptersCount = count; }
         protected:
         #if defined(XBOX)
         #elif defined(_WINDOWS)

@@ -18,6 +18,7 @@ namespace Cyber
             virtual CommandBufferCreateDesc get_create_desc() = 0;
             virtual ICommandPool* get_pool() = 0;
             virtual PIPELINE_TYPE get_current_dispatch() = 0;
+            virtual void free() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -47,6 +48,10 @@ namespace Cyber
                 return m_currentDispatch;
             }
             
+            virtual void free() override
+            {
+                delete this;
+            }
         protected:
             CommandBufferCreateDesc m_desc;
             class ICommandPool* m_pPool;

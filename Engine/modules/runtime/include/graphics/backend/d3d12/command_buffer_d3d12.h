@@ -3,6 +3,7 @@
 #include "engine_impl_traits_d3d12.hpp"
 #include "interface/graphics_types.h"
 #include "interface/command_buffer.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -50,6 +51,11 @@ namespace Cyber
             ICommandPool* get_cmd_pool() const { return m_pCmdPool; }
             void set_cmd_pool(ICommandPool* cmdPool) { m_pCmdPool = cmdPool; }
             
+            virtual void free() override final
+            {
+                SAFE_RELEASE(m_pDxCmdList);
+                TCommandBufferBase::free();
+            }
         protected:
             ID3D12GraphicsCommandList* m_pDxCmdList;
             // Cached in beginCmd to avoid fetching them during rendering

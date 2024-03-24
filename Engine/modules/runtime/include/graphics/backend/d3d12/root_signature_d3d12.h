@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine_impl_traits_d3d12.hpp"
-#include "interface/root_signature.h"
+#include "interface/root_signature.hpp"
 
 namespace Cyber
 {

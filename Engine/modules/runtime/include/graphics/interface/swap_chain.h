@@ -50,6 +50,8 @@ namespace Cyber
             {
                 return m_desc;
             }
+
+            
         protected:
             SwapChainDesc m_desc;
             RenderObject::ITexture** m_ppBackBufferSRVs;

@@ -136,7 +136,8 @@ namespace Cyber
 
             virtual void free() override
             {
-                cyber_free((void*)m_name);
+                if(m_name != nullptr)
+                    cyber_free((void*)m_name);
             }
 
         protected:

@@ -2,6 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "device_object.h"
 #include "graphics_types.h"
+#include "interface/shader_resource.h"
 #include "platform/memory.h"
 
 namespace Cyber
@@ -28,7 +29,7 @@ namespace Cyber
             uint32_t static_sampler_count;
             const char8_t* const* push_constant_names;
             uint32_t push_constant_count;
-            IRootSignaturePool* pool;
+            IRootSignaturePool** pool;
         };
 
         struct CYBER_GRAPHICS_API IRootSignature
@@ -165,7 +166,7 @@ namespace Cyber
                 m_pipelineType = type;
             }
             
-            virtual IRootSignaturePool* get_pool() const override
+            virtual IRootSignaturePool** get_pool() const override
             {
                 return m_pPool;
             }
@@ -211,11 +212,7 @@ namespace Cyber
                     for(uint32_t i = 0;i < m_pushConstantCount; ++i)
                     {
                         RenderObject::IShaderResource* binding_to_free = m_pPushConstants[i];
-                        if(binding_to_free.name != nullptr)
-                        {
-                            cyber_free((char8_t*)binding_to_free.name);
-                            cyber_free(binding_to_free);
-                        }
+                        binding_to_free->free();
                     }
                     cyber_free(m_pPushConstants);
                 }
@@ -225,10 +222,7 @@ namespace Cyber
                     for(uint32_t i = 0;i < m_staticSamplerCount; ++i)
                     {
                         RenderObject::IShaderResource* binding_to_free = m_pStaticSamplers[i];
-                        if(binding_to_free.name != nullptr)
-                        {
-                            cyber_free((char8_t*)binding_to_free.name);
-                        }
+                        binding_to_free->free();
                     }
                     cyber_free(m_pStaticSamplers);
                 }

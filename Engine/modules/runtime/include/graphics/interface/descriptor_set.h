@@ -8,7 +8,8 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API IDescriptorSet
         {
-            
+            virtual class IRootSignature* get_root_signature() const = 0;
+            virtual uint32_t get_set_index() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -21,6 +22,16 @@ namespace Cyber
             DescriptorSetBase(RenderDeviceImplType* device) : TDescriptorSetBase(device) {  };
 
             virtual ~DescriptorSetBase() = default;
+
+            virtual class IRootSignature* get_root_signature() const
+            {
+                return m_pRootSignature;
+            }
+
+            virtual uint32_t get_set_index() const
+            {
+                return m_setIndex;
+            }
         protected:
             class IRootSignature* m_pRootSignature;
             uint32_t m_setIndex;
