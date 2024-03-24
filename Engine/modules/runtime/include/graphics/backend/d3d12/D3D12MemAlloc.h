@@ -74,6 +74,8 @@ Documentation of all members: D3D12MemAlloc.h
     #endif
 #endif
 
+#include "platform/flag_enums.h"
+
 /*
 When defined to value other than 0, the library will try to use
 D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT or D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT

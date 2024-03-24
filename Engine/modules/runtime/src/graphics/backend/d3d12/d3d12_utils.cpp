@@ -1,6 +1,5 @@
 #include "d3d12_utils.h"
 //#include "platform/configure.h"
-//#include <winnt.h>
 #include <d3d12.h>
 #include <d3d12shader.h>
 #include <d3dcompiler.h>

@@ -17,15 +17,14 @@ namespace Cyber
         {
             
         };
-
         /// DirectX12 does not have a concept of a semaphore. We emulate it using a fence.
-        class CYBER_GRAPHICS_API Semaphtore_D3D12_Impl : public SemaphoreBase<EngineD3D12ImplTraits>
+        class CYBER_GRAPHICS_API Semaphore_D3D12_Impl : public SemaphoreBase<EngineD3D12ImplTraits>
         {
         public:
             using TSemaphtoreBase = SemaphoreBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Semaphtore_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TSemaphtoreBase(device) {}
+            Semaphore_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TSemaphtoreBase(device) {}
         protected:
             ID3D12Fence* dx_fence;
             HANDLE dx_wait_idle_fence_event;

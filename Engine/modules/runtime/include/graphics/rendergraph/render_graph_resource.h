@@ -64,7 +64,7 @@ namespace Cyber
         public:
             const char8_t* resource_name;
             ERGResourceType resource_type;
-            RHIDevice* device;
+            RenderObject::IRenderDevice* device;
         };
 
         class RGBuffer : public RGRenderResource

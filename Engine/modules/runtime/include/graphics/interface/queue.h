@@ -32,6 +32,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IQueue
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
+            virtual void wait_fence(class IFence* fence, uint64_t value) = 0;
             virtual QUEUE_TYPE get_type() const = 0;
             virtual QueueIndex get_index() const = 0;
         };

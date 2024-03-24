@@ -27,6 +27,9 @@ namespace Cyber
             Queue_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TQueueBase(device) {}
 
             virtual void signal_fence(class IFence* fence, uint64_t value) override;
+            virtual void wait_fence(class IFence* fence, uint64_t value) override;
+
+            ID3D12CommandQueue* get_native_queue() const { return m_pCommandQueue; }
         protected:
             ID3D12CommandQueue* m_pCommandQueue;
             IFence* m_pFence;

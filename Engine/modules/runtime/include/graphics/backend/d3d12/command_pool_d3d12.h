@@ -26,8 +26,9 @@ namespace Cyber
 
             CommandPool_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandPoolCreateDesc& desc) : TCommandPoolBase(device, desc) {}
 
+            ID3D12CommandAllocator* get_native_command_allocator() const { return m_pDxCmdAlloc; }
         protected:
-            struct ID3D12CommandAllocator* pDxCmdAlloc;
+            struct ID3D12CommandAllocator* m_pDxCmdAlloc;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

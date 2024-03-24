@@ -7,6 +7,12 @@
 
 namespace Cyber
 {
+    namespace RenderObject
+    {
+        struct IRenderDevice;
+        struct IQueue;
+    }
+    
     namespace render_graph
     {
         class CYBER_RUNTIME_API RenderGraphBuilder

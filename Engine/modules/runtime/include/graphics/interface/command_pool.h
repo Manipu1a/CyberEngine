@@ -13,7 +13,8 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API ICommandPool
         {
-            
+            virtual void set_queue(class IQueue* queue) = 0;
+            virtual IQueue* get_queue() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -27,6 +28,16 @@ namespace Cyber
             CommandPoolBase(RenderDeviceImplType* device, const CommandPoolCreateDesc& desc) : TCommandPoolBase(device), m_desc(desc) {  };
 
             virtual ~CommandPoolBase() = default;
+
+            virtual void set_queue(class IQueue* queue) override
+            {
+                m_pQueue = queue;
+            }
+
+            virtual IQueue* get_queue() const override
+            {
+                return m_pQueue;
+            }
         protected:
             class IQueue* m_pQueue;
             CommandPoolCreateDesc m_desc;

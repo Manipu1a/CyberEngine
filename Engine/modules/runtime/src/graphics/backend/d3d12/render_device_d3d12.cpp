@@ -34,6 +34,10 @@
 #include "graphics/backend/d3d12/queue_d3d12.h"
 #include "graphics/backend/d3d12/adapter_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
+#include "graphics/backend/d3d12/descriptor_set_d3d12.h"
+#include "graphics/backend/d3d12/semaphore_d3d12.h"
+#include "graphics/backend/d3d12/render_pipeline_d3d12.h"
+#include "graphics/backend/d3d12/root_signature_d3d12.h"
 #include "platform/configure.h"
 
 
@@ -666,10 +670,8 @@ namespace Cyber
             D3D12MA::ALLOCATION_DESC alloc_desc = {};
             alloc_desc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
             if(pDesc.m_flags & TCF_OWN_MEMORY_BIT)
-                alloc_desc.Flags |= D3D12MA::ALLOCATION_FLAG_COMMITTED;
-            
-            D3D12MA::ALLOCATION_FLAGS extraFlags = D3D12MA::ALLOCATION_FLAG_NONE;
-            extraFlags |= D3D12MA::ALLOCATION_FLAG_COMMITTED;
+                alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
+
             // Create resource
             auto hRes = m_pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, pClearValue, &pTexture->allocation, IID_ARGS(&pTexture->native_resource));
             if(hRes != S_OK)
@@ -820,16 +822,16 @@ namespace Cyber
         for(uint32_t i = 0; i < cmd_count; i++)
         {
             CommandBuffer_D3D12_Impl* dx_cmd = static_cast<CommandBuffer_D3D12_Impl*>(submitDesc.m_ppCmds[i]);
-            cmds[i] = dx_cmd->m_pDxCmdList;
+            cmds[i] = dx_cmd->get_dx_cmd_list();
         }
         // Wait semaphores
         for(uint32_t i = 0; i < submitDesc.m_waitSemaphoreCount; i++)
         {
             Semaphore_D3D12_Impl* dx_semaphore = static_cast<Semaphore_D3D12_Impl*>(submitDesc.m_ppWaitSemaphores[i]);
-            dx_queue->pCommandQueue->Wait(dx_semaphore->dx_fence, dx_semaphore->fence_value - 1);
+            dx_queue->get_native_queue()->Wait(dx_semaphore->dx_fence, dx_semaphore->fence_value - 1);
         }
         // Execute
-        dx_queue->pCommandQueue->ExecuteCommandLists(cmd_count, cmds);
+        dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
         // Signal fences
         if(dx_fence)
         {
@@ -839,13 +841,13 @@ namespace Cyber
         for(uint32_t i = 0; i < submitDesc.m_signalSemaphoreCount; i++)
         {
             Semaphore_D3D12_Impl* dx_semaphore = static_cast<Semaphore_D3D12_Impl*>(submitDesc.m_ppSignalSemaphores[i]);
-            dx_queue->signal_fence(dx_semaphore->dx_fence, dx_semaphore->fence_value++);
+            dx_queue->get_native_queue()->Signal(dx_semaphore->dx_fence, dx_semaphore->fence_value++);
         }
     }
 
     void RenderDevice_D3D12_Impl::present_queue(IQueue* queue, const QueuePresentDesc& presentDesc)
     {
-        SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(presentDesc.swap_chain);
+        SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(presentDesc.m_pSwapChain);
         
         HRESULT hr =  dx_swapchain->pDxSwapChain->Present(0, dx_swapchain->mFlags);
 
@@ -874,13 +876,14 @@ namespace Cyber
     {
         D3D12_COMMAND_LIST_TYPE type = queue->get_type() == QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->get_type() == QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-        bool res = SUCCEEDED(d3d12_device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandPool->m_pDxCmdAlloc)));
+        
+        auto command_allocator = commandPool->get_native_command_allocator();
+        bool res = SUCCEEDED(d3d12_device->CreateCommandAllocator(type, IID_PPV_ARGS(&command_allocator)));
         if(!res)
         {
             cyber_assert(false, "command allocator create failed!");
         }
-        commandPool->m_pQueue = queue;
+        commandPool->set_queue(queue);
     }
 
     ICommandPool* RenderDevice_D3D12_Impl::create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
@@ -905,32 +908,32 @@ namespace Cyber
     {
         CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>();
         CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-        Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->pQueue);
+        Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->get_queue());
 
         // set command pool of new command
         dxCommandBuffer->set_node_index(GRAPHICS_SINGLE_GPU_NODE_INDEX);
         dxCommandBuffer->set_type(dxQueue->get_type());
-        dxCommandBuffer->set_bound_heap(0, mCbvSrvUavHeaps[dxCommandBuffer->m_nodeIndex]);
-        dxCommandBuffer->set_bound_heap(1, mSamplerHeaps[dxCommandBuffer->m_nodeIndex]);
+        dxCommandBuffer->set_bound_heap(0, m_cbvSrvUavHeaps[dxCommandBuffer->m_nodeIndex]);
+        dxCommandBuffer->set_bound_heap(1, m_samplerHeaps[dxCommandBuffer->m_nodeIndex]);
 
         dxCommandBuffer->m_pCmdPool = pool;
         
         uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
         ID3D12PipelineState* initialState = nullptr;
+        auto cmd_list = dxCommandBuffer->get_dx_cmd_list();
         CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask,gDx12CmdTypeTranslator[dxCommandBuffer->m_type] , 
-                dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&dxCommandBuffer->m_pDxCmdList)));
+                dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&cmd_list)));
         
         // Command lists are add in the recording state, but there is nothing
         // to record yet. The main loop expects it to be closed, so close it now.
-        CHECK_HRESULT(dxCommandBuffer->m_pDxCmdList->Close());
+        CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
         return dxCommandBuffer;
     }
 
     void RenderDevice_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer)
     {
         CommandBuffer_D3D12_Impl* dxCommandBuffer = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-        SAFE_RELEASE(dxCommandBuffer->m_pDxCmdList);
-        cyber_delete(commandBuffer);
+        dxCommandBuffer->free();
     }
 
     void RenderDevice_D3D12_Impl::cmd_begin(ICommandBuffer* commandBuffer)
@@ -943,13 +946,13 @@ namespace Cyber
         if(cmd->m_type != QUEUE_TYPE_TRANSFER)
         {
             ID3D12DescriptorHeap* heaps[] = {
-                cmd->m_pBoundHeaps[0]->m_pCurrentHeap,
-                cmd->m_pBoundHeaps[1]->m_pCurrentHeap
+                cmd->m_pBoundHeaps[0]->get_heap(),
+                cmd->m_pBoundHeaps[1]->get_heap()
             };
-            cmd->pDxCmdList->SetDescriptorHeaps(2, heaps);
+            cmd->get_dx_cmd_list()->SetDescriptorHeaps(2, heaps);
 
-            cmd->m_boundHeapStartHandles[0] = cmd->m_pBoundHeaps[0]->m_pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
-            cmd->m_boundHeapStartHandles[1] = cmd->m_pBoundHeaps[1]->m_pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
+            cmd->m_boundHeapStartHandles[0] = cmd->m_pBoundHeaps[0]->get_heap()->GetGPUDescriptorHandleForHeapStart();
+            cmd->m_boundHeapStartHandles[1] = cmd->m_pBoundHeaps[1]->get_heap()->GetGPUDescriptorHandleForHeapStart();
         }
         // Reset CPU side data
         cmd->m_pBoundRootSignature = nullptr;
@@ -958,8 +961,8 @@ namespace Cyber
     void RenderDevice_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
     {
         CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-        cyber_check(cmd->m_pDxCmdList);
-        CHECK_HRESULT(cmd->m_pDxCmdList->Close());
+        cyber_check(cmd->get_dx_cmd_list());
+        CHECK_HRESULT(cmd->get_dx_cmd_list()->Close());
     }
 
     void RenderDevice_D3D12_Impl::cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc)
@@ -1002,7 +1005,7 @@ namespace Cyber
                             {
                                 barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                             }
-                            barrier->Transition.pResource = buffer->pDxResource;
+                            barrier->Transition.pResource = buffer->get_dx_resource();
                             barrier->Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
                             if(transition_barrier->queue_acquire)
                             {
@@ -1038,7 +1041,7 @@ namespace Cyber
             {
                 barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
                 barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                barrier->UAV.pResource = texture->m_nativeResource;
+                barrier->UAV.pResource = texture->get_d3d12_resource();
                 ++transition_count;
             }
             else
@@ -1055,7 +1058,7 @@ namespace Cyber
                 {
                     barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
                 }
-                barrier->Transition.pResource = texture->m_nativeResource;
+                barrier->Transition.pResource = texture->get_d3d12_resource();
                 barrier->Transition.Subresource = transition_barrier->subresource_barrier ?
                                                  CALC_SUBRESOURCE_INDEX(transition_barrier->mip_level, transition_barrier->array_layer, 0, texture->m_mipLevels, texture->m_arraySize + 1)
                                                 : D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
@@ -1090,19 +1093,19 @@ namespace Cyber
         }
         if(transition_count > 0)
         {
-            Cmd->m_pDxCmdList->ResourceBarrier(transition_count, barriers);
+            Cmd->get_dx_cmd_list()->ResourceBarrier(transition_count, barriers);
         }
     }
 
     void reset_root_signature(CommandBuffer_D3D12_Impl* cmd, PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
     {
-        if(cmd->m_pBoundRootSignature != rootSignature)
+        if(cmd->get_bound_root_signature() != rootSignature)
         {
-            cmd->m_pBoundRootSignature = rootSignature;
+            cmd->set_bound_root_signature(rootSignature);
             if(type == PIPELINE_TYPE_GRAPHICS)
-                cmd->m_pDxCmdList->SetGraphicsRootSignature(rootSignature);
+                cmd->get_dx_cmd_list()->SetGraphicsRootSignature(rootSignature);
             else
-                cmd->m_pDxCmdList->SetComputeRootSignature(rootSignature);
+                cmd->get_dx_cmd_list()->SetComputeRootSignature(rootSignature);
         }
     }
 
@@ -1110,7 +1113,7 @@ namespace Cyber
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
     #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->pDxCmdList;
+        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->get_dx_cmd_list();
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[GRAPHICS_MAX_MRT_COUNT]);
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
         DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
@@ -1197,35 +1200,35 @@ namespace Cyber
     {
         CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
         #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-            ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->pDxCmdList;
+            ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
             cmdList4->EndRenderPass();
             return;
         #endif
         cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
     }
     
-    void RenderDevice_D3D12_Impl::render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet)
+    void RenderDevice_D3D12_Impl::render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, RenderObject::IDescriptorSet* descriptorSet)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        const DescriptorSet_D3D12_Impl* Set = static_cast<const DescriptorSet_D3D12_Impl*>(descriptorSet);
-        RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(Set->root_signature);
+        const RenderObject::DescriptorSet_D3D12_Impl* Set = static_cast<const RenderObject::DescriptorSet_D3D12_Impl*>(descriptorSet);
+        RenderObject::RootSignature_D3D12_Impl* RS = static_cast<RenderObject::RootSignature_D3D12_Impl*>(Set->get_root_signature());
 
         cyber_check(RS);
         reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
         if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
         {
-            Cmd->m_pDxCmdList->SetGraphicsRootDescriptorTable(Set->set_index, {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+            Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
         }
         else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
         {
-            Cmd->m_pDxCmdList->SetGraphicsRootDescriptorTable(Set->set_index, {Cmd->m_boundHeapStartHandles[1].ptr + Set->sampler_handle});
+            Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[1].ptr + Set->sampler_handle});
         }
     }
     void RenderDevice_D3D12_Impl::render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
         D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
-        Cmd->pDxCmdList->RSSetViewports(1, &viewport);
+        Cmd->get_dx_cmd_list()->RSSetViewports(1, &viewport);
     }
     void RenderDevice_D3D12_Impl::render_encoder_set_scissor(RenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height)
     {
@@ -1235,17 +1238,17 @@ namespace Cyber
         rect.top = y;
         rect.right = x + width;
         rect.bottom = y + height;
-        Cmd->pDxCmdList->RSSetScissorRects(1, &rect);
+        Cmd->get_dx_cmd_list()->RSSetScissorRects(1, &rect);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_bind_pipeline(RenderObject::RenderPassEncoder* encoder, RenderObject::IRenderPipeline* pipeline)
+    void RenderDevice_D3D12_Impl::render_encoder_bind_pipeline(RenderPassEncoder* encoder, RenderObject::IRenderPipeline* pipeline)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderPipeline_D3D12_Impl*>(pipeline);
+        RenderObject::RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderObject::RenderPipeline_D3D12_Impl*>(pipeline);
         reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
-        Cmd->pDxCmdList->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
-        Cmd->pDxCmdList->SetPipelineState(Pipeline->pDxPipelineState);
+        Cmd->get_dx_cmd_list()->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
+        Cmd->get_dx_cmd_list()->SetPipelineState(Pipeline->pDxPipelineState);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_bind_vertex_buffer(RenderObject::RenderPassEncoder* encoder, uint32_t buffer_count, RenderObject::IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+    void RenderDevice_D3D12_Impl::render_encoder_bind_vertex_buffer(RenderPassEncoder* encoder, uint32_t buffer_count, RenderObject::IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
 
@@ -1253,59 +1256,59 @@ namespace Cyber
         for(uint32_t i = 0;i < buffer_count; ++i)
         {
             const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffers[i]);
-            cyber_check(Buffer->mDxGpuAddress != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
+            cyber_check(Buffer->get_dx_gpu_address() != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
 
-            views[i].BufferLocation = Buffer->mDxGpuAddress + (offsets ? offsets[i] : 0);
-            views[i].SizeInBytes = (UINT)(Buffer->mSize - (offsets ? offsets[i] : 0));
+            views[i].BufferLocation = Buffer->get_dx_gpu_address() + (offsets ? offsets[i] : 0);
+            views[i].SizeInBytes = (UINT)(Buffer->get_size() - (offsets ? offsets[i] : 0));
             views[i].StrideInBytes = (UINT)strides[i];  
         }
-        Cmd->pDxCmdList->IASetVertexBuffers(0, buffer_count, views);
+        Cmd->get_dx_cmd_list()->IASetVertexBuffers(0, buffer_count, views);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_bind_index_buffer(RenderObject::RenderPassEncoder* encoder, RenderObject::IBuffer* buffer, uint32_t index_stride, uint64_t offset)
+    void RenderDevice_D3D12_Impl::render_encoder_bind_index_buffer(RenderPassEncoder* encoder, RenderObject::IBuffer* buffer, uint32_t index_stride, uint64_t offset)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
         const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
 
         DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
-        view.BufferLocation = Buffer->mDxGpuAddress + offset;
-        view.SizeInBytes = (UINT)(Buffer->mSize - offset);
+        view.BufferLocation = Buffer->get_dx_gpu_address() + offset;
+        view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
         view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
-        Cmd->pDxCmdList->IASetIndexBuffer(&view);
+        Cmd->get_dx_cmd_list()->IASetIndexBuffer(&view);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_push_constants(RenderObject::RenderPassEncoder* encoder, RenderObject::IRootSignature* rs, const char8_t* name, const void* data)
+    void RenderDevice_D3D12_Impl::render_encoder_push_constants(RenderPassEncoder* encoder, RenderObject::IRootSignature* rs, const char8_t* name, const void* data)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
         RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(rs);
         reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-        Cmd->pDxCmdList->SetGraphicsRoot32BitConstants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+        Cmd->get_dx_cmd_list()->SetGraphicsRoot32BitConstants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_draw(RenderObject::RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
+    void RenderDevice_D3D12_Impl::render_encoder_draw(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)1, (UINT)first_vertex, (UINT)0);
+        Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)1, (UINT)first_vertex, (UINT)0);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_draw_instanced(RenderObject::RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+    void RenderDevice_D3D12_Impl::render_encoder_draw_instanced(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        Cmd->pDxCmdList->DrawInstanced((UINT)vertex_count, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
+        Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_draw_indexed(RenderObject::RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+    void RenderDevice_D3D12_Impl::render_encoder_draw_indexed(RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        Cmd->pDxCmdList->DrawIndexedInstanced((UINT)index_count, (UINT)1, (UINT)first_index, (UINT)first_vertex, (UINT)0);
+        Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)1, (UINT)first_index, (UINT)first_vertex, (UINT)0);
     }
-    void RenderDevice_D3D12_Impl::render_encoder_draw_indexed_instanced(RenderObject::RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+    void RenderDevice_D3D12_Impl::render_encoder_draw_indexed_instanced(RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-        Cmd->pDxCmdList->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
+        Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
     }
 
     ISwapChain* RenderDevice_D3D12_Impl::create_swap_chain(const SwapChainDesc& desc)
     {
-        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(adapter->pInstance);
+        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(m_pAdapter->get_instance());
         const uint32_t buffer_count = desc.mImageCount;
-        SwapChain_D3D12_Impl* dxSwapChain = (SwapChain_D3D12_Impl*)cyber_calloc(1, sizeof(SwapChain_D3D12));
-        dxSwapChain->mDxSyncInterval = desc.mEnableVsync ? 1 : 0;
+        SwapChain_D3D12_Impl* dxSwapChain = (SwapChain_D3D12_Impl*)cyber_calloc(1, sizeof(SwapChain_D3D12_Impl));
+        dxSwapChain->set_dx_sync_interval(desc.mEnableVsync ? 1 : 0);
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
         chinDesc.Width = desc.mWidth;
@@ -1321,10 +1324,10 @@ namespace Cyber
         chinDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
         chinDesc.Flags = 0;
         BOOL allowTearing = FALSE;
-        dxInstance->pDXGIFactory->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
+        dxInstance->get_dxgi_factory()->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
         chinDesc.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-        dxSwapChain->mFlags |= (!desc.mEnableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
-
+        auto flag = dxSwapChain->get_flags() | (!desc.mEnableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+        dxSwapChain->set_flags(flag);    
         IDXGISwapChain1* swapchain;
 
         HWND hwnd = desc.surface->handle;
@@ -1339,13 +1342,14 @@ namespace Cyber
             queue = static_cast<Queue_D3D12_Impl*>(get_queue(QUEUE_TYPE_GRAPHICS, 0));
         }
 
-        auto bCreated = SUCCEEDED(dxInstance->pDXGIFactory->CreateSwapChainForHwnd(queue->pCommandQueue, hwnd, &chinDesc, NULL, NULL, &swapchain));
+        auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(m_pDxDevice, hwnd, &chinDesc, NULL, NULL, &swapchain));
         cyber_assert(bCreated, "Failed to try to create swapchain! An existed swapchain might be destroyed!");
 
-        bCreated = SUCCEEDED(dxInstance->pDXGIFactory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
+        bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
         cyber_assert(bCreated, "Failed to try to associate swapchain with window!");
 
-        auto bQueryChain3 = SUCCEEDED(swapchain->QueryInterface(IID_PPV_ARGS(&dxSwapChain->pDxSwapChain)));
+        auto swap_chain = dxSwapChain->get_dx_swap_chain();
+        auto bQueryChain3 = SUCCEEDED(swapchain->QueryInterface(IID_PPV_ARGS(&swap_chain)));
         cyber_assert(bQueryChain3, "Failed to query IDXGISwapChain3 from created swapchain!");
 
         SAFE_RELEASE(swapchain);
@@ -1353,67 +1357,67 @@ namespace Cyber
         ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
         for(uint32_t i = 0; i < buffer_count; ++i)
         {
-            CHECK_HRESULT(dxSwapChain->pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
+            CHECK_HRESULT(dxSwapChain->get_dx_swap_chain()->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->mBackBufferSRVs = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
+        dxSwapChain->m_ppBackBufferSRVs = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
         for(uint32_t i = 0; i < buffer_count; i++)
         {
             RenderObject::Texture_D3D12_Impl* Ts = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
             Ts->native_resource = backbuffers[i];
             Ts->allocation = nullptr;
-            Ts->mIsCube = false;
-            Ts->mArraySize = 0;
-            Ts->mFormat = desc.mFormat;
-            Ts->mAspectMask = 1;
-            Ts->mDepth = 1;
-            Ts->mWidth = desc.mWidth;
-            Ts->mHeight = desc.mHeight;
-            Ts->mMipLevels = 1;
-            Ts->mNodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
-            Ts->mOwnsImage = false;
-            Ts->mNativeHandle = Ts->native_resource;
-            dxSwapChain->mBackBufferSRVs[i] = Ts;
+            Ts->m_isCube = false;
+            Ts->m_arraySize = 0;
+            Ts->m_format = desc.mFormat;
+            Ts->m_aspectMask = 1;
+            Ts->m_depth = 1;
+            Ts->m_width = desc.mWidth;
+            Ts->m_height = desc.mHeight;
+            Ts->m_mipLevels = 1;
+            Ts->m_nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
+            Ts->m_ownsImage = false;
+            Ts->m_pNativeHandle = Ts->native_resource;
+            dxSwapChain->m_ppBackBufferSRVs[i] = Ts;
         }
         //dxSwapChain->mBackBuffers = Ts;
-        dxSwapChain->mBufferSRVCount = buffer_count;
+        dxSwapChain->m_bufferSRVCount = buffer_count;
 
         // Create depth stencil view
         //dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
         TextureCreateDesc depthStencilDesc = {};
-        depthStencilDesc.height = desc.mHeight;
-        depthStencilDesc.width = desc.mWidth;
-        depthStencilDesc.depth = 1;
-        depthStencilDesc.array_size = 1;
-        depthStencilDesc.format = FORMAT_D24_UNORM_S8_UINT;
-        depthStencilDesc.mip_levels = 1;
-        depthStencilDesc.sample_count = SAMPLE_COUNT_1;
-        depthStencilDesc.descriptors = DESCRIPTOR_TYPE_UNDEFINED;
-        depthStencilDesc.start_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-        depthStencilDesc.name = u8"Main Depth Stencil";
-        dxSwapChain->mBackBufferDSV = create_texture(depthStencilDesc);
+        depthStencilDesc.m_height = desc.mHeight;
+        depthStencilDesc.m_width = desc.mWidth;
+        depthStencilDesc.m_depth = 1;
+        depthStencilDesc.m_arraySize = 1;
+        depthStencilDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilDesc.m_mipLevels = 1;
+        depthStencilDesc.m_sampleCount = SAMPLE_COUNT_1;
+        depthStencilDesc.m_descriptors = DESCRIPTOR_TYPE_UNDEFINED;
+        depthStencilDesc.m_startState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+        depthStencilDesc.m_name = u8"Main Depth Stencil";
+        dxSwapChain->m_pBackBufferDSV = create_texture(depthStencilDesc);
 
-        auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->mBackBufferDSV);
+        auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->m_pBackBufferDSV);
 
         TextureViewCreateDesc depthStencilViewDesc = {};
-        depthStencilViewDesc.texture = dxSwapChain->mBackBufferDSV;
-        depthStencilViewDesc.dimension = TEX_DIMENSION_2D;
-        depthStencilViewDesc.format = FORMAT_D24_UNORM_S8_UINT;
-        depthStencilViewDesc.usages = TVU_RTV_DSV;
-        depthStencilViewDesc.aspects = TVA_DEPTH;
-        depthStencilViewDesc.array_layer_count = 1;
-        dxSwapChain->mBackBufferDSVView = create_texture_view(depthStencilViewDesc);
+        depthStencilViewDesc.m_pTexture = dxSwapChain->m_pBackBufferDSV;
+        depthStencilViewDesc.m_dimension = TEX_DIMENSION_2D;
+        depthStencilViewDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilViewDesc.m_usages = TVU_RTV_DSV;
+        depthStencilViewDesc.m_aspects = TVA_DEPTH;
+        depthStencilViewDesc.m_arrayLayerCount = 1;
+        dxSwapChain->m_pBackBufferDSVView = create_texture_view(depthStencilViewDesc);
 
-        dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
+        dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
         return dxSwapChain;
     }
 
     void RenderDevice_D3D12_Impl::free_swap_chain(ISwapChain* swapchain)
     {
         SwapChain_D3D12_Impl* dxSwapChain = static_cast<SwapChain_D3D12_Impl*>(swapchain);
-        for(uint32_t i = 0;i < dxSwapChain->mBufferSRVCount; ++i)
+        for(uint32_t i = 0;i < dxSwapChain->m_bufferSRVCount; ++i)
         {
-            RenderObject::Texture_D3D12_Impl* dxTexture = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->mBackBufferSRVs[i]);
+            RenderObject::Texture_D3D12_Impl* dxTexture = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->m_ppBackBufferSRVs[i]);
             SAFE_RELEASE(dxTexture->native_resource);
         }
         SAFE_RELEASE(dxSwapChain->pDxSwapChain);

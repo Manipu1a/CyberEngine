@@ -26,7 +26,7 @@ namespace Cyber
             return true;
         }
 
-        CYBER_FORCE_INLINE bool load_shader_stage_byte_code(SHADER_TARGET shaderTarget, const ShaderStageLoadDesc& loadDesc, uint32_t macroCount, ShaderMacro* macros, ShaderLibraryCreateDesc* libraryDesc, ShaderByteCodeBuffer* shaderByteCodeBuffer)
+        CYBER_FORCE_INLINE bool load_shader_stage_byte_code(SHADER_TARGET shaderTarget, const ShaderStageLoadDesc& loadDesc, uint32_t macroCount, ShaderMacro* macros, RenderObject::ShaderLibraryCreateDesc* libraryDesc, ShaderByteCodeBuffer* shaderByteCodeBuffer)
         {
             char8_t* bytes = nullptr;
             uint32_t length = 0;
@@ -66,9 +66,9 @@ namespace Cyber
             return true;
         }
 
-        IShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
+        RenderObject::IShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
         {
-            ShaderLibraryCreateDesc libraryDesc;
+            RenderObject::ShaderLibraryCreateDesc libraryDesc;
             
             EShaderStageLoadFlags combinedFlags = SHADER_STAGE_LOAD_FLAG_NONE;
 
@@ -89,7 +89,7 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    IShaderLibrary* shaderLibrary = device->create_shader_library(libraryDesc);
+                    RenderObject::IShaderLibrary* shaderLibrary = device->create_shader_library(libraryDesc);
                     //RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(device, libraryDesc);
                     if(shaderLibrary)
                     {
