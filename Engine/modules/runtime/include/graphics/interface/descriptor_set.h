@@ -9,7 +9,10 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IDescriptorSet : public IDeviceObject
         {
             virtual class IRootSignature* get_root_signature() const = 0;
+            virtual void set_root_signature(class IRootSignature* pRootSignature) = 0;
+
             virtual uint32_t get_set_index() const = 0;
+            virtual void set_set_index(uint32_t setIndex) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -28,9 +31,19 @@ namespace Cyber
                 return m_pRootSignature;
             }
 
+            virtual void set_root_signature(class IRootSignature* pRootSignature)
+            {
+                m_pRootSignature = pRootSignature;
+            }
+
             virtual uint32_t get_set_index() const
             {
                 return m_setIndex;
+            }
+
+            virtual void set_set_index(uint32_t setIndex)
+            {
+                m_setIndex = setIndex;
             }
         protected:
             class IRootSignature* m_pRootSignature;

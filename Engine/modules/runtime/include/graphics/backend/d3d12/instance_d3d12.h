@@ -46,6 +46,9 @@ namespace Cyber
             struct IAdapter** get_adapters() const { return m_pAdapters; }
             void set_adapters(struct IAdapter** adapters) { m_pAdapters = adapters; }
 
+            struct IAdapter* get_adapter(uint32_t index) const { return m_pAdapters[index]; }
+            void set_adapter(uint32_t index, struct IAdapter* adapter) { m_pAdapters[index] = adapter; }
+            
             uint32_t get_adapters_count() const { return m_adaptersCount; }
             void set_adapters_count(uint32_t count) { m_adaptersCount = count; }
         protected:

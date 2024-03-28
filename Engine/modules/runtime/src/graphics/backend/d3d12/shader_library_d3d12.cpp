@@ -147,7 +147,7 @@ namespace Cyber
             if(stage == SHADER_STAGE_VERT)
             {
                 reflection->set_vertex_input_count(shaderDesc.InputParameters);
-                auto vertex_inputs = (RenderObject::VertexInput_D3D12_Impl*)cyber_calloc(shaderDesc.InputParameters, sizeof(RenderObject::VertexInput_D3D12_Impl));
+                auto vertex_inputs = (RenderObject::IVertexInput**)cyber_calloc(shaderDesc.InputParameters, sizeof(RenderObject::IVertexInput*));
                 // Count the string sizes of the vertex inputs for the name pool
                 for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
                 {
@@ -157,18 +157,19 @@ namespace Cyber
                     bool hasParamIndex = paramDesc.SemanticIndex > 0 || !strcmp(paramDesc.SemanticName, "TEXCOORD");
                     uint32_t source_len = (uint32_t)strlen(paramDesc.SemanticName) + (hasParamIndex ? 1 : 0);
 
-                    vertex_inputs[i].set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
-                    vertex_inputs[i].set_semantics_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
+                    vertex_inputs[i] = cyber_new<RenderObject::VertexInput_D3D12_Impl>();
+                    vertex_inputs[i]->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
+                    vertex_inputs[i]->set_semantics_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
                     if(hasParamIndex)
-                        EA::StdC::Sprintf((char*)vertex_inputs[i].get_name(), "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
+                        EA::StdC::Sprintf((char*)vertex_inputs[i]->get_name(), "%s%u", paramDesc.SemanticName, paramDesc.SemanticIndex);
                     else
-                        EA::StdC::Sprintf((char*)vertex_inputs[i].get_name(), "%s", paramDesc.SemanticName);
+                        EA::StdC::Sprintf((char*)vertex_inputs[i]->get_name(), "%s", paramDesc.SemanticName);
 
-                    EA::StdC::Sprintf((char*)vertex_inputs[i].get_semantics_name(), "%s", paramDesc.SemanticName);
-                    vertex_inputs[i].set_semantics_index(paramDesc.SemanticIndex);
-                    vertex_inputs[i].set_binding(paramDesc.Register);
+                    EA::StdC::Sprintf((char*)vertex_inputs[i]->get_semantics_name(), "%s", paramDesc.SemanticName);
+                    vertex_inputs[i]->set_semantics_index(paramDesc.SemanticIndex);
+                    vertex_inputs[i]->set_binding(paramDesc.Register);
                     const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
-                    vertex_inputs[i].set_format(gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)]);
+                    vertex_inputs[i]->set_format(gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)]);
                 }
                 reflection->set_vertex_inputs(vertex_inputs);
             }

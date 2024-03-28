@@ -53,6 +53,12 @@ namespace Cyber
             {
                 return m_type;
             }
+
+            CYBER_FORCE_INLINE DescriptorHandle get_start_handle() const
+            {
+                return m_startHandle;
+            }
+            
         protected:
             /// DX Heap
             ID3D12DescriptorHeap* m_pCurrentHeap;

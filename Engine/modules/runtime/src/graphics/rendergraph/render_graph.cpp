@@ -9,7 +9,7 @@ namespace Cyber
 {
     namespace render_graph
     {
-        void RenderGraphFrameExecutor::initialize(IQueue* queue, IRenderDevice* device)
+        void RenderGraphFrameExecutor::initialize(RenderObject::IQueue* queue, RenderObject::IRenderDevice* device)
         {
             RenderObject::CommandPoolCreateDesc cmd_pool_desc = {};
             //gfx_cmd_pool = rhi_create_command_pool(queue, cmd_pool_desc);

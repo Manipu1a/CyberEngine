@@ -35,6 +35,8 @@ namespace Cyber
             void collect_shader_reflection_data(ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage);
 
             void reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage, const D3D12_SHADER_DESC& shaderDesc);
+
+            CYBER_FORCE_INLINE ID3DBlob* get_shader_blob() const { return m_pShaderBlob; }
         protected:
             ID3DBlob* m_pShaderBlob;
             struct IDxcResult* m_pShaderResult;
