@@ -3,7 +3,7 @@
 #include "device_object.h"
 #include "graphics_types.h"
 #include "interface/vertex_input.h"
-#include "interface/shader_resource.h"
+#include "interface/shader_resource.hpp"
 #include "platform/memory.h"
 
 namespace Cyber
@@ -13,14 +13,16 @@ namespace Cyber
         class IShaderResource;
         class IVertexInput;
         
-        struct CYBER_GRAPHICS_API IShaderReflection
+        struct CYBER_GRAPHICS_API IShaderReflection : public IDeviceObject
         {
             virtual const char8_t* get_entry_name() const = 0;
             virtual void set_entry_name(const char8_t* name) = 0;
             virtual const char* get_name_pool() const = 0;
 
-            virtual IVertexInput* get_vertex_inputs() const = 0;
-            virtual void set_vertex_inputs(IVertexInput* inputs) = 0;
+            virtual IVertexInput** get_vertex_inputs() const = 0;
+            virtual IVertexInput* get_vertex_input(uint32_t index) const = 0;
+            virtual void set_vertex_inputs(IVertexInput** inputs) = 0;
+            virtual void set_vertex_input(IVertexInput* input, uint32_t index) = 0;
 
             virtual void free_vertex_inputs() const = 0;
 
@@ -65,14 +67,24 @@ namespace Cyber
                 return m_namePool;
             }
 
-            virtual IVertexInput* get_vertex_inputs() const override final
+            virtual IVertexInput** get_vertex_inputs() const override final
             {
                 return m_pVertexInputs;
             }
 
-            virtual void set_vertex_inputs(IVertexInput* inputs) override final
+            virtual void set_vertex_inputs(IVertexInput** inputs) override final
             {
                 m_pVertexInputs = inputs;
+            }
+
+            virtual void set_vertex_input(IVertexInput* input, uint32_t index) override final
+            {
+                m_pVertexInputs[index] = input;
+            }
+            
+            virtual IVertexInput* get_vertex_input(uint32_t index) const final
+            {
+                return m_pVertexInputs[index];
             }
 
             virtual void free_vertex_inputs() const override final
@@ -171,7 +183,7 @@ namespace Cyber
         protected:
             const char8_t* m_entryName;
             char* m_namePool;
-            IVertexInput* m_pVertexInputs;
+            IVertexInput** m_pVertexInputs;
             RenderObject::IShaderResource** m_ppShaderResources;
             SHADER_STAGE m_shaderStage;
             uint32_t m_namePoolSize;

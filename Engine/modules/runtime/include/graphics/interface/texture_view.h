@@ -24,8 +24,8 @@ namespace Cyber
         };
 
         //class CERenderDevice;
-        struct CYBER_GRAPHICS_API ITextureView
-        {
+        struct CYBER_GRAPHICS_API ITextureView : public IDeviceObject
+        { 
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
         };
 

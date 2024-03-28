@@ -7,6 +7,12 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class CYBER_GRAPHICS_API IDeviceObject
+        {
+        public:
+            virtual void free() = 0;
+        };
+
         template<class BaseInterface, typename RenderDeviceType> 
         class CYBER_GRAPHICS_API DeviceObjectBase : public ObjectBase<BaseInterface>
         {
@@ -17,6 +23,11 @@ namespace Cyber
             virtual ~DeviceObjectBase() = default;
 
             RenderDeviceType* get_device() const { return m_pRenderDevice; }
+
+            virtual void free() override
+            {
+                delete this;
+            }
 
         private:
             DeviceObjectBase() = default;

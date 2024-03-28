@@ -9,7 +9,7 @@ namespace Cyber
     namespace RenderObject
     {
 
-        struct CYBER_GRAPHICS_API IVertexInput
+        struct CYBER_GRAPHICS_API IVertexInput : public IDeviceObject
         {
             virtual void free() = 0;
         };

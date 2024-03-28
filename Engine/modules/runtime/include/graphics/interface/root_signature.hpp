@@ -2,7 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "device_object.h"
 #include "graphics_types.h"
-#include "interface/shader_resource.h"
+#include "interface/shader_resource.hpp"
 #include "platform/memory.h"
 
 namespace Cyber
@@ -11,48 +11,49 @@ namespace Cyber
     {
         class IShaderResource;
         class IRootSignaturePool;
-        
+        class ISampler;
+
         struct CYBER_GRAPHICS_API RootSignatureParameterTable
         {
             // This should be stored here because shader could be destroyed after RS creation
-            RenderObject::IShaderResource** resources = nullptr;
-            uint32_t resource_count = 0;
-            uint32_t set_index = 0;
+            RenderObject::IShaderResource** m_ppResources = nullptr;
+            uint32_t m_resourceCount = 0;
+            uint32_t m_setIndex = 0;
         };
 
         struct CYBER_GRAPHICS_API RootSignatureCreateDesc
         {
-            class PipelineShaderCreateDesc** shaders;
-            uint32_t shader_count;
-            ISampler** static_samplers;
-            const char8_t* const* static_sampler_names;
-            uint32_t static_sampler_count;
-            const char8_t* const* push_constant_names;
-            uint32_t push_constant_count;
-            IRootSignaturePool** pool;
+            class RenderObject::PipelineShaderCreateDesc** m_ppShaders;
+            uint32_t m_shaderCount;
+            RenderObject::ISampler** m_staticSamplers;
+            const char8_t* const* m_staticSamplerNames;
+            uint32_t m_staticSamplerCount;
+            const char8_t* const* m_pushConstantNames;
+            uint32_t m_pushConstantCount;
+            RenderObject::IRootSignaturePool** m_pPool;
         };
 
-        struct CYBER_GRAPHICS_API IRootSignature
+        struct CYBER_GRAPHICS_API IRootSignature : public IDeviceObject
         {
             virtual RootSignatureParameterTable** get_parameter_tables() const = 0;
             virtual RootSignatureParameterTable* get_parameter_table(uint32_t index) const = 0;
             virtual uint32_t get_parameter_table_count() const = 0;
             virtual void set_parameter_tables(RootSignatureParameterTable** tables, uint32_t count) = 0;
             virtual void set_parameter_table(RootSignatureParameterTable* table, uint32_t index) = 0;
-            virtual class IShaderResource** get_push_constants() const = 0;
-            virtual class IShaderResource* get_push_constant(uint32_t index) const = 0;
+            virtual class RenderObject::IShaderResource** get_push_constants() const = 0;
+            virtual class RenderObject::IShaderResource* get_push_constant(uint32_t index) const = 0;
             virtual uint32_t get_push_constant_count() const = 0;
-            virtual void set_push_constants(class IShaderResource** pushConstants, uint32_t count) = 0;
-            virtual void set_push_constant(class IShaderResource* pushConstant, uint32_t index) = 0;
-            virtual class IShaderResource** get_static_samplers() const = 0;
-            virtual class IShaderResource* get_static_sampler(uint32_t index) const = 0;
+            virtual void set_push_constants(class RenderObject::IShaderResource** pushConstants, uint32_t count) = 0;
+            virtual void set_push_constant(class RenderObject::IShaderResource* pushConstant, uint32_t index) = 0;
+            virtual class RenderObject::IShaderResource** get_static_samplers() const = 0;
+            virtual class RenderObject::IShaderResource* get_static_sampler(uint32_t index) const = 0;
             virtual uint32_t get_static_sampler_count() const = 0;
-            virtual void set_static_samplers(class IShaderResource** staticSamplers, uint32_t count) = 0;
-            virtual void set_static_sampler(class IShaderResource* staticSampler, uint32_t index) = 0;
+            virtual void set_static_samplers(class RenderObject::IShaderResource** staticSamplers, uint32_t count) = 0;
+            virtual void set_static_sampler(class RenderObject::IShaderResource* staticSampler, uint32_t index) = 0;
             virtual PIPELINE_TYPE get_pipeline_type() const = 0;
             virtual void set_pipeline_type(PIPELINE_TYPE type) = 0;
-            virtual IRootSignaturePool* get_pool() const = 0;
-            virtual IRootSignature* get_pool_next() const = 0;
+            virtual RenderObject::IRootSignaturePool** get_pool() const = 0;
+            virtual RenderObject::IRootSignature* get_pool_next() const = 0;
 
             virtual RootSignatureCreateDesc get_desc() const = 0;
             virtual void free() = 0;
@@ -66,7 +67,7 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TRootSignatureBase = typename DeviceObjectBase<RootSignatureInterface, RenderDeviceImplType>;
 
-            RootSignatureBase(RenderDeviceImplType* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device), m_desc(desc)
+            RootSignatureBase(RenderDeviceImplType* device, const RenderObject::RootSignatureCreateDesc& desc) : TRootSignatureBase(device), m_desc(desc)
             {
                 m_ppParameterTables = nullptr;
                 m_parameterTableCount = 0;
@@ -74,7 +75,7 @@ namespace Cyber
                 m_pushConstantCount = 0;
                 m_pStaticSamplers = nullptr;
                 m_staticSamplerCount = 0;
-                m_pPool = desc.pool;
+                m_pPool = desc.m_pPool;
                 m_pipelineType = PIPELINE_TYPE_GRAPHICS;
                 m_pPoolNext = nullptr;
             }

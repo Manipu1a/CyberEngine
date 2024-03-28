@@ -29,7 +29,7 @@ namespace Cyber
             uint32_t m_index;
         };
 
-        struct CYBER_GRAPHICS_API IQueue
+        struct CYBER_GRAPHICS_API IQueue : public IDeviceObject
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
             virtual void wait_fence(class IFence* fence, uint64_t value) = 0;

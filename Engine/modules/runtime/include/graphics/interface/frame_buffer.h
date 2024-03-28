@@ -13,7 +13,7 @@ namespace Cyber
             class ITextureView** m_ppAttachments;
         };
         
-        struct CYBER_GRAPHICS_API IFrameBuffer
+        struct CYBER_GRAPHICS_API IFrameBuffer : public IDeviceObject
         {
             virtual const FrameBuffserDesc& get_create_desc() const = 0;
         };

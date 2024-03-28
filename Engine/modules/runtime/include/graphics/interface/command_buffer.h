@@ -13,7 +13,7 @@ namespace Cyber
             bool m_isSecondary : 1;
         };
 
-        struct CYBER_GRAPHICS_API ICommandBuffer
+        struct CYBER_GRAPHICS_API ICommandBuffer : public IDeviceObject
         {
             virtual CommandBufferCreateDesc get_create_desc() = 0;
             virtual ICommandPool* get_pool() = 0;

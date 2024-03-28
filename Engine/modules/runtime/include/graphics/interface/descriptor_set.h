@@ -6,7 +6,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_GRAPHICS_API IDescriptorSet
+        struct CYBER_GRAPHICS_API IDescriptorSet : public IDeviceObject
         {
             virtual class IRootSignature* get_root_signature() const = 0;
             virtual uint32_t get_set_index() const = 0;

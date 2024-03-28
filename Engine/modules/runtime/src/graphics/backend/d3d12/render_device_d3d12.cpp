@@ -18,7 +18,6 @@
 #include "platform/memory.h"
 #include "../../common/graphics_utils.h"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
-#include "graphics/interface/device_context.h"
 #include "graphics/interface/render_device.h"
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/texture_view_d3d12.h"
@@ -38,6 +37,7 @@
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "graphics/backend/d3d12/render_pipeline_d3d12.h"
 #include "graphics/backend/d3d12/root_signature_d3d12.h"
+#include "graphics/backend/d3d12/sampler_d3d12.h"
 #include "platform/configure.h"
 
 
@@ -849,7 +849,7 @@ namespace Cyber
     {
         SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(presentDesc.m_pSwapChain);
         
-        HRESULT hr =  dx_swapchain->pDxSwapChain->Present(0, dx_swapchain->mFlags);
+        HRESULT hr =  dx_swapchain->get_dx_swap_chain()->Present(0, dx_swapchain->get_flags());
 
         if(FAILED(hr))
         {
@@ -1306,14 +1306,14 @@ namespace Cyber
     ISwapChain* RenderDevice_D3D12_Impl::create_swap_chain(const SwapChainDesc& desc)
     {
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(m_pAdapter->get_instance());
-        const uint32_t buffer_count = desc.mImageCount;
+        const uint32_t buffer_count = desc.m_imageCount;
         SwapChain_D3D12_Impl* dxSwapChain = (SwapChain_D3D12_Impl*)cyber_calloc(1, sizeof(SwapChain_D3D12_Impl));
-        dxSwapChain->set_dx_sync_interval(desc.mEnableVsync ? 1 : 0);
+        dxSwapChain->set_dx_sync_interval(desc.m_enableVsync ? 1 : 0);
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
-        chinDesc.Width = desc.mWidth;
-        chinDesc.Height = desc.mHeight;
-        chinDesc.Format = DXGIUtil_TranslatePixelFormat(desc.mFormat);
+        chinDesc.Width = desc.m_width;
+        chinDesc.Height = desc.m_height;
+        chinDesc.Format = DXGIUtil_TranslatePixelFormat(desc.m_format);
         chinDesc.Stereo = false;
         chinDesc.SampleDesc.Count = 1;
         chinDesc.SampleDesc.Quality = 0;
@@ -1326,16 +1326,16 @@ namespace Cyber
         BOOL allowTearing = FALSE;
         dxInstance->get_dxgi_factory()->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
         chinDesc.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-        auto flag = dxSwapChain->get_flags() | (!desc.mEnableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
+        auto flag = dxSwapChain->get_flags() | (!desc.m_enableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
         dxSwapChain->set_flags(flag);    
         IDXGISwapChain1* swapchain;
 
-        HWND hwnd = desc.surface->handle;
+        HWND hwnd = desc.m_pSurface->handle;
 
         Queue_D3D12_Impl* queue = nullptr;
-        if(desc.mPresentQueue)
+        if(desc.m_presentQueue)
         {
-            queue = static_cast<Queue_D3D12_Impl*>(desc.mPresentQueue);
+            queue = static_cast<Queue_D3D12_Impl*>(desc.m_presentQueue);
         }
         else 
         {
@@ -1368,11 +1368,11 @@ namespace Cyber
             Ts->allocation = nullptr;
             Ts->m_isCube = false;
             Ts->m_arraySize = 0;
-            Ts->m_format = desc.mFormat;
+            Ts->m_format = desc.m_format;
             Ts->m_aspectMask = 1;
             Ts->m_depth = 1;
-            Ts->m_width = desc.mWidth;
-            Ts->m_height = desc.mHeight;
+            Ts->m_width = desc.m_width;
+            Ts->m_height = desc.m_height;
             Ts->m_mipLevels = 1;
             Ts->m_nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
             Ts->m_ownsImage = false;
@@ -1385,8 +1385,8 @@ namespace Cyber
         // Create depth stencil view
         //dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
         TextureCreateDesc depthStencilDesc = {};
-        depthStencilDesc.m_height = desc.mHeight;
-        depthStencilDesc.m_width = desc.mWidth;
+        depthStencilDesc.m_height = desc.m_height;
+        depthStencilDesc.m_width = desc.m_width;
         depthStencilDesc.m_depth = 1;
         depthStencilDesc.m_arraySize = 1;
         depthStencilDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
@@ -1414,28 +1414,21 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::free_swap_chain(ISwapChain* swapchain)
     {
-        SwapChain_D3D12_Impl* dxSwapChain = static_cast<SwapChain_D3D12_Impl*>(swapchain);
-        for(uint32_t i = 0;i < dxSwapChain->m_bufferSRVCount; ++i)
-        {
-            RenderObject::Texture_D3D12_Impl* dxTexture = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->m_ppBackBufferSRVs[i]);
-            SAFE_RELEASE(dxTexture->native_resource);
-        }
-        SAFE_RELEASE(dxSwapChain->pDxSwapChain);
-        cyber_delete(swapchain);
+        swapchain->free();
     }
 
     void RenderDevice_D3D12_Impl::enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount)
     {
         cyber_assert(instance, "fatal: Invalid instance!");
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(instance);
-        *adapterCount = dxInstance->mAdaptersCount;
+        *adapterCount = dxInstance->get_adapters_count();
         if(!adapters)
         {
             return;
         }
         else
         {
-            for(uint32_t i = 0; i < dxInstance->mAdaptersCount; ++i)
+            for(uint32_t i = 0; i < dxInstance->get_adapters_count(); ++i)
             {
                 adapters[i] = &dxInstance->pAdapters[i];
             }
@@ -1446,7 +1439,7 @@ namespace Cyber
     {
         RenderObject::SwapChain_D3D12_Impl* dxSwapChain = static_cast<RenderObject::SwapChain_D3D12_Impl*>(swapchain);
         // On PC AquireNext is always true
-        return dxSwapChain->pDxSwapChain->GetCurrentBackBufferIndex();
+        return dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
     }
 
     IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
@@ -1455,50 +1448,50 @@ namespace Cyber
     }
 
     // for example 
-    IRootSignature* RenderDevice_D3D12_Impl::create_root_signature(const RootSignatureCreateDesc& rootSigDesc)
+    IRootSignature* RenderDevice_D3D12_Impl::create_root_signature(const RenderObject::RootSignatureCreateDesc& rootSigDesc)
     {
         RootSignature_D3D12_Impl* dxRootSignature = cyber_new<RootSignature_D3D12_Impl>();
 
         // Pick root parameters from desc data
-        SHADER_STAGE shaderStages = 0;
-        for(uint32_t i = 0; i < rootSigDesc.shader_count; ++i)
+        SHADER_STAGE shaderStages = SHADER_STAGE_NONE;
+        for(uint32_t i = 0; i < rootSigDesc.m_shaderCount; ++i)
         {
-            PipelineShaderCreateDesc* shader_desc = *(rootSigDesc.shaders + i);
-            shaderStages |= shader_desc->stage;
+            PipelineShaderCreateDesc* shader_desc = rootSigDesc.m_ppShaders[i];
+            shaderStages |= shader_desc->m_stage;
         }
 
         // Pick shader reflection data
-        rhi_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
+        graphics_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
         // rs pool allocation
         
         // Fill resource slots
-        const uint32_t tableCount = dxRootSignature->parameter_table_count;
+        const uint32_t tableCount = dxRootSignature->get_parameter_table_count();
         uint32_t descRangeCount = 0;
         for(uint32_t i = 0;i < tableCount; ++i)
         {
-            descRangeCount += dxRootSignature->parameter_tables[i].resource_count;
+            descRangeCount += dxRootSignature->get_parameter_table(i)->m_resourceCount;
         }
-        D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->push_constant_count, sizeof(D3D12_ROOT_PARAMETER1));
+        D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_parameter_table_count(), sizeof(D3D12_ROOT_PARAMETER1));
         D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
         // Create descriptor table parameter
         uint32_t valid_root_tables = 0;
         for(uint32_t i_set = 0; i_set < tableCount; ++i_set)
         {
-            RootSignatureParameterTable* paramTable = dxRootSignature->parameter_tables + i_set;
+            RootSignatureParameterTable* paramTable = dxRootSignature->get_parameter_table(i_set);
             D3D12_ROOT_PARAMETER1 rootParam = rootParams[valid_root_tables];
             rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
             SHADER_STAGE visStages = SHADER_STAGE::SHADER_STAGE_NONE;
             uint32_t i_range = 0;
             const D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
-            for(uint32_t i_register = 0; i_register < paramTable->resource_count; ++i_register)
+            for(uint32_t i_register = 0; i_register < paramTable->m_resourceCount; ++i_register)
             {
-                RHIShaderResource* resourceSlot = paramTable->resources + i_register;
-                visStages |= resourceSlot->stages;
+                IShaderResource* resourceSlot = paramTable->m_ppResources[i_register];
+                visStages |= resourceSlot->get_stages();
                 D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
-                descRange->RangeType = D3D12Util_ResourceTypeToDescriptorRangeType(resourceSlot->type);
-                descRange->NumDescriptors = (resourceSlot->type != RHI_RESOURCE_TYPE_UNIFORM_BUFFER) ? resourceSlot->size : 1;
-                descRange->BaseShaderRegister = resourceSlot->binding;
-                descRange->RegisterSpace = resourceSlot->set;
+                descRange->RangeType = D3D12Util_ResourceTypeToDescriptorRangeType(resourceSlot->get_type());
+                descRange->NumDescriptors = (resourceSlot->get_type() != GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER) ? resourceSlot->get_size() : 1;
+                descRange->BaseShaderRegister = resourceSlot->get_binding();
+                descRange->RegisterSpace = resourceSlot->get_set();
                 descRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
                 descRange->Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
                 rootParam.DescriptorTable.NumDescriptorRanges++;
@@ -1512,29 +1505,29 @@ namespace Cyber
             }
         }
         // Create push constant parameter
-        cyber_assert(dxRootSignature->push_constant_count <= 1, "Only support one push constant range");
-        if(dxRootSignature->push_constant_count > 0)
+        cyber_assert(dxRootSignature->get_push_constant_count() <= 1, "Only support one push constant range");
+        if(dxRootSignature->get_push_constant_count() > 0)
         {
-            auto& pushConstant = dxRootSignature->push_constants;
+            auto pushConstant = dxRootSignature->get_push_constant(0);
             dxRootSignature->root_constant_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-            dxRootSignature->root_constant_parameter.ShaderVisibility = D3D12Util_TranslateShaderStage(pushConstant->stages);
-            dxRootSignature->root_constant_parameter.Constants.Num32BitValues = pushConstant->size / sizeof(uint32_t);
-            dxRootSignature->root_constant_parameter.Constants.ShaderRegister = pushConstant->binding;
-            dxRootSignature->root_constant_parameter.Constants.RegisterSpace = pushConstant->set;
+            dxRootSignature->root_constant_parameter.ShaderVisibility = D3D12Util_TranslateShaderStage(pushConstant->get_stages());
+            dxRootSignature->root_constant_parameter.Constants.Num32BitValues = pushConstant->get_size() / sizeof(uint32_t);
+            dxRootSignature->root_constant_parameter.Constants.ShaderRegister = pushConstant->get_binding();
+            dxRootSignature->root_constant_parameter.Constants.RegisterSpace = pushConstant->get_set();
         }
         // Create static sampler parameter
-        uint32_t staticSamplerCount = rootSigDesc.static_sampler_count;
+        uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
         D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
         if(staticSamplerCount > 0)
         {
             staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(staticSamplerCount, sizeof(D3D12_STATIC_SAMPLER_DESC));
-            for(uint32_t i = 0;i < dxRootSignature->static_sampler_count; ++i)
+            for(uint32_t i = 0;i < dxRootSignature->m_staticSamplerCount; ++i)
             {
-                auto& rst_slot = dxRootSignature->static_samplers[i];
-                for(uint32_t j = 0; j < rootSigDesc.static_sampler_count; ++j)
+                auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
+                for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
                 {
-                    auto input_slot = (RHISampler_D3D12*)rootSigDesc.static_samplers[i];
-                    if(strcmp((char*)rst_slot.name, (char*)rootSigDesc.static_sampler_names[j]) == 0)
+                    auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
+                    if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[j]) == 0)
                     {
                         D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->dxSamplerDesc;
                         staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
@@ -1548,45 +1541,45 @@ namespace Cyber
                         staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
                         staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 
-                        RHIShaderResource* samplerResource = &rst_slot;
-                        staticSamplerDescs[i].ShaderRegister = samplerResource->binding;
-                        staticSamplerDescs[i].RegisterSpace = samplerResource->set;
+                        IShaderResource* samplerResource = rst_slot;
+                        staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
+                        staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
                         staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->stages);
                     }
                 }
             }
         }
-        bool useInputLayout = shaderStages & RHI_SHADER_STAGE_VERT; // VertexStage uses input layout
+        bool useInputLayout = shaderStages & SHADER_STAGE_VERT; // VertexStage uses input layout
         // Fill RS flags
         D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
         if(useInputLayout)
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
-        if(!(shaderStages & RHI_SHADER_STAGE_VERT))
+        if(!(shaderStages & SHADER_STAGE_VERT))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & RHI_SHADER_STAGE_HULL))
+        if(!(shaderStages & SHADER_STAGE_HULL))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & RHI_SHADER_STAGE_DOMAIN))
+        if(!(shaderStages & SHADER_STAGE_DOMAIN))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & RHI_SHADER_STAGE_GEOM))
+        if(!(shaderStages & SHADER_STAGE_GEOM))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & RHI_SHADER_STAGE_FRAG))
+        if(!(shaderStages & SHADER_STAGE_FRAG))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
         }
         
         
         D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
-        rootSignatureDesc.NumParameters = valid_root_tables + dxRootSignature->push_constant_count;
+        rootSignatureDesc.NumParameters = valid_root_tables + dxRootSignature->get_push_constant_count();
         rootSignatureDesc.pParameters = nullptr;
         rootSignatureDesc.NumStaticSamplers = staticSamplerCount;
         rootSignatureDesc.pStaticSamplers = staticSamplerDescs;
@@ -1631,39 +1624,40 @@ namespace Cyber
         }
     }
 
-    IDescriptorSet* RenderDevice_D3D12_Impl::create_descriptor_set(const IDescriptorSetCreateDesc& dSetDesc)
+    IDescriptorSet* RenderDevice_D3D12_Impl::create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc)
     {
         RootSignature_D3D12_Impl* root_signature = static_cast<RootSignature_D3D12_Impl*>(dSetDesc.root_signature);
         DescriptorSet_D3D12_Impl* descSet = cyber_new<DescriptorSet_D3D12_Impl>();
+        
         descSet->root_signature = dSetDesc.root_signature;
         descSet->set_index = dSetDesc.set_index;
 
         const uint32_t node_index = GRAPHICS_SINGLE_GPU_NODE_INDEX;
-        auto& cbv_srv_uav_heap = mCbvSrvUavHeaps[node_index];
-        auto& sampler_heap = mSamplerHeaps[node_index];
-        RootSignatureParameterTable* param_table = &root_signature->parameter_tables[dSetDesc.set_index];
+        auto& cbv_srv_uav_heap = m_cbvSrvUavHeaps[node_index];
+        auto& sampler_heap = m_samplerHeaps[node_index];
+        RenderObject::RootSignatureParameterTable* param_table = root_signature->get_parameter_table(dSetDesc.set_index);
         uint32_t cbv_srv_uav_count = 0;
         uint32_t sampler_count = 0;
         // collect descriptor counts
-        if(root_signature->parameter_table_count > 0)
+        if(root_signature->get_parameter_table_count() > 0)
         {
-            for(uint32_t i = 0; i < param_table->resource_count; ++i)
+            for(uint32_t i = 0; i < param_table->m_resourceCount; ++i)
             {
-                if(param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_SAMPLER)
+                if(param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER)
                 {
                     sampler_count++;
                 }
-                else if(param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_TEXTURE || 
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_RW_TEXTURE ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_BUFFER ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_RW_BUFFER ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_BUFFER_RAW ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_RW_BUFFER_RAW ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_TEXTURE_CUBE ||
-                        param_table->resources[i].type == GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER 
+                else if(param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_TEXTURE || 
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_RW_TEXTURE ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_BUFFER ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_RW_BUFFER ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_BUFFER_RAW ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_RW_BUFFER_RAW ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_TEXTURE_CUBE ||
+                        param_table->m_ppResources[i]->get_type() == GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER 
                         )
                 {
-                    cbv_srv_uav_count += descriptor_count_needed(&param_table->resources[i]);
+                    cbv_srv_uav_count += descriptor_count_needed(param_table->m_ppResources[i]);
                 }
             }
         }
@@ -1674,48 +1668,48 @@ namespace Cyber
         if(cbv_srv_uav_count)
         {
             auto startHandle = DescriptorHeap_D3D12::consume_descriptor_handles(cbv_srv_uav_heap, cbv_srv_uav_count);
-            descSet->cbv_srv_uav_handle = startHandle.mGpu.ptr - cbv_srv_uav_heap->mStartHandle.mGpu.ptr;
-            descSet->cbv_srv_uav_stride = cbv_srv_uav_count * cbv_srv_uav_heap->mDescriptorSize;
+            descSet->cbv_srv_uav_handle = startHandle.mGpu.ptr - cbv_srv_uav_heap->m_startHandle.mGpu.ptr;
+            descSet->cbv_srv_uav_stride = cbv_srv_uav_count * cbv_srv_uav_heap->get_descriptor_size();
         }
         if(sampler_count)
         {
             auto startHandle = DescriptorHeap_D3D12::consume_descriptor_handles(sampler_heap, sampler_count);
-            descSet->sampler_handle = startHandle.mGpu.ptr - sampler_heap->mStartHandle.mGpu.ptr;
-            descSet->sampler_stride = sampler_count * sampler_heap->mDescriptorSize;
+            descSet->sampler_handle = startHandle.mGpu.ptr - sampler_heap->m_startHandle.mGpu.ptr;
+            descSet->sampler_stride = sampler_count * sampler_heap->get_descriptor_size();
         }
         // bind null handles on creation
         if(cbv_srv_uav_count || sampler_count)
         {
             uint32_t cbv_srv_uav_offset = 0;
             uint32_t sampler_offset = 0;
-            for(uint32_t i = 0; i < param_table->resource_count; ++i)
+            for(uint32_t i = 0; i < param_table->m_resourceCount; ++i)
             {
-                const auto dimension = param_table->resources[i].dimension;
+                const auto dimension = param_table->m_ppResources[i]->get_dimension();
                 auto src_handle = D3D12_DESCRIPTOR_ID_NONE;
                 auto src_sampler_handle = D3D12_DESCRIPTOR_ID_NONE;
-                switch (param_table->resources[i].type)
+                switch (param_table->m_ppResources[i]->get_type())
                 {
-                    case GRAPHICS_RESOURCE_TYPE_TEXTURE: src_handle = pNullDescriptors->TextureSRV[dimension]; break;
-                    case GRAPHICS_RESOURCE_TYPE_BUFFER: src_handle = pNullDescriptors->BufferSRV; break;
-                    case GRAPHICS_RESOURCE_TYPE_RW_BUFFER: src_handle = pNullDescriptors->BufferUAV; break;
-                    case GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER: src_handle = pNullDescriptors->BufferCBV; break;
-                    case GRAPHICS_RESOURCE_TYPE_SAMPLER: src_sampler_handle = pNullDescriptors->Sampler; break;
+                    case GRAPHICS_RESOURCE_TYPE_TEXTURE: src_handle = m_pNullDescriptors->TextureSRV[dimension]; break;
+                    case GRAPHICS_RESOURCE_TYPE_BUFFER: src_handle = m_pNullDescriptors->BufferSRV; break;
+                    case GRAPHICS_RESOURCE_TYPE_RW_BUFFER: src_handle = m_pNullDescriptors->BufferUAV; break;
+                    case GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER: src_handle = m_pNullDescriptors->BufferCBV; break;
+                    case GRAPHICS_RESOURCE_TYPE_SAMPLER: src_sampler_handle = m_pNullDescriptors->Sampler; break;
                     default: break;
                 }
 
                 if(src_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
                 {
-                    for(uint32_t j = 0; j < param_table->resources[i].size; ++j)
+                    for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
                     {
-                        D3D12Util_CopyDescriptorHandle(cbv_srv_uav_heap, src_handle, descSet->cbv_srv_uav_handle, cbv_srv_uav_offset);
+                        cbv_srv_uav_heap->copy_descriptor_handle(src_handle, descSet->cbv_srv_uav_handle, cbv_srv_uav_offset);
                         cbv_srv_uav_offset++;
                     }
                 }
                 if(src_sampler_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
                 {
-                    for(uint32_t j = 0; j < param_table->resources[i].size; ++j)
+                    for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
                     {
-                        D3D12Util_CopyDescriptorHandle(sampler_heap, src_sampler_handle, descSet->sampler_handle, sampler_offset);
+                        sampler_heap->copy_descriptor_handle(src_sampler_handle, descSet->sampler_handle, sampler_offset);
                         sampler_offset++;
                     }
                 }
@@ -1754,12 +1748,12 @@ namespace Cyber
             D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };
 
-        if(pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count > 0)
+        if(pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_input_count() > 0)
         {
             eastl::string_hash_map<uint32_t> semantic_index_map;
-            for(uint32_t attrib_index = 0; attrib_index < pipelineDesc.vertex_shader->library->entry_reflections->vertex_input_count; ++attrib_index)
+            for(uint32_t attrib_index = 0; attrib_index < pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_input_count(); ++attrib_index)
             {
-                auto attribute = pipelineDesc.vertex_shader->library->entry_reflections->vertex_inputs[attrib_index];
+                auto attribute = pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_inputs(attrib_index);
                 input_elements[input_element_count].SemanticName = (char*)attribute.semantics_name;
                 input_elements[input_element_count].SemanticIndex = attribute.semantics_index;
                 input_elements[input_element_count].Format = DXGIUtil_TranslatePixelFormat(attribute.format);

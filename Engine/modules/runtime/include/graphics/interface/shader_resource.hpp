@@ -1,13 +1,13 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
-#include "device_object.h"
 #include "graphics_types.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_GRAPHICS_API IShaderResource
+        struct CYBER_GRAPHICS_API IShaderResource : public IDeviceObject
         {
             virtual void free() = 0;
 

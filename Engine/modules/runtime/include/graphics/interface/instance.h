@@ -15,7 +15,7 @@ namespace Cyber
             bool m_enableSetName;
         };
 
-        struct CYBER_GRAPHICS_API IInstance
+        struct CYBER_GRAPHICS_API IInstance : public IDeviceObject
         {
             virtual const InstanceCreateDesc get_create_desc() const = 0;
             virtual void optional_enable_debug_layer() = 0;

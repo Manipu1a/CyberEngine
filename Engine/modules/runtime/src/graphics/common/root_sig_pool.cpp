@@ -5,7 +5,7 @@
 #include "interface/device_context.h"
 #include "parallel_hashmap/phmap.h"
 #include "platform/memory.h"
-#include "interface/root_signature.h"
+#include "interface/root_signature.hpp"
 #include "interface/root_signature_pool.h"
 
 namespace Cyber

@@ -11,7 +11,7 @@ namespace Cyber
             uint32_t ___nothing_and_useless__;
         };
 
-        struct CYBER_GRAPHICS_API ICommandPool
+        struct CYBER_GRAPHICS_API ICommandPool : public IDeviceObject
         {
             virtual void set_queue(class IQueue* queue) = 0;
             virtual IQueue* get_queue() const = 0;

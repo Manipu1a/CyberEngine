@@ -35,7 +35,7 @@ namespace Cyber
         };
 
 
-        struct CYBER_GRAPHICS_API ITexture
+        struct CYBER_GRAPHICS_API ITexture : public IDeviceObject
         {
             virtual const TextureCreateDesc& get_create_desc() const = 0;
         };

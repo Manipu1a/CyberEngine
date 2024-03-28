@@ -359,7 +359,7 @@ namespace Cyber
                 root_signature = rhi_create_root_signature(device, root_signature_create_desc);
                 // create descriptor set
 
-                RHIDescriptorSetCreateDesc desc_set_create_desc = {
+                DescriptorSetCreateDesc desc_set_create_desc = {
                     .root_signature = root_signature,
                     .set_index = 0
                 };

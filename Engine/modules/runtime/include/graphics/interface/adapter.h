@@ -23,7 +23,7 @@ namespace Cyber
             bool m_isCpu : 1;
         };
 
-        struct CYBER_GRAPHICS_API IAdapter
+        struct CYBER_GRAPHICS_API IAdapter : public IDeviceObject
         {
             virtual IInstance* get_instance() const = 0;
             virtual void free() = 0;

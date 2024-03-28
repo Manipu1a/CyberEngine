@@ -10,7 +10,7 @@ namespace Cyber
     {
 
         // Buffer Interface
-        struct CYBER_GRAPHICS_API IBuffer
+        struct CYBER_GRAPHICS_API IBuffer : public IDeviceObject
         {
             virtual void* get_mapped_data() = 0;
             virtual uint64_t get_size() const = 0;

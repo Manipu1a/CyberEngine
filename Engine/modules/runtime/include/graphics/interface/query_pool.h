@@ -6,7 +6,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_GRAPHICS_API IQueryPool
+        struct CYBER_GRAPHICS_API IQueryPool : public IDeviceObject
         {
         };
 

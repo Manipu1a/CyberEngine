@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graphics/interface/swap_chain.h"
+#include "graphics/interface/swap_chain.hpp"
 #include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
@@ -40,6 +40,8 @@ namespace Cyber
 
             uint32_t get_enable_vsync() const { return m_enableVsync; }
             void set_enable_vsync(uint32_t enableVsync) { m_enableVsync = enableVsync; }
+
+            virtual void free() override final;
         protected:
             IDXGISwapChain3* m_pDxSwapChain;
             uint32_t m_dxSyncInterval : 3;

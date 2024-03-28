@@ -1,7 +1,7 @@
 #pragma once
 
 #include "engine_impl_traits_d3d12.hpp"
-#include "interface/shader_resource.h"
+#include "interface/shader_resource.hpp"
 
 namespace Cyber
 {

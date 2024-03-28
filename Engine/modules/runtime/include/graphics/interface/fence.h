@@ -6,7 +6,7 @@ namespace Cyber
     namespace RenderObject
     {
 
-        struct CYBER_GRAPHICS_API IFence
+        struct CYBER_GRAPHICS_API IFence : public IDeviceObject
         {
             virtual uint64_t get_fence_value() const = 0;
         };

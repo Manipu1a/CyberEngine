@@ -38,7 +38,7 @@ namespace Cyber
             bool enable_indirect_command;
         };
 
-        struct CYBER_GRAPHICS_API IRenderPipeline
+        struct CYBER_GRAPHICS_API IRenderPipeline : public IDeviceObject
         {
 
         };

@@ -4,7 +4,7 @@
 #include <string.h>
 #include "containers/btree.h"
 #include <EASTL/sort.h>
-#include "interface/shader_resource.h"
+#include "interface/shader_resource.hpp"
 #include "interface/render_pipeline.h"
 #include "interface/shader_reflection.hpp"
 #include "interface/shader_library.h"
@@ -153,11 +153,12 @@ namespace Cyber
             return lhs->get_set() < rhs->get_set();
         });
         // Slice
-        rootSignature->set_parameter_tables((RenderObject::RootSignatureParameterTable*)cyber_calloc( (uint32_t)valid_sets.size(),sizeof(RenderObject::RootSignatureParameterTable)), (uint32_t)valid_sets.size());
+        auto para_tables = (RenderObject::RootSignatureParameterTable**)cyber_calloc( (uint32_t)valid_sets.size(),sizeof(RenderObject::RootSignatureParameterTable*));
         uint32_t table_index = 0;
         for(auto&& set_index : valid_sets)
         {
-            RenderObject::RootSignatureParameterTable* table = rootSignature->get_parameter_table(table_index);
+            para_tables[table_index] = (RenderObject::RootSignatureParameterTable*)cyber_calloc(1, sizeof(RenderObject::RootSignatureParameterTable));
+            RenderObject::RootSignatureParameterTable* table = para_tables[table_index];
             table->set_index = set_index;
             table->resource_count = 0;
             // 计算每个set的资源数量
@@ -166,7 +167,7 @@ namespace Cyber
                 if(rst_resource->get_set() == set_index)
                     ++table->resource_count;
             }
-            table->resources = (RenderObject::IShaderResource*)cyber_calloc(table->resource_count, sizeof(RenderObject::IShaderResource));
+            table->resources = (RenderObject::IShaderResource**)cyber_calloc(table->resource_count, sizeof(RenderObject::IShaderResource*));
             // 将参数按照set分组存入table
             uint32_t slot_index = 0;
             for(auto&& rst_resource : rst_resources)
@@ -179,6 +180,7 @@ namespace Cyber
             }
             ++table_index;
         }
+        rootSignature->set_parameter_tables(para_tables, (uint32_t)valid_sets.size());
         // push constants
         uint32_t push_constant_count = (uint32_t)all_push_constants.size();
         rootSignature->set_push_constants((RenderObject::IShaderResource**)cyber_calloc(push_constant_count, sizeof(RenderObject::IShaderResource*)), push_constant_count);

@@ -13,7 +13,7 @@ namespace Cyber
             const char8_t* m_name;
         };
 
-        struct CYBER_GRAPHICS_API IRootSignaturePool
+        struct CYBER_GRAPHICS_API IRootSignaturePool : public IDeviceObject
         {
             virtual RootSignaturePoolCreateDesc get_create_desc() const = 0;
         };

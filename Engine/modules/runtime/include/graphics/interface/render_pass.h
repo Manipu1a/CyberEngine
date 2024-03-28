@@ -54,7 +54,7 @@ namespace Cyber
             RenderSubpassDesc* m_pSubpasses;
         };
 
-        struct CYBER_GRAPHICS_API IRenderPass
+        struct CYBER_GRAPHICS_API IRenderPass : public IDeviceObject
         {
             virtual const RenderPassDesc& get_create_desc() const = 0;
         };
@@ -65,7 +65,7 @@ namespace Cyber
         public:
             using RenderPassInterface = typename EngineImplTraits::RenderPassInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TRenderPassBase = typename DeviceObjectBase<RenderPassInterface, RenderDeviceImplType>;
+        using TRenderPassBase = typename DeviceObjectBase<RenderPassInterface, RenderDeviceImplType>;
 
             RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device), m_desc(desc)
             {

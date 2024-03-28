@@ -15,18 +15,23 @@
 #endif
 
 namespace Cyber
-{
+{  
+    namespace RenderObject
+    {
+        class IQueue;
+        class IRenderDevice;
+    }
     namespace render_graph
     {
         class CYBER_RUNTIME_API RenderGraphFrameExecutor
         {
         public:
             RenderGraphFrameExecutor() = default;
-            void initialize(class RHIQueue* queue, class RHIDevice* device);
+            void initialize(class RenderObject::IQueue* queue, class RenderObject::IRenderDevice* device);
             void finalize();
 
-            class RHICommandPool* gfx_cmd_pool;
-            class RHICommandBuffer* gfx_cmd_buffer;
+            class ICommandPool* gfx_cmd_pool;
+            class ICommandBuffer* gfx_cmd_buffer;
         };
 
         class CYBER_RUNTIME_API RenderGraph
@@ -54,7 +59,7 @@ namespace Cyber
             eastl::vector<class PassNode*> passes;
             eastl::vector<class ResourceNode*> culled_resources;
             eastl::vector<class PassNode*> culled_passes;
-            RHIQueue* gfx_queue;
+            RenderObject::IQueue* gfx_queue;
             RenderGraphFrameExecutor frame_executors[RG_MAX_FRAME_IN_FLIGHT];
         };
     }

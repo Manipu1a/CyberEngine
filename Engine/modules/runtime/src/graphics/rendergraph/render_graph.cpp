@@ -2,17 +2,19 @@
 #include "platform/memory.h"
 #include "rendergraph/render_graph_builder.h"
 #include "rendergraph/render_graph_resource.h"
+#include "interface/command_pool.h"
+#include "interface/command_buffer.h"
 
 namespace Cyber
 {
     namespace render_graph
     {
-        void RenderGraphFrameExecutor::initialize(RHIQueue* queue, RHIDevice* device)
+        void RenderGraphFrameExecutor::initialize(IQueue* queue, IRenderDevice* device)
         {
-            CommandPoolCreateDesc cmd_pool_desc = {};
+            RenderObject::CommandPoolCreateDesc cmd_pool_desc = {};
             //gfx_cmd_pool = rhi_create_command_pool(queue, cmd_pool_desc);
-            CommandBufferCreateDesc cmd_buffer_desc = {};
-            cmd_buffer_desc.is_secondary = false;
+            RenderObject::CommandBufferCreateDesc cmd_buffer_desc = {};
+            cmd_buffer_desc.m_isSecondary = false;
             //gfx_cmd_buffer = rhi_create_command_buffer(gfx_cmd_pool, cmd_buffer_desc);
         }
 

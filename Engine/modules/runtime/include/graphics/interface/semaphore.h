@@ -6,7 +6,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        struct CYBER_GRAPHICS_API ISemaphore
+        struct CYBER_GRAPHICS_API ISemaphore : public IDeviceObject
         {
             
         };

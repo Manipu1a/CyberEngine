@@ -23,7 +23,7 @@ namespace Cyber
             ShaderMacro* shader_macros;
         };
 
-        struct CYBER_GRAPHICS_API IShaderLibrary
+        struct CYBER_GRAPHICS_API IShaderLibrary : public IDeviceObject
         {
             virtual const ShaderLibraryCreateDesc& get_create_desc() const = 0;
             virtual void free_reflection() = 0;

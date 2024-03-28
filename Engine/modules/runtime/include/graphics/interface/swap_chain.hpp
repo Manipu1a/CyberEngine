@@ -2,6 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "interface/texture_view.h"
 #include "device_object.h"
+#include "texture.hpp"
 
 namespace Cyber
 {
@@ -10,26 +11,26 @@ namespace Cyber
         struct CYBER_GRAPHICS_API SwapChainDesc
         {
             /// Present Queues
-            class IQueue* mPresentQueue;
+            class IQueue* m_presentQueue;
             /// Present Queues Count
-            uint32_t mPresentQueueCount;
+            uint32_t m_presentQueueCount;
             /// Number of backbuffers in the swapchain
-            uint32_t mImageCount;
+            uint32_t m_imageCount;
             /// Width of the swapchain
-            uint32_t mWidth;
+            uint32_t m_width;
             /// Height of the swapchain 
-            uint32_t mHeight;
+            uint32_t m_height;
             /// Format of the swapchain
-            TEXTURE_FORMAT mFormat;
+            TEXTURE_FORMAT m_format;
             /// Surface
-            class Surface* surface;
+            class Surface* m_pSurface;
             /// Set whether swapchain will be presented using vsync
-            bool mEnableVsync;
+            bool m_enableVsync;
             /// We can toogle to using FLIP model if app desires
-            bool mUseFlipSwapEffect;
+            bool m_useFlipSwapEffect;
         };
 
-        struct CYBER_GRAPHICS_API ISwapChain
+        struct CYBER_GRAPHICS_API ISwapChain : public IDeviceObject
         {
             virtual const SwapChainDesc& get_create_desc() const = 0;
         };
@@ -51,7 +52,15 @@ namespace Cyber
                 return m_desc;
             }
 
-            
+            virtual void free () override
+            {
+                for(uint32_t i = 0;i < m_bufferSRVCount; ++i)
+                {
+                    m_ppBackBufferSRVs[i]->free();
+                }
+
+                TSwapChainBase::free();
+            }
         protected:
             SwapChainDesc m_desc;
             RenderObject::ITexture** m_ppBackBufferSRVs;

@@ -24,7 +24,7 @@ namespace Cyber
             using TRootSignatureBase = RootSignatureBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            RootSignature_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TRootSignatureBase(device) {}
+            RootSignature_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device, desc) {}
 
         protected:
             ID3D12RootSignature* dxRootSignature;
