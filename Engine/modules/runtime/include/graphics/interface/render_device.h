@@ -34,7 +34,29 @@ namespace Cyber
             eastl::vector<QueueGroupDesc> m_queueGroups;
             uint32_t m_queueGroupCount;
         };
-        
+
+        /// Defines resource state transition mode performed by various commands.
+        CYBER_TYPED_ENUM(RESOURCE_STATE_TRANSITION_MODE, uint8_t)
+        {
+            /// Perform no state transitions and no state validation.
+            /// Resource states are not accessed (either read or written) by the command.
+            RESOURCE_STATE_TRANSITION_MODE_NONE = 0,
+            /// Transition resources to the states required by the specific command.
+            /// Resources in unknown state are ignored.
+            RESOURCE_STATE_TRANSITION_MODE_TRANSITION = 1,
+            /// Do not transition, but verify that states are correct.
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY = 2
+        };
+
+        struct BeginRenderPassAttribs
+        {
+            IFrameBuffer* pFramebuffer;
+            IRenderPass* pRenderPass;
+            uint32_t ClearValueCount;
+            GRAPHICS_CLEAR_VALUE* pClearValues;
+            RESOURCE_STATE_TRANSITION_MODE TransitionMode;
+        };
+
         // Render device interface
         struct CYBER_GRAPHICS_API IRenderDevice
         {
@@ -99,7 +121,7 @@ namespace Cyber
             virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) = 0;
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
-            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* cmd, const RenderPassDesc& beginRenderPassDesc) = 0;
+            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_end_render_pass(ICommandBuffer* cmd) = 0;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) = 0;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) = 0;

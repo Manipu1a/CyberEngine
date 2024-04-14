@@ -1430,12 +1430,6 @@ namespace Cyber
         RenderObject::IFence* fence;
     };
 
-    struct CYBER_GRAPHICS_API DescriptorSetCreateDesc
-    {
-        RenderObject::IRootSignature* root_signature;
-        uint32_t set_index;
-    };
-
     struct CYBER_GRAPHICS_API ColorAttachment
     {
         RenderObject::ITextureView* view;

@@ -42,7 +42,7 @@ namespace Cyber
         {
             uint32_t set;
             uint32_t binding;
-            class ISampler* id;
+            class RenderObject::ISampler* id;
         };
         struct PushConstant
         {
@@ -54,11 +54,11 @@ namespace Cyber
         };
     };
 
-    class RootSignaturePoolImpl : public RenderObject::IRootSignaturePool
+    class RootSignaturePoolImpl : public RenderObject::RootSignaturePoolBase
     {
     public:
-        RootSignaturePoolImpl(const char8_t* name)
-            : name((const char*)name)
+        RootSignaturePoolImpl(const RenderObject::RootSignaturePoolCreateDesc& desc)
+            : RootSignaturePoolBase(desc)
         {
 
         }
@@ -67,55 +67,55 @@ namespace Cyber
         {
             // calculate characteristic
             RSCharacteristic newCharacteristic = {};
-            newCharacteristic.table_count = RSTables->m_parameterTableCount;
+            newCharacteristic.table_count = RSTables->get_parameter_table_count();
             newCharacteristic.table_hash = (size_t)this;
-            for(uint32_t i = 0; i < RSTables->m_parameterTableCount; ++i)
+            for(uint32_t i = 0; i < RSTables->get_parameter_table_count(); ++i)
             {
-                for(uint32_t j = 0; j < RSTables->m_parameterTables[j].resource_count; ++j)
+                for(uint32_t j = 0; j < RSTables->get_parameter_table(j)->m_resourceCount; ++j)
                 {
-                    const auto& res = RSTables->m_parameterTables[i].resources[j];
+                    const auto& res = RSTables->get_parameter_table(i)->m_ppResources[j];
                     RSCharacteristic::RSTResource r = {};
-                    r.type = res.type;
-                    r.dim = res.dimension;
-                    r.set = res.set;
-                    r.binding = res.binding;
-                    r.size = res.size;
-                    r.offset = res.offset;
-                    r.stages = res.stages;
+                    r.type = res->get_type();
+                    r.dim = res->get_dimension();
+                    r.set = res->get_set();
+                    r.binding = res->get_binding();
+                    r.size = res->get_size();
+                    r.offset = res->get_offset();
+                    r.stages = res->get_stages();
                     newCharacteristic.table_hash = Cyber::cyber_hash(&r, sizeof(r), newCharacteristic.table_hash);
                 }
             }
-            newCharacteristic.push_constant_count = RSTables->push_constant_count;
+            newCharacteristic.push_constant_count = RSTables->get_push_constant_count();
             newCharacteristic.push_constant_hash = (size_t)this;
-            for(uint32_t i = 0; i < desc->push_constant_count; ++i)
+            for(uint32_t i = 0; i < desc->m_pushConstantCount; ++i)
             {
-                const auto& pc = RSTables->push_constants[i];
+                const auto& pc = RSTables->get_push_constant(i);
                 RSCharacteristic::PushConstant p = {};
-                p.set = pc.set;
-                p.binding = pc.binding;
-                p.size = pc.size;
-                p.offset = pc.offset;
-                p.stages = pc.stages;
+                p.set = pc->get_set();
+                p.binding = pc->get_binding();
+                p.size = pc->get_size();
+                p.offset = pc->get_offset();
+                p.stages = pc->get_stages();
                 newCharacteristic.push_constant_hash = Cyber::cyber_hash(&p, sizeof(p), newCharacteristic.push_constant_hash);
             }
-            newCharacteristic.static_sampler_count = desc->static_sampler_count;
+            newCharacteristic.static_sampler_count = desc->m_staticSamplerCount;
             newCharacteristic.static_sampler_hash = ~0;
             // static samplers are well stable-sorted during RSTable intialization
-            for(uint32_t i = 0; i < desc->static_sampler_count; ++i)
+            for(uint32_t i = 0; i < desc->m_staticSamplerCount; ++i)
             {
-                for(uint32_t j = 0; j < desc->static_sampler_count; ++j)
+                for(uint32_t j = 0; j < desc->m_staticSamplerCount; ++j)
                 {
-                    if(strcmp((char*)desc->static_sampler_names[j], (char*)RSTables->static_samplers[i].name) == 0)
+                    if(strcmp((char*)desc->m_staticSamplerNames[j], (char*)RSTables->get_static_sampler(i)->get_name()) == 0)
                     {
                         RSCharacteristic::StaticSampler s = {};
-                        s.set = RSTables->static_samplers[i].set;
-                        s.binding = RSTables->static_samplers[i].binding;
-                        s.id = desc->static_samplers[j];
+                        s.set = RSTables->get_static_sampler(i)->get_set();
+                        s.binding = RSTables->get_static_sampler(i)->get_binding();
+                        s.id = desc->m_staticSamplers[j];
                         newCharacteristic.static_sampler_hash = Cyber::cyber_hash(&s, sizeof(s), newCharacteristic.static_sampler_hash);
                     }
                 }
             }
-            newCharacteristic.pipeline_type = RSTables->pipeline_type;
+            newCharacteristic.pipeline_type = RSTables->get_pipeline_type();
             return newCharacteristic;
         }
 
@@ -134,9 +134,9 @@ namespace Cyber
         bool deallocate(RenderObject::IRootSignature* rootSig)
         {
             auto trueSig = rootSig;
-            while(trueSig->pool_next && rootSig->pool)
+            while(trueSig->get_pool_next() && rootSig->get_pool())
             {
-                trueSig = trueSig->pool_next;
+                trueSig = trueSig->get_pool_next();
             }
             auto&& iter = counterMap.find(trueSig);
             if(iter != counterMap.end())
@@ -148,9 +148,9 @@ namespace Cyber
                     const auto& character = biCharacterMap[trueSig];
                     characterMap.erase(character);
                     biCharacterMap.erase(trueSig);
-                    trueSig->pool = nullptr;
-                    trueSig->pool_next = nullptr;
-                    render_device->free_root_signature(trueSig);
+                    trueSig->set_pool(nullptr);
+                    trueSig->set_pool_next(nullptr);
+                    m_renderDevice->free_root_signature(trueSig);
                     return true;
                 }
                 iter->second--;
@@ -170,8 +170,8 @@ namespace Cyber
             characterMap[character] = RSTables;
             biCharacterMap[RSTables] = character;
             counterMap[RSTables] = 1;
-            RSTables->pool = nullptr;
-            RSTables->pool_next = nullptr;
+            RSTables->set_pool(nullptr);
+            RSTables->set_pool_next(nullptr);
             return true;
         }
         ~RootSignaturePoolImpl()
@@ -179,9 +179,9 @@ namespace Cyber
             for(auto& iter : counterMap)
             {
                 auto enforceDestroy = iter.first;
-                enforceDestroy->pool = nullptr;
-                enforceDestroy->pool_next = nullptr;
-                render_device->free_root_signature(enforceDestroy);
+                enforceDestroy->set_pool(nullptr);
+                enforceDestroy->set_pool_next(nullptr);
+                m_renderDevice->free_root_signature(enforceDestroy);
             }
         }
     private:
@@ -191,24 +191,24 @@ namespace Cyber
         phmap::flat_hash_map<RenderObject::IRootSignature*, uint32_t> counterMap;
     };
 
-    RenderObject::IRootSignaturePool* graphics_util_create_root_signature_pool(const RenderObject::RootSignaturePoolCreateDesc& desc)
+    RenderObject::RootSignaturePoolBase* graphics_util_create_root_signature_pool(const RenderObject::RootSignaturePoolCreateDesc& desc)
     {
-        return cyber_new<RootSignaturePoolImpl>(desc.name);
+        return cyber_new<RootSignaturePoolImpl>(desc);
     }
 
-    RenderObject::IRootSignature* graphics_util_try_allocate_signature(RenderObject::IRootSignaturePool* pool, RenderObject::IRootSignature* RSTables, const struct RenderObject::RootSignatureCreateDesc& desc)
+    RenderObject::IRootSignature* graphics_util_try_allocate_signature(RenderObject::RootSignaturePoolBase* pool, RenderObject::IRootSignature* RSTables, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
         return static_cast<RootSignaturePoolImpl*>(pool)->try_allocate(RSTables, &desc);
     }
-    bool graphics_util_add_signature(RenderObject::IRootSignaturePool* pool, RenderObject::IRootSignature* sig, const RenderObject::RootSignatureCreateDesc& desc)
+    bool graphics_util_add_signature(RenderObject::RootSignaturePoolBase* pool, RenderObject::IRootSignature* sig, const RenderObject::RootSignatureCreateDesc& desc)
     {
         return static_cast<RootSignaturePoolImpl*>(pool)->insert(sig, &desc);
     }
-    bool graphics_util_pool_free_signature(RenderObject::IRootSignaturePool* pool, RenderObject::IRootSignature* signature)
+    bool graphics_util_pool_free_signature(RenderObject::RootSignaturePoolBase* pool, RenderObject::IRootSignature* signature)
     {
         return static_cast<RootSignaturePoolImpl*>(pool)->deallocate(signature);
     }
-    void graphics_util_free_root_signature_pool(Ref<RenderObject::IRootSignaturePool> pool)
+    void graphics_util_free_root_signature_pool(Ref<RenderObject::RootSignaturePoolBase> pool)
     {
         auto P = static_cast<RootSignaturePoolImpl*>(pool.get());
         cyber_delete(P);

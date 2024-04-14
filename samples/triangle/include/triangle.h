@@ -30,9 +30,9 @@ namespace Cyber
             void finalize();
 
         protected:
-            RHIRootSignature* root_signature = nullptr;
-            RHIDescriptorSet* descriptor_set = nullptr;
-            RHIRenderPipeline* pipeline = nullptr;
+            RenderObject::IRootSignature* root_signature = nullptr;
+            RenderObject::IDescriptorSet* descriptor_set = nullptr;
+            RenderObject::IRenderPipeline* pipeline = nullptr;
 
             class GUI::GUIApplication* gui_app = nullptr;
         };

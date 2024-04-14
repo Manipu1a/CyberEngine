@@ -39,6 +39,7 @@
 #include "graphics/backend/d3d12/root_signature_d3d12.h"
 #include "graphics/backend/d3d12/sampler_d3d12.h"
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
+#include "graphics/backend/d3d12/render_pass_d3d12.h"
 #include "platform/configure.h"
 
 
@@ -253,8 +254,7 @@ namespace Cyber
 
     RenderObject::ITextureView* RenderDevice_D3D12_Impl::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
-        RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>(this);
-        tex_view->m_desc = viewDesc;
+        RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>(this, viewDesc);
         RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.m_pTexture);
 
         // Consume handles
@@ -761,7 +761,7 @@ namespace Cyber
 
     IFence* RenderDevice_D3D12_Impl::create_fence()
     {
-        Fence_D3D12_Impl* dxFence = cyber_new<Fence_D3D12_Impl>();
+        Fence_D3D12_Impl* dxFence = cyber_new<Fence_D3D12_Impl>(this);
         cyber_assert(dxFence, "Fence create failed!");
         CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->m_pDxFence)));
         dxFence->m_fenceValue = 0;
@@ -889,7 +889,7 @@ namespace Cyber
 
     ICommandPool* RenderDevice_D3D12_Impl::create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
     {
-        CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>();
+        CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>(this, commandPoolDesc);
         allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
         return dxCommandPool;
     }
@@ -907,7 +907,7 @@ namespace Cyber
 
     ICommandBuffer* RenderDevice_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) 
     {
-        CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>();
+        CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>(this, commandBufferDesc);
         CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
         Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->get_queue());
 
@@ -1110,7 +1110,7 @@ namespace Cyber
         }
     }
 
-    RenderPassEncoder* RenderDevice_D3D12_Impl::cmd_begin_render_pass(ICommandBuffer* cmd, const RenderPassDesc& beginRenderPassDesc)
+    RenderPassEncoder* RenderDevice_D3D12_Impl::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
     #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
@@ -1123,45 +1123,56 @@ namespace Cyber
         uint32_t colorTargetCount = 0;
         uint32_t subpassIndex = 0;
         
+        auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(beginRenderPassDesc.pRenderPass);
+        auto RenderPassDesc = RenderPass->get_create_desc();
+        auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(beginRenderPassDesc.pFramebuffer);
+        auto FramebufferDesc = Framebuffer->get_create_desc();
+
         // color
-        /*
-        for(uint32_t i = 0; i < beginRenderPassDesc.subpasses[0].render_target_count; ++i)
+        for(uint32_t i = 0; i < RenderPassDesc.m_pSubpasses[0].m_renderTargetCount; ++i)
         {
-            RHITextureView_D3D12* tex_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].input_attachments[i].view);
-            clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->create_info.format);
-            clearValues[i].Color[0] = beginRenderPassDesc.subpasses[0].input_attachments[i].clear_value.r;
-            clearValues[i].Color[1] = beginRenderPassDesc.subpasses[0].input_attachments[i].clear_value.g;
-            clearValues[i].Color[2] = beginRenderPassDesc.subpasses[0].input_attachments[i].clear_value.b;
-            clearValues[i].Color[3] = beginRenderPassDesc.subpasses[0].input_attachments[i].clear_value.a;
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].color_attachments[i].load_action];
-            RHITextureView_D3D12* tex_view_resolve = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].color_attachments[i].resolve_view);
-            if(beginRenderPassDesc.subpasses[0].sample_count != RHI_SAMPLE_COUNT_1 && tex_view_resolve)
+            auto attachmentIndex = RenderPassDesc.m_pSubpasses[0].m_pInputAttachments[i].m_attachmentIndex;
+            auto view = Framebuffer->get_attachment(attachmentIndex);
+            TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
+
+            clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().m_format);
+            clearValues[i].Color[0] = beginRenderPassDesc.pClearValues[i].r;
+            clearValues[i].Color[1] = beginRenderPassDesc.pClearValues[i].g;
+            clearValues[i].Color[2] = beginRenderPassDesc.pClearValues[i].b;
+            clearValues[i].Color[3] = beginRenderPassDesc.pClearValues[i].a;
+            
+            auto attchment = RenderPassDesc.m_pAttachments[attachmentIndex];
+
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attchment.m_loadAction];
+            TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
+            if(attchment.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
             {
-                RHITexture_D3D12* tex = static_cast<RHITexture_D3D12*>(tex_view->create_info.texture);
-                RHITexture_D3D12* tex_resolve = static_cast<RHITexture_D3D12*>(tex_view_resolve->create_info.texture);
+                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().m_pTexture);
+                Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().m_pTexture);
                 D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
-                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->mRtvDsvDescriptorHandle;
+                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
                 renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                 renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
                 auto& resolve = renderPassRenderTargetDescs[colorTargetCount].EndingAccess.Resolve;
                 resolve.ResolveMode = D3D12_RESOLVE_MODE_AVERAGE;
                 resolve.Format = clearValues[i].Format;
-                resolve.pSrcResource = tex->pDxResource;
-                resolve.pDstResource = tex_resolve->pDxResource;
-                Cmd->mSubResolveResource[i].SrcRect = { 0, 0, (LONG)tex->mWidth, (LONG)tex->mHeight };
-                Cmd->mSubResolveResource[i].DstX = 0;
-                Cmd->mSubResolveResource[i].DstY = 0;
-                Cmd->mSubResolveResource[i].SrcSubresource = 0;
-                Cmd->mSubResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->mMipLevels, tex_resolve->mArraySize + 1);
+                resolve.pSrcResource = tex->get_d3d12_resource();
+                resolve.pDstResource = tex_resolve->get_d3d12_resource();
+
+                Cmd->m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->m_width, (LONG)tex->m_height };
+                Cmd->m_subResolveResource[i].DstX = 0;
+                Cmd->m_subResolveResource[i].DstY = 0;
+                Cmd->m_subResolveResource[i].SrcSubresource = 0;
+                Cmd->m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->m_mipLevels, tex_resolve->m_arraySize + 1);
                 resolve.PreserveResolveSource = false;
                 resolve.SubresourceCount = 1;
-                resolve.pSubresourceParameters = &Cmd->mSubResolveResource[i];
+                resolve.pSubresourceParameters = &Cmd->m_subResolveResource[i];
             }
             else
             {
                 // Load & Store action
-                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].color_attachments[i].store_action];
-                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->mRtvDsvDescriptorHandle;
+                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attchment.m_storeAction];
+                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
                 renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                 renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
             }
@@ -1169,18 +1180,21 @@ namespace Cyber
         }
         // depth stencil
         D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pRenderPassDepthStencilDesc = nullptr;
-        if(beginRenderPassDesc.subpasses[0].depth_stencil_attachment != nullptr && beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view != nullptr)
+        if(RenderPassDesc.m_pSubpasses[0].m_pDepthStencilAttachment != nullptr)
         {
-            RHITextureView_D3D12* dt_view = static_cast<RHITextureView_D3D12*>(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view);
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->depth_load_action];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->depth_store_action];
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->stencil_load_action];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[beginRenderPassDesc.subpasses[0].depth_stencil_attachment->stencil_store_action];
-            clearDepth.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view->create_info.format);
-            clearDepth.DepthStencil.Depth = beginRenderPassDesc.subpasses[0].depth_stencil_attachment->clear_depth;
-            clearStencil.Format = DXGIUtil_TranslatePixelFormat(beginRenderPassDesc.subpasses[0].depth_stencil_attachment->view->create_info.format);
-            clearStencil.DepthStencil.Stencil = beginRenderPassDesc.subpasses[0].depth_stencil_attachment->clear_stencil;
-            renderPassDepthStencilDesc.cpuDescriptor = dt_view->mRtvDsvDescriptorHandle;
+            auto depthStencilAttachIndex = RenderPassDesc.m_pSubpasses[0].m_pDepthStencilAttachment->m_attachmentIndex;
+            auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
+            auto clearValue = beginRenderPassDesc.pClearValues[depthStencilAttachIndex];
+            TextureView_D3D12_Impl* dt_view = static_cast<TextureView_D3D12_Impl*>(Framebuffer->get_attachment(depthStencilAttachIndex));
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachDesc.m_loadAction];
+            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachDesc.m_storeAction];
+            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachDesc.m_stencilLoadAction];
+            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachDesc.m_stencilStoreAction];
+            clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);
+            clearDepth.DepthStencil.Depth = clearValue.depth;
+            clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);;
+            clearStencil.DepthStencil.Stencil = clearValue.stencil;
+            renderPassDepthStencilDesc.cpuDescriptor = dt_view->m_rtvDsvDescriptorHandle;
             renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };
             renderPassDepthStencilDesc.DepthEndingAccess = { depthEndingAccess, {} };
             renderPassDepthStencilDesc.StencilBeginningAccess = { stencilBeginningAccess, clearStencil };
@@ -1190,10 +1204,10 @@ namespace Cyber
         D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
         cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
         return cmd;
-    #endif
+    #else
         cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
-        */
-        #endif
+        
+    #endif
         return cmd;
     }
 
@@ -1361,7 +1375,8 @@ namespace Cyber
             CHECK_HRESULT(dxSwapChain->get_dx_swap_chain()->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
         }
 
-        dxSwapChain->m_ppBackBufferSRVs = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
+        auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
+        dxSwapChain->set_back_buffers(back_buffers);
         for(uint32_t i = 0; i < buffer_count; i++)
         {
             RenderObject::Texture_D3D12_Impl* Ts = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
@@ -1378,7 +1393,7 @@ namespace Cyber
             Ts->m_nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
             Ts->m_ownsImage = false;
             Ts->m_pNativeHandle = Ts->native_resource;
-            dxSwapChain->m_ppBackBufferSRVs[i] = Ts;
+            dxSwapChain->set_back_buffer(Ts, i);
         }
         //dxSwapChain->mBackBuffers = Ts;
         dxSwapChain->m_bufferSRVCount = buffer_count;
@@ -1396,18 +1411,19 @@ namespace Cyber
         depthStencilDesc.m_descriptors = DESCRIPTOR_TYPE_UNDEFINED;
         depthStencilDesc.m_startState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
         depthStencilDesc.m_name = u8"Main Depth Stencil";
-        dxSwapChain->m_pBackBufferDSV = create_texture(depthStencilDesc);
+        auto depth_buffer = create_texture(depthStencilDesc);
+        dxSwapChain->set_back_buffer_depth(depth_buffer);
 
-        auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->m_pBackBufferDSV);
+        auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->get_back_buffer_depth());
 
         TextureViewCreateDesc depthStencilViewDesc = {};
-        depthStencilViewDesc.m_pTexture = dxSwapChain->m_pBackBufferDSV;
+        depthStencilViewDesc.m_pTexture = dxSwapChain->get_back_buffer_depth();
         depthStencilViewDesc.m_dimension = TEX_DIMENSION_2D;
         depthStencilViewDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
         depthStencilViewDesc.m_usages = TVU_RTV_DSV;
         depthStencilViewDesc.m_aspects = TVA_DEPTH;
         depthStencilViewDesc.m_arrayLayerCount = 1;
-        dxSwapChain->m_pBackBufferDSVView = create_texture_view(depthStencilViewDesc);
+        dxSwapChain->set_back_buffer_dsv(create_texture_view(depthStencilViewDesc));
 
         dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
         return dxSwapChain;
@@ -1451,7 +1467,7 @@ namespace Cyber
     // for example 
     IRootSignature* RenderDevice_D3D12_Impl::create_root_signature(const RenderObject::RootSignatureCreateDesc& rootSigDesc)
     {
-        RootSignature_D3D12_Impl* dxRootSignature = cyber_new<RootSignature_D3D12_Impl>();
+        RootSignature_D3D12_Impl* dxRootSignature = cyber_new<RootSignature_D3D12_Impl>(this, rootSigDesc);
 
         // Pick root parameters from desc data
         SHADER_STAGE shaderStages = SHADER_STAGE_NONE;
@@ -1628,7 +1644,7 @@ namespace Cyber
     IDescriptorSet* RenderDevice_D3D12_Impl::create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc)
     {
         RootSignature_D3D12_Impl* root_signature = static_cast<RootSignature_D3D12_Impl*>(dSetDesc.root_signature);
-        DescriptorSet_D3D12_Impl* descSet = cyber_new<DescriptorSet_D3D12_Impl>();
+        DescriptorSet_D3D12_Impl* descSet = cyber_new<DescriptorSet_D3D12_Impl>(this, dSetDesc);
         
         descSet->set_root_signature(dSetDesc.root_signature);
         descSet->set_set_index(dSetDesc.set_index);
@@ -1736,7 +1752,7 @@ namespace Cyber
     IRenderPipeline* RenderDevice_D3D12_Impl::create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc)
     {
         RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(pipelineDesc.root_signature);
-        RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>();
+        RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>(this, pipelineDesc);
         // Input layout
         DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
@@ -2127,15 +2143,15 @@ namespace Cyber
         }
     }
 
-    RenderObject::IBuffer* RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& pDesc)
+    RenderObject::IBuffer* RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& createDesc)
     {
         Adapter_D3D12_Impl* DxAdapter = static_cast<Adapter_D3D12_Impl*>(m_pAdapter);
         
-        RenderObject::Buffer_D3D12_Impl* pBuffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this);
+        RenderObject::Buffer_D3D12_Impl* pBuffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this, createDesc);
 
-        uint64_t allocationSize = pDesc.m_size;
+        uint64_t allocationSize = createDesc.m_size;
         // Align the buffer size to multiples of the dynamic uniform buffer minimum size
-        if(pDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        if(createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
         {
             allocationSize = round_up_64(allocationSize, DxAdapter->m_adapterDetail.m_uniformBufferAlignment);
         }
@@ -2154,7 +2170,7 @@ namespace Cyber
         desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
         desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-        if(pDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
+        if(createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
         {
             // UAV
             desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
@@ -2167,15 +2183,15 @@ namespace Cyber
         // Buffer is 1D
         desc.Width = padded_size;
 
-        GRAPHICS_RESOURCE_STATE start_state = pDesc.m_startState;
-        if(pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU || pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY)
+        GRAPHICS_RESOURCE_STATE start_state = createDesc.m_startState;
+        if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU || createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY)
         {
             // Your application should generally avoid transitioning to D3D12_RESOURCE_STATE_GENERIC_READ when possible, 
             // since that can result in premature cache flushes, or resource layout changes (for example, compress/decompress),
             // causing unnecessary pipeline stalls.
             start_state = GRAPHICS_RESOURCE_STATE_GENERIC_READ;
         }
-        else if(pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
+        else if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
         {
             start_state = GRAPHICS_RESOURCE_STATE_COPY_DEST;
         }
@@ -2184,11 +2200,11 @@ namespace Cyber
 
         D3D12MA::ALLOCATION_DESC alloc_desc = {};
 
-        if(pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY || pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU)
+        if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY || createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU)
         {
             alloc_desc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
         }
-        else if(pDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
+        else if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
         {
             alloc_desc.HeapType = D3D12_HEAP_TYPE_READBACK;
             desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
@@ -2199,7 +2215,7 @@ namespace Cyber
         }
         
         // for commit resource
-        if(pDesc.m_flags & BCF_OWN_MEMORY_BIT)
+        if(createDesc.m_flags & BCF_OWN_MEMORY_BIT)
             alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
 
         if(alloc_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT && (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
@@ -2211,30 +2227,30 @@ namespace Cyber
             heapProps.VisibleNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
             heapProps.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
             CHECK_HRESULT(m_pDxDevice->CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, NULL, IID_ARGS(&pBuffer->m_pDxResource)));
-            CB_CORE_TRACE("[D3D12] Create Committed Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(pDesc.m_pName ? pDesc.m_pName : CYBER_UTF8("")), allocationSize, pDesc.m_format);
+            CB_CORE_TRACE("[D3D12] Create Committed Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
         }
         else
         {
             CHECK_HRESULT(m_pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, NULL, &pBuffer->m_pDxAllocation, IID_ARGS(&pBuffer->m_pDxResource)));
-            CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(pDesc.m_pName ? pDesc.m_pName : CYBER_UTF8("")), allocationSize, pDesc.m_format);
+            CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
         }
         
-        if(pDesc.m_memoryUsage != GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY && pDesc.m_flags & BCF_PERSISTENT_MAP_BIT)
+        if(createDesc.m_memoryUsage != GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY && createDesc.m_flags & BCF_PERSISTENT_MAP_BIT)
             pBuffer->m_pDxResource->Map(0, NULL, &pBuffer->m_pCpuMappedAddress);
         
         pBuffer->m_dxGpuAddress = pBuffer->m_pDxResource->GetGPUVirtualAddress();
         
         // Create Descriptors
-        if(!(pDesc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
+        if(!(createDesc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
         {
             DescriptorHeap_D3D12* pHeap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-            uint32_t handleCount = ((pDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
-                                    ((pDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
-                                    ((pDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
+            uint32_t handleCount = ((createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
+                                    ((createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
+                                    ((createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
             pBuffer->m_dxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(pHeap, handleCount).mCpu;
         
             // Create CBV
-            if(pDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+            if(createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
             {
                 pBuffer->m_srvDescriptorOffset = 1;
 
@@ -2245,7 +2261,7 @@ namespace Cyber
             }
 
             // Create SRV
-            if(pDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER)
+            if(createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER)
             {
                 D3D12_CPU_DESCRIPTOR_HANDLE srv = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_srvDescriptorOffset};
                 pBuffer->m_uavDescriptorOffset = pBuffer->m_srvDescriptorOffset + pHeap->get_descriptor_size() * 1;
@@ -2253,13 +2269,13 @@ namespace Cyber
                 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
                 srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
                 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                srvDesc.Buffer.FirstElement = pDesc.m_firstElement;
-                srvDesc.Buffer.NumElements = (UINT)pDesc.m_elementCount;
+                srvDesc.Buffer.FirstElement = createDesc.m_firstElement;
+                srvDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
                 srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-                srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(pDesc.m_format);
-                if(DESCRIPTOR_TYPE_BUFFER_RAW == (pDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
+                srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
+                if(DESCRIPTOR_TYPE_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
                 {
-                    if(pDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                    if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
                     {
                         CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
                     }
@@ -2275,34 +2291,34 @@ namespace Cyber
             }
 
             // Create UAV
-            if(pDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
+            if(createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
             {
                 D3D12_CPU_DESCRIPTOR_HANDLE uav = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_uavDescriptorOffset};
 
                 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
                 uavDesc.Format = DXGI_FORMAT_UNKNOWN;
                 uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-                uavDesc.Buffer.FirstElement = pDesc.m_firstElement;
-                uavDesc.Buffer.NumElements = (UINT)pDesc.m_elementCount;
-                uavDesc.Buffer.StructureByteStride = (UINT)pDesc.m_structStride;
+                uavDesc.Buffer.FirstElement = createDesc.m_firstElement;
+                uavDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
+                uavDesc.Buffer.StructureByteStride = (UINT)createDesc.m_structStride;
                 uavDesc.Buffer.CounterOffsetInBytes = 0;
                 uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-                if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (pDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
+                if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
                 {
-                    if(pDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                    if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
                         CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
                     uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
                     uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
                 }
-                else if(pDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                else if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
                 {
-                    uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(pDesc.m_format);
+                    uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
                     D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
                     HRESULT hr = m_pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
                     if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
                         !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
                     {
-                        CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)pDesc.m_format);
+                        CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)createDesc.m_format);
                         uavDesc.Format = DXGI_FORMAT_UNKNOWN;
                     }
                 }
@@ -2312,14 +2328,14 @@ namespace Cyber
                     uavDesc.Buffer.StructureByteStride = 0;
                 }
 
-                ID3D12Resource* pCounterResource = pDesc.m_pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(pDesc.m_pCounterBuffer)->m_pDxResource : nullptr;
+                ID3D12Resource* pCounterResource = createDesc.m_pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(createDesc.m_pCounterBuffer)->m_pDxResource : nullptr;
                 create_unordered_access_view(pBuffer->m_pDxResource, pCounterResource, &uavDesc, uav);
             }
         }
 
-        pBuffer->m_size = (uint32_t)pDesc.m_size;
-        pBuffer->m_memoryUsage = pDesc.m_memoryUsage;
-        pBuffer->m_descriptors = pDesc.m_descriptors;
+        pBuffer->m_size = (uint32_t)createDesc.m_size;
+        pBuffer->m_memoryUsage = createDesc.m_memoryUsage;
+        pBuffer->m_descriptors = createDesc.m_descriptors;
         return pBuffer;
     }
     void RenderDevice_D3D12_Impl::free_buffer(RenderObject::IBuffer* buffer)
@@ -2336,7 +2352,7 @@ namespace Cyber
     }
     IShaderLibrary* RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {
-        ShaderLibrary_D3D12_Impl* pLibrary = cyber_new<ShaderLibrary_D3D12_Impl>();
+        ShaderLibrary_D3D12_Impl* pLibrary = cyber_new<ShaderLibrary_D3D12_Impl>(this, desc);
 
         bool bUseDXC = false;
         switch(desc.shader_compiler)

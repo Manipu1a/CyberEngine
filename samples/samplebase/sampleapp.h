@@ -24,15 +24,15 @@ namespace Cyber
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
             static const uint32_t BACK_BUFFER_COUNT = 3;
             RenderObject::IRenderDevice* device = nullptr;
-            RHIInstance* instance = nullptr;
-            RHIAdapter* adapter = nullptr;
-            RHIFence* present_fence = nullptr;
-            RHIQueue* queue = nullptr;
-            RHICommandPool* pool = nullptr;
-            RHICommandBuffer* cmd = nullptr;
-            RHISwapChain* swap_chain = nullptr;
+            RenderObject::IInstance* instance = nullptr;
+            RenderObject::IAdapter* adapter = nullptr;
+            RenderObject::IFence* present_fence = nullptr;
+            RenderObject::IQueue* queue = nullptr;
+            RenderObject::ICommandPool* pool = nullptr;
+            RenderObject::ICommandBuffer* cmd = nullptr;
+            RenderObject::ISwapChain* swap_chain = nullptr;
             Surface* surface = nullptr;
-            RHIFence* present_swmaphore = nullptr; 
+            RenderObject::IFence* present_swmaphore = nullptr; 
             uint32_t backbuffer_index = 0;
 
             RenderObject::CEDeviceContext* immediate_context = nullptr;

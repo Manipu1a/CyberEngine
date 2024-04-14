@@ -26,6 +26,7 @@ namespace Cyber
         class IShaderLibrary_D3D12;
         class IShaderResource_D3D12;
         class IVertexInput_D3D12;
+        class IRenderPass_D3D12;
 
         class Texture_D3D12_Impl;
         class TextureView_D3D12_Impl;
@@ -49,6 +50,7 @@ namespace Cyber
         class ShaderLibrary_D3D12_Impl;
         class ShaderResource_D3D12_Impl;
         class VertexInput_D3D12_Impl;
+        class RenderPass_D3D12_Impl;
 
         struct EngineD3D12ImplTraits
         {
@@ -75,6 +77,7 @@ namespace Cyber
             using ShaderLibraryInterface = IShaderLibrary_D3D12;
             using ShaderResourceInterface = IShaderResource_D3D12;
             using VertexInputInterface = IVertexInput_D3D12;
+            using RenderPassInterface = IRenderPass_D3D12;
 
             // Impl
             using TextureImplType = Texture_D3D12_Impl;
@@ -99,6 +102,7 @@ namespace Cyber
             using ShaderLibraryImplType = ShaderLibrary_D3D12_Impl;
             using ShaderResourceImplType = ShaderResource_D3D12_Impl;
             using VertexInputImplType = VertexInput_D3D12_Impl;
+            using RenderPassImplType = RenderPass_D3D12_Impl;
         };
     }
 }

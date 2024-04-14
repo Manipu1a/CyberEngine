@@ -26,30 +26,32 @@ namespace Cyber
             create_gfx_objects();
 
             // Create views
-            swap_chain->mBackBufferSRVViews = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * swap_chain->mBufferSRVCount);
-            for(uint32_t i = 0; i < swap_chain->mBufferSRVCount; ++i)
+            auto backBufferSRV = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * swap_chain->get_buffer_srv_count());
+            swap_chain->set_back_buffer_srv_views(backBufferSRV); 
+            for(uint32_t i = 0; i < swap_chain->get_buffer_srv_count(); ++i)
             {
                 eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
                 RenderObject::TextureViewCreateDesc view_desc = {
-                    .name = swap_chain_name.c_str(),
-                    .texture = swap_chain->mBackBufferSRVs[i],
-                    .format = (ERHIFormat)swap_chain->mBackBufferSRVs[i]->get_create_desc().format,
-                    .usages = RHI_TVU_RTV_DSV,
-                    .aspects = RHI_TVA_COLOR,
-                    .dimension = RHI_TEX_DIMENSION_2D,
-                    .array_layer_count = 1
+                    .m_name = swap_chain_name.c_str(),
+                    .m_pTexture = swap_chain->get_back_buffer(i),
+                    .m_format = (TEXTURE_FORMAT)swap_chain->get_back_buffer(i)->get_create_desc().m_format,
+                    .m_usages = TVU_RTV_DSV,
+                    .m_aspects = TVA_COLOR,
+                    .m_dimension = TEX_DIMENSION_2D,
+                    .m_arrayLayerCount = 1
                 };
-                swap_chain->mBackBufferSRVViews[i] = device->create_texture_view(view_desc);
+                auto view = device->create_texture_view(view_desc);
+                swap_chain->set_back_buffer_srv_view(view, i);
             }
             
             device->cmd_begin(cmd);
             {
-                RHITextureBarrier depth_barrier = {
-                    .texture = swap_chain->mBackBufferDSV,
-                    .src_state = RHI_RESOURCE_STATE_COMMON,
-                    .dst_state = RHI_RESOURCE_STATE_DEPTH_WRITE
+                TextureBarrier depth_barrier = {
+                    .texture = swap_chain->get_back_buffer_depth(),
+                    .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                    .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
                 };
-                RHIResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
+                ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
                 device->cmd_resource_barrier(cmd, barrier_desc1);
             }
             device->cmd_end(cmd);
@@ -79,49 +81,49 @@ namespace Cyber
         {
             // create shader
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-                vs_load_desc.target = shader_target_6_0;
+                vs_load_desc.target = SHADER_TARGET_6_0;
                 vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
                     .file_name = CYBER_UTF8("vertex_shader.hlsl"),
-                    .stage = RHI_SHADER_STAGE_VERT,
+                    .stage = SHADER_STAGE_VERT,
                     .entry_point_name = CYBER_UTF8("VSMain"),
                 };
-            RHIShaderLibrary* vs_shader = ResourceLoader::add_shader(device, vs_load_desc);
+            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
-            ps_load_desc.target = shader_target_6_0;
+            ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
                 .file_name = CYBER_UTF8("pixel_shader.hlsl"),
-                .stage = RHI_SHADER_STAGE_FRAG,
+                .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            RHIShaderLibrary* ps_shader = ResourceLoader::add_shader(device, ps_load_desc);
+            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(device, ps_load_desc);
 
             // create root signature
-            RHIPipelineShaderCreateDesc* pipeline_shader_create_desc[2];
-            pipeline_shader_create_desc[0] = cyber_new<RHIPipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[0]->stage = RHI_SHADER_STAGE_VERT;
-            pipeline_shader_create_desc[0]->library = vs_shader;
-            pipeline_shader_create_desc[0]->entry = CYBER_UTF8("VSMain");
-            pipeline_shader_create_desc[1] = cyber_new<RHIPipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[1]->stage = RHI_SHADER_STAGE_FRAG;
-            pipeline_shader_create_desc[1]->library = ps_shader;
-            pipeline_shader_create_desc[1]->entry = CYBER_UTF8("PSMain");
-            RHIRootSignatureCreateDesc root_signature_create_desc = {
-                .shaders = pipeline_shader_create_desc,
-                .shader_count = 2,
+            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
+            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            pipeline_shader_create_desc[0]->m_library = vs_shader;
+            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+            pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            pipeline_shader_create_desc[1]->m_library = ps_shader;
+            pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
+                .m_ppShaders = pipeline_shader_create_desc,
+                .m_shaderCount = 2,
             };
             root_signature = device->create_root_signature(root_signature_create_desc);
             // create descriptor set
 
-            DescriptorSetCreateDesc desc_set_create_desc = {
+            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
             descriptor_set = device->create_descriptor_set(desc_set_create_desc);
 
-            RHIVertexLayout vertex_layout = {.attribute_count = 0};
-            auto color_format = swap_chain->mBackBufferSRVViews[0]->get_create_desc().format;
-            RHIRenderPipelineCreateDesc rp_desc = 
+            VertexLayout vertex_layout = {.attribute_count = 0};
+            auto color_format = swap_chain->get_back_buffer_srv_view(0)->get_create_desc().m_format;
+            RenderObject::RenderPipelineCreateDesc rp_desc = 
             {
                 .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
@@ -130,7 +132,7 @@ namespace Cyber
                 //.rasterizer_state = {},
                 .color_formats = &color_format,
                 .render_target_count = 1,
-                .prim_topology = RHI_PRIM_TOPO_TRIANGLE_LIST,
+                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
             pipeline = device->create_render_pipeline(rp_desc);
             device->free_shader_library(vs_shader);
@@ -145,59 +147,59 @@ namespace Cyber
             constexpr uint32_t num_attachments = 3;
 
             RenderObject::RenderPassAttachmentDesc attachments[num_attachments] = {};
-            attachments[0].format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM;
-            attachments[0].load_action = RHI_LOAD_ACTION_CLEAR;
-            attachments[0].store_action = RHI_STORE_ACTION_STORE;
-            attachments[0].initial_state = RHI_RESOURCE_STATE_RENDER_TARGET;
-            attachments[0].final_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+            attachments[0].m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            attachments[0].m_loadAction = LOAD_ACTION_CLEAR;
+            attachments[0].m_storeAction = STORE_ACTION_STORE;
+            attachments[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachments[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
             
-            attachments[1].format = ERHIFormat::RHI_FORMAT_D24_UNORM_S8_UINT;
-            attachments[1].load_action = RHI_LOAD_ACTION_CLEAR;
-            attachments[1].store_action = RHI_STORE_ACTION_STORE;
-            attachments[1].initial_state = RHI_RESOURCE_STATE_COMMON;
-            attachments[1].final_state = RHI_RESOURCE_STATE_DEPTH_WRITE;
+            attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+            attachments[1].m_loadAction = LOAD_ACTION_CLEAR;
+            attachments[1].m_storeAction = STORE_ACTION_STORE;
+            attachments[1].m_initialState = GRAPHICS_RESOURCE_STATE_COMMON;
+            attachments[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
 
-            attachments[2].format = (ERHIFormat)swap_chain->mBackBufferSRVs[0]->get_create_desc().format;
-            attachments[2].load_action = RHI_LOAD_ACTION_CLEAR;
-            attachments[2].store_action = RHI_STORE_ACTION_STORE;
-            attachments[2].initial_state = RHI_RESOURCE_STATE_RENDER_TARGET;
-            attachments[2].final_state = RHI_RESOURCE_STATE_RENDER_TARGET;
+            attachments[2].m_format = swap_chain->get_back_buffer_srv_view(0)->get_create_desc().m_format;
+            attachments[2].m_loadAction = LOAD_ACTION_CLEAR;
+            attachments[2].m_storeAction = STORE_ACTION_STORE;
+            attachments[2].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachments[2].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
 
             constexpr uint32_t num_subpasses = 2;
             RenderObject::RenderSubpassDesc subpasses[num_subpasses] = {};
             // subpass 0 attachments
             RenderObject::AttachmentReference rt_attachment_ref0[] = 
             {
-                {0, RHI_RESOURCE_STATE_RENDER_TARGET}
+                {0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET}
             };
 
-            RenderObject::AttachmentReference depth_attachment_ref0 = {1, RHI_RESOURCE_STATE_DEPTH_WRITE};
+            RenderObject::AttachmentReference depth_attachment_ref0 = {1, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE};
             // subpass 1 attachments
             RenderObject::AttachmentReference rt_attachment_ref1[] =
             {
-                {2, RHI_RESOURCE_STATE_RENDER_TARGET}
+                {2, GRAPHICS_RESOURCE_STATE_RENDER_TARGET}
             };
-            RenderObject::AttachmentReference depth_attachment_ref1 = { 1, RHI_RESOURCE_STATE_DEPTH_WRITE };
+            RenderObject::AttachmentReference depth_attachment_ref1 = { 1, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE };
             RenderObject::AttachmentReference input_attachment_ref1[] = 
             {
-                { 0, RHI_RESOURCE_STATE_SHADER_RESOURCE }
+                { 0, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE }
             };
 
-            subpasses[0].render_target_count = _countof(rt_attachment_ref0);
-            subpasses[0].render_target_attachments = rt_attachment_ref0;
-            subpasses[0].depth_stencil_attachment = &depth_attachment_ref0;
+            subpasses[0].m_renderTargetCount = _countof(rt_attachment_ref0);
+            subpasses[0].m_pRenderTargetAttachments = rt_attachment_ref0;
+            subpasses[0].m_pDepthStencilAttachment = &depth_attachment_ref0;
 
-            subpasses[1].render_target_count = _countof(rt_attachment_ref1);
-            subpasses[1].render_target_attachments = rt_attachment_ref1;
-            subpasses[1].depth_stencil_attachment = &depth_attachment_ref1;
-            subpasses[1].input_attachment_count = _countof(input_attachment_ref1);
-            subpasses[1].input_attachments = input_attachment_ref1;
+            subpasses[1].m_renderTargetCount = _countof(rt_attachment_ref1);
+            subpasses[1].m_pRenderTargetAttachments = rt_attachment_ref1;
+            subpasses[1].m_pDepthStencilAttachment = &depth_attachment_ref1;
+            subpasses[1].m_inputAttachmentCount = _countof(input_attachment_ref1);
+            subpasses[1].m_pInputAttachments = input_attachment_ref1;
 
             RenderObject::RenderPassDesc renderpass_desc;
-            renderpass_desc.attachments = attachments;
-            renderpass_desc.attachment_count = num_attachments;
-            renderpass_desc.subpass_count = num_subpasses;
-            renderpass_desc.subpasses = subpasses;
+            renderpass_desc.m_pAttachments = attachments;
+            renderpass_desc.m_attachmentCount = num_attachments;
+            renderpass_desc.m_subpassCount = num_subpasses;
+            renderpass_desc.m_pSubpasses = subpasses;
 
             render_pass = device->create_render_pass(renderpass_desc);
             cyber_assert(render_pass != nullptr, "create render pass failed");
@@ -209,90 +211,90 @@ namespace Cyber
             
             // Create color texture
             RenderObject::TextureCreateDesc texture_desc = {
-                .name = CYBER_UTF8("color"),
-                .width = getWindow()->getWidth(),
-                .height = getWindow()->getHeight(),
-                .depth = 1,
-                .array_size = 1,
-                .mip_levels = 1,
-                .clear_value = { 0.0f, 0.0f, 0.0f, 1.000000000f },
-                .descriptors = RHI_DESCRIPTOR_TYPE_UNDEFINED,
-                .format = rp_desc.attachments[0].format,
-                .start_state = RHI_RESOURCE_STATE_RENDER_TARGET | RHI_RESOURCE_STATE_SHADER_RESOURCE,
+                .m_name = CYBER_UTF8("color"),
+                .m_width = getWindow()->getWidth(),
+                .m_height = getWindow()->getHeight(),
+                .m_depth = 1,
+                .m_arraySize = 1,
+                .m_mipLevels = 1,
+                .m_clearValue = { 0.0f, 0.0f, 0.0f, 1.000000000f },
+                .m_descriptors = DESCRIPTOR_TYPE_UNDEFINED,
+                .m_format = rp_desc.m_pAttachments[0].m_format,
+                .m_startState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET | GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
             };
 
             if(gbuffer.base_color_texture != nullptr)
                 gbuffer.base_color_texture = device->create_texture(texture_desc);
 
             // Create depth texture
-            texture_desc.name = CYBER_UTF8("depth zbuffer");
-            texture_desc.format = rp_desc.attachments[1].format;
-            texture_desc.clear_value = {1.0f, 1.0f, 1.0f, 1.0f};
+            texture_desc.m_name = CYBER_UTF8("depth zbuffer");
+            texture_desc.m_format = rp_desc.m_pAttachments[1].m_format;
+            texture_desc.m_clearValue = {1.0f, 1.0f, 1.0f, 1.0f};
 
             if(gbuffer.depth_texture != nullptr)
                 gbuffer.depth_texture = device->create_texture(texture_desc);
 
             // Create final color texture
-            texture_desc.name = CYBER_UTF8("final color");
-            texture_desc.format = rp_desc.attachments[2].format;
-            texture_desc.clear_value = { 0.0f, 0.0f, 0.0f, 1.0f };
+            texture_desc.m_name = CYBER_UTF8("final color");
+            texture_desc.m_format = rp_desc.m_pAttachments[2].m_format;
+            texture_desc.m_clearValue = { 0.0f, 0.0f, 0.0f, 1.0f };
 
             if(gbuffer.final_color_texture != nullptr)
                 gbuffer.final_color_texture = device->create_texture(texture_desc);
             
             RenderObject::TextureViewCreateDesc view_desc = {
-                .name = CYBER_UTF8("color_view"),
-                .texture = gbuffer.base_color_texture,
-                .format = ERHIFormat::RHI_FORMAT_R8G8B8A8_UNORM,
-                .usages = RHI_TVU_RTV_DSV,
-                .aspects = RHI_TVA_COLOR,
-                .dimension = RHI_TEX_DIMENSION_2D,
-                .array_layer_count = 1
+                .m_name = CYBER_UTF8("color_view"),
+                .m_pTexture = gbuffer.base_color_texture,
+                .m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM,
+                .m_usages = TVU_RTV_DSV,
+                .m_aspects = TVA_COLOR,
+                .m_dimension = TEX_DIMENSION_2D,
+                .m_arrayLayerCount = 1
             };
 
             RenderObject::ITextureView* views[] = 
             {
-                gbuffer.base_color_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV),
-                gbuffer.depth_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV),
-                gbuffer.final_color_texture->get_default_texture_view(ERHITextureViewUsage::RHI_TVU_RTV_DSV)
+                gbuffer.base_color_texture->get_default_texture_view(TVU_RTV_DSV),
+                gbuffer.depth_texture->get_default_texture_view(TVU_RTV_DSV),
+                gbuffer.final_color_texture->get_default_texture_view(TVU_RTV_DSV)
             };
 
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
-                .name = CYBER_UTF8("frame_buffer"),
-                .render_pass = nullptr,
-                .attachment_count = 3,
-                .attachments = views
+                .m_name = CYBER_UTF8("frame_buffer"),
+                .m_pRenderPass = nullptr,
+                .m_attachmentCount = 3,
+                .m_ppAttachments = views
             };
             frame_buffer = device->create_frame_buffer(frame_buffer_desc);
         }
 
         void RenderPassApp::raster_draw()
         {
-            RHIAcquireNextDesc acquire_desc = {
+            AcquireNextDesc acquire_desc = {
                 .fence = present_fence
             };
             backbuffer_index = device->acquire_next_image(swap_chain, acquire_desc);
-            auto back_buffer = swap_chain->mBackBufferSRVs[backbuffer_index];
-            auto back_buffer_view = swap_chain->mBackBufferSRVViews[backbuffer_index];
-            auto back_depth_buffer_view = swap_chain->mBackBufferDSVView;
+            auto back_buffer = swap_chain->get_back_buffer(backbuffer_index);
+            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(backbuffer_index);
+            auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
             device->reset_command_pool(pool);
             // record
             device->cmd_begin(cmd);
-            RHIColorAttachment screen_attachment = {
+            ColorAttachment screen_attachment = {
                 .view = back_buffer_view,
-                .load_action = RHI_LOAD_ACTION_CLEAR,
-                .store_action = RHI_STORE_ACTION_STORE,
+                .load_action = LOAD_ACTION_CLEAR,
+                .store_action = STORE_ACTION_STORE,
                 .clear_value = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f }
             };
 
-            RHIDepthStencilAttachment depth_attachment = {
+            DepthStencilAttachment depth_attachment = {
                 .view = back_depth_buffer_view,
-                .depth_load_action = RHI_LOAD_ACTION_CLEAR,
-                .depth_store_action = RHI_STORE_ACTION_STORE,
+                .depth_load_action = LOAD_ACTION_CLEAR,
+                .depth_store_action = STORE_ACTION_STORE,
                 .clear_depth = 0.0f,
                 .write_depth = 1,
-                .stencil_load_action = RHI_LOAD_ACTION_CLEAR,
-                .stencil_store_action = RHI_STORE_ACTION_STORE,
+                .stencil_load_action = LOAD_ACTION_CLEAR,
+                .stencil_store_action = STORE_ACTION_STORE,
                 .clear_stencil = 0,
                 .write_stencil = 0
             };
@@ -305,25 +307,25 @@ namespace Cyber
                 .render_target_count = 1,
                 */
             };
-            RHITextureBarrier draw_barrier = {
+            TextureBarrier draw_barrier = {
                 .texture = back_buffer,
-                .src_state = RHI_RESOURCE_STATE_PRESENT,
-                .dst_state = RHI_RESOURCE_STATE_RENDER_TARGET
+                .src_state = GRAPHICS_RESOURCE_STATE_PRESENT,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET
             };
 
-            RHIResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device->cmd_resource_barrier(cmd, barrier_desc0);
-            RHIRenderPassEncoder* rp_encoder = device->cmd_begin_render_pass(cmd, rp_desc);
-            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height, 0.0f, 1.0f);
-            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height);
+            RenderPassEncoder* rp_encoder = device->cmd_begin_render_pass(cmd, rp_desc);
+            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             device->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             device->render_encoder_draw(rp_encoder, 3, 0);
             device->cmd_end_render_pass(cmd);
 
-            screen_attachment.load_action = RHI_LOAD_ACTION_LOAD;
-            depth_attachment.depth_load_action = RHI_LOAD_ACTION_LOAD;
-            depth_attachment.stencil_load_action = RHI_LOAD_ACTION_LOAD;
+            screen_attachment.load_action = LOAD_ACTION_LOAD;
+            depth_attachment.depth_load_action = LOAD_ACTION_LOAD;
+            depth_attachment.stencil_load_action = LOAD_ACTION_LOAD;
             RenderObject::RenderPassDesc ui_rp_desc = {
                 //.sample_count = RHI_SAMPLE_COUNT_1,
                 //.color_attachments = &screen_attachment,
@@ -331,34 +333,34 @@ namespace Cyber
                 //.render_target_count = 1,
             };
 
-            RHIRenderPassEncoder* rp_ui_encoder = device->cmd_begin_render_pass(cmd, ui_rp_desc);
-            device->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height, 0.0f, 1.0f);
-            device->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().width, back_buffer->get_create_desc().height);
+            RenderPassEncoder* rp_ui_encoder = device->cmd_begin_render_pass(cmd, ui_rp_desc);
+            device->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            device->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             device->cmd_end_render_pass(cmd);
 
-            RHITextureBarrier present_barrier = {
+            TextureBarrier present_barrier = {
                 .texture = back_buffer,
-                .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
-                .dst_state = RHI_RESOURCE_STATE_PRESENT
+                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
             };
-            RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
             device->cmd_resource_barrier(cmd, barrier_desc2);
             device->cmd_end(cmd);
 
             // submit
-            RHIQueueSubmitDesc submit_desc = {
-                .pCmds = &cmd,
-                .mSignalFence = present_fence,
-                .mCmdsCount = 1
+            RenderObject::QueueSubmitDesc submit_desc = {
+                .m_ppCmds = &cmd,
+                .m_pSignalFence = present_fence,
+                .m_cmdsCount = 1
             };
             device->submit_queue(queue, submit_desc);
 
             // present
-            RHIQueuePresentDesc present_desc = {
-                .swap_chain = swap_chain,
-                .wait_semaphores = nullptr,
-                .wait_semaphore_count = 0,
-                .index = backbuffer_index,
+            RenderObject::QueuePresentDesc present_desc = {
+                .m_pSwapChain = swap_chain,
+                .m_ppwaitSemaphores = nullptr,
+                .m_waitSemaphoreCount = 0,
+                .m_index = backbuffer_index,
             };
             device->present_queue(queue, present_desc);
 

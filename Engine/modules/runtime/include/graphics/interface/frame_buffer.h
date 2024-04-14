@@ -16,6 +16,9 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IFrameBuffer : public IDeviceObject
         {
             virtual const FrameBuffserDesc& get_create_desc() const = 0;
+
+            virtual ITextureView* get_attachment(uint32_t index) const = 0;
+            virtual IRenderPass* get_render_pass() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -37,6 +40,16 @@ namespace Cyber
             virtual const FrameBuffserDesc& get_create_desc() const
             {
                 return m_desc;
+            }
+
+            virtual ITextureView* get_attachment(uint32_t index) const override final
+            {
+                return m_ppAttachments[index];
+            }
+
+            virtual IRenderPass* get_render_pass() const override final
+            {
+                return m_pRenderPass;
             }
         private:
             FrameBuffserDesc m_desc;

@@ -24,7 +24,7 @@ namespace Cyber
             using TBufferBase = Buffer<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Buffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TBufferBase(device) {}
+            Buffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, BufferCreateDesc desc) : TBufferBase(device, desc) {}
 
             virtual ~Buffer_D3D12_Impl() = default;
 

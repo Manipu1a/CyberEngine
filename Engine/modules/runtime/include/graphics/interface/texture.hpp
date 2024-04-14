@@ -38,6 +38,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API ITexture : public IDeviceObject
         {
             virtual const TextureCreateDesc& get_create_desc() const = 0;
+            virtual ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -66,7 +67,7 @@ namespace Cyber
                     reinterpret_cast<TextureViewImplType**>(&m_pDefaultTextureViews);
             }
 
-            ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const
+            ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const override
             {
                 const uint32_t num_default_views = 1;
                 return num_default_views > 1 ? 

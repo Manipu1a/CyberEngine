@@ -62,6 +62,11 @@ namespace Cyber
                 return m_entryName;
             }
 
+            virtual void set_entry_name(const char8_t* name) override final
+            {
+                m_entryName = name;
+            }
+            
             virtual const char* get_name_pool() const override final
             {
                 return m_namePool;
@@ -93,7 +98,7 @@ namespace Cyber
                 {
                     for(uint32_t i = 0; i < m_vertexInputCount; i++)
                     {
-                            m_pVertexInputs[i].free();
+                            m_pVertexInputs[i]->free();
                     }
 
                     cyber_free(m_pVertexInputs);

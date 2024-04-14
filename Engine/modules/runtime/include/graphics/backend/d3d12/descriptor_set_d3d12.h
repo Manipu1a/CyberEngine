@@ -24,7 +24,7 @@ namespace Cyber
             using TDescriptorSetBase = DescriptorSetBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            DescriptorSet_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TDescriptorSetBase(device) {}
+            DescriptorSet_D3D12_Impl(class RenderDevice_D3D12_Impl* device, DescriptorSetCreateDesc desc) : TDescriptorSetBase(device, desc) {}
 
         private:
             /// Start handle to cbv srv uav descriptor table

@@ -15,9 +15,9 @@ namespace Cyber
     {
         if(resource->get_type() == GRAPHICS_RESOURCE_TYPE::GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT)
             return true;
-        for(uint32_t i = 0;i < desc.push_constant_count; ++i)
+        for(uint32_t i = 0;i < desc.m_pushConstantCount; ++i)
         {
-            if(strcmp((char*)resource->get_name(), (char*)desc.push_constant_names[i]) == 0)
+            if(strcmp((char*)resource->get_name(), (char*)desc.m_pushConstantNames[i]) == 0)
             {
                 return true;
             }
@@ -27,9 +27,9 @@ namespace Cyber
 
     bool graphics_util_shader_resource_is_static_sampler(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
     {
-        for(uint32_t i = 0; i < desc.static_sampler_count; ++i)
+        for(uint32_t i = 0; i < desc.m_staticSamplerCount; ++i)
         {
-            if(strcmp((char*)resource->get_name(), (char*)desc.static_sampler_names[i]) == 0)
+            if(strcmp((char*)resource->get_name(), (char*)desc.m_staticSamplerNames[i]) == 0)
             {
                 return resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER;
             }
@@ -40,9 +40,9 @@ namespace Cyber
     {
         RenderObject::IShaderReflection* entery_reflection[32] = {0};
         // Pick shader reflection data
-        for(uint32_t i = 0; i < desc.shader_count; ++i)
+        for(uint32_t i = 0; i < desc.m_shaderCount; ++i)
         {
-            const RenderObject::PipelineShaderCreateDesc* shader_desc = desc.shaders[i];
+            const RenderObject::PipelineShaderCreateDesc* shader_desc = desc.m_ppShaders[i];
             // Find shader reflection data
             for(uint32_t j = 0; j < shader_desc->m_library->get_entry_count(); ++j)
             {
@@ -65,7 +65,7 @@ namespace Cyber
         eastl::vector<RenderObject::IShaderResource*> all_resources;
         eastl::vector<RenderObject::IShaderResource*> all_push_constants;
         eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
-        for(uint32_t i = 0; i < desc.shader_count; ++i)
+        for(uint32_t i = 0; i < desc.m_shaderCount; ++i)
         {
             RenderObject::IShaderReflection* reflection = entery_reflection[i];
             for(uint32_t j = 0; j < reflection->get_shader_resource_count(); ++j)
@@ -159,22 +159,22 @@ namespace Cyber
         {
             para_tables[table_index] = (RenderObject::RootSignatureParameterTable*)cyber_calloc(1, sizeof(RenderObject::RootSignatureParameterTable));
             RenderObject::RootSignatureParameterTable* table = para_tables[table_index];
-            table->set_index = set_index;
-            table->resource_count = 0;
+            table->m_setIndex = set_index;
+            table->m_resourceCount = 0;
             // 计算每个set的资源数量
             for(auto& rst_resource : rst_resources)
             {
                 if(rst_resource->get_set() == set_index)
-                    ++table->resource_count;
+                    ++table->m_resourceCount;
             }
-            table->resources = (RenderObject::IShaderResource**)cyber_calloc(table->resource_count, sizeof(RenderObject::IShaderResource*));
+            table->m_ppResources = (RenderObject::IShaderResource**)cyber_calloc(table->m_resourceCount, sizeof(RenderObject::IShaderResource*));
             // 将参数按照set分组存入table
             uint32_t slot_index = 0;
             for(auto&& rst_resource : rst_resources)
             {
                 if(rst_resource->get_set() == set_index)
                 {
-                    table->resources[slot_index] = rst_resource;
+                    table->m_ppResources[slot_index] = rst_resource;
                     ++slot_index;
                 }
             }

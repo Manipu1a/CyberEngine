@@ -12,6 +12,7 @@ namespace Cyber
         class IShaderResource;
         class IRootSignaturePool;
         class ISampler;
+        class PipelineShaderCreateDesc;
 
         struct CYBER_GRAPHICS_API RootSignatureParameterTable
         {
@@ -23,7 +24,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API RootSignatureCreateDesc
         {
-            class RenderObject::PipelineShaderCreateDesc** m_ppShaders;
+            RenderObject::PipelineShaderCreateDesc** m_ppShaders;
             uint32_t m_shaderCount;
             RenderObject::ISampler** m_staticSamplers;
             const char8_t* const* m_staticSamplerNames;
@@ -53,7 +54,9 @@ namespace Cyber
             virtual PIPELINE_TYPE get_pipeline_type() const = 0;
             virtual void set_pipeline_type(PIPELINE_TYPE type) = 0;
             virtual RenderObject::IRootSignaturePool** get_pool() const = 0;
+            virtual void set_pool(RenderObject::IRootSignaturePool** pool) = 0;
             virtual RenderObject::IRootSignature* get_pool_next() const = 0;
+            virtual void set_pool_next(RenderObject::IRootSignature* next) = 0;
 
             virtual RootSignatureCreateDesc get_desc() const = 0;
             virtual void free() = 0;
@@ -171,12 +174,19 @@ namespace Cyber
             {
                 return m_pPool;
             }
+            virtual void set_pool(RenderObject::IRootSignaturePool** pool) override
+            {
+                m_pPool = pool;
+            }
 
             virtual IRootSignature* get_pool_next() const override
             {
                 return m_pPoolNext;
             }
-
+            virtual void set_pool_next(IRootSignature* next) override
+            {
+                m_pPoolNext = next;
+            }
             virtual RootSignatureCreateDesc get_desc() const override
             {
                 return m_desc;
@@ -190,18 +200,18 @@ namespace Cyber
                     for(uint32_t i = 0; i < m_parameterTableCount; ++i)
                     {
                         RenderObject::RootSignatureParameterTable* table = m_ppParameterTables[i];
-                        if(table->resources)
+                        if(table->m_ppResources)
                         {
-                            for(uint32_t binding = 0; binding < table->resource_count; ++binding)
+                            for(uint32_t binding = 0; binding < table->m_resourceCount; ++binding)
                             {
-                                RenderObject::IShaderResource* binding_to_free = table->resources[binding];
+                                RenderObject::IShaderResource* binding_to_free = table->m_ppResources[binding];
                                 if(binding_to_free->get_name() != nullptr)
                                 {
                                     binding_to_free->free();
                                 }
                                 cyber_free(binding_to_free);
                             }
-                            cyber_free(table->resources);
+                            cyber_free(table->m_ppResources);
                         }
                         cyber_free(table);
                     }

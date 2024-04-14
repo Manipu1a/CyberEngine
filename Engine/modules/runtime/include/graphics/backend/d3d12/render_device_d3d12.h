@@ -75,7 +75,7 @@ namespace Cyber
             virtual void cmd_end(ICommandBuffer* commandBuffer) override;
             virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) override;
 
-            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const RenderPassDesc& beginRenderPassDesc) override;
+            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
             virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;

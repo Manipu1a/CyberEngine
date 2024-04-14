@@ -157,7 +157,7 @@ namespace Cyber
                     bool hasParamIndex = paramDesc.SemanticIndex > 0 || !strcmp(paramDesc.SemanticName, "TEXCOORD");
                     uint32_t source_len = (uint32_t)strlen(paramDesc.SemanticName) + (hasParamIndex ? 1 : 0);
 
-                    vertex_inputs[i] = cyber_new<RenderObject::VertexInput_D3D12_Impl>();
+                    vertex_inputs[i] = cyber_new<RenderObject::VertexInput_D3D12_Impl>(get_device());
                     vertex_inputs[i]->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
                     vertex_inputs[i]->set_semantics_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len+1)));
                     if(hasParamIndex)
@@ -190,7 +190,7 @@ namespace Cyber
             // Get the number of bound resources
             m_entryCount = 1;
             m_pEntryReflections = (RenderObject::IShaderReflection**)cyber_calloc(m_entryCount, sizeof(RenderObject::IShaderReflection*));
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = cyber_new<RenderObject::ShaderReflection_D3D12_Impl>();
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = cyber_new<RenderObject::ShaderReflection_D3D12_Impl>(get_device());
             reflection->set_entry_name(D3DShaderEntryName);
             reflection->set_shader_resource_count(shaderDesc.BoundResources);
             auto shader_resources = (RenderObject::IShaderResource**)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::IShaderResource*));
@@ -201,7 +201,7 @@ namespace Cyber
                 D3D12_SHADER_INPUT_BIND_DESC bindDesc;
                 d3d12Reflection->GetResourceBindingDesc(i, &bindDesc);
                 const size_t source_len = strlen(bindDesc.Name);
-                shader_resources[i] = cyber_new<RenderObject::ShaderResource_D3D12_Impl>();
+                shader_resources[i] = cyber_new<RenderObject::ShaderResource_D3D12_Impl>(get_device());
                 RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(shader_resources[i]);
 
                 resource->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1)));

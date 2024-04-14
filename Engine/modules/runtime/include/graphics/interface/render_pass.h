@@ -2,6 +2,8 @@
 #include "common/cyber_graphics_config.h"
 #include "common/flags.h"
 #include "device_object.h"
+#include "interface/graphics_types.h"
+
 namespace Cyber
 {
     namespace RenderObject

@@ -100,7 +100,7 @@ namespace Cyber
 
             for(uint32_t i = 0;i < count; i++)
             {
-                RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>();
+                RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>(get_device());
                 // Device Objects
                 pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
                 m_pAdapters[i] = pAdapter;
