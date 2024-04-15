@@ -10,7 +10,7 @@ namespace Cyber
     
     namespace Samples
     {
-        class TrignaleApp : public SampleApp
+        class TrignaleApp : public Cyber::GameApplication
         {
         public:
             TrignaleApp();
@@ -22,7 +22,7 @@ namespace Cyber
 
         public:
             void raster_draw();
-            void create_gfx_objects();
+            virtual void create_gfx_objects() override;
             void create_render_pipeline();
             void create_resource();
             void create_ui();

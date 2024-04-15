@@ -26,12 +26,14 @@ namespace Cyber
             using TInstanceBase = InstanceBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Instance_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const InstanceCreateDesc& desc) : TInstanceBase(device, desc) {}
+            Instance_D3D12_Impl(const InstanceCreateDesc& desc);
 
             virtual void initialize_environment() override final;
             virtual void de_initialize_environment() override final;
             virtual void optional_enable_debug_layer() override final;
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
+
+            virtual IRenderDevice* create_render_device(IAdapter* adapter, const RenderDeviceCreateDesc& desc) override final;
 
             virtual void free() override final;
 

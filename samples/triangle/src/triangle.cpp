@@ -26,38 +26,38 @@ namespace Cyber
 
             create_gfx_objects();
             
-            gui_app->initialize(device, getWindow()->getNativeWindow());
+            gui_app->initialize(m_pRenderDevice, getWindow()->getNativeWindow());
 
             // Create views
-            auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * swap_chain->get_buffer_srv_count());
-            swap_chain->set_back_buffer_srv_views(back_buffer_views);
-            for(uint32_t i = 0; i < swap_chain->get_buffer_srv_count(); ++i)
+            auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * m_pSwapChain->get_buffer_srv_count());
+            m_pSwapChain->set_back_buffer_srv_views(back_buffer_views);
+            for(uint32_t i = 0; i < m_pSwapChain->get_buffer_srv_count(); ++i)
             {
                 eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
                 RenderObject::TextureViewCreateDesc view_desc = {
                     .m_name = swap_chain_name.c_str(),
-                    .m_pTexture = swap_chain->get_back_buffer(i),
-                    .m_format = swap_chain->get_back_buffer(i)->get_create_desc().m_format,
+                    .m_pTexture = m_pSwapChain->get_back_buffer(i),
+                    .m_format = m_pSwapChain->get_back_buffer(i)->get_create_desc().m_format,
                     .m_usages = TVU_RTV_DSV,
                     .m_aspects = TVA_COLOR,
                     .m_dimension = TEX_DIMENSION_2D,
                     .m_arrayLayerCount = 1
                 };
-                auto tex_view = device->create_texture_view(view_desc);
-                swap_chain->set_back_buffer_srv_view(tex_view, i);
+                auto tex_view = m_pRenderDevice->create_texture_view(view_desc);
+                m_pSwapChain->set_back_buffer_srv_view(tex_view, i);
             }
             
-            device->cmd_begin(cmd);
+            m_pRenderDevice->cmd_begin(m_pCmd);
             {
                 TextureBarrier depth_barrier = {
-                    .texture = swap_chain->get_back_buffer_depth(),
+                    .texture = m_pSwapChain->get_back_buffer_depth(),
                     .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
                     .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
                 };
                 ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
-                device->cmd_resource_barrier(cmd, barrier_desc1);
+                m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc1);
             }
-            device->cmd_end(cmd);
+            m_pRenderDevice->cmd_end(m_pCmd);
 
             create_render_pipeline();
 
@@ -80,15 +80,15 @@ namespace Cyber
         void TrignaleApp::raster_draw()
         {
             AcquireNextDesc acquire_desc = {
-                .fence = present_fence
+                .fence = m_pPresentFence
             };
-            backbuffer_index = device->acquire_next_image(swap_chain, acquire_desc);
-            auto back_buffer = swap_chain->get_back_buffer(backbuffer_index);
-            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(backbuffer_index);
-            auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
-            device->reset_command_pool(pool);
+            m_backBufferIndex = m_pRenderDevice->acquire_next_image(m_pSwapChain, acquire_desc);
+            auto back_buffer = m_pSwapChain->get_back_buffer(m_backBufferIndex);
+            auto back_buffer_view = m_pSwapChain->get_back_buffer_srv_view(m_backBufferIndex);
+            auto back_depth_buffer_view = m_pSwapChain->get_back_buffer_dsv();
+            m_pRenderDevice->reset_command_pool(m_pPool);
             // record
-            device->cmd_begin(cmd);
+            m_pRenderDevice->cmd_begin(m_pCmd);
             ColorAttachment screen_attachment = {
                 .view = back_buffer_view,
                 .load_action = LOAD_ACTION_CLEAR,
@@ -134,7 +134,7 @@ namespace Cyber
                 .m_pSubpasses = nullptr
             };
             
-            auto renderpass = device->create_render_pass(rp_desc1);
+            auto renderpass = m_pRenderDevice->create_render_pass(rp_desc1);
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
            
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
@@ -153,14 +153,14 @@ namespace Cyber
             };
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            device->cmd_resource_barrier(cmd, barrier_desc0);
-            RenderPassEncoder* rp_encoder = device->cmd_begin_render_pass(cmd, RenderPassBeginInfo);
-            device->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            device->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
-            device->render_encoder_bind_pipeline(rp_encoder, pipeline);
+            m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc0);
+            RenderPassEncoder* rp_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
+            m_pRenderDevice->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            m_pRenderDevice->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            m_pRenderDevice->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            device->render_encoder_draw(rp_encoder, 3, 0);
-            device->cmd_end_render_pass(cmd);
+            m_pRenderDevice->render_encoder_draw(rp_encoder, 3, 0);
+            m_pRenderDevice->cmd_end_render_pass(m_pCmd);
 
             // ui pass
             /*
@@ -202,75 +202,28 @@ namespace Cyber
             */
             // submit
             RenderObject::QueueSubmitDesc submit_desc = {
-                .m_ppCmds = &cmd,
-                .m_pSignalFence = present_fence,
+                .m_ppCmds = &m_pCmd,
+                .m_pSignalFence = m_pPresentFence,
                 .m_cmdsCount = 1
             };
-            device->submit_queue(queue, submit_desc);
+            m_pRenderDevice->submit_queue(m_pQueue, submit_desc);
 
             // present
             RenderObject::QueuePresentDesc present_desc = {
-                .m_pSwapChain = swap_chain,
+                .m_pSwapChain = m_pSwapChain,
                 .m_ppwaitSemaphores = nullptr,
                 .m_waitSemaphoreCount = 0,
-                .m_index = backbuffer_index,
+                .m_index = m_backBufferIndex,
             };
-            device->present_queue(queue, present_desc);
+            m_pRenderDevice->present_queue(m_pQueue, present_desc);
 
             // sync & reset
-            device->wait_fences(&present_fence, 1);
+            m_pRenderDevice->wait_fences(&m_pPresentFence, 1);
         }
 
         void TrignaleApp::create_gfx_objects()
         {
-            // Create instance
-            DECLARE_ZERO(RenderObject::InstanceCreateDesc, instance_desc);
-            instance_desc.m_enableDebugLayer = true;
-            instance_desc.m_enableGpuBasedValidation = false;
-            instance_desc.m_enableSetName = true;
-            instance = device->create_instance(instance_desc);
-
-            // Filter adapters
-            uint32_t adapter_count = 0;
-            device->enum_adapters(instance, nullptr, &adapter_count);
-            RenderObject::IAdapter* adapters[64];
-            device->enum_adapters(instance, adapters, &adapter_count);
-            adapter = adapters[0];
-
-            // Create device
-            DECLARE_ZERO(QueueGroupDesc, queue_group_desc);
-            queue_group_desc.m_queueCount = 1;
-            queue_group_desc.m_queueType = QUEUE_TYPE_GRAPHICS;
-            DECLARE_ZERO(RenderObject::RenderDeviceCreateDesc, device_desc);
-            device_desc.m_queueGroupCount = 1;
-            device_desc.m_queueGroups = { queue_group_desc };
-            device->create_device(adapter, device_desc);
-            queue = device->get_queue(QUEUE_TYPE_GRAPHICS, 0);
-            present_fence = device->create_fence();
-
-            auto window = getWindow();
-
-            // Create swapchain
-        #if defined (_WIN32) || defined (_WIN64)
-            surface = device->surface_from_hwnd(getWindow()->getNativeWindow());
-        #elif defined(_APPLE_)
-        #endif
-            DECLARE_ZERO(RenderObject::SwapChainDesc, chain_desc);
-            chain_desc.m_pSurface = surface;
-            chain_desc.m_width = getWindow()->getWidth();
-            chain_desc.m_height = getWindow()->getHeight();
-            chain_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
-            chain_desc.m_imageCount = 3;
-            chain_desc.m_presentQueue = queue;
-            chain_desc.m_presentQueueCount = 1;
-            chain_desc.m_enableVsync = true;
-            swap_chain = device->create_swap_chain(chain_desc);
-
-            present_swmaphore = device->create_fence();
-            pool = device->create_command_pool(queue, RenderObject::CommandPoolCreateDesc());
-
-            RenderObject::CommandBufferCreateDesc cmd_buffer_desc = {.m_isSecondary = false};
-            cmd =  device->create_command_buffer(pool, cmd_buffer_desc);
+            GameApplication::create_gfx_objects();
         }
 
         void TrignaleApp::create_resource()
@@ -373,7 +326,7 @@ namespace Cyber
                     .stage = SHADER_STAGE_VERT,
                     .entry_point_name = CYBER_UTF8("VSMain"),
                 };
-                RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(device, vs_load_desc);
+                RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(m_pRenderDevice, vs_load_desc);
 
                 ResourceLoader::ShaderLoadDesc ps_load_desc = {};
                 ps_load_desc.target = SHADER_TARGET_6_0;
@@ -382,7 +335,7 @@ namespace Cyber
                     .stage = SHADER_STAGE_FRAG,
                     .entry_point_name = CYBER_UTF8("PSMain"),
                 };
-                RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(device, ps_load_desc);
+                RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(m_pRenderDevice, ps_load_desc);
 
                 // create root signature
                 RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
@@ -398,14 +351,14 @@ namespace Cyber
                 .m_ppShaders = pipeline_shader_create_desc,
                 .m_shaderCount = 2,
                 };
-                root_signature = device->create_root_signature(root_signature_create_desc);
+                root_signature = m_pRenderDevice->create_root_signature(root_signature_create_desc);
                 // create descriptor set
 
                 RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                     .root_signature = root_signature,
                     .set_index = 0
                 };
-                descriptor_set = device->create_descriptor_set(desc_set_create_desc);
+                descriptor_set = m_pRenderDevice->create_descriptor_set(desc_set_create_desc);
 
                 VertexLayout vertex_layout = {.attribute_count = 0};
                 RenderObject::RenderPipelineCreateDesc rp_desc = 
@@ -415,33 +368,33 @@ namespace Cyber
                     .fragment_shader = pipeline_shader_create_desc[1],
                     .vertex_layout = &vertex_layout,
                     //.rasterizer_state = {},
-                    .color_formats = &swap_chain->get_back_buffer_srv_view(0)->get_create_desc().m_format,
+                    .color_formats = &m_pSwapChain->get_back_buffer_srv_view(0)->get_create_desc().m_format,
                     .render_target_count = 1,
                     .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
                 };
-                pipeline = device->create_render_pipeline(rp_desc);
+                pipeline = m_pRenderDevice->create_render_pipeline(rp_desc);
                 vs_shader->free();
                 ps_shader->free();
         }
 
         void TrignaleApp::finalize()
         {
-            device->wait_queue_idle(queue);
-            device->wait_fences(&present_fence, 1);
-            device->free_fence(present_fence);
-            for(uint32_t i = 0;i < swap_chain->get_buffer_srv_count(); ++i)
+            m_pRenderDevice->wait_queue_idle(m_pQueue);
+            m_pRenderDevice->wait_fences(&m_pPresentFence, 1);
+            m_pRenderDevice->free_fence(m_pPresentFence);
+            for(uint32_t i = 0;i < m_pSwapChain->get_buffer_srv_count(); ++i)
             {
-                device->free_texture_view(swap_chain->get_back_buffer_srv_view(i));
+                m_pRenderDevice->free_texture_view(m_pSwapChain->get_back_buffer_srv_view(i));
             }
-            device->free_swap_chain(swap_chain);
-            device->free_surface(surface);
-            device->free_command_buffer(cmd);
-            device->free_command_pool(pool);
-            device->free_render_pipeline(pipeline);
-            device->free_root_signature(root_signature);
-            device->free_queue(queue);
-            device->free_device();
-            device->free_instance(instance);
+            m_pRenderDevice->free_swap_chain(m_pSwapChain);
+            m_pRenderDevice->free_surface(m_pSurface);
+            m_pRenderDevice->free_command_buffer(m_pCmd);
+            m_pRenderDevice->free_command_pool(m_pPool);
+            m_pRenderDevice->free_render_pipeline(pipeline);
+            m_pRenderDevice->free_root_signature(root_signature);
+            m_pRenderDevice->free_queue(m_pQueue);
+            m_pRenderDevice->free_device();
+            m_pRenderDevice->free_instance(m_pInstance);
         }
 
     }

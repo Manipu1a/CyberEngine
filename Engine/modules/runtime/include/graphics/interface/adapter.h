@@ -6,6 +6,8 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class IInstance;
+        
         struct CYBER_GRAPHICS_API AdapterDetail
         {
             uint32_t m_uniformBufferAlignment;

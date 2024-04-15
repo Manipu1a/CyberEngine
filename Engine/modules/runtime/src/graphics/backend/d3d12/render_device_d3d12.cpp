@@ -58,11 +58,11 @@ namespace Cyber
         free_device();
     }
 
-    void RenderDevice_D3D12_Impl::create_device(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
+    void RenderDevice_D3D12_Impl::create_render_device_impl(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
     {
         RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(adapter);
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->get_instance());
-        
+            
         this->m_pAdapter = adapter;
 
         if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->get_native_adapter(), dxAdapter->get_feature_level(), IID_PPV_ARGS(&m_pDxDevice))))
@@ -120,13 +120,13 @@ namespace Cyber
             desc.NodeMask = 0;
             desc.NumDescriptors = gCpuDescriptorHeapProerties[i].mMaxDescriptors;
             desc.Type = (D3D12_DESCRIPTOR_HEAP_TYPE)i;
-#ifdef _DEBUG
+    #ifdef _DEBUG
 
-#endif
+    #endif
             m_cpuDescriptorHeaps[i] = (DescriptorHeap_D3D12*)cyber_malloc(sizeof(DescriptorHeap_D3D12));
             DescriptorHeap_D3D12::create_descriptor_heap(m_pDxDevice, desc, &m_cpuDescriptorHeaps[i]);
         }
-        
+            
         // One shader visible heap for each linked node
         for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
         {
@@ -712,38 +712,6 @@ namespace Cyber
         }
 
         return pTexture;
-    }
-
-    IInstance* RenderDevice_D3D12_Impl::create_instance(const InstanceCreateDesc& instanceDesc)
-    {
-        Instance_D3D12_Impl* instance = cyber_new<Instance_D3D12_Impl>(this, instanceDesc);
-        // Initialize driver
-        instance->initialize_environment();
-        // Enable Debug Layer
-        instance->optional_enable_debug_layer();
-
-        UINT flags = 0;
-        if(instanceDesc.m_enableDebugLayer)
-            flags = DXGI_CREATE_FACTORY_DEBUG;
-        
-        if(SUCCEEDED(CreateDXGIFactory2(flags, IID_PPV_ARGS(&instance->m_pDXGIFactory))))
-        {
-            uint32_t gpuCount = 0;
-            bool foundSoftwareAdapter = false;
-            instance->query_all_adapters(gpuCount, foundSoftwareAdapter);
-            // If the only adapter we found is a software adapter, log error message for QA 
-            if(!gpuCount && foundSoftwareAdapter)
-            {
-                cyber_assert(false, "The only avaliable GPU has DXGI_ADAPTER_FLAG_SOFTWARE. Early exiting");
-                return nullptr;
-            }
-        }
-        else 
-        {
-            cyber_assert(false, "[D3D12 Fatal]: Create DXGIFactory2 Failed!]");
-        }
-
-        return instance;
     }
 
     void RenderDevice_D3D12_Impl::free_instance(IInstance* instance)

@@ -13,7 +13,6 @@
 #include "command_pool.h"
 #include "semaphore.h"
 #include "fence.h"
-#include "Instance.h"
 #include "render_pipeline.h"
 #include "root_signature.hpp"
 #include "root_signature_pool.h"
@@ -66,10 +65,8 @@ namespace Cyber
             virtual AGS_RETURN_CODE get_ags_status() const = 0;
 
             // Instance APIs
-            virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) = 0;
             virtual void free_instance(IInstance* instance) = 0;
             // Device APIS
-            virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
             virtual void free_device() = 0;
             // API Object APIs
             virtual Surface* surface_from_hwnd(HWND hwnd) = 0;
@@ -144,16 +141,19 @@ namespace Cyber
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
             using BufferImplType = typename EngineImplTraits::BufferImplType;
             using RenderDeviceInterface = typename EngineImplTraits::RenderDeviceInterface;
-            using TRenderDeviceBase = typename ObjectBase<RenderDeviceInterface>;
+            using TRenderDeviceBase = ObjectBase<RenderDeviceInterface>;
 
             RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(), m_desc(deviceDesc)
             {
                 this->m_pAdapter = adapter;
+                
+                create_render_device_impl(adapter, deviceDesc);
             }
             virtual ~RenderDeviceBase()
             {
             }
-            
+        protected:
+            virtual void create_render_device_impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
         protected:
             IAdapter* m_pAdapter;
             RenderDeviceCreateDesc m_desc;

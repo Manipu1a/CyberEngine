@@ -27,10 +27,13 @@ namespace Cyber
 
             RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
             {
-                create_device(adapter, deviceDesc);
             }
 
             virtual ~RenderDevice_D3D12_Impl();
+
+        protected:
+            virtual void create_render_device_impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
+
         public:
             // Device interface
             virtual GRAPHICS_BACKEND get_backend() const override
@@ -47,7 +50,6 @@ namespace Cyber
             }
 
             // Device APIs
-            virtual void create_device(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
             virtual void free_device() override;
             // API Object APIs
             virtual Surface* surface_from_hwnd(HWND hwnd) override;
@@ -96,7 +98,6 @@ namespace Cyber
 
             virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) override;
             virtual void free_render_pipeline(IRenderPipeline* pipeline) override;
-            virtual IInstance* create_instance(const InstanceCreateDesc& instanceDesc) override;
             virtual void free_instance(IInstance* instance) override;
 
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;

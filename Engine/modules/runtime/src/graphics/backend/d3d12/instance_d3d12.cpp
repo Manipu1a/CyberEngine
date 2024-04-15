@@ -9,6 +9,39 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        Instance_D3D12_Impl::Instance_D3D12_Impl(const InstanceCreateDesc& desc) : TInstanceBase(desc)
+        {
+            // Initialize driver
+            this->initialize_environment();
+            // Enable Debug Layer
+            this->optional_enable_debug_layer();
+
+            UINT flags = 0;
+            if(desc.m_enableDebugLayer)
+                flags = DXGI_CREATE_FACTORY_DEBUG;
+            
+            if(SUCCEEDED(CreateDXGIFactory2(flags, IID_PPV_ARGS(&this->m_pDXGIFactory))))
+            {
+                uint32_t gpuCount = 0;
+                bool foundSoftwareAdapter = false;
+                this->query_all_adapters(gpuCount, foundSoftwareAdapter);
+                // If the only adapter we found is a software adapter, log error message for QA 
+                if(!gpuCount && foundSoftwareAdapter)
+                {
+                    cyber_assert(false, "The only avaliable GPU has DXGI_ADAPTER_FLAG_SOFTWARE. Early exiting");
+                }
+            }
+            else 
+            {
+                cyber_assert(false, "[D3D12 Fatal]: Create DXGIFactory2 Failed!]");
+            }
+        }
+
+        IRenderDevice* create_render_device(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& desc)
+        {
+            return cyber_new<RenderDevice_D3D12_Impl>(adapter, desc);
+        }
+
         void Instance_D3D12_Impl::initialize_environment()
         {
 
@@ -100,7 +133,7 @@ namespace Cyber
 
             for(uint32_t i = 0;i < count; i++)
             {
-                RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>(get_device());
+                RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>(get_render_device());
                 // Device Objects
                 pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
                 m_pAdapters[i] = pAdapter;
