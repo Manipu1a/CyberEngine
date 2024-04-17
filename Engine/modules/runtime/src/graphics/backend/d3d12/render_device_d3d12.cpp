@@ -784,6 +784,8 @@ namespace Cyber
         Queue_D3D12_Impl* dxQueue = cyber_new<Queue_D3D12_Impl>(this);
         dxQueue->m_pCommandQueue = m_commandQueues[type][index];
         dxQueue->m_pFence = create_fence();
+        dxQueue->set_type(type);
+        dxQueue->set_index(index);
         return dxQueue;
     }
     void RenderDevice_D3D12_Impl::submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc)

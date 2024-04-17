@@ -141,7 +141,7 @@ namespace Cyber
             d3d12Reflection->GetDesc(&shaderDesc);
             reflection_record_shader_resource(d3d12Reflection, stage, shaderDesc);
 
-            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections[m_entryCount++]);
+            RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections[0]);
             reflection->set_shader_stage(stage);
             // Collect vertex inputs
             if(stage == SHADER_STAGE_VERT)
@@ -232,10 +232,8 @@ namespace Cyber
                 {
                     resource->set_type(GRAPHICS_RESOURCE_TYPE_BUFFER);
                 }
-
-                reflection->set_shader_resources( shader_resources );
             }
-
+            reflection->set_shader_resources( shader_resources );
             m_pEntryReflections[0] = reflection;
         }
     }

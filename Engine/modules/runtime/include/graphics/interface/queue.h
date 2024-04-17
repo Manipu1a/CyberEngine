@@ -34,7 +34,9 @@ namespace Cyber
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
             virtual void wait_fence(class IFence* fence, uint64_t value) = 0;
             virtual QUEUE_TYPE get_type() const = 0;
+            virtual void set_type(QUEUE_TYPE type) = 0;
             virtual QueueIndex get_index() const = 0;
+            virtual void set_index(QueueIndex index) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -54,9 +56,19 @@ namespace Cyber
                 return m_type;
             }
 
+            CYBER_FORCE_INLINE virtual void set_type(QUEUE_TYPE type) override
+            {
+                m_type = type;
+            }
+
             CYBER_FORCE_INLINE virtual QueueIndex get_index() const override
             {
                 return m_index;
+            }
+
+            CYBER_FORCE_INLINE virtual void set_index(QueueIndex index) override
+            {
+                m_index = index;
             }
         protected:
             QUEUE_TYPE m_type;
