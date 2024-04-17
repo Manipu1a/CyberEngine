@@ -7,7 +7,7 @@
 #include "CyberEvents/ApplicationEvent.h"
 #include "inputsystem/InputSystem.h"
 #include <windows.h>
-#include "graphics/interface/render_device.h"
+#include "graphics/interface/render_device.hpp"
 #include "graphics/interface/device_context.h"
 
 

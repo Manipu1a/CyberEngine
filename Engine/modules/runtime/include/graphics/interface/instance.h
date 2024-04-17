@@ -2,7 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "device_object.h"
 #include "common/flags.h"
-#include "interface/render_device.h"
+#include "interface/render_device.hpp"
 #include "interface/graphics_types.h"
 
 namespace Cyber
@@ -22,6 +22,7 @@ namespace Cyber
             virtual void optional_enable_debug_layer() = 0;
             virtual void initialize_environment() = 0;
             virtual void de_initialize_environment() = 0;
+            virtual void enum_adapters(IAdapter** adapters, uint32_t* adapterCount) = 0;
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) = 0;
             virtual IRenderDevice* create_render_device(IAdapter* adapter, const RenderDeviceCreateDesc& desc) = 0;
 
@@ -55,6 +56,7 @@ namespace Cyber
             {
                 return m_renderDevice;
             }
+            
             
             virtual void free() override
             {

@@ -1,0 +1,451 @@
+[
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp.obj", "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\allocator_cyber.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\allocator_eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\allocator_eastl.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\allocator_eastl.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\assert.cpp.obj", "thirdparty\\EASTL\\EASTL\\assert.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\assert.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\atomic.cpp.obj", "thirdparty\\EASTL\\EASTL\\atomic.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\atomic.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\eastl.cpp.obj", "thirdparty\\EASTL\\EASTL\\eastl.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\eastl.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\EASTLTestAllocator.cpp.obj", "thirdparty\\EASTL\\EASTL\\EASTLTestAllocator.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\EASTLTestAllocator.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\fixed_pool.cpp.obj", "thirdparty\\EASTL\\EASTL\\fixed_pool.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\fixed_pool.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\hashtable.cpp.obj", "thirdparty\\EASTL\\EASTL\\hashtable.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\hashtable.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\intrusive_list.cpp.obj", "thirdparty\\EASTL\\EASTL\\intrusive_list.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\intrusive_list.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\numeric_limits.cpp.obj", "thirdparty\\EASTL\\EASTL\\numeric_limits.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\numeric_limits.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\red_black_tree.cpp.obj", "thirdparty\\EASTL\\EASTL\\red_black_tree.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\red_black_tree.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\string.cpp.obj", "thirdparty\\EASTL\\EASTL\\string.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\string.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\thread_support.cpp.obj", "thirdparty\\EASTL\\EASTL\\thread_support.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\thread_support.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\EAStdC\\EAMemory.cpp.obj", "thirdparty\\EASTL\\EASTL\\EAStdC\\EAMemory.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\EAStdC\\EAMemory.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\EASTL\\windows\\x64\\release\\thirdparty\\EASTL\\EASTL\\EAStdC\\EASprintf.cpp.obj", "thirdparty\\EASTL\\EASTL\\EAStdC\\EASprintf.cpp"],
+  "file": "thirdparty\\EASTL\\EASTL\\EAStdC\\EASprintf.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\alloc.c.obj", "thirdparty\\mimalloc\\alloc.c"],
+  "file": "thirdparty\\mimalloc\\alloc.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\alloc-aligned.c.obj", "thirdparty\\mimalloc\\alloc-aligned.c"],
+  "file": "thirdparty\\mimalloc\\alloc-aligned.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\alloc-posix.c.obj", "thirdparty\\mimalloc\\alloc-posix.c"],
+  "file": "thirdparty\\mimalloc\\alloc-posix.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\stats.c.obj", "thirdparty\\mimalloc\\stats.c"],
+  "file": "thirdparty\\mimalloc\\stats.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\random.c.obj", "thirdparty\\mimalloc\\random.c"],
+  "file": "thirdparty\\mimalloc\\random.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\os.c.obj", "thirdparty\\mimalloc\\os.c"],
+  "file": "thirdparty\\mimalloc\\os.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\bitmap.c.obj", "thirdparty\\mimalloc\\bitmap.c"],
+  "file": "thirdparty\\mimalloc\\bitmap.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\arena.c.obj", "thirdparty\\mimalloc\\arena.c"],
+  "file": "thirdparty\\mimalloc\\arena.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\segment-cache.c.obj", "thirdparty\\mimalloc\\segment-cache.c"],
+  "file": "thirdparty\\mimalloc\\segment-cache.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\segment.c.obj", "thirdparty\\mimalloc\\segment.c"],
+  "file": "thirdparty\\mimalloc\\segment.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\page.c.obj", "thirdparty\\mimalloc\\page.c"],
+  "file": "thirdparty\\mimalloc\\page.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\heap.c.obj", "thirdparty\\mimalloc\\heap.c"],
+  "file": "thirdparty\\mimalloc\\heap.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\options.c.obj", "thirdparty\\mimalloc\\options.c"],
+  "file": "thirdparty\\mimalloc\\options.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\mimalloc\\windows\\x64\\release\\thirdparty\\mimalloc\\init.c.obj", "thirdparty\\mimalloc\\init.c"],
+  "file": "thirdparty\\mimalloc\\init.c"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\samples\\samplebase", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_SAMPLES_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\samples\\windows\\x64\\release\\samples\\samplebase\\sampleapp.cpp.obj", "samples\\samplebase\\sampleapp.cpp"],
+  "file": "samples\\samplebase\\sampleapp.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputAllocator.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputButtonStickGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputHoldGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputinputDeltaState.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputDevice.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\builtin\\GainputInputDeviceBuiltIn.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboard.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\keyboard\\GainputInputDeviceKeyboardMac.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\mouse\\GainputInputDeviceMouse.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePad.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\pad\\GainputInputDevicePadMac.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\touch\\GainputInputDeviceTouch.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputManager.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputMap.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputPlayer.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecorder.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\recorder\\GainputInputRecording.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputInputState.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\GainputMapFilters.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputPinchGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputRotateGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputSimultaneouslyDownGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputTapGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\gestures\\GainputDoubleClickGesture.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DGAINPUT_LIB_DYNAMIC", "/Dgainput_EXPORTS", "/DWIN32", "/DNDEBUG", "/Fobuild\\.objs\\Gainput\\windows\\x64\\release\\thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp.obj", "thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp"],
+  "file": "thirdparty\\gainput\\lib\\source\\gainput\\dev\\GainputMemoryStream.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\core\\Application.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Application.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\core\\Application.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\core\\Window.cpp.obj", "Engine\\Modules\\runtime\\src\\core\\Window.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\core\\Window.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\platform\\memory.cpp.obj", "Engine\\Modules\\runtime\\src\\platform\\memory.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\platform\\memory.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp.obj", "Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\platform\\WindowsWindow.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\interface\\device_context.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\interface\\device_context.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\interface\\device_context.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\D3D12MemAlloc.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\D3D12MemAlloc.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\D3D12MemAlloc.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_shaderreflection.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_shaderreflection.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_shaderreflection.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_utils.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_utils.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\d3d12_utils.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\descriptor_heap_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\descriptor_heap_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\descriptor_heap_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\instance_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\instance_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\instance_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\queue_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\queue_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\queue_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\render_device_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\render_device_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\render_device_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\shader_library_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\shader_library_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\shader_library_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\swap_chain_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\swap_chain_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\swap_chain_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_view_d3d12.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_view_d3d12.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\backend\\d3d12\\texture_view_d3d12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\common\\graphics_utils.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\common\\graphics_utils.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\common\\graphics_utils.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\common\\root_sig_pool.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\common\\root_sig_pool.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\common\\root_sig_pool.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\gui\\cyber_gui.cpp.obj", "Engine\\Modules\\runtime\\src\\gui\\cyber_gui.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\gui\\cyber_gui.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\resource\\resource_loader.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\resource\\resource_loader.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\resource\\resource_loader.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\gameruntime\\GameApplication.cpp.obj", "Engine\\Modules\\runtime\\src\\gameruntime\\GameApplication.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\gameruntime\\GameApplication.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\inputsystem\\InputListener.cpp.obj", "Engine\\Modules\\runtime\\src\\inputsystem\\InputListener.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\inputsystem\\InputListener.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\inputsystem\\InputSystem.cpp.obj", "Engine\\Modules\\runtime\\src\\inputsystem\\InputSystem.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\inputsystem\\InputSystem.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_builder.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_builder.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_builder.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DCYBER_API_EXPORT", "/DNDEBUG", "/Fobuild\\.objs\\CyberRuntime\\windows\\x64\\release\\Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_resource.cpp.obj", "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_resource.cpp"],
+  "file": "Engine\\Modules\\runtime\\src\\graphics\\rendergraph\\render_graph_resource.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/Isamples\\renderpass\\include", "/ID:\\Project\\CyberEngine\\samples\\samplebase", "/IEngine\\Modules\\runtime\\include", "/IEngine\\Modules\\runtime\\include\\graphics", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Events\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\gainput\\lib\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\renderpass\\windows\\x64\\release\\samples\\renderpass\\src\\renderpass.cpp.obj", "samples\\renderpass\\src\\renderpass.cpp"],
+  "file": "samples\\renderpass\\src\\renderpass.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\imgui.cpp.obj", "thirdparty\\IMGUI\\imgui\\imgui.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\imgui.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\imgui_demo.cpp.obj", "thirdparty\\IMGUI\\imgui\\imgui_demo.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\imgui_demo.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\imgui_draw.cpp.obj", "thirdparty\\IMGUI\\imgui\\imgui_draw.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\imgui_draw.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\imgui_tables.cpp.obj", "thirdparty\\IMGUI\\imgui\\imgui_tables.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\imgui_tables.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\imgui_widgets.cpp.obj", "thirdparty\\IMGUI\\imgui\\imgui_widgets.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\imgui_widgets.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_win32.cpp.obj", "thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_win32.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_win32.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/ID:\\Project\\CyberEngine\\thirdparty\\IMGUI", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\IMGUI\\windows\\x64\\release\\thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_dx12.cpp.obj", "thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_dx12.cpp"],
+  "file": "thirdparty\\IMGUI\\imgui\\backends\\imgui_impl_dx12.cpp"
+},
+{
+  "directory": "D:\\Project\\CyberEngine",
+  "arguments": ["C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.29.30133\\bin\\HostX64\\x64\\cl.exe", "/c", "/nologo", "/O2", "/fp:fast", "/std:c++20", "/IEngine\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXMath-main\\Inc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DXIL", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\DxilContainer", "/ID:\\Project\\CyberEngine\\thirdparty\\DirectXShaderCompiler\\dxc\\Support", "/ID:\\Project\\CyberEngine\\thirdparty\\parallel_hashmap", "/IEngine\\Modules\\Log\\include", "/ID:\\Project\\CyberEngine\\thirdparty\\spdlog", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL", "/ID:\\Project\\CyberEngine\\thirdparty\\EASTL\\EASTL\\EAStdC", "/ID:\\Project\\CyberEngine\\thirdparty\\mimalloc\\include", "/DUNICODE", "/D_UNICODE", "/D_WINDOWS", "/DNDEBUG", "/Fobuild\\.objs\\CyberLog\\windows\\x64\\release\\Engine\\Modules\\Log\\src\\Log.cpp.obj", "Engine\\Modules\\Log\\src\\Log.cpp"],
+  "file": "Engine\\Modules\\Log\\src\\Log.cpp"
+}]

@@ -32,7 +32,7 @@ namespace Cyber
             virtual void de_initialize_environment() override final;
             virtual void optional_enable_debug_layer() override final;
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
-
+            virtual void enum_adapters(IAdapter** adapters, uint32_t* adapterCount) override final;
             virtual IRenderDevice* create_render_device(IAdapter* adapter, const RenderDeviceCreateDesc& desc) override final;
 
             virtual void free() override final;

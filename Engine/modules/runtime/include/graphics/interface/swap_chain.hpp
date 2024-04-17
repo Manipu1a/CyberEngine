@@ -61,11 +61,11 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TSwapChainBase = DeviceObjectBase<SwapChainInterface, RenderDeviceImplType>;
 
-            SwapChainBase(RenderDeviceImplType* device) : TSwapChainBase(device) {  };
+            SwapChainBase(RenderDeviceImplType* device, SwapChainDesc desc) : TSwapChainBase(device) , m_desc(m_desc) {  };
 
             virtual ~SwapChainBase() = default;
 
-            virtual const SwapChainDesc& get_create_desc() const
+            virtual const SwapChainDesc& get_create_desc() const override
             {
                 return m_desc;
             }

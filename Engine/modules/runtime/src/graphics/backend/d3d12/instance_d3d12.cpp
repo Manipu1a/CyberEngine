@@ -11,6 +11,9 @@ namespace Cyber
     {
         Instance_D3D12_Impl::Instance_D3D12_Impl(const InstanceCreateDesc& desc) : TInstanceBase(desc)
         {
+            m_pAdapters = nullptr;
+            m_adaptersCount = 0;
+
             // Initialize driver
             this->initialize_environment();
             // Enable Debug Layer
@@ -37,9 +40,11 @@ namespace Cyber
             }
         }
 
-        IRenderDevice* create_render_device(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& desc)
+        IRenderDevice* Instance_D3D12_Impl::create_render_device(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& desc)
         {
-            return cyber_new<RenderDevice_D3D12_Impl>(adapter, desc);
+            IRenderDevice* render_device = cyber_new<RenderDevice_D3D12_Impl>(adapter, desc);
+            render_device->initialize_render_device();
+            return render_device;
         }
 
         void Instance_D3D12_Impl::initialize_environment()
@@ -135,8 +140,25 @@ namespace Cyber
             {
                 RenderObject::Adapter_D3D12_Impl* pAdapter = cyber_new<RenderObject::Adapter_D3D12_Impl>(get_render_device());
                 // Device Objects
+                pAdapter->set_instantce(this);
                 pAdapter->fill_adapter(RenderObject::AdapterDetail{}, adapter_levels[i], dxgi_adapters[i], false);
                 m_pAdapters[i] = pAdapter;
+            }
+        }
+        
+        void Instance_D3D12_Impl::enum_adapters(IAdapter** adapters, uint32_t* adapterCount)
+        {
+            *adapterCount = get_adapters_count();
+            if(!adapters)
+            {
+                return;
+            }
+            else
+            {
+                for(uint32_t i = 0; i < get_adapters_count(); ++i)
+                {
+                    adapters[i] = get_adapter(i);
+                }
             }
         }
 

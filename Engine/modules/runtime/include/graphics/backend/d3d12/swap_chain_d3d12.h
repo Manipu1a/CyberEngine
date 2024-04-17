@@ -18,15 +18,16 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
-            
-            SwapChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device);
+            using TSwapChainBase = SwapChainBase<EngineD3D12ImplTraits>;
+
+            SwapChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device, SwapChainDesc desc);
 
             virtual ~SwapChain_D3D12_Impl()
             {
 
             }
             
-            IDXGISwapChain3* get_dx_swap_chain() const { return m_pDxSwapChain; }
+            IDXGISwapChain3* get_dx_swap_chain() { return m_pDxSwapChain; }
             void set_dx_swap_chain(IDXGISwapChain3* swapChain) { m_pDxSwapChain = swapChain; }
 
             uint32_t get_dx_sync_interval() const { return m_dxSyncInterval; }

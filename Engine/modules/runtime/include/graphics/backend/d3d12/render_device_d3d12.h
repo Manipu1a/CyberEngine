@@ -1,6 +1,6 @@
 #pragma once
 #include "d3d12.config.h"
-#include "interface/render_device.h"
+#include "interface/render_device.hpp"
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "engine_impl_traits_d3d12.hpp"
 
@@ -32,13 +32,13 @@ namespace Cyber
             virtual ~RenderDevice_D3D12_Impl();
 
         protected:
-            virtual void create_render_device_impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) override;
+            virtual void create_render_device_impl() override;
 
         public:
             // Device interface
             virtual GRAPHICS_BACKEND get_backend() const override
             {
-                return GRAPHCIS_BACKEND_D3D12;
+                return GRAPHICS_BACKEND_D3D12;
             }
             virtual NVAPI_STATUS get_nvapi_status() const override
             {
@@ -53,13 +53,13 @@ namespace Cyber
             virtual void free_device() override;
             // API Object APIs
             virtual Surface* surface_from_hwnd(HWND hwnd) override;
+            virtual void free_surface(Surface* surface) override;
             virtual IFence* create_fence() override;
             virtual void wait_fences(IFence** fences, uint32_t fenceCount) override;
             virtual void free_fence(IFence* fence) override;
             virtual FENCE_STATUS query_fence_status(IFence* fence) override;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
             virtual void free_swap_chain(ISwapChain* swapchain) override;
-            virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) override;
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             // Queue APIs
@@ -67,6 +67,7 @@ namespace Cyber
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
             virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
             virtual void wait_queue_idle(IQueue* queue) override;
+            virtual void free_queue(IQueue* queue) override;
             virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
             virtual void reset_command_pool(ICommandPool* pool) override;
             virtual void free_command_pool(ICommandPool* pool) override;
@@ -77,6 +78,7 @@ namespace Cyber
             virtual void cmd_end(ICommandBuffer* commandBuffer) override;
             virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) override;
 
+            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
             virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
             virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
@@ -103,6 +105,7 @@ namespace Cyber
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
             virtual void free_texture_view(ITextureView* view) override;
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
+            virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
             virtual void free_buffer(IBuffer* buffer) override;
             virtual void map_buffer(IBuffer* buffer, const BufferRange* range) override;

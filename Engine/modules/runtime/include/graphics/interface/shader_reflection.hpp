@@ -54,7 +54,21 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TShaderReflectionBase = typename DeviceObjectBase<ShaderReflectionInterface, RenderDeviceImplType>;
 
-            ShaderReflectionBase(RenderDeviceImplType* device) : TShaderReflectionBase(device) {  };
+            ShaderReflectionBase(RenderDeviceImplType* device) : TShaderReflectionBase(device) 
+            { 
+                m_entryName = nullptr;
+                m_namePool = nullptr;
+                m_pVertexInputs = nullptr;
+                m_ppShaderResources = nullptr;
+                m_shaderStage = SHADER_STAGE::SHADER_STAGE_NONE;
+                m_namePoolSize = 0;
+                m_vertexInputCount = 0;
+                m_shaderResourceCount = 0;
+                m_variableCount = 0;
+                m_threadGroupSizes[0] = 0;
+                m_threadGroupSizes[1] = 0;
+                m_threadGroupSizes[2] = 0;
+            };
             virtual ~ShaderReflectionBase() = default;
             
             virtual const char8_t* get_entry_name() const override final

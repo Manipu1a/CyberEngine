@@ -26,10 +26,22 @@ namespace Cyber
             using TCommandBufferBase = CommandBufferBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device, desc) {}
+            CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device, desc) 
+            {
+                m_pDxCmdList = nullptr;
+                m_pBoundHeaps[0] = nullptr;
+                m_pBoundHeaps[1] = nullptr;
+                m_boundHeapStartHandles[0].ptr = 0;
+                m_boundHeapStartHandles[1].ptr = 0;
+                m_pBoundRootSignature = nullptr;
+                m_type = 0;
+                m_nodeIndex = 0;
+                m_pCmdPool = nullptr;
+            }
 
             virtual ~CommandBuffer_D3D12_Impl() = default;
 
+            ID3D12GraphicsCommandList** get_dx_cmd_list_addr() { return &m_pDxCmdList; }
             ID3D12GraphicsCommandList* get_dx_cmd_list() const { return m_pDxCmdList; }
             void set_dx_cmd_list(ID3D12GraphicsCommandList* cmdList) { m_pDxCmdList = cmdList; }
 

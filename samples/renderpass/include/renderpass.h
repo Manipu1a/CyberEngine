@@ -19,7 +19,7 @@ namespace Cyber
 
     namespace Samples
     {
-        class RenderPassApp : public SampleApp
+        class RenderPassApp : public Cyber::GameApplication
         {
         public:
             RenderPassApp();

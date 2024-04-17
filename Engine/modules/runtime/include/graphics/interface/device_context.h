@@ -2,7 +2,7 @@
 #include "common/cyber_graphics_config.h"
 #include "graphics_types.h"
 #include "frame_buffer.h"
-#include "render_device.h"
+#include "render_device.hpp"
 
 namespace Cyber
 {

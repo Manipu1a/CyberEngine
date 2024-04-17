@@ -6,6 +6,6 @@ if has_config("build_triangle") then
 end
 
 if has_config("build_renderpass") then
-    includes("renderpass/xmake.lua")
+    --includes("renderpass/xmake.lua")
 end
 

@@ -18,7 +18,7 @@
 #include "platform/memory.h"
 #include "../../common/graphics_utils.h"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
-#include "graphics/interface/render_device.h"
+#include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/texture_view_d3d12.h"
 #include "graphics/backend/d3d12/buffer_d3d12.h"
@@ -58,13 +58,11 @@ namespace Cyber
         free_device();
     }
 
-    void RenderDevice_D3D12_Impl::create_render_device_impl(RenderObject::IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc)
+    void RenderDevice_D3D12_Impl::create_render_device_impl()
     {
-        RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(adapter);
+        RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(m_pAdapter);
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->get_instance());
             
-        this->m_pAdapter = adapter;
-
         if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->get_native_adapter(), dxAdapter->get_feature_level(), IID_PPV_ARGS(&m_pDxDevice))))
         {
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
@@ -73,9 +71,9 @@ namespace Cyber
         // Create Requested Queues
         m_pNullDescriptors = (RenderObject::EmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RenderObject::EmptyDescriptors_D3D12));
 
-        for(uint32_t i = 0u; i < deviceDesc.m_queueGroupCount;i++)
+        for(uint32_t i = 0u; i < m_desc.m_queueGroupCount;i++)
         {
-            auto& queueGroup = deviceDesc.m_queueGroups[i];
+            auto& queueGroup = m_desc.m_queueGroups[i];
             auto type = queueGroup.m_queueType;
 
             m_commandQueueCounts[type] = queueGroup.m_queueCount;
@@ -714,6 +712,11 @@ namespace Cyber
         return pTexture;
     }
 
+    void RenderDevice_D3D12_Impl::free_texture(ITexture* texture)
+    {
+
+    }
+
     void RenderDevice_D3D12_Impl::free_instance(IInstance* instance)
     {
 
@@ -725,6 +728,11 @@ namespace Cyber
         surface->handle = window;
         //surface = (RHISurface*)(&window);
         return surface;
+    }
+
+    void RenderDevice_D3D12_Impl::free_surface(Surface* surface)
+    {
+
     }
 
     IFence* RenderDevice_D3D12_Impl::create_fence()
@@ -840,17 +848,26 @@ namespace Cyber
         }
     }
 
+    void RenderDevice_D3D12_Impl::free_queue(IQueue* queue)
+    {
+
+    }
+
     // Command Objects
     void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, IQueue* queue)
     {
         D3D12_COMMAND_LIST_TYPE type = queue->get_type() == QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->get_type() == QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
         
-        auto command_allocator = commandPool->get_native_command_allocator();
+        //auto command_allocator = commandPool->get_native_command_allocator();
+        ID3D12CommandAllocator* command_allocator = nullptr;
         bool res = SUCCEEDED(d3d12_device->CreateCommandAllocator(type, IID_PPV_ARGS(&command_allocator)));
         if(!res)
         {
             cyber_assert(false, "command allocator create failed!");
+        }
+        else {
+            commandPool->set_native_command_allocator(command_allocator);
         }
         commandPool->set_queue(queue);
     }
@@ -889,10 +906,10 @@ namespace Cyber
         
         uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
         ID3D12PipelineState* initialState = nullptr;
-        auto cmd_list = dxCommandBuffer->get_dx_cmd_list();
+        ID3D12GraphicsCommandList* cmd_list = nullptr;
         CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask,gDx12CmdTypeTranslator[dxCommandBuffer->m_type] , 
                 dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&cmd_list)));
-        
+        dxCommandBuffer->set_dx_cmd_list(cmd_list);
         // Command lists are add in the recording state, but there is nothing
         // to record yet. The main loop expects it to be closed, so close it now.
         CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
@@ -1076,6 +1093,12 @@ namespace Cyber
             else
                 cmd->get_dx_cmd_list()->SetComputeRootSignature(rootSignature);
         }
+    }
+
+    IRenderPass* RenderDevice_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
+    {
+        RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);
+        return dxRenderPass;
     }
 
     RenderPassEncoder* RenderDevice_D3D12_Impl::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
@@ -1290,7 +1313,7 @@ namespace Cyber
     {
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(m_pAdapter->get_instance());
         const uint32_t buffer_count = desc.m_imageCount;
-        SwapChain_D3D12_Impl* dxSwapChain = (SwapChain_D3D12_Impl*)cyber_calloc(1, sizeof(SwapChain_D3D12_Impl));
+        SwapChain_D3D12_Impl* dxSwapChain = cyber_new<SwapChain_D3D12_Impl>(this, desc);
         dxSwapChain->set_dx_sync_interval(desc.m_enableVsync ? 1 : 0);
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
@@ -1324,15 +1347,16 @@ namespace Cyber
         {
             queue = static_cast<Queue_D3D12_Impl*>(get_queue(QUEUE_TYPE_GRAPHICS, 0));
         }
-
-        auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(m_pDxDevice, hwnd, &chinDesc, NULL, NULL, &swapchain));
+        
+        auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(queue->get_native_queue(), hwnd, &chinDesc, NULL, NULL, &swapchain));
         cyber_assert(bCreated, "Failed to try to create swapchain! An existed swapchain might be destroyed!");
 
         bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER));
         cyber_assert(bCreated, "Failed to try to associate swapchain with window!");
 
-        auto swap_chain = dxSwapChain->get_dx_swap_chain();
-        auto bQueryChain3 = SUCCEEDED(swapchain->QueryInterface(IID_PPV_ARGS(&swap_chain)));
+        IDXGISwapChain3* swap_chain3 = nullptr;
+        auto bQueryChain3 = SUCCEEDED(swapchain->QueryInterface(IID_PPV_ARGS(&swap_chain3)));
+        dxSwapChain->set_dx_swap_chain(swap_chain3);
         cyber_assert(bQueryChain3, "Failed to query IDXGISwapChain3 from created swapchain!");
 
         SAFE_RELEASE(swapchain);
@@ -1394,30 +1418,12 @@ namespace Cyber
         dxSwapChain->set_back_buffer_dsv(create_texture_view(depthStencilViewDesc));
 
         dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
-        return dxSwapChain;
+        return static_cast<ISwapChain*>(dxSwapChain);
     }
 
     void RenderDevice_D3D12_Impl::free_swap_chain(ISwapChain* swapchain)
     {
         swapchain->free();
-    }
-
-    void RenderDevice_D3D12_Impl::enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount)
-    {
-        cyber_assert(instance, "fatal: Invalid instance!");
-        Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(instance);
-        *adapterCount = dxInstance->get_adapters_count();
-        if(!adapters)
-        {
-            return;
-        }
-        else
-        {
-            for(uint32_t i = 0; i < dxInstance->get_adapters_count(); ++i)
-            {
-                adapters[i] = dxInstance->get_adapter(i);
-            }
-        }
     }
 
     uint32_t RenderDevice_D3D12_Impl::acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc)

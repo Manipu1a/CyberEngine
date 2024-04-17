@@ -4,6 +4,6 @@ option("build_triangle")
 option_end()
 
 option("build_renderpass")
-    set_default(false)
+    set_default(true)
     set_description("Toggle to build samples of renderpass")
 option_end()

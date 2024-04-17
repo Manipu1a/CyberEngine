@@ -71,19 +71,21 @@ namespace Cyber
         instance_desc.m_enableGpuBasedValidation = false;
         instance_desc.m_enableSetName = true;
 
-        if(backend == GRAPHCIS_BACKEND_D3D12)
+        if(backend == GRAPHICS_BACKEND_D3D12)
         {
             m_pInstance = cyber_new<RenderObject::Instance_D3D12_Impl>(instance_desc);
         }
+
     }
 
     void GameApplication::create_gfx_objects()
     {
+        create_render_device(GRAPHICS_BACKEND_D3D12);
         // Filter adapters
         uint32_t adapter_count = 0;
-        m_pRenderDevice->enum_adapters(m_pInstance, nullptr, &adapter_count);
+        m_pInstance->enum_adapters(nullptr, &adapter_count);
         RenderObject::IAdapter* adapters[64];
-        m_pRenderDevice->enum_adapters(m_pInstance, adapters, &adapter_count);
+        m_pInstance->enum_adapters(adapters, &adapter_count);
         m_pAdapter = adapters[0];
 
         // Create device
@@ -94,6 +96,7 @@ namespace Cyber
         device_desc.m_queueGroupCount = 1;
         device_desc.m_queueGroups = { queue_group_desc };
         m_pRenderDevice = m_pInstance->create_render_device(m_pAdapter, device_desc);
+
         m_pQueue = m_pRenderDevice->get_queue(QUEUE_TYPE_GRAPHICS, 0);
         m_pPresentFence = m_pRenderDevice->create_fence();
 

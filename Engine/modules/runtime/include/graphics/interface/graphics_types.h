@@ -38,7 +38,7 @@ namespace Cyber
     
     CYBER_TYPED_ENUM(GRAPHICS_BACKEND, uint8_t)
     {
-        GRAPHCIS_BACKEND_D3D12 = 0,
+        GRAPHICS_BACKEND_D3D12 = 0,
         GRAPHICS_BACKEND_VULKAN = 1,
         GRAPHICS_BACKEND_METAL = 2,
     };

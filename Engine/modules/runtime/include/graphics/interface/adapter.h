@@ -28,6 +28,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IAdapter : public IDeviceObject
         {
             virtual IInstance* get_instance() const = 0;
+            virtual void set_instantce(IInstance* instantce) = 0;
             virtual void free() = 0;
         };
 
@@ -48,6 +49,11 @@ namespace Cyber
                 return m_pInstance;
             }
             
+            virtual void set_instantce(IInstance* instantce) override final
+            {
+                m_pInstance = instantce;
+            }
+
             virtual void free() override final
             {
                 delete this;

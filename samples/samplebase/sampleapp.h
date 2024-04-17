@@ -1,6 +1,5 @@
 #pragma once
 #include "gameruntime/GameApplication.h"
-
 #include "cyber_samples.config.h"
 
 namespace Cyber

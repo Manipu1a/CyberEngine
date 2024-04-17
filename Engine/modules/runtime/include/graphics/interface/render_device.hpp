@@ -59,6 +59,8 @@ namespace Cyber
         // Render device interface
         struct CYBER_GRAPHICS_API IRenderDevice
         {
+
+            virtual void initialize_render_device() = 0;
             // interface
             virtual GRAPHICS_BACKEND get_backend() const = 0;
             virtual NVAPI_STATUS get_nvapi_status() const = 0;
@@ -77,7 +79,7 @@ namespace Cyber
             virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
             virtual void free_swap_chain(ISwapChain* swapChain) = 0;
-            virtual void enum_adapters(IInstance* instance, IAdapter** adapters, uint32_t* adapterCount) = 0;
+            
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             // Queue APIs
@@ -146,14 +148,21 @@ namespace Cyber
             RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(), m_desc(deviceDesc)
             {
                 this->m_pAdapter = adapter;
-                
-                create_render_device_impl(adapter, deviceDesc);
             }
+            
+            virtual void initialize_render_device() override
+            {
+                create_render_device_impl();
+            }
+
             virtual ~RenderDeviceBase()
             {
+                
             }
+
         protected:
-            virtual void create_render_device_impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) = 0;
+            virtual void create_render_device_impl() = 0;
+            
         protected:
             IAdapter* m_pAdapter;
             RenderDeviceCreateDesc m_desc;
