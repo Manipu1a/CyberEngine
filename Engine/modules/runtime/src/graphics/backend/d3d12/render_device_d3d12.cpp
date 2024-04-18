@@ -550,7 +550,7 @@ namespace Cyber
 
     RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& pDesc)
     {
-        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
+        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this, pDesc);
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         D3D12_RESOURCE_DESC desc = {};
@@ -1124,7 +1124,7 @@ namespace Cyber
         // color
         for(uint32_t i = 0; i < RenderPassDesc.m_pSubpasses[0].m_renderTargetCount; ++i)
         {
-            auto attachmentIndex = RenderPassDesc.m_pSubpasses[0].m_pInputAttachments[i].m_attachmentIndex;
+            auto attachmentIndex = RenderPassDesc.m_pSubpasses[0].m_pRenderTargetAttachments[i].m_attachmentIndex;
             auto view = Framebuffer->get_attachment(attachmentIndex);
             TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
 
@@ -1371,22 +1371,18 @@ namespace Cyber
 
         auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
         dxSwapChain->set_back_buffers(back_buffers);
+        TextureCreateDesc textureDesc = {};
         for(uint32_t i = 0; i < buffer_count; i++)
         {
-            RenderObject::Texture_D3D12_Impl* Ts = cyber_new<RenderObject::Texture_D3D12_Impl>(this);
-            Ts->native_resource = backbuffers[i];
-            Ts->allocation = nullptr;
-            Ts->m_isCube = false;
-            Ts->m_arraySize = 0;
-            Ts->m_format = desc.m_format;
-            Ts->m_aspectMask = 1;
-            Ts->m_depth = 1;
-            Ts->m_width = desc.m_width;
-            Ts->m_height = desc.m_height;
-            Ts->m_mipLevels = 1;
-            Ts->m_nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
-            Ts->m_ownsImage = false;
-            Ts->m_pNativeHandle = Ts->native_resource;
+            textureDesc.m_width = desc.m_width;
+            textureDesc.m_height = desc.m_height;
+            textureDesc.m_depth = 1;
+            textureDesc.m_arraySize = 1;
+            textureDesc.m_format = desc.m_format;
+            textureDesc.m_mipLevels = 1;
+            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
+            textureDesc.m_startState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            auto Ts = create_texture(textureDesc);
             dxSwapChain->set_back_buffer(Ts, i);
         }
         //dxSwapChain->mBackBuffers = Ts;
@@ -1437,7 +1433,7 @@ namespace Cyber
 
     IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
     {
-        return nullptr;
+        return cyber_new<FrameBuffer_D3D12_Impl>(this, frameBufferDesc);
     }
 
     // for example 

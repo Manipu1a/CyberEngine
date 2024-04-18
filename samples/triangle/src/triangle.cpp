@@ -89,6 +89,7 @@ namespace Cyber
             m_pRenderDevice->reset_command_pool(m_pPool);
             // record
             m_pRenderDevice->cmd_begin(m_pCmd);
+            /*
             ColorAttachment screen_attachment = {
                 .view = back_buffer_view,
                 .load_action = LOAD_ACTION_CLEAR,
@@ -107,7 +108,21 @@ namespace Cyber
                 .clear_stencil = 0,
                 .write_stencil = 0
             };
-            
+            */
+            RenderObject::RenderPassAttachmentDesc attachments[2] = {};
+            attachments[0].m_sampleCount = 1;
+            attachments[0].m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            attachments[0].m_loadAction = LOAD_ACTION_CLEAR;
+            attachments[0].m_storeAction = STORE_ACTION_STORE;
+            attachments[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachments[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachments[1].m_sampleCount = 1;
+            attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+            attachments[1].m_loadAction = LOAD_ACTION_CLEAR;
+            attachments[1].m_storeAction = STORE_ACTION_STORE;
+            attachments[1].m_initialState = GRAPHICS_RESOURCE_STATE_COMMON;
+            attachments[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+
             RenderObject::AttachmentReference color_attachment_ref = {
                 .m_attachmentIndex = 0,
                 .m_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET
@@ -128,18 +143,26 @@ namespace Cyber
             };
 
             RenderObject::RenderPassDesc rp_desc1 = {
-                .m_attachmentCount = 0,
-                .m_pAttachments = nullptr,
+                .m_attachmentCount = 2,
+                .m_pAttachments = attachments,
                 .m_subpassCount = 1,
-                .m_pSubpasses = nullptr
+                .m_pSubpasses = &subpass_desc
             };
             
             auto renderpass = m_pRenderDevice->create_render_pass(rp_desc1);
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
-           
+            
+            RenderObject::ITextureView* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view };
+            RenderObject::FrameBuffserDesc frame_buffer_desc = {
+                .m_pRenderPass = renderpass,
+                .m_attachmentCount = 2,
+                .m_ppAttachments = attachment_resources
+            };
+            auto frame_buffer = m_pRenderDevice->create_frame_buffer(frame_buffer_desc);
+
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
-                .pFramebuffer = nullptr,
+                .pFramebuffer = frame_buffer,
                 .pRenderPass = renderpass,
                 .ClearValueCount = 1,
                 .pClearValues = &clear_value,
@@ -160,8 +183,17 @@ namespace Cyber
             m_pRenderDevice->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             m_pRenderDevice->render_encoder_draw(rp_encoder, 3, 0);
+
             m_pRenderDevice->cmd_end_render_pass(m_pCmd);
 
+            TextureBarrier present_barrier = {
+                .texture = back_buffer,
+                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
+            };
+            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+            m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc2);
+            m_pRenderDevice->cmd_end(m_pCmd);
             // ui pass
             /*
             screen_attachment.load_action = LOAD_ACTION_LOAD;
@@ -190,14 +222,6 @@ namespace Cyber
             // draw ui
             gui_app->update(cmd, 0.0f);
             rhi_cmd_end_render_pass(cmd);
-
-            RHITextureBarrier present_barrier = {
-                .texture = back_buffer,
-                .src_state = RHI_RESOURCE_STATE_RENDER_TARGET,
-                .dst_state = RHI_RESOURCE_STATE_PRESENT
-            };
-            RHIResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            rhi_cmd_resource_barrier(cmd, barrier_desc2);
             rhi_cmd_end(cmd);
             */
             // submit
@@ -368,7 +392,7 @@ namespace Cyber
                     .fragment_shader = pipeline_shader_create_desc[1],
                     .vertex_layout = &vertex_layout,
                     //.rasterizer_state = {},
-                    .color_formats = &m_pSwapChain->get_back_buffer_srv_view(0)->get_create_desc().m_format,
+                    .color_formats = &m_pSwapChain->get_back_buffer(0)->get_create_desc().m_format,
                     .render_target_count = 1,
                     .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
                 };

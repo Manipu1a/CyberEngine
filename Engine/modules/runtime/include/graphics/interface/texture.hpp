@@ -49,9 +49,25 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
 
-            using TTextureBase = typename DeviceObjectBase<TextureInterface, RenderDeviceImplType>;
+            using TTextureBase = DeviceObjectBase<TextureInterface, RenderDeviceImplType>;
 
-            Texture(RenderDeviceImplType* device) : TTextureBase(device) { }
+            Texture(RenderDeviceImplType* device, TextureCreateDesc desc) : TTextureBase(device), m_desc(desc) 
+            { 
+                m_width = desc.m_width;
+                m_height = desc.m_height;
+                m_depth = desc.m_depth;
+                m_arraySize = desc.m_arraySize;
+                m_mipLevels = desc.m_mipLevels;
+                m_format = desc.m_format;
+                m_aspectMask = 0;
+                m_nodeIndex = 0;
+                m_isCube = 0;
+                m_isDedicated = 0;
+                m_ownsImage = 1;
+                m_pNativeHandle = nullptr;
+                m_pDefaultTextureViews = nullptr;
+            }
+            
             virtual ~Texture() = default;
 
             void create_from_file(const char* file_name);
@@ -119,17 +135,17 @@ namespace Cyber
                     default_views[default_view_index++] = view;
                 };
 
-                if(m_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+                if(m_desc.m_startState & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_SRV);
                 }
                 
-                if(m_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_DEPTH_WRITE || m_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE)
+                if(m_desc.m_startState & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_DEPTH_WRITE || m_desc.m_startState & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_RTV_DSV);
                 }
 
-                if(m_desc.start_state & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
+                if(m_desc.m_startState & GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_UAV);
                 }

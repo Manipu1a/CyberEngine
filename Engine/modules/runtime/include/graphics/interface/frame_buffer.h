@@ -27,7 +27,7 @@ namespace Cyber
         public:
             using FrameBufferInterface = typename EngineImplTraits::FrameBufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TFrameBufferBase = typename DeviceObjectBase<FrameBufferInterface, RenderDeviceImplType>;
+            using TFrameBufferBase = DeviceObjectBase<FrameBufferInterface, RenderDeviceImplType>;
 
             FrameBufferBase(RenderDeviceImplType* device, const FrameBuffserDesc& desc) : TFrameBufferBase(device), m_desc(desc)
             {
@@ -37,7 +37,7 @@ namespace Cyber
 
             virtual ~FrameBufferBase() = default;
 
-            virtual const FrameBuffserDesc& get_create_desc() const
+            virtual const FrameBuffserDesc& get_create_desc() const override final
             {
                 return m_desc;
             }

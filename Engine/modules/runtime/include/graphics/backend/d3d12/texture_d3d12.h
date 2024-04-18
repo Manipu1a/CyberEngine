@@ -22,7 +22,11 @@ namespace Cyber
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using TTextureBase = Texture<EngineD3D12ImplTraits>;
             
-            Texture_D3D12_Impl(class RenderDevice_D3D12_Impl* device) :TTextureBase(device) {}
+            Texture_D3D12_Impl(RenderDeviceImplType* device, TextureCreateDesc desc) : TTextureBase(device, desc) 
+            {
+                native_resource = nullptr;
+                allocation = nullptr;
+            }
 
             virtual ~Texture_D3D12_Impl()
             {
