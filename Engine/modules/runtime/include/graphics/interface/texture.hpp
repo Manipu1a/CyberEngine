@@ -39,6 +39,10 @@ namespace Cyber
         {
             virtual const TextureCreateDesc& get_create_desc() const = 0;
             virtual ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const = 0;
+            virtual GRAPHICS_RESOURCE_STATE get_old_state() const = 0;
+            virtual void set_old_state(GRAPHICS_RESOURCE_STATE state) = 0;
+            virtual GRAPHICS_RESOURCE_STATE get_new_state() const = 0;
+            virtual void set_new_state(GRAPHICS_RESOURCE_STATE state) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -96,6 +100,23 @@ namespace Cyber
                 return m_desc;
             }
 
+            virtual GRAPHICS_RESOURCE_STATE get_old_state() const
+            {
+                return m_oldState;
+            }
+            virtual void set_old_state(GRAPHICS_RESOURCE_STATE state)
+            {
+                m_oldState = state;
+            }
+            virtual GRAPHICS_RESOURCE_STATE get_new_state() const
+            {
+                return m_newState;
+            }
+            virtual void set_new_state(GRAPHICS_RESOURCE_STATE state)
+            {
+                m_newState = state;
+            }
+            
         protected:
             virtual TextureViewImplType* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
 
@@ -166,7 +187,8 @@ namespace Cyber
             uint32_t m_isCube;
             uint32_t m_isDedicated;
             uint32_t m_ownsImage;
-            
+            GRAPHICS_RESOURCE_STATE m_oldState;
+            GRAPHICS_RESOURCE_STATE m_newState;
             void* m_pNativeHandle;
             void* m_pDefaultTextureViews;
 

@@ -29,6 +29,7 @@ namespace Cyber
             gui_app->initialize(m_pRenderDevice, getWindow()->getNativeWindow());
 
             // Create views
+            /*
             auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * m_pSwapChain->get_buffer_srv_count());
             m_pSwapChain->set_back_buffer_srv_views(back_buffer_views);
             for(uint32_t i = 0; i < m_pSwapChain->get_buffer_srv_count(); ++i)
@@ -46,16 +47,11 @@ namespace Cyber
                 auto tex_view = m_pRenderDevice->create_texture_view(view_desc);
                 m_pSwapChain->set_back_buffer_srv_view(tex_view, i);
             }
+            */
             
             m_pRenderDevice->cmd_begin(m_pCmd);
             {
-                TextureBarrier depth_barrier = {
-                    .texture = m_pSwapChain->get_back_buffer_depth(),
-                    .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
-                    .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
-                };
-                ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
-                m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc1);
+
             }
             m_pRenderDevice->cmd_end(m_pCmd);
 
@@ -66,8 +62,6 @@ namespace Cyber
         void TrignaleApp::run()
         {
             GameApplication::run();
-
-
         }
 
         void TrignaleApp::update(float deltaTime)
@@ -89,73 +83,13 @@ namespace Cyber
             m_pRenderDevice->reset_command_pool(m_pPool);
             // record
             m_pRenderDevice->cmd_begin(m_pCmd);
-            /*
-            ColorAttachment screen_attachment = {
-                .view = back_buffer_view,
-                .load_action = LOAD_ACTION_CLEAR,
-                .store_action = STORE_ACTION_STORE,
-                .clear_value = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f }
-            };
 
-            DepthStencilAttachment depth_attachment = {
-                .view = back_depth_buffer_view,
-                .depth_load_action = LOAD_ACTION_CLEAR,
-                .depth_store_action = STORE_ACTION_STORE,
-                .clear_depth = 0.0f,
-                .write_depth = 1,
-                .stencil_load_action = LOAD_ACTION_CLEAR,
-                .stencil_store_action = STORE_ACTION_STORE,
-                .clear_stencil = 0,
-                .write_stencil = 0
-            };
-            */
-            RenderObject::RenderPassAttachmentDesc attachments[2] = {};
-            attachments[0].m_sampleCount = 1;
-            attachments[0].m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
-            attachments[0].m_loadAction = LOAD_ACTION_CLEAR;
-            attachments[0].m_storeAction = STORE_ACTION_STORE;
-            attachments[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachments[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachments[1].m_sampleCount = 1;
-            attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
-            attachments[1].m_loadAction = LOAD_ACTION_CLEAR;
-            attachments[1].m_storeAction = STORE_ACTION_STORE;
-            attachments[1].m_initialState = GRAPHICS_RESOURCE_STATE_COMMON;
-            attachments[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-
-            RenderObject::AttachmentReference color_attachment_ref = {
-                .m_attachmentIndex = 0,
-                .m_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET
-            };
-
-            RenderObject::AttachmentReference depth_attachment_ref = {
-                .m_attachmentIndex = 1,
-                .m_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
-            };
-
-            RenderObject::RenderSubpassDesc subpass_desc = {
-                .m_sampleCount = SAMPLE_COUNT_1,
-                .m_inputAttachmentCount = 0,
-                .m_pInputAttachments = nullptr,
-                .m_pDepthStencilAttachment = &depth_attachment_ref,
-                .m_renderTargetCount = 1,
-                .m_pRenderTargetAttachments = &color_attachment_ref
-            };
-
-            RenderObject::RenderPassDesc rp_desc1 = {
-                .m_attachmentCount = 2,
-                .m_pAttachments = attachments,
-                .m_subpassCount = 1,
-                .m_pSubpasses = &subpass_desc
-            };
-            
-            auto renderpass = m_pRenderDevice->create_render_pass(rp_desc1);
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             
-            RenderObject::ITextureView* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view };
+            RenderObject::ITextureView* attachment_resources[1] = { back_buffer_view  };
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
-                .m_pRenderPass = renderpass,
-                .m_attachmentCount = 2,
+                .m_pRenderPass = m_pRenderPass,
+                .m_attachmentCount = 1,
                 .m_ppAttachments = attachment_resources
             };
             auto frame_buffer = m_pRenderDevice->create_frame_buffer(frame_buffer_desc);
@@ -163,7 +97,7 @@ namespace Cyber
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
                 .pFramebuffer = frame_buffer,
-                .pRenderPass = renderpass,
+                .pRenderPass = m_pRenderPass,
                 .ClearValueCount = 1,
                 .pClearValues = &clear_value,
                 .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_NONE
@@ -171,9 +105,19 @@ namespace Cyber
 
             TextureBarrier draw_barrier = {
                 .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_PRESENT,
-                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
             };
+            TextureBarrier depth_barrier = {
+                .texture = m_pSwapChain->get_back_buffer_depth(),
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
+                .subresource_barrier = 0
+            };
+            TextureBarrier barriers[2];
+            barriers[0] = draw_barrier;
+            barriers[1] = depth_barrier;
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc0);
@@ -183,9 +127,7 @@ namespace Cyber
             m_pRenderDevice->render_encoder_bind_pipeline(rp_encoder, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             m_pRenderDevice->render_encoder_draw(rp_encoder, 3, 0);
-
             m_pRenderDevice->cmd_end_render_pass(m_pCmd);
-
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
                 .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
@@ -242,12 +184,61 @@ namespace Cyber
             m_pRenderDevice->present_queue(m_pQueue, present_desc);
 
             // sync & reset
+            //m_pRenderDevice->wait_queue_idle(m_pQueue);
+            m_pQueue->signal_fence(m_pPresentFence, m_pPresentFence->get_fence_value());
+            
             m_pRenderDevice->wait_fences(&m_pPresentFence, 1);
         }
 
         void TrignaleApp::create_gfx_objects()
         {
             GameApplication::create_gfx_objects();
+
+            //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
+            attachment_desc.m_sampleCount = 1;
+            attachment_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            attachment_desc.m_loadAction = LOAD_ACTION_CLEAR;
+            attachment_desc.m_storeAction = STORE_ACTION_STORE;
+            attachment_desc.m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_desc.m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
+            //attachments[1].m_sampleCount = 1;
+            //attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+            //attachments[1].m_loadAction = LOAD_ACTION_CLEAR;
+            //attachments[1].m_storeAction = STORE_ACTION_STORE;
+            //attachments[1].m_initialState = GRAPHICS_RESOURCE_STATE_COMMON;
+            //attachments[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+
+            /*
+            RenderObject::AttachmentReference attachment_ref[] = 
+            {
+                {
+                    .m_attachmentIndex = 0,
+                    .m_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET
+                },
+                {
+                    .m_attachmentIndex = 1,
+                    .m_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
+                }
+            };
+            */
+            attachment_ref = { 0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET };
+
+            //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
+            subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
+            subpass_desc.m_inputAttachmentCount = 0;
+            subpass_desc.m_pInputAttachments = nullptr;
+            subpass_desc.m_pDepthStencilAttachment = nullptr;
+            subpass_desc.m_renderTargetCount = 1;
+            subpass_desc.m_pRenderTargetAttachments = &attachment_ref;
+
+            RenderObject::RenderPassDesc rp_desc1 = {
+                .m_attachmentCount = 1,
+                .m_pAttachments = &attachment_desc,
+                .m_subpassCount = 1,
+                .m_pSubpasses = &subpass_desc
+            };
+            
+            m_pRenderPass = m_pRenderDevice->create_render_pass(rp_desc1);
         }
 
         void TrignaleApp::create_resource()

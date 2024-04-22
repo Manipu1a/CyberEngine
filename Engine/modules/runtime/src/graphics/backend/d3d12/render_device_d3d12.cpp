@@ -253,7 +253,17 @@ namespace Cyber
     RenderObject::ITextureView* RenderDevice_D3D12_Impl::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
         RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>(this, viewDesc);
-        RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.m_pTexture);
+        ID3D12Resource* native_resource = nullptr;
+        if(viewDesc.m_pNativeResource)
+        {
+            native_resource = (ID3D12Resource*)viewDesc.m_pNativeResource;
+        }
+        else if(viewDesc.m_pTexture)
+        {
+            RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.m_pTexture);
+            native_resource = tex->get_d3d12_resource();
+        }
+        cyber_check(native_resource);
 
         // Consume handles
         const auto usages = viewDesc.m_usages;
@@ -349,7 +359,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                     break;
                 }
-                create_shader_resource_view(tex->native_resource, &srvDesc, srv);
+                create_shader_resource_view(native_resource, &srvDesc, srv);
                 current_offset_cursor += heap->get_descriptor_size() * 1;
             }
             // Create UAV
@@ -405,7 +415,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                     break;
                 }
-                create_unordered_access_view(tex->native_resource, NULL, &uavDesc, uav);
+                create_unordered_access_view(native_resource, NULL, &uavDesc, uav);
             }
         }
 
@@ -466,7 +476,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                         break;
                 }
-                create_depth_stencil_view(tex->native_resource, &dsvDesc, tex_view->m_rtvDsvDescriptorHandle);
+                create_depth_stencil_view(native_resource, &dsvDesc, tex_view->m_rtvDsvDescriptorHandle);
             }
             else
             {
@@ -530,7 +540,7 @@ namespace Cyber
                         cyber_assert(false, "Invalid texture dimension");
                         break;
                 }
-                create_render_target_view(tex->native_resource, &rtvDesc, tex_view->m_rtvDsvDescriptorHandle);
+                create_render_target_view(native_resource, &rtvDesc, tex_view->m_rtvDsvDescriptorHandle);
             }
         }
         return tex_view;
@@ -660,6 +670,8 @@ namespace Cyber
 
             D3D12_CLEAR_VALUE* pClearValue = nullptr;
             D3D12_RESOURCE_STATES res_states = D3D12Util_TranslateResourceState(actualStartState);
+            pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+            pTexture->set_new_state(actualStartState);
 
             if((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
             {
@@ -707,6 +719,12 @@ namespace Cyber
             }
 
 
+        }
+        else {
+            pTexture->native_resource = (ID3D12Resource*)pDesc.m_pNativeHandle;
+            pTexture->allocation = nullptr;
+            pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+            pTexture->set_new_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
         }
 
         return pTexture;
@@ -763,6 +781,7 @@ namespace Cyber
             FENCE_STATUS fence_status = query_fence_status(fences[i]);
             Fence_D3D12_Impl* dxFence = static_cast<Fence_D3D12_Impl*>(fences[i]);
             uint64_t fence_value = dxFence->m_fenceValue;
+            dxFence->m_fenceValue++;
             if(fence_status == FENCE_STATUS_INCOMPLETE)
             {
                 dxFence->m_pDxFence->SetEventOnCompletion(fence_value, dxFence->m_dxWaitIdleFenceEvent);
@@ -811,6 +830,7 @@ namespace Cyber
         }
         // Execute
         dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
+        /*
         // Signal fences
         if(dx_fence)
         {
@@ -822,13 +842,14 @@ namespace Cyber
             Semaphore_D3D12_Impl* dx_semaphore = static_cast<Semaphore_D3D12_Impl*>(submitDesc.m_ppSignalSemaphores[i]);
             dx_queue->get_native_queue()->Signal(dx_semaphore->dx_fence, dx_semaphore->fence_value++);
         }
+        */
     }
 
     void RenderDevice_D3D12_Impl::present_queue(IQueue* queue, const QueuePresentDesc& presentDesc)
     {
         SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(presentDesc.m_pSwapChain);
         
-        HRESULT hr =  dx_swapchain->get_dx_swap_chain()->Present(0, dx_swapchain->get_flags());
+        HRESULT hr =  dx_swapchain->get_dx_swap_chain()->Present(1, dx_swapchain->get_flags());
 
         if(FAILED(hr))
         {
@@ -841,8 +862,9 @@ namespace Cyber
     {
         Queue_D3D12_Impl* Queue = static_cast<Queue_D3D12_Impl*>(queue);
         Fence_D3D12_Impl* Fence = static_cast<Fence_D3D12_Impl*>(Queue->m_pFence);
-        Queue->signal_fence(Fence, Fence->m_fenceValue);
-        uint64_t fence_value = Fence->m_fenceValue - 1;
+        uint64_t fence_value = Fence->m_fenceValue;
+        Queue->signal_fence(Fence, fence_value);
+        Fence->m_fenceValue++;
         if(Fence->m_pDxFence->GetCompletedValue() < fence_value)
         {
             Fence->m_pDxFence->SetEventOnCompletion(fence_value, Fence->m_dxWaitIdleFenceEvent);
@@ -957,12 +979,13 @@ namespace Cyber
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
         const uint32_t barriers_count = barrierDesc.buffer_barrier_count + barrierDesc.texture_barrier_count;
-        D3D12_RESOURCE_BARRIER* barriers = (D3D12_RESOURCE_BARRIER*)alloca(sizeof(D3D12_RESOURCE_BARRIER) * barriers_count);
+        eastl::vector<D3D12_RESOURCE_BARRIER> barriers;
+        
         uint32_t transition_count = 0;
         for(uint32_t i = 0; i < barrierDesc.buffer_barrier_count; ++i)
         {
+            DECLARE_ZERO(D3D12_RESOURCE_BARRIER, barrier);
             const BufferBarrier* transition_barrier = &barrierDesc.buffer_barriers[i];
-            D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
             RenderObject::Buffer_D3D12_Impl* buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(transition_barrier->buffer);
             if(buffer->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY ||
                 buffer->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU ||
@@ -971,104 +994,116 @@ namespace Cyber
                     if(transition_barrier->src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
                         transition_barrier->dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
                     {
-                            barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-                            barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                            barrier->UAV.pResource = buffer->m_pDxResource;
+                            barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                            barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                            barrier.UAV.pResource = buffer->m_pDxResource;
                             ++transition_count;
+                            barriers.emplace_back(barrier);
                     }
                     else 
                     {
                             cyber_assert(transition_barrier->src_state != transition_barrier->dst_state, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
 
-                            barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                            barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
                             if(transition_barrier->d3d12.begin_only)
                             {
-                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+                                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
                             }
                             else if(transition_barrier->d3d12.end_only)
                             {
-                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+                                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
                             }
                             else
                             {
-                                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                             }
-                            barrier->Transition.pResource = buffer->get_dx_resource();
-                            barrier->Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+                            barrier.Transition.pResource = buffer->get_dx_resource();
+                            barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
                             if(transition_barrier->queue_acquire)
                             {
-                                barrier->Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+                                barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
                             }
                             else 
                             {
-                                barrier->Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
+                                barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
                             }
 
                             if(transition_barrier->queue_release)
                             {
-                                barrier->Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+                                barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
                             }
                             else 
                             {
-                                barrier->Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
+                                barrier.Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
                             }
 
-                            cyber_assert(barrier->Transition.StateBefore != barrier->Transition.StateAfter, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
+                            cyber_assert(barrier.Transition.StateBefore != barrier.Transition.StateAfter, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
                             ++transition_count;
+                            barriers.emplace_back(barrier);
                     }
                 }
         }
 
         for(uint32_t i = 0; i < barrierDesc.texture_barrier_count; ++i)
         {
+            DECLARE_ZERO(D3D12_RESOURCE_BARRIER, barrier);
             const TextureBarrier* transition_barrier = &barrierDesc.texture_barriers[i];
-            D3D12_RESOURCE_BARRIER* barrier = &barriers[transition_count];
             RenderObject::Texture_D3D12_Impl* texture = static_cast<RenderObject::Texture_D3D12_Impl*>(transition_barrier->texture);
+            //cyber_check(texture->get_new_state() == transition_barrier->src_state);
+            if(texture->get_new_state() == transition_barrier->dst_state)
+            {
+                continue;
+            }
+
+            texture->set_old_state(texture->get_new_state());
+            texture->set_new_state(transition_barrier->dst_state);
+
             if(transition_barrier->src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
                 transition_barrier->dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
             {
-                barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                barrier->UAV.pResource = texture->get_d3d12_resource();
+                barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                barrier.UAV.pResource = texture->get_d3d12_resource();
                 ++transition_count;
+                barriers.emplace_back(barrier);
             }
             else
             {
                 cyber_assert(transition_barrier->src_state != transition_barrier->dst_state, "D3D12 ERROR: Texture Barrier with same src and dst state!");
 
-                barrier->Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-                barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                 if(transition_barrier->d3d12.begin_only)
                 {
-                    barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+                    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
                 }
                 else if(transition_barrier->d3d12.end_only)
                 {
-                    barrier->Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+                    barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
                 }
-                barrier->Transition.pResource = texture->get_d3d12_resource();
-                barrier->Transition.Subresource = transition_barrier->subresource_barrier ?
+                barrier.Transition.pResource = texture->get_d3d12_resource();
+                barrier.Transition.Subresource = transition_barrier->subresource_barrier != 0 ?
                                                  CALC_SUBRESOURCE_INDEX(transition_barrier->mip_level, transition_barrier->array_layer, 0, texture->m_mipLevels, texture->m_arraySize + 1)
                                                 : D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
                 if(transition_barrier->queue_acquire)
                 {
-                    barrier->Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+                    barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
                 }
                 else 
                 {
-                    barrier->Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
+                    barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier->src_state);
                 }
 
                 if(transition_barrier->queue_release)
                 {
-                    barrier->Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+                    barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
                 }
                 else 
                 {
-                    barrier->Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
+                    barrier.Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier->dst_state);
                 }
 
-                if(barrier->Transition.StateBefore == D3D12_RESOURCE_STATE_COMMON && barrier->Transition.StateAfter == D3D12_RESOURCE_STATE_COMMON)
+                if(barrier.Transition.StateBefore == D3D12_RESOURCE_STATE_COMMON && barrier.Transition.StateAfter == D3D12_RESOURCE_STATE_COMMON)
                 {
                     if(transition_barrier->src_state == GRAPHICS_RESOURCE_STATE_PRESENT || transition_barrier->dst_state == D3D12_RESOURCE_STATE_COMMON)
                     {
@@ -1077,11 +1112,12 @@ namespace Cyber
                 }
                 //cyber_assert(false, "D3D12 ERROR: Texture Barrier with same src and dst state!");
                 ++transition_count;
+                barriers.emplace_back(barrier);
             }
         }
         if(transition_count > 0)
         {
-            Cmd->get_dx_cmd_list()->ResourceBarrier(transition_count, barriers);
+            Cmd->get_dx_cmd_list()->ResourceBarrier(barriers.size(), barriers.data());
         }
     }
 
@@ -1363,17 +1399,27 @@ namespace Cyber
 
         SAFE_RELEASE(swapchain);
         // Get swapchain images
+        auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * buffer_count);
+        dxSwapChain->set_back_buffer_srv_views(back_buffer_views);
+        auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
+        dxSwapChain->set_back_buffers(back_buffers);
         ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
+        TextureCreateDesc textureDesc = {};
         for(uint32_t i = 0; i < buffer_count; ++i)
         {
             CHECK_HRESULT(dxSwapChain->get_dx_swap_chain()->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
-        }
+            TextureViewCreateDesc textureViewDesc = {};
+            textureViewDesc.m_dimension = TEX_DIMENSION_2D;
+            textureViewDesc.m_format = desc.m_format;
+            textureViewDesc.m_usages = TVU_RTV_DSV;
+            textureViewDesc.m_aspects = TVA_COLOR;
+            textureViewDesc.m_arrayLayerCount = 1;
+            textureViewDesc.m_pNativeResource = backbuffers[i];
+            textureViewDesc.m_mipLevelCount = 1;
+            textureViewDesc.m_baseMipLevel = 0;
+            auto back_buffer_view = create_texture_view(textureViewDesc);
+            dxSwapChain->set_back_buffer_srv_view(back_buffer_view, i);
 
-        auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
-        dxSwapChain->set_back_buffers(back_buffers);
-        TextureCreateDesc textureDesc = {};
-        for(uint32_t i = 0; i < buffer_count; i++)
-        {
             textureDesc.m_width = desc.m_width;
             textureDesc.m_height = desc.m_height;
             textureDesc.m_depth = 1;
@@ -1382,6 +1428,8 @@ namespace Cyber
             textureDesc.m_mipLevels = 1;
             textureDesc.m_sampleCount = SAMPLE_COUNT_1;
             textureDesc.m_startState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            textureDesc.m_name = u8"SwapChain Back Buffer";
+            textureDesc.m_pNativeHandle = backbuffers[i];
             auto Ts = create_texture(textureDesc);
             dxSwapChain->set_back_buffer(Ts, i);
         }

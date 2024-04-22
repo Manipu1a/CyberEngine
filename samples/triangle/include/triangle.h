@@ -33,7 +33,9 @@ namespace Cyber
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
-
+            RenderObject::RenderSubpassDesc subpass_desc;
+            RenderObject::RenderPassAttachmentDesc attachment_desc;
+            RenderObject::AttachmentReference attachment_ref;
             class GUI::GUIApplication* gui_app = nullptr;
         };
     }

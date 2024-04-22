@@ -9,6 +9,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IFence : public IDeviceObject
         {
             virtual uint64_t get_fence_value() const = 0;
+            virtual void add_fence_value() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -25,6 +26,11 @@ namespace Cyber
             virtual uint64_t get_fence_value() const override
             {
                 return m_fenceValue;
+            }
+
+            virtual void add_fence_value() override
+            {
+                m_fenceValue++;
             }
         protected:
             uint64_t m_fenceValue;

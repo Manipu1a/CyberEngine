@@ -96,9 +96,7 @@ namespace Cyber
         device_desc.m_queueGroupCount = 1;
         device_desc.m_queueGroups = { queue_group_desc };
         m_pRenderDevice = m_pInstance->create_render_device(m_pAdapter, device_desc);
-
         m_pQueue = m_pRenderDevice->get_queue(QUEUE_TYPE_GRAPHICS, 0);
-        m_pPresentFence = m_pRenderDevice->create_fence();
 
         // Create swapchain
     #if defined (_WIN32) || defined (_WIN64)

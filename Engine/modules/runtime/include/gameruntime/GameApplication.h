@@ -50,6 +50,7 @@ namespace Cyber
         RenderObject::ICommandPool* m_pPool = nullptr;
         RenderObject::ICommandBuffer* m_pCmd = nullptr;
         RenderObject::ISwapChain* m_pSwapChain = nullptr;
+        RenderObject::IRenderPass* m_pRenderPass = nullptr;
         Surface* m_pSurface = nullptr;
         RenderObject::IFence* m_pPresentSwmaphore = nullptr; 
         uint32_t m_backBufferIndex = 0;
