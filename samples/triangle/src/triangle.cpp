@@ -115,9 +115,6 @@ namespace Cyber
                 .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
                 .subresource_barrier = 0
             };
-            TextureBarrier barriers[2];
-            barriers[0] = draw_barrier;
-            barriers[1] = depth_barrier;
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc0);
@@ -128,6 +125,15 @@ namespace Cyber
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             m_pRenderDevice->render_encoder_draw(rp_encoder, 3, 0);
             m_pRenderDevice->cmd_end_render_pass(m_pCmd);
+            
+            // ui pass
+            RenderPassEncoder* rp_ui_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
+            m_pRenderDevice->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            m_pRenderDevice->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            // draw ui
+            gui_app->update(rp_encoder, 0.0f);
+            m_pRenderDevice->cmd_end_render_pass(m_pCmd);
+
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
                 .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
@@ -136,36 +142,6 @@ namespace Cyber
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
             m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc2);
             m_pRenderDevice->cmd_end(m_pCmd);
-            // ui pass
-            /*
-            screen_attachment.load_action = LOAD_ACTION_LOAD;
-            depth_attachment.depth_load_action = LOAD_ACTION_LOAD;
-            depth_attachment.stencil_load_action = LOAD_ACTION_LOAD;
-
-            RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
-            {
-                .pFramebuffer = nullptr,
-                .pRenderPass = renderpass,
-                .pClearValues = { 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f },
-                .ClearValueCount = 1,
-                .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_NONE
-            };
-
-            RenderObject::RenderPassDesc ui_rp_desc = {
-                .sam = SAMPLE_COUNT_1,
-                .color_attachments = &screen_attachment,
-                .depth_stencil_attachment = &depth_attachment,
-                .render_target_count = 1,
-            };
-
-            RenderPassEncoder* rp_ui_encoder = rhi_cmd_begin_render_pass(cmd, ui_rp_desc);
-            rhi_render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight, 0.0f, 1.0f);
-            rhi_render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->mWidth, back_buffer->mHeight);
-            // draw ui
-            gui_app->update(cmd, 0.0f);
-            rhi_cmd_end_render_pass(cmd);
-            rhi_cmd_end(cmd);
-            */
             // submit
             RenderObject::QueueSubmitDesc submit_desc = {
                 .m_ppCmds = &m_pCmd,
@@ -207,7 +183,6 @@ namespace Cyber
             //attachments[1].m_storeAction = STORE_ACTION_STORE;
             //attachments[1].m_initialState = GRAPHICS_RESOURCE_STATE_COMMON;
             //attachments[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-
             /*
             RenderObject::AttachmentReference attachment_ref[] = 
             {
@@ -221,21 +196,39 @@ namespace Cyber
                 }
             };
             */
-            attachment_ref = { 0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET };
+            attachment_ref[0].m_attachmentIndex = 0;
+            attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[0].m_loadAction = LOAD_ACTION_CLEAR;
+            attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+
+            attachment_ref[1].m_attachmentIndex = 0;
+            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[1].m_loadAction = LOAD_ACTION_LOAD;
+            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
 
             //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
-            subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
-            subpass_desc.m_inputAttachmentCount = 0;
-            subpass_desc.m_pInputAttachments = nullptr;
-            subpass_desc.m_pDepthStencilAttachment = nullptr;
-            subpass_desc.m_renderTargetCount = 1;
-            subpass_desc.m_pRenderTargetAttachments = &attachment_ref;
+            //subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
+            subpass_desc[0].m_inputAttachmentCount = 0;
+            subpass_desc[0].m_pInputAttachments = nullptr;
+            subpass_desc[0].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[0].m_renderTargetCount = 1;
+            subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
 
+            subpass_desc[1].m_inputAttachmentCount = 0;
+            subpass_desc[1].m_pInputAttachments = nullptr;
+            subpass_desc[1].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[1].m_renderTargetCount = 1;
+            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[1];
+            
             RenderObject::RenderPassDesc rp_desc1 = {
                 .m_attachmentCount = 1,
                 .m_pAttachments = &attachment_desc,
-                .m_subpassCount = 1,
-                .m_pSubpasses = &subpass_desc
+                .m_subpassCount = 2,
+                .m_pSubpasses = subpass_desc
             };
             
             m_pRenderPass = m_pRenderDevice->create_render_pass(rp_desc1);

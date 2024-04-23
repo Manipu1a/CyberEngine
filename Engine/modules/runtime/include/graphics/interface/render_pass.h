@@ -23,12 +23,18 @@ namespace Cyber
         struct CYBER_GRAPHICS_API AttachmentReference
         {
             uint32_t m_attachmentIndex;
-            GRAPHICS_RESOURCE_STATE m_state;
+            TEXTURE_SAMPLE_COUNT m_sampleCount;
+            LOAD_ACTION m_loadAction;
+            STORE_ACTION m_storeAction;
+            LOAD_ACTION m_stencilLoadAction;
+            STORE_ACTION m_stencilStoreAction;
+            GRAPHICS_RESOURCE_STATE m_initialState;
+            GRAPHICS_RESOURCE_STATE m_finalState;
         };
 
         struct CYBER_GRAPHICS_API RenderSubpassDesc
         {
-            TEXTURE_SAMPLE_COUNT m_sampleCount;
+            //TEXTURE_SAMPLE_COUNT m_sampleCount;
             uint32_t m_inputAttachmentCount;
             const AttachmentReference* m_pInputAttachments;
             const AttachmentReference* m_pDepthStencilAttachment;

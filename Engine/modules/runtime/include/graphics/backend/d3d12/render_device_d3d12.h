@@ -80,6 +80,7 @@ namespace Cyber
 
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
             virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
+            virtual void cmd_next_sub_pass() override;
             virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;

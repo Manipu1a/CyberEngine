@@ -34,6 +34,11 @@ namespace Cyber
                 return m_pCurrentHeap;
             }
             
+            void set_heap(ID3D12DescriptorHeap* heap)
+            {
+                m_pCurrentHeap = heap;
+            }
+            
             CYBER_FORCE_INLINE uint32_t get_descriptor_size() const
             {
                 return m_descriptorSize;

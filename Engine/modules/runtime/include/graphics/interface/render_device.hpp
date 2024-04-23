@@ -121,6 +121,7 @@ namespace Cyber
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
             virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
+            virtual void cmd_next_sub_pass() = 0;
             virtual void cmd_end_render_pass(ICommandBuffer* cmd) = 0;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) = 0;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) = 0;
@@ -166,11 +167,15 @@ namespace Cyber
         protected:
             IAdapter* m_pAdapter;
             RenderDeviceCreateDesc m_desc;
+            uint32_t m_subpassIndex = 0;
 
         public:
             friend TextureImplType;
             friend TextureViewImplType;
             friend BufferImplType;
         };
+
+
+        
     }
 }

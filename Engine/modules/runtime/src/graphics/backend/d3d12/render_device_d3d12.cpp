@@ -1240,6 +1240,11 @@ namespace Cyber
         return cmd;
     }
 
+    void RenderDevice_D3D12_Impl::cmd_next_sub_pass()
+    {
+        
+    }
+
     void RenderDevice_D3D12_Impl::cmd_end_render_pass(ICommandBuffer* pCommandBuffer)
     {
         CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);

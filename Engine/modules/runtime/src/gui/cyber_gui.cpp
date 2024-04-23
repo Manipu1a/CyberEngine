@@ -30,8 +30,9 @@ namespace Cyber
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             desc.NodeMask = 0;
             g_imguiSrvDescHeap = cyber_new<RenderObject::DescriptorHeap_D3D12>();
-            auto native_heap = g_imguiSrvDescHeap->get_heap();
+            ID3D12DescriptorHeap* native_heap = nullptr;
             CHECK_HRESULT(device_d3d12->GetD3D12Device()->CreateDescriptorHeap(&desc, IID_ARGS(&native_heap)));
+            g_imguiSrvDescHeap->set_heap(native_heap);
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
