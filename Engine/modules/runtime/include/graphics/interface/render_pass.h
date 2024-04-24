@@ -11,13 +11,6 @@ namespace Cyber
         struct CYBER_GRAPHICS_API RenderPassAttachmentDesc
         {
             TEXTURE_FORMAT m_format;
-            uint8_t m_sampleCount;
-            LOAD_ACTION m_loadAction;
-            STORE_ACTION m_storeAction;
-            LOAD_ACTION m_stencilLoadAction;
-            STORE_ACTION m_stencilStoreAction;
-            GRAPHICS_RESOURCE_STATE m_initialState;
-            GRAPHICS_RESOURCE_STATE m_finalState;
         };
 
         struct CYBER_GRAPHICS_API AttachmentReference
@@ -65,6 +58,8 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IRenderPass : public IDeviceObject
         {
             virtual const RenderPassDesc& get_create_desc() const = 0;
+            virtual uint32_t get_subpass_index() const = 0;
+            virtual void next_subpass() = 0;
         };
 
         template<typename EngineImplTraits>
@@ -77,11 +72,16 @@ namespace Cyber
 
             RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device), m_desc(desc)
             {
+                m_subpassIndex = 0;
             }
 
             virtual const RenderPassDesc& get_create_desc() const override { return m_desc; }
+
+            virtual uint32_t get_subpass_index() const override { return m_subpassIndex; }
+            virtual void next_subpass() override { m_subpassIndex++; }
         protected:
             RenderPassDesc m_desc;
+            uint32_t m_subpassIndex;
         };
     }
 }

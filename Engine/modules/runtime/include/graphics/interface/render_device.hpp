@@ -120,8 +120,8 @@ namespace Cyber
             virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) = 0;
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
-            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
-            virtual void cmd_next_sub_pass() = 0;
+            virtual void cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
+            virtual void cmd_next_sub_pass(ICommandBuffer* cmd) = 0;
             virtual void cmd_end_render_pass(ICommandBuffer* cmd) = 0;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) = 0;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) = 0;
@@ -161,6 +161,19 @@ namespace Cyber
                 
             }
 
+            virtual void cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc) override
+            {
+                m_subpassIndex = 0;
+                m_pRenderPass = beginRenderPassDesc.pRenderPass;
+                m_pFrameBuffer = beginRenderPassDesc.pFramebuffer;
+                m_beginRenderPassAttribs = beginRenderPassDesc;
+            }
+
+            virtual void cmd_next_sub_pass(ICommandBuffer* cmd) override
+            {
+                m_subpassIndex++;
+            }
+
         protected:
             virtual void create_render_device_impl() = 0;
             
@@ -169,13 +182,23 @@ namespace Cyber
             RenderDeviceCreateDesc m_desc;
             uint32_t m_subpassIndex = 0;
 
+            BeginRenderPassAttribs m_beginRenderPassAttribs;
+            IRenderPass* m_pRenderPass = nullptr;
+            IFrameBuffer* m_pFrameBuffer = nullptr;
         public:
             friend TextureImplType;
             friend TextureViewImplType;
             friend BufferImplType;
         };
-
-
         
+        /*
+        template<typename EngineImplTraits>
+        inline void RenderDeviceBase<EngineImplTraits>::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
+        {
+            m_pRenderPass = beginRenderPassDesc.pRenderPass;
+            m_pFrameBuffer = beginRenderPassDesc.pFramebuffer;
+            m_beginRenderPassAttribs = beginRenderPassDesc;
+        }
+        */
     }
 }

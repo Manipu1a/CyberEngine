@@ -1138,111 +1138,131 @@ namespace Cyber
         RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);
         return dxRenderPass;
     }
-
-    RenderPassEncoder* RenderDevice_D3D12_Impl::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
+    
+    void RenderDevice_D3D12_Impl::commit_subpass_rendertargets(RenderPassEncoder* cmd)
     {
         CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
-    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->get_dx_cmd_list();
-        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[GRAPHICS_MAX_MRT_COUNT]);
-        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
-        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
-        DECLARE_ZERO(D3D12_RENDER_PASS_RENDER_TARGET_DESC, renderPassRenderTargetDescs[GRAPHICS_MAX_MRT_COUNT]);
-        DECLARE_ZERO(D3D12_RENDER_PASS_DEPTH_STENCIL_DESC, renderPassDepthStencilDesc);
-        uint32_t colorTargetCount = 0;
-        uint32_t subpassIndex = 0;
-        
-        auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(beginRenderPassDesc.pRenderPass);
-        auto RenderPassDesc = RenderPass->get_create_desc();
-        auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(beginRenderPassDesc.pFramebuffer);
-        auto FramebufferDesc = Framebuffer->get_create_desc();
-
-        // color
-        for(uint32_t i = 0; i < RenderPassDesc.m_pSubpasses[0].m_renderTargetCount; ++i)
-        {
-            auto attachmentIndex = RenderPassDesc.m_pSubpasses[0].m_pRenderTargetAttachments[i].m_attachmentIndex;
-            auto view = Framebuffer->get_attachment(attachmentIndex);
-            TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
-
-            clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().m_format);
-            clearValues[i].Color[0] = beginRenderPassDesc.pClearValues[i].r;
-            clearValues[i].Color[1] = beginRenderPassDesc.pClearValues[i].g;
-            clearValues[i].Color[2] = beginRenderPassDesc.pClearValues[i].b;
-            clearValues[i].Color[3] = beginRenderPassDesc.pClearValues[i].a;
+        #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+            ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->get_dx_cmd_list();
+            DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[GRAPHICS_MAX_MRT_COUNT]);
+            DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
+            DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
+            DECLARE_ZERO(D3D12_RENDER_PASS_RENDER_TARGET_DESC, renderPassRenderTargetDescs[GRAPHICS_MAX_MRT_COUNT]);
+            DECLARE_ZERO(D3D12_RENDER_PASS_DEPTH_STENCIL_DESC, renderPassDepthStencilDesc);
+            uint32_t colorTargetCount = 0;
             
-            auto attchment = RenderPassDesc.m_pAttachments[attachmentIndex];
+            m_pRenderPass = m_beginRenderPassAttribs.pRenderPass;
+            m_pFrameBuffer = m_beginRenderPassAttribs.pFramebuffer;
 
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attchment.m_loadAction];
-            TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
-            if(attchment.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
-            {
-                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().m_pTexture);
-                Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().m_pTexture);
-                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
-                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
-                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
-                renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
-                auto& resolve = renderPassRenderTargetDescs[colorTargetCount].EndingAccess.Resolve;
-                resolve.ResolveMode = D3D12_RESOLVE_MODE_AVERAGE;
-                resolve.Format = clearValues[i].Format;
-                resolve.pSrcResource = tex->get_d3d12_resource();
-                resolve.pDstResource = tex_resolve->get_d3d12_resource();
+            auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_beginRenderPassAttribs.pRenderPass);
+            auto RenderPassDesc = RenderPass->get_create_desc();
+            auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_beginRenderPassAttribs.pFramebuffer);
+            auto FramebufferDesc = Framebuffer->get_create_desc();
+            cyber_assert(RenderPassDesc.m_subpassCount > m_subpassIndex, "Subpass index out of range!");
+            auto SubPassDesc = RenderPassDesc.m_pSubpasses[m_subpassIndex];
 
-                Cmd->m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->m_width, (LONG)tex->m_height };
-                Cmd->m_subResolveResource[i].DstX = 0;
-                Cmd->m_subResolveResource[i].DstY = 0;
-                Cmd->m_subResolveResource[i].SrcSubresource = 0;
-                Cmd->m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->m_mipLevels, tex_resolve->m_arraySize + 1);
-                resolve.PreserveResolveSource = false;
-                resolve.SubresourceCount = 1;
-                resolve.pSubresourceParameters = &Cmd->m_subResolveResource[i];
-            }
-            else
+            // color
+            for(uint32_t i = 0; i < SubPassDesc.m_renderTargetCount; ++i)
             {
-                // Load & Store action
-                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attchment.m_storeAction];
-                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
-                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
-                renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
+                auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
+                auto attachmentIndex = attachmentRef.m_attachmentIndex;
+                auto view = Framebuffer->get_attachment(attachmentIndex);
+                TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
+
+                clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().m_format);
+                clearValues[i].Color[0] = m_beginRenderPassAttribs.pClearValues[i].r;
+                clearValues[i].Color[1] = m_beginRenderPassAttribs.pClearValues[i].g;
+                clearValues[i].Color[2] = m_beginRenderPassAttribs.pClearValues[i].b;
+                clearValues[i].Color[3] = m_beginRenderPassAttribs.pClearValues[i].a;
+                
+                D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachmentRef.m_loadAction];
+                TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
+                if(attachmentRef.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
+                {
+                    Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().m_pTexture);
+                    Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().m_pTexture);
+                    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
+                    renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
+                    renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
+                    renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
+                    auto& resolve = renderPassRenderTargetDescs[colorTargetCount].EndingAccess.Resolve;
+                    resolve.ResolveMode = D3D12_RESOLVE_MODE_AVERAGE;
+                    resolve.Format = clearValues[i].Format;
+                    resolve.pSrcResource = tex->get_d3d12_resource();
+                    resolve.pDstResource = tex_resolve->get_d3d12_resource();
+
+                    Cmd->m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->m_width, (LONG)tex->m_height };
+                    Cmd->m_subResolveResource[i].DstX = 0;
+                    Cmd->m_subResolveResource[i].DstY = 0;
+                    Cmd->m_subResolveResource[i].SrcSubresource = 0;
+                    Cmd->m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->m_mipLevels, tex_resolve->m_arraySize + 1);
+                    resolve.PreserveResolveSource = false;
+                    resolve.SubresourceCount = 1;
+                    resolve.pSubresourceParameters = &Cmd->m_subResolveResource[i];
+                }
+                else
+                {
+                    // Load & Store action
+                    D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attachmentRef.m_storeAction];
+                    renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
+                    renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
+                    renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
+                }
+                ++colorTargetCount;
             }
-            ++colorTargetCount;
-        }
-        // depth stencil
-        D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pRenderPassDepthStencilDesc = nullptr;
-        if(RenderPassDesc.m_pSubpasses[0].m_pDepthStencilAttachment != nullptr)
-        {
-            auto depthStencilAttachIndex = RenderPassDesc.m_pSubpasses[0].m_pDepthStencilAttachment->m_attachmentIndex;
-            auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
-            auto clearValue = beginRenderPassDesc.pClearValues[depthStencilAttachIndex];
-            TextureView_D3D12_Impl* dt_view = static_cast<TextureView_D3D12_Impl*>(Framebuffer->get_attachment(depthStencilAttachIndex));
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachDesc.m_loadAction];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachDesc.m_storeAction];
-            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachDesc.m_stencilLoadAction];
-            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachDesc.m_stencilStoreAction];
-            clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);
-            clearDepth.DepthStencil.Depth = clearValue.depth;
-            clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);;
-            clearStencil.DepthStencil.Stencil = clearValue.stencil;
-            renderPassDepthStencilDesc.cpuDescriptor = dt_view->m_rtvDsvDescriptorHandle;
-            renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };
-            renderPassDepthStencilDesc.DepthEndingAccess = { depthEndingAccess, {} };
-            renderPassDepthStencilDesc.StencilBeginningAccess = { stencilBeginningAccess, clearStencil };
-            renderPassDepthStencilDesc.StencilEndingAccess = { stencilEndingAccess, {} };
-            pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
-        }
-        D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
-        cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
-        return cmd;
-    #else
-        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
-        
-    #endif
-        return cmd;
+            // depth stencil
+            D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pRenderPassDepthStencilDesc = nullptr;
+            if(SubPassDesc.m_pDepthStencilAttachment != nullptr)
+            {
+                auto attachmentRef = SubPassDesc.m_pDepthStencilAttachment;
+                auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex;
+                auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
+                auto clearValue = m_beginRenderPassAttribs.pClearValues[depthStencilAttachIndex];
+                TextureView_D3D12_Impl* dt_view = static_cast<TextureView_D3D12_Impl*>(Framebuffer->get_attachment(depthStencilAttachIndex));
+                D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_loadAction];
+                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_storeAction];
+                D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_stencilLoadAction];
+                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_stencilStoreAction];
+                clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);
+                clearDepth.DepthStencil.Depth = clearValue.depth;
+                clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);;
+                clearStencil.DepthStencil.Stencil = clearValue.stencil;
+                renderPassDepthStencilDesc.cpuDescriptor = dt_view->m_rtvDsvDescriptorHandle;
+                renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };
+                renderPassDepthStencilDesc.DepthEndingAccess = { depthEndingAccess, {} };
+                renderPassDepthStencilDesc.StencilBeginningAccess = { stencilBeginningAccess, clearStencil };
+                renderPassDepthStencilDesc.StencilEndingAccess = { stencilEndingAccess, {} };
+                pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
+            }
+            D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
+            cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
+        #else
+            cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+        #endif
     }
 
-    void RenderDevice_D3D12_Impl::cmd_next_sub_pass()
+    void RenderDevice_D3D12_Impl::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
     {
+        TRenderDeviceBase::cmd_begin_render_pass(cmd, beginRenderPassDesc);
+
+        commit_subpass_rendertargets(cmd);
         
+    }
+
+    void RenderDevice_D3D12_Impl::cmd_next_sub_pass(ICommandBuffer* pCommandBuffer)
+    {
+        CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
+        #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+            ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
+            cmdList4->EndRenderPass();
+        #endif
+        TRenderDeviceBase::cmd_next_sub_pass(cmd);
+
+        if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
+        {
+            cyber_assert(false, "RenderPass or FrameBuffer is nullptr!");
+        }
+        commit_subpass_rendertargets(cmd);
     }
 
     void RenderDevice_D3D12_Impl::cmd_end_render_pass(ICommandBuffer* pCommandBuffer)

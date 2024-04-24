@@ -79,8 +79,8 @@ namespace Cyber
             virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) override;
 
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
-            virtual RenderPassEncoder* cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
-            virtual void cmd_next_sub_pass() override;
+            virtual void cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
+            virtual void cmd_next_sub_pass(ICommandBuffer* commandBuffer) override;
             virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
             virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
             virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
@@ -136,9 +136,10 @@ namespace Cyber
             ID3D12PipelineLibrary* GetPipelineLibrary() { return m_pPipelineLibrary; }
             void* GetPSOCacheData() { return m_pPSOCacheData; }
             ID3D12Debug* GetDxDebug() { return m_pDxDebug; }
-
             
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
+
+            void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
         protected:
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);

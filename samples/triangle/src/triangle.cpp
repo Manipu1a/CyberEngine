@@ -118,20 +118,20 @@ namespace Cyber
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc0);
-            RenderPassEncoder* rp_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
-            m_pRenderDevice->render_encoder_set_viewport(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            m_pRenderDevice->render_encoder_set_scissor(rp_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
-            m_pRenderDevice->render_encoder_bind_pipeline(rp_encoder, pipeline);
+            m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
+            m_pRenderDevice->render_encoder_set_viewport(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            m_pRenderDevice->render_encoder_set_scissor(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            m_pRenderDevice->render_encoder_bind_pipeline(m_pCmd, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            m_pRenderDevice->render_encoder_draw(rp_encoder, 3, 0);
-            m_pRenderDevice->cmd_end_render_pass(m_pCmd);
+            m_pRenderDevice->render_encoder_draw(m_pCmd, 3, 0);
             
             // ui pass
-            RenderPassEncoder* rp_ui_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
-            m_pRenderDevice->render_encoder_set_viewport(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            m_pRenderDevice->render_encoder_set_scissor(rp_ui_encoder, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            m_pRenderDevice->cmd_next_sub_pass(m_pCmd);
+            //RenderPassEncoder* rp_ui_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
+            m_pRenderDevice->render_encoder_set_viewport(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            m_pRenderDevice->render_encoder_set_scissor(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            gui_app->update(rp_encoder, 0.0f);
+            gui_app->update(m_pCmd, 0.0f);
             m_pRenderDevice->cmd_end_render_pass(m_pCmd);
 
             TextureBarrier present_barrier = {
@@ -171,12 +171,7 @@ namespace Cyber
             GameApplication::create_gfx_objects();
 
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
-            attachment_desc.m_sampleCount = 1;
             attachment_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
-            attachment_desc.m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_desc.m_storeAction = STORE_ACTION_STORE;
-            attachment_desc.m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_desc.m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
             //attachments[1].m_sampleCount = 1;
             //attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
             //attachments[1].m_loadAction = LOAD_ACTION_CLEAR;
