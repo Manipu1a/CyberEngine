@@ -39,6 +39,8 @@ namespace Cyber
             ImGuiIO& io = ImGui::GetIO(); (void)io;
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+            io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+           // io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
             // Setup Dear ImGui style
             ImGui::StyleColorsDark();
@@ -73,6 +75,14 @@ namespace Cyber
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
             Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
             ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
+
+            // Update and Render additional Platform Windows
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+            {
+                ImGui::UpdatePlatformWindows();
+                ImGui::RenderPlatformWindowsDefault(nullptr, Cmd->get_dx_cmd_list());
+            }
         }
 
         void GUIApplication::finalize()

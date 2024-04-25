@@ -1,11 +1,7 @@
 #pragma once
 #include "graphics/common/cyber_graphics_config.h"
-#include "graphics/common/flags.h"
 #include <EASTL/vector.h>
 #include <stdint.h>
-#include "core/Core.h"
-#include "core/Window.h"
-#include "CyberLog/Log.h"
 
 namespace Cyber
 {

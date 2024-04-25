@@ -1,4 +1,5 @@
 #pragma once
+#include "CyberLog/Log.h"
 
 #define CB_DEBUG
 

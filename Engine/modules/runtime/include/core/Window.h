@@ -1,6 +1,6 @@
 #pragma once
 #include "cyber_runtime.config.h"
-#include "Core.h"
+#include "core.h"
 #include "EASTL/vector.h"
 #include "CyberEvents/Event.h"
 #include <windows.h>
@@ -99,13 +99,9 @@ namespace Cyber
         
         virtual uint32_t getWidth() const = 0;
         virtual uint32_t getHeight() const = 0;
-
 		virtual HWND getNativeWindow() const = 0;
-        
         virtual void setEventCallback(const EventCallbackFn& callback) = 0;
-
         static Ref<Cyber::Window> createWindow(const WindowDesc& desc);
-
         virtual void rebuildDisplayMetrics(DisplayMetrics& outMetrics) = 0;
     };
 }
