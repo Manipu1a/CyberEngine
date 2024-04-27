@@ -1,6 +1,7 @@
 #include "renderer/renderer.h"
 #include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/instance_d3d12.h"
+#include "core/application.h"
 namespace Cyber
 {
     namespace Renderer 
@@ -59,13 +60,13 @@ namespace Cyber
 
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)
-            m_pSurface = m_pRenderDevice->surface_from_hwnd(getWindow()->getNativeWindow());
+            m_pSurface = m_pRenderDevice->surface_from_hwnd(m_pApp->get_window()->get_native_window());
         #elif defined(_APPLE_)
         #endif
             DECLARE_ZERO(RenderObject::SwapChainDesc, chain_desc);
             chain_desc.m_pSurface = m_pSurface;
-            chain_desc.m_width = getWindow()->getWidth();
-            chain_desc.m_height = getWindow()->getHeight();
+            chain_desc.m_width = m_pApp->get_window()->get_width();
+            chain_desc.m_height = m_pApp->get_window()->get_height();
             chain_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
             chain_desc.m_imageCount = 3;
             chain_desc.m_presentQueue = m_pQueue;

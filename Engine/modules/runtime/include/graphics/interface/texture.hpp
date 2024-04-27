@@ -4,6 +4,7 @@
 #include "texture_view.h"
 #include "device_object.h"
 #include "interface/graphics_types.h"
+#include "core/debug.h"
 
 namespace Cyber
 {

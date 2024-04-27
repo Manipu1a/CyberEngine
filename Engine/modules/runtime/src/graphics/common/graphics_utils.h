@@ -2,7 +2,7 @@
 #include "graphics/interface/graphics_types.h"
 #include "interface/root_signature.hpp"
 #include "interface/root_signature_pool.h"
-
+#include "EASTL/string.h"
 namespace Cyber
 {
     #define cyber_round_up(value, multiple) (((value + multiple - 1) / (multiple)) * multiple)

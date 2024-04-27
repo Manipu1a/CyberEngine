@@ -21,12 +21,17 @@ namespace Cyber
 
         void TrignaleApp::initialize(Cyber::WindowDesc& desc)
         {
-            GameApplication::initialize(desc);
+            SampleApp::initialize(desc);
+            cyber_check(m_pApp);
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+            auto cmd = renderer->get_command_buffer();
+
             gui_app = cyber_new<GUI::GUIApplication>();
 
             create_gfx_objects();
             
-            gui_app->initialize(m_pRenderDevice, getWindow()->getNativeWindow());
+            gui_app->initialize(render_device, m_pApp->get_window()->get_native_window());
 
             // Create views
             /*
@@ -49,11 +54,11 @@ namespace Cyber
             }
             */
             
-            m_pRenderDevice->cmd_begin(m_pCmd);
+            render_device->cmd_begin(cmd);
             {
 
             }
-            m_pRenderDevice->cmd_end(m_pCmd);
+            render_device->cmd_end(cmd);
 
             create_render_pipeline();
 
@@ -61,28 +66,35 @@ namespace Cyber
 
         void TrignaleApp::run()
         {
-            GameApplication::run();
+            m_pApp->run();
         }
 
         void TrignaleApp::update(float deltaTime)
         {
-            GameApplication::update(deltaTime);
+            m_pApp->update(deltaTime);
             
             raster_draw();
         }
 
         void TrignaleApp::raster_draw()
         {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+            auto cmd = renderer->get_command_buffer();
+            auto swap_chain = renderer->get_swap_chain();
+            auto present_fence = renderer->get_present_semaphore();
+
             AcquireNextDesc acquire_desc = {
-                .fence = m_pPresentFence
+                .fence = present_fence
             };
-            m_backBufferIndex = m_pRenderDevice->acquire_next_image(m_pSwapChain, acquire_desc);
-            auto back_buffer = m_pSwapChain->get_back_buffer(m_backBufferIndex);
-            auto back_buffer_view = m_pSwapChain->get_back_buffer_srv_view(m_backBufferIndex);
-            auto back_depth_buffer_view = m_pSwapChain->get_back_buffer_dsv();
-            m_pRenderDevice->reset_command_pool(m_pPool);
+
+            m_backBufferIndex = render_device->acquire_next_image(swap_chain, acquire_desc);
+            auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
+            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
+            auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
+            render_device->reset_command_pool(m_pPool);
             // record
-            m_pRenderDevice->cmd_begin(m_pCmd);
+            render_device->cmd_begin(cmd);
 
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             
@@ -92,7 +104,7 @@ namespace Cyber
                 .m_attachmentCount = 1,
                 .m_ppAttachments = attachment_resources
             };
-            auto frame_buffer = m_pRenderDevice->create_frame_buffer(frame_buffer_desc);
+            auto frame_buffer = render_device->create_frame_buffer(frame_buffer_desc);
 
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
@@ -110,29 +122,29 @@ namespace Cyber
                 .subresource_barrier = 0
             };
             TextureBarrier depth_barrier = {
-                .texture = m_pSwapChain->get_back_buffer_depth(),
+                .texture = swap_chain->get_back_buffer_depth(),
                 .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
                 .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
                 .subresource_barrier = 0
             };
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc0);
-            m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
-            m_pRenderDevice->render_encoder_set_viewport(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            m_pRenderDevice->render_encoder_set_scissor(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
-            m_pRenderDevice->render_encoder_bind_pipeline(m_pCmd, pipeline);
+            render_device->cmd_resource_barrier(cmd, barrier_desc0);
+            render_device->cmd_begin_render_pass(cmd, RenderPassBeginInfo);
+            render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            render_device->render_encoder_bind_pipeline(cmd, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            m_pRenderDevice->render_encoder_draw(m_pCmd, 3, 0);
+            render_device->render_encoder_draw(cmd, 3, 0);
             
             // ui pass
-            m_pRenderDevice->cmd_next_sub_pass(m_pCmd);
+            render_device->cmd_next_sub_pass(cmd);
             //RenderPassEncoder* rp_ui_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
-            m_pRenderDevice->render_encoder_set_viewport(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            m_pRenderDevice->render_encoder_set_scissor(m_pCmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            gui_app->update(m_pCmd, 0.0f);
-            m_pRenderDevice->cmd_end_render_pass(m_pCmd);
+            gui_app->update(cmd, 0.0f);
+            render_device->cmd_end_render_pass(cmd);
 
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
@@ -140,15 +152,15 @@ namespace Cyber
                 .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
             };
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            m_pRenderDevice->cmd_resource_barrier(m_pCmd, barrier_desc2);
-            m_pRenderDevice->cmd_end(m_pCmd);
+            render_device->cmd_resource_barrier(cmd, barrier_desc2);
+            render_device->cmd_end(cmd);
             // submit
             RenderObject::QueueSubmitDesc submit_desc = {
-                .m_ppCmds = &m_pCmd,
-                .m_pSignalFence = m_pPresentFence,
+                .m_ppCmds = &cmd,
+                .m_pSignalFence = renderer->get_present_semaphore(),
                 .m_cmdsCount = 1
             };
-            m_pRenderDevice->submit_queue(m_pQueue, submit_desc);
+            render_device->submit_queue(m_pQueue, submit_desc);
 
             // present
             RenderObject::QueuePresentDesc present_desc = {
@@ -157,18 +169,20 @@ namespace Cyber
                 .m_waitSemaphoreCount = 0,
                 .m_index = m_backBufferIndex,
             };
-            m_pRenderDevice->present_queue(m_pQueue, present_desc);
+            render_device->present_queue(m_pQueue, present_desc);
 
             // sync & reset
             //m_pRenderDevice->wait_queue_idle(m_pQueue);
-            m_pQueue->signal_fence(m_pPresentFence, m_pPresentFence->get_fence_value());
+            m_pQueue->signal_fence(present_fence, present_fence->get_fence_value());
             
-            m_pRenderDevice->wait_fences(&m_pPresentFence, 1);
+            render_device->wait_fences(&present_fence, 1);
         }
 
         void TrignaleApp::create_gfx_objects()
         {
-            GameApplication::create_gfx_objects();
+            m_pApp->get_renderer()->create_gfx_objects();
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
 
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
             attachment_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
@@ -226,7 +240,7 @@ namespace Cyber
                 .m_pSubpasses = subpass_desc
             };
             
-            m_pRenderPass = m_pRenderDevice->create_render_pass(rp_desc1);
+            m_pRenderPass = render_device->create_render_pass(rp_desc1);
         }
 
         void TrignaleApp::create_resource()
@@ -247,6 +261,8 @@ namespace Cyber
 
         void TrignaleApp::create_render_pipeline()
         {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
             /*
             namespace render_graph = Cyber::render_graph;
@@ -329,7 +345,7 @@ namespace Cyber
                     .stage = SHADER_STAGE_VERT,
                     .entry_point_name = CYBER_UTF8("VSMain"),
                 };
-                RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(m_pRenderDevice, vs_load_desc);
+                RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
                 ResourceLoader::ShaderLoadDesc ps_load_desc = {};
                 ps_load_desc.target = SHADER_TARGET_6_0;
@@ -338,7 +354,7 @@ namespace Cyber
                     .stage = SHADER_STAGE_FRAG,
                     .entry_point_name = CYBER_UTF8("PSMain"),
                 };
-                RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(m_pRenderDevice, ps_load_desc);
+                RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
                 // create root signature
                 RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
@@ -354,14 +370,14 @@ namespace Cyber
                 .m_ppShaders = pipeline_shader_create_desc,
                 .m_shaderCount = 2,
                 };
-                root_signature = m_pRenderDevice->create_root_signature(root_signature_create_desc);
+                root_signature = render_device->create_root_signature(root_signature_create_desc);
                 // create descriptor set
 
                 RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                     .root_signature = root_signature,
                     .set_index = 0
                 };
-                descriptor_set = m_pRenderDevice->create_descriptor_set(desc_set_create_desc);
+                descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
                 VertexLayout vertex_layout = {.attribute_count = 0};
                 RenderObject::RenderPipelineCreateDesc rp_desc = 
@@ -375,29 +391,32 @@ namespace Cyber
                     .render_target_count = 1,
                     .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
                 };
-                pipeline = m_pRenderDevice->create_render_pipeline(rp_desc);
+                pipeline = render_device->create_render_pipeline(rp_desc);
                 vs_shader->free();
                 ps_shader->free();
         }
 
         void TrignaleApp::finalize()
         {
-            m_pRenderDevice->wait_queue_idle(m_pQueue);
-            m_pRenderDevice->wait_fences(&m_pPresentFence, 1);
-            m_pRenderDevice->free_fence(m_pPresentFence);
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+
+            render_device->wait_queue_idle(m_pQueue);
+            render_device->wait_fences(&m_pPresentFence, 1);
+            render_device->free_fence(m_pPresentFence);
             for(uint32_t i = 0;i < m_pSwapChain->get_buffer_srv_count(); ++i)
             {
-                m_pRenderDevice->free_texture_view(m_pSwapChain->get_back_buffer_srv_view(i));
+                render_device->free_texture_view(m_pSwapChain->get_back_buffer_srv_view(i));
             }
-            m_pRenderDevice->free_swap_chain(m_pSwapChain);
-            m_pRenderDevice->free_surface(m_pSurface);
-            m_pRenderDevice->free_command_buffer(m_pCmd);
-            m_pRenderDevice->free_command_pool(m_pPool);
-            m_pRenderDevice->free_render_pipeline(pipeline);
-            m_pRenderDevice->free_root_signature(root_signature);
-            m_pRenderDevice->free_queue(m_pQueue);
-            m_pRenderDevice->free_device();
-            m_pRenderDevice->free_instance(m_pInstance);
+            render_device->free_swap_chain(m_pSwapChain);
+            render_device->free_surface(m_pSurface);
+            render_device->free_command_buffer(m_pCmd);
+            render_device->free_command_pool(m_pPool);
+            render_device->free_render_pipeline(pipeline);
+            render_device->free_root_signature(root_signature);
+            render_device->free_queue(m_pQueue);
+            render_device->free_device();
+            render_device->free_instance(m_pInstance);
         }
 
     }

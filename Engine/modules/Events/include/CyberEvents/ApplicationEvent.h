@@ -15,7 +15,7 @@ namespace Cyber
             eastl::string str(typename eastl::string::CtorSprintf(), ("WindowResizeEvent: %d, %d"), mWidth, mHeight);
             return str;
         }
-
+`
         EVENT_CLASS_TYPE(WindowResize)
         EVENT_CLASS_CATEGORY(EventCategoryApplication)
     private:

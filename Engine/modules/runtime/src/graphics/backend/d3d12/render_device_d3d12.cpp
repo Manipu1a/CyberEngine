@@ -1,4 +1,5 @@
 #include "graphics/backend/d3d12/render_device_d3d12.h"
+#include "core/debug.h"
 #include "EASTL/vector.h"
 #include <EASTL/hash_map.h>
 #include <EASTL/string_hash_map.h>

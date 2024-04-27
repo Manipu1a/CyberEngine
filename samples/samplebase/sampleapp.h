@@ -1,25 +1,24 @@
 #pragma once
-#include "gameruntime/GameApplication.h"
 #include "cyber_samples.config.h"
+#include "core/window.h"
+#include "core/application.h"
 
 namespace Cyber
 {
     namespace Samples
     {
-        class CYBER_SAMPLES_API SampleApp : public Cyber::GameApplication
+        class CYBER_SAMPLES_API SampleApp
         {
         public:
             SampleApp();
             ~SampleApp();
 
-            virtual void initialize(Cyber::WindowDesc& desc) override;
-            virtual void run() override;
-            virtual void update(float deltaTime) override;
+            virtual void initialize(Cyber::WindowDesc& desc);
+            virtual void run();
+            virtual void update(float deltaTime);
             
         protected:
-
-
-            RenderObject::CEDeviceContext* immediate_context = nullptr;
+            Core::Application* m_pApp;
         };
 
     }

@@ -92,16 +92,16 @@ namespace Cyber
     {
     public:
         using EventCallbackFn = eastl::function<void(Event&)>;
+        Window() = default;
         virtual ~Window() = default;
-
-        virtual void onUpdate(float deltaTime) = 0;
-        virtual void onClose() = 0;
+        virtual void initialize_window(const Cyber::WindowDesc& desc) = 0;
+        virtual void update(float deltaTime) = 0;
+        virtual void close() = 0;
         
-        virtual uint32_t getWidth() const = 0;
-        virtual uint32_t getHeight() const = 0;
-		virtual HWND getNativeWindow() const = 0;
-        virtual void setEventCallback(const EventCallbackFn& callback) = 0;
-        static Ref<Cyber::Window> createWindow(const WindowDesc& desc);
-        virtual void rebuildDisplayMetrics(DisplayMetrics& outMetrics) = 0;
+        virtual uint32_t get_width() const = 0;
+        virtual uint32_t get_height() const = 0;
+		virtual HWND get_native_window() const = 0;
+        virtual void set_event_callback(const EventCallbackFn& callback) = 0;
+        virtual void rebuild_display_metrics(DisplayMetrics& outMetrics) = 0;
     };
 }

@@ -8,9 +8,15 @@ namespace Cyber
         class GUIApplication;
     }
     
+    namespace RenderObject
+    {
+        class IRootSignature;
+        class IDescriptorSet;
+        class IRenderPipeline;
+    }
     namespace Samples
     {
-        class TrignaleApp : public Cyber::GameApplication
+        class TrignaleApp : public SampleApp
         {
         public:
             TrignaleApp();
@@ -22,7 +28,7 @@ namespace Cyber
 
         public:
             void raster_draw();
-            virtual void create_gfx_objects() override;
+            void create_gfx_objects();
             void create_render_pipeline();
             void create_resource();
             void create_ui();

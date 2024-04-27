@@ -1,8 +1,9 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "graphics_types.h"
+#include "device_object.h"
 #include "platform/memory.h"
-
+#include <string>
 namespace Cyber
 {
     namespace RenderObject

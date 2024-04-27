@@ -6,6 +6,10 @@
 
 namespace Cyber
 {
+    namespace Core
+    {
+        class Application;
+    }
     namespace Renderer
     {
         class CYBER_RUNTIME_API Renderer
@@ -21,6 +25,18 @@ namespace Cyber
             
             void create_render_device(GRAPHICS_BACKEND backend);
             void create_gfx_objects();
+
+            CYBER_FORCE_INLINE RenderObject::IRenderDevice* get_render_device() const { return m_pRenderDevice; }
+            CYBER_FORCE_INLINE RenderObject::IInstance* get_instance() const { return m_pInstance; }
+            CYBER_FORCE_INLINE RenderObject::IAdapter* get_adapter() const { return m_pAdapter; }
+            CYBER_FORCE_INLINE RenderObject::IQueue* get_queue() const { return m_pQueue; }
+            CYBER_FORCE_INLINE RenderObject::ICommandPool* get_command_pool() const { return m_pPool; }
+            CYBER_FORCE_INLINE RenderObject::ICommandBuffer* get_command_buffer() const { return m_pCmd; }
+            CYBER_FORCE_INLINE RenderObject::ISwapChain* get_swap_chain() const { return m_pSwapChain; }
+            CYBER_FORCE_INLINE RenderObject::IRenderPass* get_render_pass() const { return m_pRenderPass; }
+            CYBER_FORCE_INLINE Surface* get_surface() const { return m_pSurface; }
+            CYBER_FORCE_INLINE RenderObject::IFence* get_present_semaphore() const { return m_pPresentSwmaphore; }
+            CYBER_FORCE_INLINE Core::Application* get_application() const { return m_pApp; }
         protected:
             ///-------------------------------------
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
@@ -37,6 +53,7 @@ namespace Cyber
             Surface* m_pSurface = nullptr;
             RenderObject::IFence* m_pPresentSwmaphore = nullptr; 
             uint32_t m_backBufferIndex = 0;
+            Core::Application* m_pApp = nullptr;
         };
     }
 }

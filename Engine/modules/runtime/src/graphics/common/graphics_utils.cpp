@@ -8,7 +8,7 @@
 #include "interface/render_pipeline.h"
 #include "interface/shader_reflection.hpp"
 #include "interface/shader_library.h"
-
+#include "CyberLog/Log.h"
 namespace Cyber 
 {
     bool graphics_util_shader_resource_is_root_constant(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)

@@ -1,5 +1,5 @@
 #pragma once
-#include "core/Core.h"
+#include "core/core.h"
 #include "platform/configure.h"
 
 namespace Cyber
@@ -39,7 +39,7 @@ namespace Cyber
         virtual int getCategoryFlags() const = 0;
         virtual eastl::string toString() const { return getName(); }
 
-        inline bool isInCategory(EventCategory category)
+        CYBER_FORCE_INLINE bool isInCategory(EventCategory category)
         {
             return getCategoryFlags() & category;
         }

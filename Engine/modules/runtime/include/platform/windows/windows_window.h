@@ -4,33 +4,35 @@
 
 namespace Cyber
 {
-    class WindowsWindow : public Window
+    namespace Platform
     {
-    public:
-        WindowsWindow(const WindowDesc& desc);
-
-        virtual void onUpdate(float deltaTime) override;
-        virtual void onClose() override;
-        virtual uint32_t getWidth() const override;
-        virtual uint32_t getHeight() const override;
-        virtual void rebuildDisplayMetrics(DisplayMetrics& outMetrics);
-        
-        inline virtual void setEventCallback(const EventCallbackFn& callback) override { mData.mEventCallback = callback; }
-
-        void initWindow(const Cyber::WindowDesc& desc);
-        void initRHI();
-        
-        inline virtual HWND getNativeWindow() const {return mData.mWindowDesc.handle;}
-    private:
-    
-    private:
-        struct WindowData
+        class WindowsWindow : public Window
         {
-            WindowDesc mWindowDesc;
-            EventCallbackFn mEventCallback;
+        public:
+            WindowsWindow();
+
+            virtual void initialize_window(const Cyber::WindowDesc& desc);
+            virtual void update(float deltaTime);
+            virtual void close();
+            
+            virtual uint32_t get_width() const;
+            virtual uint32_t get_height() const;
+            virtual void set_event_callback(const EventCallbackFn& callback);
+            virtual void rebuild_display_metrics(DisplayMetrics& outMetrics);
+
+            void initRHI();
+            inline virtual HWND get_native_window() const override{return mData.mWindowDesc.handle;}
+        private:
+        
+        private:
+            struct WindowData
+            {
+                WindowDesc mWindowDesc;
+                EventCallbackFn mEventCallback;
+            };
+
+            WindowData mData;
         };
+    }
 
-        WindowData mData;
-
-    };
 }
