@@ -6,6 +6,8 @@
 #include "interface/graphics_types.h"
 #include <d3dcompiler.h>
 #include "d3d12_utils.h"
+#include <EASTL/EAStdC/EASprintf.h>
+
 namespace Cyber
 {
     namespace RenderObject

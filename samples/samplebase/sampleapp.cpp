@@ -18,7 +18,8 @@ namespace Cyber
 
         void SampleApp::initialize(Cyber::WindowDesc& desc)
         {
-            m_pApp = cyber_new<Platform::WindowsApplication>(desc);
+            Core::Application::create_application(desc);
+            m_pApp = &Core::Application::getApp();
             m_pApp->initialize();
         }
 

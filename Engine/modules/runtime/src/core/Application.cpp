@@ -58,7 +58,7 @@ namespace Cyber
 
         Application& Application::create_application(const WindowDesc& desc)
         {
-            sInstance = cyber_new<Platform::WindowsApplication>();
+            sInstance = cyber_new<Platform::WindowsApplication>(desc);
             return *sInstance;
         }
     }

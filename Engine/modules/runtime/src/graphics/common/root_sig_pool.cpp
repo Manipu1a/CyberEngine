@@ -208,10 +208,10 @@ namespace Cyber
     {
         return static_cast<RootSignaturePoolImpl*>(pool)->deallocate(signature);
     }
-    void graphics_util_free_root_signature_pool(Ref<RenderObject::RootSignaturePoolBase> pool)
+    void graphics_util_free_root_signature_pool(RenderObject::RootSignaturePoolBase* pool)
     {
-        auto P = static_cast<RootSignaturePoolImpl*>(pool.get());
+        auto P = static_cast<RootSignaturePoolImpl*>(pool);
         cyber_delete(P);
-        pool.reset();
+        pool = nullptr;
     }
 }

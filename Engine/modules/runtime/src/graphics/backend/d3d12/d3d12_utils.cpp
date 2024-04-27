@@ -4,6 +4,7 @@
 #include <d3d12shader.h>
 #include <d3dcompiler.h>
 #include "platform/memory.h"
+#include "EASTL/string.h"
 //#include "cyber_runtime.config.h"
 //#include "../../common/common_utils.h"
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
