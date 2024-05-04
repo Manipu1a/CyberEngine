@@ -6,9 +6,18 @@ namespace Cyber
 {
     namespace Renderer 
     {
-        void Renderer::initialize()
+        Renderer::Renderer()
         {
 
+        }
+        
+        Renderer::~Renderer()
+        {
+
+        }
+        void Renderer::initialize()
+        {
+            create_gfx_objects();
         }
         void Renderer::run()
         {
@@ -58,15 +67,16 @@ namespace Cyber
             m_pRenderDevice = m_pInstance->create_render_device(m_pAdapter, device_desc);
             m_pQueue = m_pRenderDevice->get_queue(QUEUE_TYPE_GRAPHICS, 0);
 
+            
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)
-            m_pSurface = m_pRenderDevice->surface_from_hwnd(m_pApp->get_window()->get_native_window());
+            m_pSurface = m_pRenderDevice->surface_from_hwnd(Core::Application::getApp()->get_window()->get_native_window());
         #elif defined(_APPLE_)
         #endif
             DECLARE_ZERO(RenderObject::SwapChainDesc, chain_desc);
             chain_desc.m_pSurface = m_pSurface;
-            chain_desc.m_width = m_pApp->get_window()->get_width();
-            chain_desc.m_height = m_pApp->get_window()->get_height();
+            chain_desc.m_width = Core::Application::getApp()->get_window()->get_width();
+            chain_desc.m_height = Core::Application::getApp()->get_window()->get_height();
             chain_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
             chain_desc.m_imageCount = 3;
             chain_desc.m_presentQueue = m_pQueue;

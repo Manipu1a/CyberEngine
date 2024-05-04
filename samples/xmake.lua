@@ -1,4 +1,4 @@
-includes("samplebase/xmake.lua")
+--includes("samplebase/xmake.lua")
 includes("triangle/xmake.lua")
 
 if has_config("build_triangle") then

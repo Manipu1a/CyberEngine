@@ -1,4 +1,4 @@
-#include "gui/cyber_gui.h"
+#include "editor/editor.h"
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
@@ -10,18 +10,19 @@
 
 namespace Cyber
 {
-    namespace GUI
+    namespace Editor
     {
-        GUIApplication::GUIApplication()
-        {
-
-        }
-        GUIApplication::~GUIApplication()
+        Editor::Editor()
         {
 
         }
 
-        void GUIApplication::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
+        Editor::~Editor()
+        {
+
+        }
+
+        void Editor::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
         {
             RenderObject::RenderDevice_D3D12_Impl* device_d3d12 = static_cast<RenderObject::RenderDevice_D3D12_Impl*>(device);
             D3D12_DESCRIPTOR_HEAP_DESC desc = {};
@@ -53,14 +54,14 @@ namespace Cyber
                 DXGI_FORMAT_R8G8B8A8_UNORM, native_heap,
                 native_heap->GetCPUDescriptorHandleForHeapStart(),
                 native_heap->GetGPUDescriptorHandleForHeapStart());
-                
-
         }
-        void GUIApplication::run()
+
+        void Editor::run()
         {
 
         }
-        void GUIApplication::update(RenderPassEncoder* encoder, float deltaTime)
+
+        void Editor::update(RenderObject::ICommandBuffer* encoder, float deltaTime)
         {
             // Start the Dear ImGui frame
             ImGui_ImplDX12_NewFrame();
@@ -85,13 +86,12 @@ namespace Cyber
             }
         }
 
-        void GUIApplication::finalize()
+        void Editor::finalize()
         {
             // Cleanup
             ImGui_ImplDX12_Shutdown();
             ImGui_ImplWin32_Shutdown();
             ImGui::DestroyContext();
-            
         }
     }
 }

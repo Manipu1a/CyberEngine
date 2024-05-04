@@ -1,5 +1,6 @@
 target("triangle")
-    set_kind("binary")
+    set_kind("shared")
     add_includedirs("include", {public = true})
     add_files("src/triangle.cpp")
-    add_deps("samples", {public = false})
+    add_deps("CyberRuntime", {public = false})
+    add_defines("CYBER_API_EXPORT")

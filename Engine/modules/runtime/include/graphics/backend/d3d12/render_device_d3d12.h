@@ -73,6 +73,7 @@ namespace Cyber
             virtual void free_command_pool(ICommandPool* pool) override;
             virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
             virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
+            virtual void set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) override;
 
             virtual void cmd_begin(ICommandBuffer* commandBuffer) override;
             virtual void cmd_end(ICommandBuffer* commandBuffer) override;

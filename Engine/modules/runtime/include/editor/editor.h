@@ -1,22 +1,26 @@
 #pragma once
 #include "graphics/backend/d3d12/graphics_types_d3d12.h"
-#include "graphics/interface/render_device.hpp"
-#include "cyber_runtime.config.h"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
+#include "cyber_runtime.config.h"
 
 namespace Cyber
 {
-    namespace GUI
+    namespace RenderObject
     {
-        class CYBER_RUNTIME_API GUIApplication
+        class IRenderDevice;
+    }
+
+    namespace Editor
+    {
+        class CYBER_RUNTIME_API Editor
         {
         public:
-            GUIApplication();
-            ~GUIApplication();
+            Editor();
+            ~Editor();
 
             void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
             void run();
-            void update(RenderPassEncoder* encoder, float deltaTime);
+            void update(RenderObject::ICommandBuffer* encoder, float deltaTime);
             void finalize();
 
             struct RenderObject::DescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;

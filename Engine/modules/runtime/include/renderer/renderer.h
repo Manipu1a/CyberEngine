@@ -36,10 +36,9 @@ namespace Cyber
             CYBER_FORCE_INLINE RenderObject::IRenderPass* get_render_pass() const { return m_pRenderPass; }
             CYBER_FORCE_INLINE void set_render_pass(RenderObject::IRenderPass* pass) { m_pRenderPass = pass; }
             CYBER_FORCE_INLINE Surface* get_surface() const { return m_pSurface; }
-            CYBER_FORCE_INLINE RenderObject::IFence* get_present_semaphore() const { return m_pPresentSwmaphore; }
+            CYBER_FORCE_INLINE RenderObject::IFence* get_present_semaphore() const { return m_pPresentFence; }
             CYBER_FORCE_INLINE uint32_t get_back_buffer_index() const { return m_backBufferIndex; }
             CYBER_FORCE_INLINE void set_back_buffer_index(uint32_t index) { m_backBufferIndex = index; }
-            CYBER_FORCE_INLINE Core::Application* get_application() const { return m_pApp; }
 
         protected:
             ///-------------------------------------
@@ -57,7 +56,6 @@ namespace Cyber
             Surface* m_pSurface = nullptr;
             RenderObject::IFence* m_pPresentSwmaphore = nullptr; 
             uint32_t m_backBufferIndex = 0;
-            Core::Application* m_pApp = nullptr;
         };
     }
 }

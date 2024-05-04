@@ -3,12 +3,13 @@
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
-#include "gui/cyber_gui.h"
-#include "renderer/renderer.h"
+#include "core/Application.h"
+
 namespace Cyber
 {
     namespace Samples
     {
+
         TrignaleApp::TrignaleApp()
         {
 
@@ -19,41 +20,17 @@ namespace Cyber
             
         }
 
-        void TrignaleApp::initialize(Cyber::WindowDesc& desc)
+        void TrignaleApp::initialize()
         {
-            SampleApp::initialize(desc);
+            SampleApp::initialize();
+            m_pApp = Cyber::Core::Application::getApp();
             cyber_check(m_pApp);
+            create_gfx_objects();
+
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto cmd = renderer->get_command_buffer();
 
-            gui_app = cyber_new<GUI::GUIApplication>();
-
-            create_gfx_objects();
-            
-            gui_app->initialize(render_device, m_pApp->get_window()->get_native_window());
-
-            // Create views
-            /*
-            auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * m_pSwapChain->get_buffer_srv_count());
-            m_pSwapChain->set_back_buffer_srv_views(back_buffer_views);
-            for(uint32_t i = 0; i < m_pSwapChain->get_buffer_srv_count(); ++i)
-            {
-                eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
-                RenderObject::TextureViewCreateDesc view_desc = {
-                    .m_name = swap_chain_name.c_str(),
-                    .m_pTexture = m_pSwapChain->get_back_buffer(i),
-                    .m_format = m_pSwapChain->get_back_buffer(i)->get_create_desc().m_format,
-                    .m_usages = TVU_RTV_DSV,
-                    .m_aspects = TVA_COLOR,
-                    .m_dimension = TEX_DIMENSION_2D,
-                    .m_arrayLayerCount = 1
-                };
-                auto tex_view = m_pRenderDevice->create_texture_view(view_desc);
-                m_pSwapChain->set_back_buffer_srv_view(tex_view, i);
-            }
-            */
-            
             render_device->cmd_begin(cmd);
             {
 
@@ -66,12 +43,12 @@ namespace Cyber
 
         void TrignaleApp::run()
         {
-            m_pApp->run();
+            //m_pApp->run();
         }
 
         void TrignaleApp::update(float deltaTime)
         {
-            m_pApp->update(deltaTime);
+           // m_pApp->update(deltaTime);
             
             raster_draw();
         }
@@ -87,14 +64,13 @@ namespace Cyber
             auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
 
-
             AcquireNextDesc acquire_desc = {
                 .fence = present_fence
             };
-            uint32_t back_buffer_index = render_device->acquire_next_image(swap_chain, acquire_desc);
-            renderer->set_back_buffer_index(back_buffer_index);
-            auto back_buffer = swap_chain->get_back_buffer(back_buffer_index);
-            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(back_buffer_index);
+            m_backBufferIndex = render_device->acquire_next_image(swap_chain, acquire_desc);
+            renderer->set_back_buffer_index(m_backBufferIndex);
+            auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
+            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
             render_device->reset_command_pool(pool);
             // record
@@ -140,15 +116,32 @@ namespace Cyber
             render_device->render_encoder_bind_pipeline(cmd, pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             render_device->render_encoder_draw(cmd, 3, 0);
+            render_device->cmd_end_render_pass(cmd);
             
             // ui pass
-            render_device->cmd_next_sub_pass(cmd);
+            //render_device->cmd_next_sub_pass(cmd);
             //RenderPassEncoder* rp_ui_encoder = m_pRenderDevice->cmd_begin_render_pass(m_pCmd, RenderPassBeginInfo);
-            render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            //render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            gui_app->update(cmd, 0.0f);
-            render_device->cmd_end_render_pass(cmd);
+            /*
+            render_device->set_render_target(cmd, 1, &back_buffer_view, nullptr);
+            auto editor = m_pApp->get_editor();
+            editor->update(cmd, 0.0f);
+            */
+        }
+
+        void TrignaleApp::present()
+        {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+            auto cmd = renderer->get_command_buffer();
+            auto swap_chain = renderer->get_swap_chain();
+            auto present_fence = renderer->get_present_semaphore();
+            auto pool = renderer->get_command_pool();
+            auto queue = renderer->get_queue();
+            auto renderpass = renderer->get_render_pass();
+            auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
 
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
@@ -171,7 +164,7 @@ namespace Cyber
                 .m_pSwapChain = swap_chain,
                 .m_ppwaitSemaphores = nullptr,
                 .m_waitSemaphoreCount = 0,
-                .m_index = back_buffer_index,
+                .m_index = m_backBufferIndex,
             };
             render_device->present_queue(queue, present_desc);
 
@@ -184,7 +177,7 @@ namespace Cyber
 
         void TrignaleApp::create_gfx_objects()
         {
-            m_pApp->get_renderer()->create_gfx_objects();
+            //m_pApp->get_renderer()->create_gfx_objects();
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
 
@@ -436,7 +429,7 @@ namespace Cyber
     }
 }
 
-
+/*
 int WINAPI WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      PSTR    lpCmdLine,
@@ -462,6 +455,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
     app.initialize(desc);
     app.run();
 
+    while(Cyber::Core::Application::getApp().is_running())
+    {
+        app.update(0.0f);
+    }
+
     FreeConsole();
     return 1;
 }
+*/

@@ -1,4 +1,4 @@
-#include "sampleapp.h"
+#include "gameruntime/sampleapp.h"
 #include "platform/memory.h"
 #include "platform/windows/windows_application.h"
 
@@ -16,19 +16,24 @@ namespace Cyber
 
         }
 
-        void SampleApp::initialize(Cyber::WindowDesc& desc)
+        void SampleApp::initialize()
         {
-            Core::Application::create_application(desc);
-            m_pApp = &Core::Application::getApp();
-            m_pApp->initialize();
+
         }
 
         void SampleApp::run()
         {
+            
         }
 
         void SampleApp::update(float deltaTime)
         {
+            
+        }
+
+        void SampleApp::present()
+        {
+            
         }
     }
 }

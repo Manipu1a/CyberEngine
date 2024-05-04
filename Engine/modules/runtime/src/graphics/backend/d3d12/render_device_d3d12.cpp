@@ -947,6 +947,28 @@ namespace Cyber
         dxCommandBuffer->free();
     }
 
+    void RenderDevice_D3D12_Impl::set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
+    {
+        CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
+        ID3D12GraphicsCommandList* dx_cmd_list = cmd->get_dx_cmd_list();
+        
+        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[8] = {};
+        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
+
+        for(uint32_t i = 0; i < numRenderTargets; i++)
+        {
+            RenderObject::TextureView_D3D12_Impl* rtv = static_cast<RenderObject::TextureView_D3D12_Impl*>(renderTargets[i]);
+            rtvHandles[i] = rtv->m_rtvDsvDescriptorHandle;
+        }
+
+        if(depthTarget)
+        {
+            RenderObject::TextureView_D3D12_Impl* dsv = static_cast<RenderObject::TextureView_D3D12_Impl*>(depthTarget);
+            dsvHandle = dsv->m_rtvDsvDescriptorHandle;
+        }
+        dx_cmd_list->OMSetRenderTargets(numRenderTargets, rtvHandles, false,depthTarget ? &dsvHandle : nullptr);
+    }
+
     void RenderDevice_D3D12_Impl::cmd_begin(ICommandBuffer* commandBuffer)
     {
         CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
@@ -1247,7 +1269,6 @@ namespace Cyber
         TRenderDeviceBase::cmd_begin_render_pass(cmd, beginRenderPassDesc);
 
         commit_subpass_rendertargets(cmd);
-        
     }
 
     void RenderDevice_D3D12_Impl::cmd_next_sub_pass(ICommandBuffer* pCommandBuffer)

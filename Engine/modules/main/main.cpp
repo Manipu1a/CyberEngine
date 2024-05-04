@@ -1,32 +1,8 @@
 #include <iostream>
-#include "core/Core.h"
-#include "platform/WindowsWindow.h"
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
-#include "GameRuntime/GameApplication.h"
-
-/*
-int main(int argc, char** argv)
-{
-    Cyber::Log::initLog();
-
-    ClassTest* test = new ClassTest(10);
-    if(test)
-    {
-        CB_CORE_INFO("test{0}", test->a);
-    }
-
-    CB_CORE_INFO("Cyber Engine");
-    Cyber::WindowDesc desc;
-    desc.title = "Cyber";
-    desc.mWndW = 1280;
-    desc.mWndH = 720;
-    Cyber::Application app(desc);
-    app.Run();
-
-    return 0;
-}
-*/
+#include "core/Application.h"
+#include "triangle.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -75,10 +51,12 @@ int WINAPI WinMain(HINSTANCE hInstance,
     desc.mWndH = 720;
     desc.hInstance = hInstance;
     desc.cmdShow = nCmdShow;
-    Cyber::GameApplication app;
-    app.initialize(desc);
-    app.run();
+    Cyber::Core::Application* app = Cyber::Core::Application::create_application(desc);
+    app->set_sample_app(Cyber::create_sample_app());
+    app->initialize();
+    app->run();
 
     FreeConsole();
     return 1;
 }
+ 

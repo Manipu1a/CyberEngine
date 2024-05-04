@@ -79,7 +79,6 @@ namespace Cyber
             virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
             virtual void free_swap_chain(ISwapChain* swapChain) = 0;
-            
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             // Queue APIs
@@ -101,6 +100,7 @@ namespace Cyber
             virtual void update_descriptor_set(IDescriptorSet* set, const DescriptorData* updateDesc, uint32_t count) = 0;
             virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) = 0;
             virtual void free_render_pipeline(IRenderPipeline* pipeline) = 0;
+            virtual void set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) = 0;
             // Resource APIs
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
             virtual void free_texture_view(ITextureView* view) = 0;

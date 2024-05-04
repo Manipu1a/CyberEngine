@@ -51,11 +51,11 @@ namespace Cyber
 
         void WindowsApplication::run()
         {
-
+            Application::run();
         }
         void WindowsApplication::update(float deltaTime)
         {
-
+            Application::update(deltaTime);
         }
         void WindowsApplication::onEvent(Event& e)
         {
