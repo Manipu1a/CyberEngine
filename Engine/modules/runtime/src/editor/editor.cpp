@@ -93,5 +93,35 @@ namespace Cyber
             ImGui_ImplWin32_Shutdown();
             ImGui::DestroyContext();
         }
+
+        void Editor::new_frame()
+        {
+
+        }
+
+        void Editor::end_frame()
+        {
+
+        }
+
+        void Editor::render()
+        {
+
+        }
+
+        void Editor::invalidate_device_objects()
+        {
+
+        }
+
+        void Editor::create_device_objects()
+        {
+
+        }
+        
+        void Editor::create_fonts_texture()
+        {
+
+        }
     }
 }

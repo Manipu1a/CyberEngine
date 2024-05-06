@@ -1,15 +1,21 @@
 #pragma once
 
-class ImGuiRenderer
+namespace Cyber
 {
-public:
-    ImGuiRenderer();
-    ~ImGuiRenderer();
+    namespace Editor
+    {
+        class ImGuiRenderer
+        {
+        public:
+            ImGuiRenderer();
+            ~ImGuiRenderer();
 
-    void new_frame();
-    void end_frame();
-    void render_draw_data(void* draw_data);
-    void create_device_objects();
-    void create_fonts_texture();
-    
-};
+            void new_frame();
+            void end_frame();
+            void render_draw_data();
+            void invalidate_device_objects();
+            void create_device_objects();
+            void create_fonts_texture();
+        };
+    }
+}
