@@ -7,14 +7,15 @@
 #include "graphics/backend/d3d12/render_device_d3d12.h"
 #include "graphics/backend/d3d12/command_buffer_d3d12.h"
 #include "core/debug.h"
+#include "editor/imgui_renderer.h"
 
 namespace Cyber
 {
     namespace Editor
     {
-        Editor::Editor()
+        Editor::Editor(const EditorCreateInfo& createInfo)
         {
-
+            
         }
 
         Editor::~Editor()
@@ -94,31 +95,31 @@ namespace Cyber
             ImGui::DestroyContext();
         }
 
-        void Editor::new_frame()
+        void Editor::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
         {
-
+            m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
         }
 
         void Editor::end_frame()
         {
-
+            m_imguiRenderer->end_frame();
         }
 
         void Editor::render()
         {
-
+            m_imguiRenderer->render_draw_data();
         }
 
         void Editor::invalidate_device_objects()
         {
-
+            m_imguiRenderer->invalidate_device_objects();
         }
 
         void Editor::create_device_objects()
         {
-
+            m_imguiRenderer->create_device_objects();
         }
-        
+
         void Editor::create_fonts_texture()
         {
 

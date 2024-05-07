@@ -336,63 +336,63 @@ namespace Cyber
             graph->execute();
             */
 
-                // create shader
-                ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-                vs_load_desc.target = SHADER_TARGET_6_0;
-                vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                    .file_name = CYBER_UTF8("vertex_shader.hlsl"),
-                    .stage = SHADER_STAGE_VERT,
-                    .entry_point_name = CYBER_UTF8("VSMain"),
-                };
-                RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            // create shader
+            ResourceLoader::ShaderLoadDesc vs_load_desc = {};
+            vs_load_desc.target = SHADER_TARGET_6_0;
+            vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("vertex_shader.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
-                ResourceLoader::ShaderLoadDesc ps_load_desc = {};
-                ps_load_desc.target = SHADER_TARGET_6_0;
-                ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                    .file_name = CYBER_UTF8("pixel_shader.hlsl"),
-                    .stage = SHADER_STAGE_FRAG,
-                    .entry_point_name = CYBER_UTF8("PSMain"),
-                };
-                RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            ResourceLoader::ShaderLoadDesc ps_load_desc = {};
+            ps_load_desc.target = SHADER_TARGET_6_0;
+            ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("pixel_shader.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
-                // create root signature
-                RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
-                pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-                pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
-                pipeline_shader_create_desc[0]->m_library = vs_shader;
-                pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
-                pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-                pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
-                pipeline_shader_create_desc[1]->m_library = ps_shader;
-                pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-                RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                .m_ppShaders = pipeline_shader_create_desc,
-                .m_shaderCount = 2,
-                };
-                root_signature = render_device->create_root_signature(root_signature_create_desc);
-                // create descriptor set
+            // create root signature
+            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
+            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            pipeline_shader_create_desc[0]->m_library = vs_shader;
+            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+            pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            pipeline_shader_create_desc[1]->m_library = ps_shader;
+            pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
+            .m_ppShaders = pipeline_shader_create_desc,
+            .m_shaderCount = 2,
+            };
+            root_signature = render_device->create_root_signature(root_signature_create_desc);
+            // create descriptor set
 
-                RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
-                    .root_signature = root_signature,
-                    .set_index = 0
-                };
-                descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
+            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
+                .root_signature = root_signature,
+                .set_index = 0
+            };
+            descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
-                VertexLayout vertex_layout = {.attribute_count = 0};
-                RenderObject::RenderPipelineCreateDesc rp_desc = 
-                {
-                    .root_signature = root_signature,
-                    .vertex_shader = pipeline_shader_create_desc[0],
-                    .fragment_shader = pipeline_shader_create_desc[1],
-                    .vertex_layout = &vertex_layout,
-                    //.rasterizer_state = {},
-                    .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
-                    .render_target_count = 1,
-                    .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
-                };
-                pipeline = render_device->create_render_pipeline(rp_desc);
-                vs_shader->free();
-                ps_shader->free();
+            VertexLayout vertex_layout = {.attribute_count = 0};
+            RenderObject::RenderPipelineCreateDesc rp_desc = 
+            {
+                .root_signature = root_signature,
+                .vertex_shader = pipeline_shader_create_desc[0],
+                .fragment_shader = pipeline_shader_create_desc[1],
+                .vertex_layout = &vertex_layout,
+                //.rasterizer_state = {},
+                .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
+                .render_target_count = 1,
+                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+            };
+            pipeline = render_device->create_render_pipeline(rp_desc);
+            vs_shader->free();
+            ps_shader->free();
         }
 
         void TrignaleApp::finalize()

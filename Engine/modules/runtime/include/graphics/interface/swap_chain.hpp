@@ -22,6 +22,8 @@ namespace Cyber
             uint32_t m_height;
             /// Format of the swapchain
             TEXTURE_FORMAT m_format;
+            /// Format of the depth stencil buffer
+            TEXTURE_FORMAT m_depthStencilFormat;
             /// Surface
             class Surface* m_pSurface;
             /// Set whether swapchain will be presented using vsync
