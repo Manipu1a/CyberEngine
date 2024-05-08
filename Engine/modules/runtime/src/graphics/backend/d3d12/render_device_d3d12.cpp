@@ -1562,11 +1562,10 @@ namespace Cyber
         for(uint32_t i_set = 0; i_set < tableCount; ++i_set)
         {
             RootSignatureParameterTable* paramTable = dxRootSignature->get_parameter_table(i_set);
-            D3D12_ROOT_PARAMETER1 rootParam = rootParams[valid_root_tables];
+            D3D12_ROOT_PARAMETER1& rootParam = rootParams[valid_root_tables];
             rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
             SHADER_STAGE visStages = SHADER_STAGE::SHADER_STAGE_NONE;
             uint32_t i_range = 0;
-            const D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
             for(uint32_t i_register = 0; i_register < paramTable->m_resourceCount; ++i_register)
             {
                 IShaderResource* resourceSlot = paramTable->m_ppResources[i_register];
@@ -1584,7 +1583,7 @@ namespace Cyber
             if(visStages != 0)
             {
                 rootParam.ShaderVisibility = D3D12Util_TranslateShaderStage(visStages);
-                rootParam.DescriptorTable.pDescriptorRanges = descRange;
+                rootParam.DescriptorTable.pDescriptorRanges = descRanges;
                 valid_root_tables++;
             }
         }
@@ -1664,7 +1663,7 @@ namespace Cyber
         
         D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
         rootSignatureDesc.NumParameters = valid_root_tables + dxRootSignature->get_push_constant_count();
-        rootSignatureDesc.pParameters = nullptr;
+        rootSignatureDesc.pParameters = rootParams;
         rootSignatureDesc.NumStaticSamplers = staticSamplerCount;
         rootSignatureDesc.pStaticSamplers = staticSamplerDescs;
         rootSignatureDesc.Flags = rootSignatureFlags;
@@ -1683,6 +1682,9 @@ namespace Cyber
                 CB_ERROR("Failed to create root signature!");
                 return nullptr;
             }
+        }
+        else {
+            CB_CORE_ERROR("Failed to create root signature: {0}", (char*)error->GetBufferPointer());
         }
 
         return dxRootSignature;

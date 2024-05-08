@@ -36,6 +36,12 @@ namespace Cyber
         }
         return false;
     }
+
+    bool graphics_util_shader_resource_is_normal_sampler(const RenderObject::IShaderResource* resource)
+    {
+        return resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER;
+    }
+
     void graphics_util_init_root_signature_tables(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
         RenderObject::IShaderReflection* entery_reflection[32] = {0};

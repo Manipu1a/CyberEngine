@@ -38,7 +38,11 @@ namespace Cyber
             m_pRenderer->create_gfx_objects();
             m_pInputSystem = cyber_new<InputSystem>();
             m_pInputSystem->initInputSystem();
-            m_pEditor = cyber_new<Editor::Editor>();
+            Editor::EditorCreateInfo createInfo = {};
+            createInfo.pDevice = m_pRenderer->get_render_device();
+            createInfo.BackBufferFmt = TEXTURE_FORMAT_R32G32B32_SFLOAT;
+            createInfo.DepthBufferFmt = TEXTURE_FORMAT_D32_SFLOAT;
+            m_pEditor = cyber_new<Editor::Editor>(createInfo);
             m_pEditor->initialize(m_pRenderer->get_render_device(), m_pWindow->get_native_window());
             m_pSampleApp->initialize();
         }
@@ -68,7 +72,10 @@ namespace Cyber
             auto cmd = m_pRenderer->get_command_buffer();
             auto render_device = m_pRenderer->get_render_device();
             render_device->set_render_target(cmd, 1, &back_buffer_view, nullptr);
-            m_pEditor->update(cmd, deltaTime);
+            //m_pEditor->update(cmd, deltaTime);
+            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+            m_pEditor->render();
+            m_pEditor->end_frame();
             m_pSampleApp->present();
         }
         

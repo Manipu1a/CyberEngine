@@ -15,7 +15,7 @@ namespace Cyber
     {
         Editor::Editor(const EditorCreateInfo& createInfo)
         {
-            
+            m_imguiRenderer = cyber_new<ImGuiRenderer>(createInfo);
         }
 
         Editor::~Editor()
