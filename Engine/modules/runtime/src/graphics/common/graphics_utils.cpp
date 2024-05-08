@@ -27,6 +27,8 @@ namespace Cyber
 
     bool graphics_util_shader_resource_is_static_sampler(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
     {
+        return resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER;
+        
         for(uint32_t i = 0; i < desc.m_staticSamplerCount; ++i)
         {
             if(strcmp((char*)resource->get_name(), (char*)desc.m_staticSamplerNames[i]) == 0)
@@ -36,6 +38,7 @@ namespace Cyber
         }
         return false;
     }
+
 
     bool graphics_util_shader_resource_is_normal_sampler(const RenderObject::IShaderResource* resource)
     {
@@ -69,6 +72,7 @@ namespace Cyber
         // Collect all resources
         rootSignature->set_pipeline_type(PIPELINE_TYPE_NONE);
         eastl::vector<RenderObject::IShaderResource*> all_resources;
+        eastl::vector<RenderObject::IShaderResource*> all_samplers;
         eastl::vector<RenderObject::IShaderResource*> all_push_constants;
         eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
         for(uint32_t i = 0; i < desc.m_shaderCount; ++i)

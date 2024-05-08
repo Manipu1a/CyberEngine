@@ -73,7 +73,9 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .m_ppShaders = pipeline_shader_create_desc,
-                .m_shaderCount = 2
+                .m_shaderCount = 2,
+                .m_staticSamplers = nullptr,
+                .m_staticSamplerCount = 1
             };
             RenderObject::IRootSignature* root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
 
