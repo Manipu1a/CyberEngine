@@ -110,7 +110,7 @@ namespace Cyber
             virtual void free_buffer(IBuffer* buffer) = 0;
             virtual void map_buffer(IBuffer* buffer, const BufferRange* range) = 0;
             virtual void unmap_buffer(IBuffer* buffer) = 0;
-
+            virtual ISampler* create_sampler(const SamplerCreateDesc& samplerDesc) = 0;
             // Shader
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;

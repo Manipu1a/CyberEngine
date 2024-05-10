@@ -443,6 +443,8 @@ namespace Cyber
         D3D12_COMPARISON_FUNC_ALWAYS,
     };
 
+    D3D12_FILTER D3D12Util_TranslateFilter(FILTER_TYPE minFilter, FILTER_TYPE magFilter, FILTER_TYPE mipfilter);
+
     D3D12_BLEND_DESC D3D12Util_TranslateBlendState(const BlendStateCreateDesc* pDesc);
 
     D3D12_RASTERIZER_DESC D3D12Util_TranslateRasterizerState(const RasterizerStateCreateDesc* pDesc);

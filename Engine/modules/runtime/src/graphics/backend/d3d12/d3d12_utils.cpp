@@ -122,6 +122,266 @@ namespace Cyber
         return D3D12_PRIMITIVE_TOPOLOGY_TYPE_UNDEFINED;
     }
 
+    D3D12_FILTER D3D12Util_TranslateFilter(FILTER_TYPE minFilter, FILTER_TYPE magFilter, FILTER_TYPE mipfilter)
+    {
+        switch (minFilter)
+        {
+            case FILTER_TYPE_UNKNOWN:
+                CB_CORE_ERROR("Unknown filter type");
+                break;
+            case FILTER_TYPE::FILTER_TYPE_POINT:
+            {
+                if(magFilter == FILTER_TYPE_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_POINT)
+                    {
+                        return D3D12_FILTER_MIN_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_LINEAR)
+                    {
+                        return D3D12_FILTER_MIN_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_POINT)
+                    {
+                        return D3D12_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_LINEAR)
+                    {
+                        return D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+            case FILTER_TYPE::FILTER_TYPE_LINEAR:
+            {
+                if(magFilter == FILTER_TYPE_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_POINT)
+                    {
+                        return D3D12_FILTER_MIN_LINEAR_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_LINEAR)
+                    {
+                        return D3D12_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_POINT)
+                    {
+                        return D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_LINEAR)
+                    {
+                        return D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_ANISOTROPIC:
+            {
+                cyber_assert(magFilter == FILTER_TYPE_ANISOTROPIC && mipfilter == FILTER_TYPE_ANISOTROPIC, "For anisotropic filtering, both mag and min filters must be anisotropic.");
+                return D3D12_FILTER_ANISOTROPIC;
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_COMPARISON_POINT:
+            {
+                if(magFilter == FILTER_TYPE_COMPARISON_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_COMPARISON_POINT)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_COMPARISON_LINEAR)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_COMPARISON_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_COMPARISON_POINT)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_COMPARISON_LINEAR)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_COMPARISON_LINEAR:
+            {
+                if(magFilter == FILTER_TYPE_COMPARISON_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_COMPARISON_POINT)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_COMPARISON_LINEAR)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_COMPARISON_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_COMPARISON_POINT)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_COMPARISON_LINEAR)
+                    {
+                        return D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_COMPARISON_ANISOTROPIC:
+            {
+                cyber_assert(magFilter == FILTER_TYPE_COMPARISON_ANISOTROPIC && mipfilter == FILTER_TYPE_COMPARISON_ANISOTROPIC, "For anisotropic filtering, both mag and min filters must be anisotropic.");
+                return D3D12_FILTER_COMPARISON_ANISOTROPIC;
+                break;
+            }
+
+            // Minimum filters
+            case FILTER_TYPE::FILTER_TYPE_MINIMUM_POINT:
+            {
+                if(magFilter == FILTER_TYPE_MINIMUM_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_MINIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MINIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_MINIMUM_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_MINIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MINIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_POINT_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_MINIMUM_LINEAR:
+            {
+                if(magFilter == FILTER_TYPE_MINIMUM_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_MINIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MINIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_MINIMUM_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_MINIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MINIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MINIMUM_MIN_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_MINIMUM_ANISOTROPIC:
+            {
+                cyber_assert(magFilter == FILTER_TYPE_MINIMUM_ANISOTROPIC && mipfilter == FILTER_TYPE_MINIMUM_ANISOTROPIC, "For anisotropic filtering, both mag and min filters must be anisotropic.");
+                return D3D12_FILTER_MINIMUM_ANISOTROPIC;
+                break;
+            }
+
+            // Maximum filters
+            case FILTER_TYPE::FILTER_TYPE_MAXIMUM_POINT:
+            {
+                if(magFilter == FILTER_TYPE_MAXIMUM_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_MAXIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_MAXIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_POINT_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_MAXIMUM_LINEAR:
+            {
+                if(magFilter == FILTER_TYPE_MAXIMUM_POINT)
+                {
+                    if(mipfilter == FILTER_TYPE_MAXIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_LINEAR_MAG_POINT_MIP_LINEAR;
+                    }
+                }
+                else if(magFilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                {
+                    if(mipfilter == FILTER_TYPE_MAXIMUM_POINT)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_MAG_LINEAR_MIP_POINT;
+                    }
+                    else if(mipfilter == FILTER_TYPE_MAXIMUM_LINEAR)
+                    {
+                        return D3D12_FILTER_MAXIMUM_MIN_MAG_MIP_LINEAR;
+                    }
+                }
+                break;
+            }
+
+            case FILTER_TYPE::FILTER_TYPE_MAXIMUM_ANISOTROPIC:
+            {
+                cyber_assert(magFilter == FILTER_TYPE_MAXIMUM_ANISOTROPIC && mipfilter == FILTER_TYPE_MAXIMUM_ANISOTROPIC, "For anisotropic filtering, both mag and min filters must be anisotropic.");
+                return D3D12_FILTER_MAXIMUM_ANISOTROPIC;
+                break;
+            }
+
+            default:
+                CB_CORE_ERROR("Unknown filter type");
+                break;
+        }
+
+        return D3D12_FILTER_MIN_MAG_MIP_POINT;
+    }
+
 #if !defined (XBOX) && defined (_WIN32)
     static D3D12Util_DXCLoader DxcLoader;
 

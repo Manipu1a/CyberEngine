@@ -12,6 +12,7 @@ namespace Cyber
 
     namespace RenderObject
     {
+        
         // Buffer Interface
         struct CYBER_GRAPHICS_API ISampler_D3D12 : public ISampler
         {
@@ -33,6 +34,5 @@ namespace Cyber
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
-
     }
 }
