@@ -21,6 +21,7 @@ target("CyberRuntime")
     add_deps("mimalloc", {public = true})
     add_deps("Gainput", {public=true})
     add_deps("IMGUI", {public=true})
+    add_deps("stb", {public=true})
     set_configdir("$(projectdir)/Engine")
     add_configfiles("$(projectdir)/Engine/config.h.in")
 

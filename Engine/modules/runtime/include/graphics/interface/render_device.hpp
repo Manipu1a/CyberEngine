@@ -11,13 +11,11 @@
 #include "queue.h"
 #include "command_buffer.h"
 #include "command_pool.h"
-#include "semaphore.h"
 #include "fence.h"
 #include "render_pipeline.h"
 #include "root_signature.hpp"
-#include "root_signature_pool.h"
 #include "shader_library.h"
-#include "shader_reflection.hpp"
+#include "sampler.h"
 #include "adapter.h"
 #include "descriptor_set.h"
 #include "object_base.h"
@@ -110,7 +108,7 @@ namespace Cyber
             virtual void free_buffer(IBuffer* buffer) = 0;
             virtual void map_buffer(IBuffer* buffer, const BufferRange* range) = 0;
             virtual void unmap_buffer(IBuffer* buffer) = 0;
-            virtual ISampler* create_sampler(const SamplerCreateDesc& samplerDesc) = 0;
+            virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) = 0;
             // Shader
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;

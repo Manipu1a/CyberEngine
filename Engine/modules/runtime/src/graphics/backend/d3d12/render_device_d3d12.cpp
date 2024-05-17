@@ -40,6 +40,7 @@
 #include "graphics/backend/d3d12/root_signature_d3d12.h"
 #include "graphics/backend/d3d12/sampler_d3d12.h"
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
+#include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
 #include "platform/configure.h"
 
@@ -1531,6 +1532,26 @@ namespace Cyber
         return cyber_new<FrameBuffer_D3D12_Impl>(this, frameBufferDesc);
     }
 
+    ISampler* RenderDevice_D3D12_Impl::create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc)
+    {
+        D3D12_SAMPLER_DESC samplerDescD3D12 = {
+        .Filter = D3D12Util_TranslateFilter(samplerDesc.min_filter, samplerDesc.mag_filter, samplerDesc.mip_filter),
+        .AddressU = D3D12Util_TranslateAddressMode(samplerDesc.address_u),
+        .AddressV = D3D12Util_TranslateAddressMode(samplerDesc.address_v),
+        .AddressW = D3D12Util_TranslateAddressMode(samplerDesc.address_w),
+        .MipLODBias = samplerDesc.mip_lod_bias,
+        .MaxAnisotropy = eastl::min<uint32_t>(samplerDesc.max_anisotropy, D3D12_DEFAULT_MAX_ANISOTROPY),
+        .ComparisonFunc = D3D12Util_TranslateCompareMode(samplerDesc.compare_mode),
+        .BorderColor = {samplerDesc.border_color.r, samplerDesc.border_color.g, samplerDesc.border_color.b, samplerDesc.border_color.a},
+        .MinLOD = samplerDesc.min_lod,
+        .MaxLOD = samplerDesc.max_lod
+        };
+        
+        Sampler_D3D12_Impl* sampler = cyber_new<Sampler_D3D12_Impl>(this, samplerDesc);
+        sampler->m_dxHandle = DescriptorHeap_D3D12::consume_descriptor_handles(m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER], 1).mCpu;
+        m_pDxDevice->CreateSampler(&samplerDescD3D12, sampler->m_dxHandle);
+        return sampler;
+    }
     // for example 
     IRootSignature* RenderDevice_D3D12_Impl::create_root_signature(const RenderObject::RootSignatureCreateDesc& rootSigDesc)
     {
@@ -1612,7 +1633,7 @@ namespace Cyber
                     auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
                     if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[j]) == 0)
                     {
-                        D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->dxSamplerDesc;
+                        D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
                         staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
                         staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
                         staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
@@ -2137,7 +2158,7 @@ namespace Cyber
                     {
                         cyber_assert(pParam->samplers[arr], "Binding Null Sampler");
 
-                        pSamplerHeap->copy_descriptor_handle({Samplers[arr]->mDxHandle.ptr}, dxSet->sampler_handle, arr + heapOffset);
+                        pSamplerHeap->copy_descriptor_handle({Samplers[arr]->m_dxHandle.ptr}, dxSet->sampler_handle, arr + heapOffset);
                     }
                 }
                 break;

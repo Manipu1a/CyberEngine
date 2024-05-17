@@ -30,7 +30,13 @@ namespace Cyber
             uint32_t max_anisotropy = 0;
 
             COMPARE_MODE compare_mode = CMP_NEVER;
+
+            GRAPHICS_COLOR border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+            float min_lod = 0.0f;
+            float max_lod = 0.0f;
         };
+
         struct CYBER_GRAPHICS_API ISampler : public IDeviceObject
         {
             
@@ -44,10 +50,11 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TSamplerBase = typename DeviceObjectBase<SamplerInterface, RenderDeviceImplType>;
 
-            SamplerBase(RenderDeviceImplType* device) : TSamplerBase(device) {  };
+            SamplerBase(RenderDeviceImplType* device, SamplerCreateDesc desc) : TSamplerBase(device), m_desc(desc) {  };
             virtual ~SamplerBase() = default;
         protected:
             
+            SamplerCreateDesc m_desc;
         };
     }
 

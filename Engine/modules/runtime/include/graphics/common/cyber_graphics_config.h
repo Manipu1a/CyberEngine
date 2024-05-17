@@ -1,6 +1,6 @@
 #pragma once
 #include "platform/configure.h"
-#include "utils/hash.h"
+#include "tools/hash.h"
 
 #ifndef CYBER_GRAPHICS_EXPORT
     #if defined (_MSC_VER)

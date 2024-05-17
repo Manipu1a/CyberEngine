@@ -62,6 +62,7 @@ namespace Cyber
             virtual void free_swap_chain(ISwapChain* swapchain) override;
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
+            virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
             // Queue APIs
             virtual IQueue* get_queue(QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;

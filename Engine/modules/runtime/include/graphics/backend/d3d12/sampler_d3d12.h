@@ -25,12 +25,12 @@ namespace Cyber
             using TSamplerBase = SamplerBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Sampler_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TSamplerBase(device) {}
+            Sampler_D3D12_Impl(class RenderDevice_D3D12_Impl* device, SamplerCreateDesc desc) : TSamplerBase(device, desc) {}
         protected:
             /// Description for creating the sampler descriptor for this sampler
-            D3D12_SAMPLER_DESC dxSamplerDesc;
+            D3D12_SAMPLER_DESC m_dxSamplerDesc;
             /// Descriptor handle of the Sampler in a CPU visible descriptor heap
-            D3D12_CPU_DESCRIPTOR_HANDLE mDxHandle;
+            D3D12_CPU_DESCRIPTOR_HANDLE m_dxHandle;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

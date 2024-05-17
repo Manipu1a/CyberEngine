@@ -1231,6 +1231,14 @@ namespace Cyber
 
     };
 
+    typedef struct GRAPHICS_COLOR
+    {
+        float r;
+        float g;
+        float b;
+        float a;
+    } GRAPHICS_COLOR;
+    
     typedef union GRAPHICS_CLEAR_VALUE
     {
         struct

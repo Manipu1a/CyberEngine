@@ -382,6 +382,35 @@ namespace Cyber
         return D3D12_FILTER_MIN_MAG_MIP_POINT;
     }
 
+    D3D12_TEXTURE_ADDRESS_MODE D3D12Util_TranslateAddressMode(ADDRESS_MODE mode)
+    {
+        switch (mode) 
+        {
+            case ADDRESS_MODE_UNKNOWN : CB_ERROR("Unknown address mode"); return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            case ADDRESS_MODE_WRAP : return D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+            case ADDRESS_MODE_MIRROR : return D3D12_TEXTURE_ADDRESS_MODE_MIRROR;
+            case ADDRESS_MODE_CLAMP : return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            case ADDRESS_MODE_BORDER : return D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+            case ADDRESS_MODE_MIRROR_ONCE : return D3D12_TEXTURE_ADDRESS_MODE_MIRROR_ONCE;
+            default: CB_ERROR("Unknown address mode"); return D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+        }
+    }
+
+    D3D12_COMPARISON_FUNC D3D12Util_TranslateCompareMode(COMPARE_MODE mode)
+    {
+        switch(mode)
+        {
+            case CMP_NEVER: return D3D12_COMPARISON_FUNC_NEVER;
+            case CMP_LESS: return D3D12_COMPARISON_FUNC_LESS;
+            case CMP_EQUAL: return D3D12_COMPARISON_FUNC_EQUAL;
+            case CMP_LESS_EQUAL: return D3D12_COMPARISON_FUNC_LESS_EQUAL;
+            case CMP_GREATER: return D3D12_COMPARISON_FUNC_GREATER;
+            case CMP_NOT_EQUAL: return D3D12_COMPARISON_FUNC_NOT_EQUAL;
+            case CMP_GREATER_EQUAL: return D3D12_COMPARISON_FUNC_GREATER_EQUAL;
+            case CMP_ALWAYS: return D3D12_COMPARISON_FUNC_ALWAYS;
+            default: CB_ERROR("Unknown compare mode"); return D3D12_COMPARISON_FUNC_NEVER;
+        }
+    }
 #if !defined (XBOX) && defined (_WIN32)
     static D3D12Util_DXCLoader DxcLoader;
 
