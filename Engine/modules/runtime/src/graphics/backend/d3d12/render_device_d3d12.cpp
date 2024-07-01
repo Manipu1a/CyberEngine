@@ -1548,6 +1548,7 @@ namespace Cyber
         };
         
         Sampler_D3D12_Impl* sampler = cyber_new<Sampler_D3D12_Impl>(this, samplerDesc);
+        sampler->m_dxSamplerDesc = samplerDescD3D12;
         sampler->m_dxHandle = DescriptorHeap_D3D12::consume_descriptor_handles(m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER], 1).mCpu;
         m_pDxDevice->CreateSampler(&samplerDescD3D12, sampler->m_dxHandle);
         return sampler;

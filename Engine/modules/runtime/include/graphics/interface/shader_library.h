@@ -45,7 +45,7 @@ namespace Cyber
             {
                 m_name = desc.name;
                 m_pEntryReflections = nullptr;
-                m_entryCount = 0;
+                m_entryCount = 1;
             }
 
             virtual ~ShaderLibraryBase() = default;
@@ -74,6 +74,7 @@ namespace Cyber
             const char8_t* m_name;
             IShaderReflection** m_pEntryReflections;
             uint32_t m_entryCount;
+            const char8_t* m_entryPoint;
             ShaderLibraryCreateDesc m_desc;
         };
     }

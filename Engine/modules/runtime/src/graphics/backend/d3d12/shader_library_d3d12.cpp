@@ -193,7 +193,7 @@ namespace Cyber
             m_entryCount = 1;
             m_pEntryReflections = (RenderObject::IShaderReflection**)cyber_calloc(m_entryCount, sizeof(RenderObject::IShaderReflection*));
             RenderObject::ShaderReflection_D3D12_Impl* reflection = cyber_new<RenderObject::ShaderReflection_D3D12_Impl>(get_device());
-            reflection->set_entry_name(D3DShaderEntryName);
+            reflection->set_entry_name(m_name);
             reflection->set_shader_resource_count(shaderDesc.BoundResources);
             auto shader_resources = (RenderObject::IShaderResource**)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::IShaderResource*));
 

@@ -72,10 +72,29 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("main");
             pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
 
+            RenderObject::SamplerCreateDesc sampler_create_desc = {};
+            sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.mag_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.mip_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.address_u = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.address_v = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.address_w = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.flags = SAMPLER_FLAG_NONE;
+            sampler_create_desc.unnormalized_coordinates = false;
+            sampler_create_desc.mip_lod_bias = 0.0f;
+            sampler_create_desc.max_anisotropy = 0;
+            sampler_create_desc.compare_mode = CMP_NEVER;
+            sampler_create_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+            sampler_create_desc.min_lod = 0.0f;
+            sampler_create_desc.max_lod = 0.0f;
+            auto sampler = m_pDevice->create_sampler(sampler_create_desc);
+            const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
+
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .m_ppShaders = pipeline_shader_create_desc,
                 .m_shaderCount = 2,
-                .m_staticSamplers = nullptr,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1
             };
             
