@@ -33,8 +33,12 @@ namespace Cyber
         {
 
         }
-        void ImGuiRenderer::render_draw_data()
+        void ImGuiRenderer::render_draw_data(RenderObject::IRenderDevice* device, ImDrawData* drawData)
         {
+            if(drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f || drawData->CmdListsCount == 0)
+            {
+                return;
+            }
 
         }
         void ImGuiRenderer::invalidate_device_objects()
@@ -118,7 +122,15 @@ namespace Cyber
 
         void ImGuiRenderer::create_fonts_texture()
         {
+            // Build texture atlas
+            ImGuiIO& IO = ImGui::GetIO();
 
+            unsigned char* pData  = nullptr;
+            int            Width  = 0;
+            int            Weight = 0;
+            IO.Fonts->GetTexDataAsRGBA32(&pData, &Width, &Weight);
+
+            
         }
     }
 }

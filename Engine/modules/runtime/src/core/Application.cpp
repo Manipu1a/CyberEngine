@@ -5,6 +5,7 @@
 #include "core/Timestep.h"
 #include "core/window.h"
 #include "gameruntime/sampleapp.h"
+#include "editor/imgui_impl_win32.h"
 
 namespace Cyber
 {
@@ -42,8 +43,9 @@ namespace Cyber
             createInfo.pDevice = m_pRenderer->get_render_device();
             createInfo.BackBufferFmt = TEXTURE_FORMAT_R32G32B32_SFLOAT;
             createInfo.DepthBufferFmt = TEXTURE_FORMAT_D32_SFLOAT;
-            m_pEditor = cyber_new<Editor::Editor>(createInfo);
-            m_pEditor->initialize(m_pRenderer->get_render_device(), m_pWindow->get_native_window());
+            createInfo.Hwnd = m_pWindow->get_native_window();
+
+            m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
             m_pSampleApp->initialize();
         }
 
@@ -74,7 +76,8 @@ namespace Cyber
             render_device->set_render_target(cmd, 1, &back_buffer_view, nullptr);
             //m_pEditor->update(cmd, deltaTime);
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
-            m_pEditor->render();
+            m_pEditor->update(m_pRenderer->get_command_buffer(), deltaTime);
+            m_pEditor->render(m_pRenderer->get_render_device());
             m_pEditor->end_frame();
             m_pSampleApp->present();
         }

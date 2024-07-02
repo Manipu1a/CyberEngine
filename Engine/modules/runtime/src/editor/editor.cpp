@@ -1,6 +1,5 @@
 #include "editor/editor.h"
 #include "imgui/imgui.h"
-#include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
 #include "platform/memory.h"
 #include "platform/configure.h"
@@ -16,6 +15,8 @@ namespace Cyber
         Editor::Editor(const EditorCreateInfo& createInfo)
         {
             m_imguiRenderer = cyber_new<ImGuiRenderer>(createInfo);
+
+            initialize(createInfo.pDevice, createInfo.Hwnd);
         }
 
         Editor::~Editor()
@@ -38,7 +39,7 @@ namespace Cyber
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             ImGui::CreateContext();
-            ImGuiIO& io = ImGui::GetIO(); (void)io;
+            ImGuiIO& io = ImGui::GetIO();
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
             io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -47,7 +48,7 @@ namespace Cyber
             // Setup Dear ImGui style
             ImGui::StyleColorsDark();
             ImGui::StyleColorsLight();
-            
+            /*
             // Setup Platform/Renderer backends
             ImGui_ImplWin32_Init(hwnd);
             
@@ -55,6 +56,7 @@ namespace Cyber
                 DXGI_FORMAT_R8G8B8A8_UNORM, native_heap,
                 native_heap->GetCPUDescriptorHandleForHeapStart(),
                 native_heap->GetGPUDescriptorHandleForHeapStart());
+                */
         }
 
         void Editor::run()
@@ -65,18 +67,18 @@ namespace Cyber
         void Editor::update(RenderObject::ICommandBuffer* encoder, float deltaTime)
         {
             // Start the Dear ImGui frame
-            ImGui_ImplDX12_NewFrame();
-            ImGui_ImplWin32_NewFrame();
-            ImGui::NewFrame();
+            //ImGui_ImplDX12_NewFrame();
+            //ImGui_ImplWin32_NewFrame();
+            //ImGui::NewFrame();
             bool show_demo_window = true;
             ImGui::ShowDemoWindow(&show_demo_window);
 
             // Rendering
-            ImGui::Render();
-            RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
+            /*ImGui::Render();
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
             Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
-            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
+            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());*/
+            RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
 
             // Update and Render additional Platform Windows
             ImGuiIO& io = ImGui::GetIO();
@@ -90,24 +92,27 @@ namespace Cyber
         void Editor::finalize()
         {
             // Cleanup
-            ImGui_ImplDX12_Shutdown();
-            ImGui_ImplWin32_Shutdown();
+            //ImGui_ImplDX12_Shutdown();
+            //ImGui_ImplWin32_Shutdown();
             ImGui::DestroyContext();
         }
 
         void Editor::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
         {
             m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
+            ImGui::NewFrame();
         }
 
         void Editor::end_frame()
         {
             m_imguiRenderer->end_frame();
+            ImGui::EndFrame();
         }
 
-        void Editor::render()
+        void Editor::render(RenderObject::IRenderDevice* device)
         {
-            m_imguiRenderer->render_draw_data();
+            ImGui::Render();
+            m_imguiRenderer->render_draw_data(device, ImGui::GetDrawData());
         }
 
         void Editor::invalidate_device_objects()

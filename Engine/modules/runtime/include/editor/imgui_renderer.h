@@ -1,6 +1,6 @@
 #pragma once
 #include "editor.h"
-
+#include "imgui/imgui.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -17,7 +17,7 @@ namespace Cyber
 
             void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
-            void render_draw_data();
+            void render_draw_data(RenderObject::IRenderDevice* device, ImDrawData* drawData);
             void invalidate_device_objects();
             void create_device_objects();
             void create_fonts_texture();

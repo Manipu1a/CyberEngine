@@ -30,6 +30,7 @@ namespace Cyber
             static constexpr uint32_t DefaultInitialIBSize = 1024;
 
             class RenderObject::IRenderDevice* pDevice = nullptr;
+            HWND Hwnd = nullptr;
 
             TEXTURE_FORMAT BackBufferFmt = {};
             TEXTURE_FORMAT DepthBufferFmt = {};
@@ -40,15 +41,17 @@ namespace Cyber
             uint32_t InitialIBSize = DefaultInitialIBSize;
 
             EditorCreateInfo() noexcept {}
-            EditorCreateInfo(RenderObject::IRenderDevice* pDevice, TEXTURE_FORMAT backBufferFmt, TEXTURE_FORMAT depthBufferFmt) noexcept
+            EditorCreateInfo(RenderObject::IRenderDevice* pDevice, HWND hwnd, TEXTURE_FORMAT backBufferFmt, TEXTURE_FORMAT depthBufferFmt) noexcept
                 : pDevice(pDevice)
+                , Hwnd(hwnd)
                 , BackBufferFmt(backBufferFmt)
                 , DepthBufferFmt(depthBufferFmt)
             {
             }
 
-            EditorCreateInfo(RenderObject::IRenderDevice* pDevice, RenderObject::SwapChainDesc swapChainDesc) noexcept
+            EditorCreateInfo(RenderObject::IRenderDevice* pDevice, HWND hwnd, RenderObject::SwapChainDesc swapChainDesc) noexcept
                 : pDevice(pDevice)
+                , Hwnd(hwnd)
                 , BackBufferFmt(swapChainDesc.m_format)
                 , DepthBufferFmt(swapChainDesc.m_depthStencilFormat)
             {
@@ -74,9 +77,9 @@ namespace Cyber
 
             struct RenderObject::DescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;
             /**/
-            void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
+            virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
-            void render();
+            void render(RenderObject::IRenderDevice* device);
             void invalidate_device_objects();
             void create_device_objects();
             void create_fonts_texture();
