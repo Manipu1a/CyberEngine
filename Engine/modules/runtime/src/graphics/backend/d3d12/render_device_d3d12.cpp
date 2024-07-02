@@ -560,114 +560,116 @@ namespace Cyber
         }
     }
 
-    RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& pDesc)
+    RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& Desc, TextureData* pInitData)
     {
-        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this, pDesc);
+        RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this, Desc);
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
-        D3D12_RESOURCE_DESC desc = {};
+        bool InitializeTexture = pInitData != nullptr;
+
+        D3D12_RESOURCE_DESC d3dTexDesc = {};
 
         //TODO:
-        DXGI_FORMAT dxFormat = DXGIUtil_TranslatePixelFormat(pDesc.m_format);
+        DXGI_FORMAT dxFormat = DXGIUtil_TranslatePixelFormat(Desc.m_format);
         
-        DESCRIPTOR_TYPE descriptors = pDesc.m_descriptors;
+        DESCRIPTOR_TYPE descriptors = Desc.m_descriptors;
 
-        if(pDesc.m_pNativeHandle == nullptr)
+        if(Desc.m_pNativeHandle == nullptr)
         {
             D3D12_RESOURCE_DIMENSION res_dim = D3D12_RESOURCE_DIMENSION_UNKNOWN;
-            if(pDesc.m_flags & TCF_FORCE_2D)
+            if(Desc.m_flags & TCF_FORCE_2D)
             {
                 res_dim = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
             }
-            else if(pDesc.m_flags & TCF_FORCE_3D)
+            else if(Desc.m_flags & TCF_FORCE_3D)
             {
                 res_dim = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
             }
             else
             {
-                if(pDesc.m_depth > 1)
+                if(Desc.m_depth > 1)
                     res_dim = D3D12_RESOURCE_DIMENSION_TEXTURE3D;
-                else if(pDesc.m_height > 1)
+                else if(Desc.m_height > 1)
                     res_dim = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
                 else
                     res_dim = D3D12_RESOURCE_DIMENSION_TEXTURE1D;
             }
 
-            desc.Dimension = res_dim;
-            desc.Alignment = (UINT)pDesc.m_sampleCount > 1 ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0;
-            desc.Width = pDesc.m_width;
-            desc.Height = pDesc.m_height;
-            desc.DepthOrArraySize = (UINT)(pDesc.m_arraySize != 1 ? pDesc.m_arraySize : pDesc.m_depth);
-            desc.MipLevels = (UINT)pDesc.m_mipLevels;
-            desc.Format = DXGIUtil_FormatToTypeless(dxFormat);
-            desc.SampleDesc.Count = (UINT)pDesc.m_sampleCount;
-            desc.SampleDesc.Quality = (UINT)pDesc.m_sampleQuality;
-            desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-            desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            d3dTexDesc.Dimension = res_dim;
+            d3dTexDesc.Alignment = (UINT)Desc.m_sampleCount > 1 ? D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT : 0;
+            d3dTexDesc.Width = Desc.m_width;
+            d3dTexDesc.Height = Desc.m_height;
+            d3dTexDesc.DepthOrArraySize = (UINT)(Desc.m_arraySize != 1 ? Desc.m_arraySize : Desc.m_depth);
+            d3dTexDesc.MipLevels = (UINT)Desc.m_mipLevels;
+            d3dTexDesc.Format = DXGIUtil_FormatToTypeless(dxFormat);
+            d3dTexDesc.SampleDesc.Count = (UINT)Desc.m_sampleCount;
+            d3dTexDesc.SampleDesc.Quality = (UINT)Desc.m_sampleQuality;
+            d3dTexDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+            d3dTexDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
             D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS data;
-            data.Format = desc.Format;
+            data.Format = d3dTexDesc.Format;
             data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
-            data.SampleCount = desc.SampleDesc.Count;
+            data.SampleCount = d3dTexDesc.SampleDesc.Count;
             hook_CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data));
             while(data.NumQualityLevels == 0 && data.SampleCount > 0)
             {
                 CB_CORE_WARN("Sample Count [0] not supported. Trying a lower sample count [1]", data.SampleCount, data.SampleCount / 2);
-                data.SampleCount = desc.SampleDesc.Count / 2;
+                data.SampleCount = d3dTexDesc.SampleDesc.Count / 2;
                 hook_CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data));
             }
 
-            desc.SampleDesc.Count = data.SampleCount;
+            d3dTexDesc.SampleDesc.Count = data.SampleCount;
 
-            GRAPHICS_RESOURCE_STATE actualStartState = (GRAPHICS_RESOURCE_STATE)pDesc.m_startState;
+            GRAPHICS_RESOURCE_STATE actualStartState = (GRAPHICS_RESOURCE_STATE)Desc.m_startState;
 
             // Decide UAV flags
             if(descriptors & DESCRIPTOR_TYPE_RW_TEXTURE)
             {
-                desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             }
 
             // Decide render target flags
-            if(pDesc.m_startState & GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+            if(Desc.m_startState & GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
             {
-                desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-                actualStartState = (GRAPHICS_RESOURCE_STATE)((pDesc.m_startState > GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
-                                    ? (pDesc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
+                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_startState > GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+                                    ? (Desc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
                                     : GRAPHICS_RESOURCE_STATE_RENDER_TARGET);
             }
-            else if(pDesc.m_startState & GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+            else if(Desc.m_startState & GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
             {
-                desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-                actualStartState = (GRAPHICS_RESOURCE_STATE)((pDesc.m_startState > GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
-                                    ? (pDesc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_startState > GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+                                    ? (Desc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
                                     : GRAPHICS_RESOURCE_STATE_DEPTH_WRITE);
             }
 
             // Decide sharing flags for multi adapter
-            if(pDesc.m_flags & TCF_EXPORT_ADAPTER_BIT)
+            if(Desc.m_flags & TCF_EXPORT_ADAPTER_BIT)
             {
-                desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
-                desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_CROSS_ADAPTER;
+                d3dTexDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
             }
 
-            if(pDesc.m_flags & TCF_FORCE_ALLOW_DISPLAY_TARGET)
+            if(Desc.m_flags & TCF_FORCE_ALLOW_DISPLAY_TARGET)
             {
                 actualStartState = GRAPHICS_RESOURCE_STATE_PRESENT;
             }
 
             D3D12_CLEAR_VALUE clearValue = {};
             clearValue.Format = dxFormat;
-            if(desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
+            if(d3dTexDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)
             {
-                clearValue.DepthStencil.Depth = pDesc.m_clearValue.depth;
-                clearValue.DepthStencil.Stencil = (UINT8)pDesc.m_clearValue.stencil;
+                clearValue.DepthStencil.Depth = Desc.m_clearValue.depth;
+                clearValue.DepthStencil.Stencil = (UINT8)Desc.m_clearValue.stencil;
             }
             else
             {
-                clearValue.Color[0] = pDesc.m_clearValue.r;
-                clearValue.Color[1] = pDesc.m_clearValue.g;
-                clearValue.Color[2] = pDesc.m_clearValue.b;
-                clearValue.Color[3] = pDesc.m_clearValue.a;
+                clearValue.Color[0] = Desc.m_clearValue.r;
+                clearValue.Color[1] = Desc.m_clearValue.g;
+                clearValue.Color[2] = Desc.m_clearValue.b;
+                clearValue.Color[3] = Desc.m_clearValue.a;
             }
 
             D3D12_CLEAR_VALUE* pClearValue = nullptr;
@@ -675,24 +677,24 @@ namespace Cyber
             pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
             pTexture->set_new_state(actualStartState);
 
-            if((desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
+            if((d3dTexDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET) || (d3dTexDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
             {
                 pClearValue = &clearValue;
             }
 
             D3D12MA::ALLOCATION_DESC alloc_desc = {};
             alloc_desc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-            if(pDesc.m_flags & TCF_OWN_MEMORY_BIT)
+            if(Desc.m_flags & TCF_OWN_MEMORY_BIT)
                 alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
 
             // Create resource
-            auto hRes = m_pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, pClearValue, &pTexture->allocation, IID_ARGS(&pTexture->native_resource));
+            auto hRes = m_pResourceAllocator->CreateResource(&alloc_desc, &d3dTexDesc, res_states, pClearValue, &pTexture->allocation, IID_ARGS(&pTexture->native_resource));
             if(hRes != S_OK)
             {
                 auto fallbackhRes = hRes;
                 CB_CORE_ERROR("[D3D12] Create Texture Resource Failed With HRESULT {0}! \n\t With Name: {1} \n\t Size: {2}{3} \n\t Format: {4} \n\t Sample Count: {5}", 
-                                hRes, (char*)pDesc.m_name ? (char*)pDesc.m_name : "", pDesc.m_width, pDesc.m_height,
-                                pDesc.m_format, pDesc.m_sampleCount);
+                                hRes, (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
+                                Desc.m_format, Desc.m_sampleCount);
                 const bool use_fallback_commited = true;
                 if(use_fallback_commited)
                 {
@@ -702,7 +704,7 @@ namespace Cyber
                     heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
                     heapProps.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
                     heapProps.VisibleNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
-                    fallbackhRes = hook_CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, pClearValue, IID_ARGS(&pTexture->native_resource));
+                    fallbackhRes = hook_CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &d3dTexDesc, res_states, pClearValue, IID_ARGS(&pTexture->native_resource));
                     if(fallbackhRes == S_OK)
                     {
                         CB_CORE_TRACE("[D3D12] Create Texture With Fallback Driver API Succeed!");
@@ -716,14 +718,63 @@ namespace Cyber
             else
             {
                 CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: {0}\n\t Size: {1}x{2} \n\t Format: {3} \n\t Sample Count: {4}", 
-                                (char*)pDesc.m_name ? (char*)pDesc.m_name : "", pDesc.m_width, pDesc.m_height,
-                                pDesc.m_format, pDesc.m_sampleCount);
+                                (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
+                                Desc.m_format, Desc.m_sampleCount);
+
+                if(InitializeTexture)
+                {
+                    uint64_t uploadBufferSize = 0;
+                    m_pDxDevice->GetCopyableFootprints(&d3dTexDesc, 0, pInitData->numSubResources, 0, nullptr, nullptr, nullptr, &uploadBufferSize);
+                    
+                    D3D12_HEAP_PROPERTIES uploadHeapProps = {};
+                    uploadHeapProps.Type = D3D12_HEAP_TYPE_UPLOAD;
+                    uploadHeapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+                    uploadHeapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    uploadHeapProps.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
+                    uploadHeapProps.VisibleNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
+
+                    D3D12_RESOURCE_DESC uploadBufferDesc = {};
+                    uploadBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+                    uploadBufferDesc.Alignment = 0;
+                    uploadBufferDesc.Width = uploadBufferSize;
+                    uploadBufferDesc.Height = 1;
+                    uploadBufferDesc.DepthOrArraySize = 1;
+                    uploadBufferDesc.MipLevels = 1;
+                    uploadBufferDesc.Format = DXGI_FORMAT_UNKNOWN;
+                    uploadBufferDesc.SampleDesc.Count = 1;
+                    uploadBufferDesc.SampleDesc.Quality = 0;
+                    uploadBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+                    uploadBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+                    ID3D12Resource* uploadBuffer = nullptr;
+                    hRes = hook_CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_ARGS(&uploadBuffer));
+
+                    if(FAILED(hRes))
+                    {
+                        CB_CORE_ERROR("[D3D12] Create Upload Buffer Failed With HRESULT {0}!", hRes);
+                    }
+
+                    // Update Sub Resource
+                    D3D12_SUBRESOURCE_DATA* subResourceData = (D3D12_SUBRESOURCE_DATA*)cyber_malloc(sizeof(D3D12_SUBRESOURCE_DATA) * pInitData->numSubResources);
+                    for(size_t subres = 0; subres < pInitData->numSubResources; subres++)
+                    {
+                        subResourceData[subres].pData = pInitData->pSubResources[subres].pData;
+                        subResourceData[subres].RowPitch = pInitData->pSubResources[subres].stride;
+                        subResourceData[subres].SlicePitch = pInitData->pSubResources[subres].depthStride;
+                    }
+                    CommandBuffer_D3D12_Impl* pCmdBuffer;
+                    auto list = pCmdBuffer->get_dx_cmd_list();
+                    auto uploadedSize = D3D12Util_UpdateSubresource(list, pTexture->native_resource, uploadBuffer, 0, 0, pInitData->numSubResources, subResourceData);
+
+                    cyber_assert(uploadedSize == uploadBufferSize, "Upload Buffer Size Mismatch!");
+
+                }
             }
 
 
         }
         else {
-            pTexture->native_resource = (ID3D12Resource*)pDesc.m_pNativeHandle;
+            pTexture->native_resource = (ID3D12Resource*)Desc.m_pNativeHandle;
             pTexture->allocation = nullptr;
             pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
             pTexture->set_new_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);

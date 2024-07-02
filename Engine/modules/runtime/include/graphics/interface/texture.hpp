@@ -10,6 +10,27 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        struct CYBER_GRAPHICS_API TextureSubResData
+        {
+            // Pointer to the data in cpu memory
+            const void *pData;
+            
+            uint32_t srcOffset;
+
+            uint32_t stride;
+
+            uint32_t depthStride;
+        };
+
+        struct CYBER_GRAPHICS_API TextureData
+        {
+            TextureSubResData *pSubResources;
+
+            uint32_t numSubResources;
+
+            class IRenderDevice* pDevice;
+        };
+
         struct CYBER_GRAPHICS_API TextureCreateDesc
         {
             /// Pointer to native texture handle if the texture does not own underlying resource

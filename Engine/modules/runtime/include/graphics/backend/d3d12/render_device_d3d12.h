@@ -107,7 +107,7 @@ namespace Cyber
 
             virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
             virtual void free_texture_view(ITextureView* view) override;
-            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc) override;
+            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) override;
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
             virtual void free_buffer(IBuffer* buffer) override;
@@ -146,6 +146,7 @@ namespace Cyber
         protected:
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
+
 
             class D3D12MA::Allocator* m_pResourceAllocator;
 

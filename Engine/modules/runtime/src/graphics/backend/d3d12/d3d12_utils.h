@@ -457,6 +457,75 @@ namespace Cyber
 
     D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(PRIMITIVE_TOPOLOGY topology);
 
+    inline void MemcpySubresource(D3D12_MEMCPY_DEST* pDest, const D3D12_SUBRESOURCE_DATA* pSrc, uint64_t RowSizeInBytes, uint32_t numRows, uint32_t numSlices)
+    {
+        for(uint32_t z = 0; z < numSlices; ++z)
+        {
+            BYTE* pDestSlice = reinterpret_cast<BYTE*>(pDest->pData) + pDest->SlicePitch * z;
+            const BYTE* pSrcSlice = reinterpret_cast<const BYTE*>(pSrc->pData) + pSrc->SlicePitch * z;
+            for(uint32_t y = 0; y < numRows; ++y)
+            {
+                memcpy(pDestSlice + pDest->RowPitch * y, pSrcSlice + pSrc->RowPitch * y, RowSizeInBytes);
+            }
+        }
+    }
+
+    inline uint64_t UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
+                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t subresourceSize,
+                                        const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts, const uint32_t* pNumRows, const uint64_t* pRowSizeInBytes,
+                                        const D3D12_SUBRESOURCE_DATA* pSrcData)
+    {
+        D3D12_RESOURCE_DESC IntermediateDesc = pIntermediate->GetDesc();
+        D3D12_RESOURCE_DESC DestDesc = pDestResource->GetDesc();
+        
+        BYTE* pData;
+        pIntermediate->Map(0, NULL, reinterpret_cast<void**>(pData));
+        for(uint32_t i = 0; i < numSubresources; ++i)
+        {
+            D3D12_MEMCPY_DEST DestData = {pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, pLayouts[i].Footprint.RowPitch * pNumRows[i]};
+            MemcpySubresource(&DestData, &pSrcData[i], pRowSizeInBytes[i], pNumRows[i], pLayouts[i].Footprint.Depth);
+        }
+        pIntermediate->Unmap(0, NULL);
+
+        if(DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+        {
+            pCmdList->CopyBufferRegion(pDestResource, firstSubresource * subresourceSize, pIntermediate, 0, subresourceSize);
+        }
+        else
+        {
+            for(uint32_t i = 0; i < numSubresources; ++i)
+            {
+                D3D12_TEXTURE_COPY_LOCATION Dst = {pDestResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, firstSubresource + i};
+                D3D12_TEXTURE_COPY_LOCATION Src = {pIntermediate, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, pLayouts[i]};
+                pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+            }
+        }
+    }
+
+    // Update Sub Resource Data
+    inline uint64_t D3D12Util_UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
+                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t subresourceSize,
+                                        const D3D12_SUBRESOURCE_DATA* pSrcData)
+    {
+        uint64_t RequiredSize = 0;
+        uint64_t MemToAlloc = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t)  + sizeof(uint64_t)) * numSubresources;
+        
+        void* pMem = cyber_malloc(MemToAlloc);
+        D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(pMem);
+        uint32_t* pNumRows = reinterpret_cast<uint32_t*>(pLayouts + numSubresources);
+        uint64_t* pRowSizeInBytes = reinterpret_cast<uint64_t*>(pNumRows + numSubresources);
+
+        D3D12_RESOURCE_DESC Desc = pDestResource->GetDesc();
+        ID3D12Device* pDevice = nullptr;
+        pDestResource->GetDevice(IID_PPV_ARGS(&pDevice));
+        pDevice->GetCopyableFootprints(&Desc, firstSubresource, numSubresources, 0, pLayouts, pNumRows, pRowSizeInBytes, &RequiredSize);
+        pDevice->Release();
+
+        uint64_t Res = UpdateSubresource(pCmdList, pDestResource, pIntermediate, firstSubresource, numSubresources, subresourceSize, pLayouts, pNumRows, pRowSizeInBytes, pSrcData);
+        cyber_free(pMem);
+        return Res;
+    }
+
     #if !defined (XBOX) && defined (_WIN32)
         struct D3D12Util_DXCLoader
         {
