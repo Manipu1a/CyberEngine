@@ -4,6 +4,7 @@
 #include "graphics/interface/root_signature.hpp"
 #include "graphics/interface/render_device.hpp"
 #include "platform/memory.h"
+#include "core/Application.h"
 namespace Cyber
 {
     namespace Editor
@@ -130,7 +131,30 @@ namespace Cyber
             int            Weight = 0;
             IO.Fonts->GetTexDataAsRGBA32(&pData, &Width, &Weight);
 
+            RenderObject::TextureCreateDesc texture_desc = {};
+            texture_desc.m_width = Width;
+            texture_desc.m_height = Weight;
+            texture_desc.m_mipLevels = 1;
+            texture_desc.m_arraySize = 1;
+            texture_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            texture_desc.m_startState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
             
+            RenderObject::TextureSubResData sub_res_data = {};
+            sub_res_data.pData = pData;
+            sub_res_data.stride = Width * 4;
+            sub_res_data.depthStride = 0;
+            sub_res_data.srcOffset = 0;
+
+            RenderObject::TextureData texture_data = {};
+            texture_data.pSubResources = &sub_res_data;
+            texture_data.numSubResources = 1;
+            texture_data.pDevice = m_pDevice;
+            texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
+
+            auto texture = m_pDevice->create_texture(texture_desc, &texture_data);
+            m_pFontSRV = texture->get_default_texture_view(TVU_SRV);
+            
+            IO.Fonts->TexID = (ImTextureID)m_pFontSRV;
         }
     }
 }

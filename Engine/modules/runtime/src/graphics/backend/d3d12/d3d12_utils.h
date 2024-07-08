@@ -500,6 +500,8 @@ namespace Cyber
                 pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
             }
         }
+
+        return 0;
     }
 
     // Update Sub Resource Data

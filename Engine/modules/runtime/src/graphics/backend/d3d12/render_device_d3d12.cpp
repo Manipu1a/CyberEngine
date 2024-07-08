@@ -762,7 +762,9 @@ namespace Cyber
                         subResourceData[subres].RowPitch = pInitData->pSubResources[subres].stride;
                         subResourceData[subres].SlicePitch = pInitData->pSubResources[subres].depthStride;
                     }
-                    CommandBuffer_D3D12_Impl* pCmdBuffer;
+                    
+                    cyber_assert(pInitData->pCommandBuffer != nullptr, "Command Buffer is Nullptr!");
+                    CommandBuffer_D3D12_Impl* pCmdBuffer = static_cast<CommandBuffer_D3D12_Impl*>(pInitData->pCommandBuffer);
                     auto list = pCmdBuffer->get_dx_cmd_list();
                     auto uploadedSize = D3D12Util_UpdateSubresource(list, pTexture->native_resource, uploadBuffer, 0, 0, pInitData->numSubResources, subResourceData);
 

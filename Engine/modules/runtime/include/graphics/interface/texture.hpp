@@ -29,6 +29,8 @@ namespace Cyber
             uint32_t numSubResources;
 
             class IRenderDevice* pDevice;
+
+            class ICommandBuffer* pCommandBuffer;
         };
 
         struct CYBER_GRAPHICS_API TextureCreateDesc
