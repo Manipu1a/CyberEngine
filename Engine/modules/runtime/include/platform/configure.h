@@ -46,7 +46,7 @@
 #define CYBER_BEGIN_NAMESPACE(Name) \
     namespace Name                  \
     {                               
-#define CYBER_END_NAMESPACE(Name)   \
+#define CYBER_END_NAMESPACE   \
     }
 
 #define CB_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
