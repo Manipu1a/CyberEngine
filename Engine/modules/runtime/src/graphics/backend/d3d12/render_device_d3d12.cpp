@@ -772,8 +772,6 @@ namespace Cyber
 
                 }
             }
-
-
         }
         else {
             pTexture->native_resource = (ID3D12Resource*)Desc.m_pNativeHandle;

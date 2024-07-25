@@ -39,6 +39,21 @@ namespace Cyber
         GRAPHICS_BACKEND_METAL = 2,
     };
 
+    CYBER_TYPED_ENUM(VALUE_TYPE, uint8_t)
+    {
+        VALUE_TYPE_UNDEFINED = 0,
+        VALUE_TYPE_INT8,
+        VALUE_TYPE_INT16,
+        VALUE_TYPE_INT32,
+        VALUE_TYPE_UINT8,
+        VALUE_TYPE_UINT16,
+        VALUE_TYPE_UINT32,
+        VALUE_TYPE_FLOAT16,
+        VALUE_TYPE_FLOAT32,
+        VALUE_TYPE_FLOAT64,
+        VALUE_TYPE_COUNT,
+    };
+
     CYBER_TYPED_ENUM(NVAPI_STATUS, int8_t)
     {
         NVAPI_NONE = 0,
@@ -745,6 +760,32 @@ namespace Cyber
         GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU = 3,
         /// Memory will be used for writing on device and readback on host.
         GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU = 4,
+
+    };
+    
+    CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_USAGE, uint32_t)
+    {
+        GRAPHICS_RESOURCE_USAGE_UNIFIED = 0,
+        /// A resource that can only be read on the GPU, cannot be written by the GPU.
+        /// and cannot be accessed at all by the CPU. This type of resource must be 
+        /// initialized when it is created, since it cannot be altered after creation.
+        GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
+        /// A resource that can be read by the GPU and written to by the GPU and can also
+        /// be accessed by the CPU.
+        GRAPHICS_RESOURCE_USAGE_DEFAULT,
+        /// A resource that can be read by the GPU and written at least once per frame by the CPU.
+        GRAPHICS_RESOURCE_USAGE_DYNAMIC,
+        /// A resource that supports data transfer (copy) from the CPU to the GPU.
+        GRAPHICS_RESOURCE_USAGE_STAGING,
+        /// A resource that can be partially committed to physical memory.
+        GRAPHICS_RESOURCE_USAGE_SPARSE,
+    };
+
+    CYBER_TYPED_ENUM(CPU_ACCESS_FLAGS, uint8_t)
+    {
+        CPU_ACCESS_NONE = 0, ///< No CPU access
+        CPU_ACCESS_READ = 0x01, ///< A resource can be mapped for reading
+        CPU_ACCESS_WRITE = 0x02, ///< A resource can be mapped for writing
     };
 
     CYBER_TYPED_ENUM(BUFFER_CREATION_FLAG, uint32_t)

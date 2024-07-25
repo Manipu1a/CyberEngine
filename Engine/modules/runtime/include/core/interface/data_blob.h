@@ -1,7 +1,7 @@
 #pragma once
 
 
-struct DataBlob
+struct IDataBlob
 {
     virtual void resize() = 0;
     virtual size_t get_size() const = 0;
