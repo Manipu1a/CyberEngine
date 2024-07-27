@@ -3,7 +3,7 @@
 #include "graphics/interface/graphics_types.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
-
+CYBER_BEGIN_NAMESPACE(Image)
 CYBER_TYPED_ENUM(IMAGE_FILE_FORMAT, uint8_t)
 {
     IMAGE_FILE_FORMAT_UNKNOWN = 0,
@@ -48,23 +48,34 @@ public:
 
     struct EncodeInfo
     {
-
+        uint32_t width;
+        uint32_t height;
+        TEXTURE_FORMAT textureFormat;
+        bool keepAlpha;
+        const void* data;
+        uint32_t stride;
+        IMAGE_FILE_FORMAT fileFormat;
+        int jepgQuality;
     };
 
     static void encode(const EncodeInfo& encodeInfo, IDataBlob** dataBlob);
 
-    ImageDesc get_desc() const;
+    const ImageDesc& get_desc() const { return m_desc; }
 
-    IDataBlob* get_data_blob();
+    IDataBlob* get_data_blob() { return m_dataBlob; }
     
-    const IDataBlob* get_data_blob() const;
+    const IDataBlob* get_data_blob() const { return m_dataBlob; }
 
     static IMAGE_FILE_FORMAT GetFileFormat(const uint8_t* data, size_t dataSize, const char8_t* filePath);
+
 private:
+    Image(const ImageDesc& desc, IDataBlob* dataBlob);
+    Image(const ImageLoadInfo& loadInfo, IDataBlob* dataBlob);
 
     ImageDesc m_desc;
 
     IDataBlob* m_dataBlob;
 };
 
+CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

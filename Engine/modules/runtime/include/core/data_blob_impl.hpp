@@ -6,10 +6,10 @@
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Core)
 
-class DataBlobImpl final : public DataBlob
+class DataBlobImpl final : public IDataBlob
 {
 public:
-    static DataBlobImpl* create(size_t size, const void* data);
+    static DataBlobImpl* create(size_t size = 0, const void* data = nullptr);
 
     virtual ~DataBlobImpl();
 
