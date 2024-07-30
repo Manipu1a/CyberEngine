@@ -21,7 +21,7 @@ private:
     
 private:
     const char8_t* m_name;
-    DataBlob* m_dataBlob;
+    class DataBlob* m_dataBlob;
     RenderObject::TextureCreateDesc m_textureCreateDesc;
 };
 CYBER_END_NAMESPACE

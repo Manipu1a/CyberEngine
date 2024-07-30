@@ -1,6 +1,8 @@
 #include "image.h"
 #include "platform/memory.h"
 #include "core/data_blob_impl.hpp"
+#include "CyberLog/Log.h"
+#include "eastl/string.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Image)
@@ -68,11 +70,48 @@ IMAGE_FILE_FORMAT Image::GetFileFormat(const uint8_t* data, size_t dataSize, con
 
     if(filePath != nullptr)
     {
-        const char* DotPos = strrchr((const char*)filePath, '.');
+        const char* dotPos = strrchr((const char*)filePath, '.');
         
+        if(dotPos == nullptr)
+        {
+            CB_ERROR("Unable to recognize file format: file name {0} does not contain extension", (char*)filePath);
+            return IMAGE_FILE_FORMAT_UNKNOWN;
+        }
 
+        auto* extension = dotPos + 1;
+        if(*extension == 0)
+        {
+            CB_ERROR("Unable to recognize file format: file name {0} contain empty extension", (char*)filePath);
+            return IMAGE_FILE_FORMAT_UNKNOWN;
+        }
+
+        eastl::string ext(extension);
+        ext.make_lower();
+        if(ext == "png")
+        {
+            return IMAGE_FILE_FORMAT_PNG;
+        }
+        else if(ext == "jpg" || ext == "jpeg")
+        {
+            return IMAGE_FILE_FORMAT_JPEG;
+        }
+        else if(ext == "tiff" || ext == "tif")
+        {
+            return IMAGE_FILE_FORMAT_TIFF;
+        }
+        else if(ext == "dds")
+        {
+            return IMAGE_FILE_FORMAT_DDS;
+        }
+        else if(ext == "ktx")
+        {
+            return IMAGE_FILE_FORMAT_KTX;
+        }
+        else if(ext == "sgi" || ext == "rgb" || ext == "rgba" || ext == "bw" || ext == "int" || ext == "inta")
+        {
+            return IMAGE_FILE_FORMAT_SGI;
+        }
     }
-
 
     return IMAGE_FILE_FORMAT_UNKNOWN;
 }
@@ -86,7 +125,7 @@ Image::Image(const ImageLoadInfo& loadInfo, IDataBlob* dataBlob) : m_dataBlob(Co
 {
     if(loadInfo.format == IMAGE_FILE_FORMAT_TIFF)
     {
-
+        
     }
     else if(loadInfo.format == IMAGE_FILE_FORMAT_PNG)
     {
