@@ -68,10 +68,11 @@ public:
 
     static IMAGE_FILE_FORMAT GetFileFormat(const uint8_t* data, size_t dataSize, const char8_t* filePath);
 
-private:
+public:
     Image(const ImageDesc& desc, IDataBlob* dataBlob);
     Image(const ImageLoadInfo& loadInfo, IDataBlob* dataBlob);
 
+private:
     ImageDesc m_desc;
 
     IDataBlob* m_dataBlob;

@@ -25,11 +25,14 @@ void TextureLoaderImpl::create_texture(RenderObject::IRenderDevice* device, Rend
 }
 const RenderObject::TextureCreateDesc& TextureLoaderImpl::get_texture_desc()
 {
-
+    return m_textureCreateDesc;
 }
-const RenderObject::TextureSubResData& TextureLoaderImpl::get_texture_sub_res_data()
-{
 
+const RenderObject::TextureSubResData& TextureLoaderImpl::get_texture_sub_res_data(uint32_t mipLevel, uint32_t arraySlice)
+{
+    const auto subResIndex = arraySlice * m_textureCreateDesc.m_mipLevels + mipLevel;  
+    cyber_check(subResIndex < m_textureSubResData.size());
+    return m_textureSubResData[subResIndex];
 }
 
 CYBER_END_NAMESPACE
