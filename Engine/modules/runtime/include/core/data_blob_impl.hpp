@@ -14,10 +14,16 @@ public:
 
     virtual ~DataBlobImpl();
 
-    virtual void resize() override;
+    virtual void resize(size_t newSize) override;
     virtual size_t get_size() const override;
     virtual void* get_data_ptr() override;
     virtual const void* get_const_data_ptr() const override;
+
+    template<typename T>
+    T* get_data_ptr()
+    {
+        return reinterpret_cast<T*>(get_data_ptr());
+    }
 
     explicit DataBlobImpl(size_t size, const void* data);
 

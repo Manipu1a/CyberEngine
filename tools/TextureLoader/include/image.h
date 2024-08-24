@@ -32,9 +32,9 @@ struct ImageDesc
 
     uint32_t height;
 
-    VALUE_TYPE valueType;
+    VALUE_TYPE componentType;
 
-    uint32_t numChannels;
+    uint32_t numComponents;
 
     uint32_t rowStride;
 };

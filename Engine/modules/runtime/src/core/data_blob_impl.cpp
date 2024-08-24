@@ -20,9 +20,10 @@ DataBlobImpl::~DataBlobImpl()
 {
 }
 
-void DataBlobImpl::resize()
+void DataBlobImpl::resize( size_t newSize )
 {
-    m_Data.resize(m_Size);
+    m_Size = newSize;
+    m_Data.resize(newSize);
 }
 
 size_t DataBlobImpl::get_size() const

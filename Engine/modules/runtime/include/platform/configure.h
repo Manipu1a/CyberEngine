@@ -55,4 +55,22 @@
 
 #define IID_ARGS IID_PPV_ARGS
 
+#define CYBER_CONCATENATE0(X, Y) X##Y
+#define CYBER_CONCATENATE(X, Y) CYBER_CONCATENATE0(X, Y)
+
+#define CYBER_BEGIN_INTERFACE(Iface, Base) \
+    typedef struct Iface                   \
+    {                                      \
+        struct Iface##Vtbl* pVtbl;         \
+    } Iface;                               \
+    struct Iface##Methods
+
+#define CYBER_END_INTERFACE                                                                                             \
+    typedef struct CYBER_CONCATENATE(CYBER_INTERFACE_NAME, Methods) CYBER_CONCATENATE(CYBER_INTERFACE_NAME, Methods);   \
+    typedef struct CYBER_CONCATENATE(CYBER_INTERFACE_NAME, Vtbl)                                                        \
+    {                                                                                                                   \
+        CYBER_CONCATENATE(CYBER_INTERFACE_NAME, InclusiveMethods);                                                      \
+    } CYBER_CONCATENATE(CYBER_INTERFACE_NAME, Vtbl);                                                                
+
+#define CALL_IFACE_METHOD(Iface, Method, This, ...) (This)->
 
