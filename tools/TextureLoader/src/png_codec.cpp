@@ -1,0 +1,9 @@
+#include "png_codec.h"
+#include "png.h"
+
+CYBER_BEGIN_NAMESPACE(Cyber)
+CYBER_BEGIN_NAMESPACE(Image)
+
+
+CYBER_END_NAMESPACE
+CYBER_END_NAMESPACE

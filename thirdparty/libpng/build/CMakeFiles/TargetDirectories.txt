@@ -1,0 +1,14 @@
+D:/Project/libpng/build/CMakeFiles/png_genfiles.dir
+D:/Project/libpng/build/CMakeFiles/png_shared.dir
+D:/Project/libpng/build/CMakeFiles/png_static.dir
+D:/Project/libpng/build/CMakeFiles/pngtest.dir
+D:/Project/libpng/build/CMakeFiles/pngvalid.dir
+D:/Project/libpng/build/CMakeFiles/pngstest.dir
+D:/Project/libpng/build/CMakeFiles/pngunknown.dir
+D:/Project/libpng/build/CMakeFiles/pngimage.dir
+D:/Project/libpng/build/CMakeFiles/pngfix.dir
+D:/Project/libpng/build/CMakeFiles/png-fix-itxt.dir
+D:/Project/libpng/build/CMakeFiles/RUN_TESTS.dir
+D:/Project/libpng/build/CMakeFiles/INSTALL.dir
+D:/Project/libpng/build/CMakeFiles/ALL_BUILD.dir
+D:/Project/libpng/build/CMakeFiles/ZERO_CHECK.dir

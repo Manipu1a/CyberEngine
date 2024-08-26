@@ -1,0 +1,10 @@
+^D:\PROJECT\CYBERENGINE\THIRDPARTY\ZLIB\BUILD\CMAKEFILES\7EC71C3A593AACAC88F1263EA5C4CB5C\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Project/CyberEngine/thirdparty/zlib -BD:/Project/CyberEngine/thirdparty/zlib/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/Project/CyberEngine/thirdparty/zlib/build/zlib.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
