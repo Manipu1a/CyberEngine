@@ -4,9 +4,14 @@ CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
 
 
-static RenderObject::TextureCreateDesc TexDescFromTexLoadInfo()
+static RenderObject::TextureCreateDesc TexDescFromTexLoadInfo(const TextureLoadInfo& texLoadInfo)
 {
-
+    RenderObject::TextureCreateDesc createDesc;
+    createDesc.m_name = texLoadInfo.name;
+    createDesc.m_format = texLoadInfo.format;
+    createDesc.m_usage = texLoadInfo.usage;
+    createDesc.m_flags = texLoadInfo.flags;
+    
 }
 
 TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize, IDataBlob* dataBlob)

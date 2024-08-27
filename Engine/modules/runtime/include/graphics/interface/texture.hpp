@@ -47,6 +47,9 @@ namespace Cyber
             /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
             GRAPHICS_CLEAR_VALUE m_clearValue;
             DESCRIPTOR_TYPE m_descriptors;
+
+            GRAPHICS_RESOURCE_USAGE m_usage;
+            
             TEXTURE_CREATE_FLAG m_flags;
             /// Number of multisamples per pixel (currently Textures created with mUsage TEXTURE_USAGE_SAMPLED_IMAGE only support SAMPLE_COUNT_1)
             TEXTURE_SAMPLE_COUNT m_sampleCount;

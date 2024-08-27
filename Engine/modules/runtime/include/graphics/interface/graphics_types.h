@@ -781,6 +781,38 @@ namespace Cyber
         GRAPHICS_RESOURCE_USAGE_SPARSE,
     };
 
+    CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_BIND_FLAGS, uint32_t)
+    {
+        // Undefined binding.
+        GRAPHICS_RESOURCE_BIND_FLAGS_NONE = 0,
+        // A buffer can be bound as a vertex buffer.
+        GRAPHICS_RESOURCE_BIND_FLAGS_VERTEX_BUFFER = 1u << 0u,
+        // A buffer can be bound as an index buffer.
+        GRAPHICS_RESOURCE_BIND_FLAGS_INDEX_BUFFER = 1u << 1u,
+        // A buffer can be bound as a uniform buffer.
+        GRAPHICS_RESOURCE_BIND_FLAGS_UNIFORM_BUFFER = 1u << 2u,
+        // A buffer or a texture can be bound as a shader resource.
+        GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE = 1u << 3u,
+        // A buffer can be bound as a target for stream output stage.
+        GRAPHICS_RESOURCE_BIND_FLAGS_STREAM_OUTPUT = 1u << 4u,
+        // A texture can be bound as a render target.
+        GRAPHICS_RESOURCE_BIND_FLAGS_RENDER_TARGET = 1u << 5u,
+        // A texture can be bound as a depth-stencil target.
+        GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL = 1u << 6u,
+        // A buffer or a texture can be bound as an unordered access view.
+        GRAPHICS_RESOURCE_BIND_FLAGS_UNORDERED_ACCESS = 1u << 7u,
+        // A buffer can be bound as the source buffer for indirect draw commands.
+        GRAPHICS_RESOURCE_BIND_FLAGS_DRAW_ARGS = 1u << 8u,
+        // A texture can be used as render pass input attachment.
+        GRAPHICS_RESOURCE_BIND_FLAGS_ATTACHMENT = 1u << 9u,
+        // A buffer can be used as a scratch buffer or as the source of primitive data
+        // for acceleration structures building.
+        GRAPHICS_RESOURCE_BIND_FLAGS_RAY_TRACING = 1u << 10u,
+        // A texture can be used as a shading rate source.
+        GRAPHICS_RESOURCE_BIND_FLAGS_SHADING_RATE = 1u << 11u,
+        
+        GRAPHICS_RESOURCE_BIND_FLAGS_LAST = GRAPHICS_RESOURCE_BIND_FLAGS_SHADING_RATE
+    };
     CYBER_TYPED_ENUM(CPU_ACCESS_FLAGS, uint8_t)
     {
         CPU_ACCESS_NONE = 0, ///< No CPU access
