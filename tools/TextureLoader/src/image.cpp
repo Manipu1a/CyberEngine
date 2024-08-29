@@ -5,7 +5,7 @@
 #include "eastl/string.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
-CYBER_BEGIN_NAMESPACE(Image)
+CYBER_BEGIN_NAMESPACE(TextureLoader)
 
 void Image::create_from_data_blob(const ImageLoadInfo& imageLoadInfo, IDataBlob* dataBlob, Image** image)
 {
@@ -22,7 +22,7 @@ void Image::encode(const EncodeInfo& encodeInfo, IDataBlob** dataBlob)
 
 }
 
-IMAGE_FILE_FORMAT Image::GetFileFormat(const uint8_t* data, size_t dataSize, const char8_t* filePath)
+IMAGE_FILE_FORMAT Image::get_file_format(const uint8_t* data, size_t dataSize, const char8_t* filePath)
 {
     if(data != nullptr)
     {

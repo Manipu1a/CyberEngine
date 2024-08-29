@@ -2,7 +2,7 @@
 #include "png.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
-CYBER_BEGIN_NAMESPACE(Image)
+CYBER_BEGIN_NAMESPACE(TextureLoader)
 
 struct PNGReadFnState
 {

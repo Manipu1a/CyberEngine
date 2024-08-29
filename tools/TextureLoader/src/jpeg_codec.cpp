@@ -2,7 +2,7 @@
 #include "jpeglib.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
-CYBER_BEGIN_NAMESPACE(Image)
+CYBER_BEGIN_NAMESPACE(TextureLoader)
 
 struct my_jpeg_error_mgr
 {

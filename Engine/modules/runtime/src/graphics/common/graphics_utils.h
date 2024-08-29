@@ -19,6 +19,12 @@ namespace Cyber
     void graphics_util_free_root_signature_pool(RenderObject::RootSignaturePoolBase* pool);
 
     eastl::string GetHLSLProfileString(SHADER_STAGE stage, ShaderVersion version);
+
+    template < VALUE_TYPE >
+    struct VALUE_TYPE2CType
+    {};
+
+    
 }
 
 

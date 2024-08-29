@@ -3,7 +3,7 @@
 #include "graphics/interface/graphics_types.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
-CYBER_BEGIN_NAMESPACE(Image)
+CYBER_BEGIN_NAMESPACE(TextureLoader)
 CYBER_TYPED_ENUM(IMAGE_FILE_FORMAT, uint8_t)
 {
     IMAGE_FILE_FORMAT_UNKNOWN = 0,
@@ -66,7 +66,7 @@ public:
     
     const IDataBlob* get_data_blob() const { return m_dataBlob; }
 
-    static IMAGE_FILE_FORMAT GetFileFormat(const uint8_t* data, size_t dataSize, const char8_t* filePath);
+    static IMAGE_FILE_FORMAT get_file_format(const uint8_t* data, size_t dataSize, const char8_t* filePath = nullptr);
 
 public:
     Image(const ImageDesc& desc, IDataBlob* dataBlob);

@@ -11,7 +11,7 @@ struct TextureLoadInfo
 
     GRAPHICS_RESOURCE_USAGE usage;
 
-    GRAPHICS_RESOURCE_STATE flags;
+    GRAPHICS_RESOURCE_BIND_FLAGS bindFlags;
 
     uint32_t mipLevels;
 
@@ -29,7 +29,7 @@ struct TextureLoadInfo
 
     explicit TextureLoadInfo(const char8_t* name,
                              GRAPHICS_RESOURCE_USAGE usage, 
-                             GRAPHICS_RESOURCE_STATE flags, 
+                             GRAPHICS_RESOURCE_BIND_FLAGS bindFlags, 
                              uint32_t mipLevels, 
                              CPU_ACCESS_FLAGS cpuAccessFlags, 
                              bool isSRGB, 
@@ -39,7 +39,7 @@ struct TextureLoadInfo
                              FILTER_TYPE filter)
         : name(name), 
         usage(usage), 
-        flags(flags), 
+        bindFlags(bindFlags), 
         mipLevels(mipLevels), 
         cpuAccessFlags(cpuAccessFlags), 
         isSRGB(isSRGB), 
@@ -58,6 +58,7 @@ class ITextureLoader
     virtual void create_texture(class RenderObject::IRenderDevice* device, class RenderObject::ITexture* texture) = 0;
     virtual const RenderObject::TextureCreateDesc& get_texture_desc() = 0;
     virtual const RenderObject::TextureSubResData& get_texture_sub_res_data(uint32_t mipLevel, uint32_t arraySlice) = 0;
+    virtual RenderObject::TextureData get_texture_data() = 0;
 };
 
 void create_texture_loader_from_image();
