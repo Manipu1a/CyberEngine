@@ -804,7 +804,7 @@ namespace Cyber
         // A buffer can be bound as the source buffer for indirect draw commands.
         GRAPHICS_RESOURCE_BIND_FLAGS_DRAW_ARGS = 1u << 8u,
         // A texture can be used as render pass input attachment.
-        GRAPHICS_RESOURCE_BIND_FLAGS_ATTACHMENT = 1u << 9u,
+        GRAPHICS_RESOURCE_BIND_FLAGS_INPUT_ATTACHMENT = 1u << 9u,
         // A buffer can be used as a scratch buffer or as the source of primitive data
         // for acceleration structures building.
         GRAPHICS_RESOURCE_BIND_FLAGS_RAY_TRACING = 1u << 10u,

@@ -137,7 +137,8 @@ namespace Cyber
             texture_desc.m_mipLevels = 1;
             texture_desc.m_arraySize = 1;
             texture_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
-            texture_desc.m_startState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+            texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE;
+            texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
             
             RenderObject::TextureSubResData sub_res_data = {};
             sub_res_data.pData = pData;

@@ -1,6 +1,7 @@
 #include "texture_loader_impl.hpp"
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
+#include "common/graphics_utils.h"
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
 
@@ -69,7 +70,11 @@ const RenderObject::TextureSubResData& TextureLoaderImpl::get_texture_sub_res_da
 void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
 {
     const auto& imgDesc = m_image->get_desc();
-    
+    const auto channelDepth = GetValueSize(imgDesc.componentType) * 8;
+
+    m_textureCreateDesc;
+    m_textureCreateDesc.m_width = imgDesc.width;
+
 }
 void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
 {

@@ -46,8 +46,8 @@ namespace Cyber
             uint32_t m_mipLevels;
             /// Optimized clear value (recommended to use this same value when clearing the rendertarget)
             GRAPHICS_CLEAR_VALUE m_clearValue;
-            DESCRIPTOR_TYPE m_descriptors;
 
+            TEXTURE_DIMENSION m_dimension;
             GRAPHICS_RESOURCE_USAGE m_usage;
             GRAPHICS_RESOURCE_BIND_FLAGS m_bindFlags;
             CPU_ACCESS_FLAGS m_cpuAccessFlags;
@@ -59,7 +59,7 @@ namespace Cyber
             /// Image format
             TEXTURE_FORMAT m_format;
             /// What state will the texture get created in
-            GRAPHICS_RESOURCE_STATE m_startState;
+            GRAPHICS_RESOURCE_STATE m_initializeState;
         };
 
 

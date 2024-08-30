@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <synchapi.h>
 #include "platform/memory.h"
-#include "../../common/graphics_utils.h"
+#include "common/graphics_utils.h"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
 #include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/texture_d3d12.h"
@@ -572,8 +572,6 @@ namespace Cyber
         //TODO:
         DXGI_FORMAT dxFormat = DXGIUtil_TranslatePixelFormat(Desc.m_format);
         
-        DESCRIPTOR_TYPE descriptors = Desc.m_descriptors;
-
         if(Desc.m_pNativeHandle == nullptr)
         {
             D3D12_RESOURCE_DIMENSION res_dim = D3D12_RESOURCE_DIMENSION_UNKNOWN;
@@ -605,7 +603,6 @@ namespace Cyber
             d3dTexDesc.SampleDesc.Count = (UINT)Desc.m_sampleCount;
             d3dTexDesc.SampleDesc.Quality = (UINT)Desc.m_sampleQuality;
             d3dTexDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-            d3dTexDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
             D3D12_FEATURE_DATA_MULTISAMPLE_QUALITY_LEVELS data;
             data.Format = d3dTexDesc.Format;
@@ -621,27 +618,37 @@ namespace Cyber
 
             d3dTexDesc.SampleDesc.Count = data.SampleCount;
 
-            GRAPHICS_RESOURCE_STATE actualStartState = (GRAPHICS_RESOURCE_STATE)Desc.m_startState;
+            GRAPHICS_RESOURCE_STATE actualStartState = (GRAPHICS_RESOURCE_STATE)Desc.m_initializeState;
 
-            // Decide UAV flags
-            if(descriptors & DESCRIPTOR_TYPE_RW_TEXTURE)
+            d3dTexDesc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            // Decide resource flags
+            if(Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_UNORDERED_ACCESS)
             {
                 d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             }
-
-            // Decide render target flags
-            if(Desc.m_startState & GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+            if(Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_RENDER_TARGET)
             {
                 d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET;
-                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_startState > GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
-                                    ? (Desc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
-                                    : GRAPHICS_RESOURCE_STATE_RENDER_TARGET);
             }
-            else if(Desc.m_startState & GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+            if(Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL)
             {
                 d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
-                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_startState > GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
-                                    ? (Desc.m_startState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+            }
+            if((Desc.m_bindFlags & (GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_FLAGS_INPUT_ATTACHMENT)) == 0 && (Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL) != 0)
+            {
+                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            }
+            // Decide resource states
+            if(Desc.m_initializeState & GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+            {
+                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_initializeState > GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+                                    ? (Desc.m_initializeState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
+                                    : GRAPHICS_RESOURCE_STATE_RENDER_TARGET);
+            }
+            else if(Desc.m_initializeState & GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+            {
+                actualStartState = (GRAPHICS_RESOURCE_STATE)((Desc.m_initializeState > GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+                                    ? (Desc.m_initializeState & (GRAPHICS_RESOURCE_STATE)~GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
                                     : GRAPHICS_RESOURCE_STATE_DEPTH_WRITE);
             }
 
@@ -1526,7 +1533,8 @@ namespace Cyber
             textureDesc.m_format = desc.m_format;
             textureDesc.m_mipLevels = 1;
             textureDesc.m_sampleCount = SAMPLE_COUNT_1;
-            textureDesc.m_startState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_RENDER_TARGET;
+            textureDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
             textureDesc.m_name = u8"SwapChain Back Buffer";
             textureDesc.m_pNativeHandle = backbuffers[i];
             auto Ts = create_texture(textureDesc);
@@ -1545,8 +1553,8 @@ namespace Cyber
         depthStencilDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
         depthStencilDesc.m_mipLevels = 1;
         depthStencilDesc.m_sampleCount = SAMPLE_COUNT_1;
-        depthStencilDesc.m_descriptors = DESCRIPTOR_TYPE_UNDEFINED;
-        depthStencilDesc.m_startState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+        depthStencilDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL;
+        depthStencilDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
         depthStencilDesc.m_name = u8"Main Depth Stencil";
         auto depth_buffer = create_texture(depthStencilDesc);
         dxSwapChain->set_back_buffer_depth(depth_buffer);
