@@ -72,8 +72,10 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     const auto& imgDesc = m_image->get_desc();
     const auto channelDepth = GetValueSize(imgDesc.componentType) * 8;
 
-    m_textureCreateDesc;
+    m_textureCreateDesc.m_dimension = TEX_DIMENSION_2D;
     m_textureCreateDesc.m_width = imgDesc.width;
+    m_textureCreateDesc.m_height = imgDesc.height;
+    m_textureCreateDesc.m_mipLevels;
 
 }
 void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
