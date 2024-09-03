@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <synchapi.h>
 #include "platform/memory.h"
-#include "common/graphics_utils.h"
+#include "common/graphics_utils.hpp"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
 #include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/texture_d3d12.h"

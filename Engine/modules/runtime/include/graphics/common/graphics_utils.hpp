@@ -85,11 +85,16 @@ namespace Cyber
     };
 
     // Returns the size of the value type in bytes
-    inline uint32_t GetValueSize(VALUE_TYPE Val)
+    inline uint32_t get_value_size(VALUE_TYPE Val)
     {
         cyber_assert(Val < VALUE_TYPE_COUNT, "Invalid value type");
         return ValueTypeToSizeMap[Val];
     }
+
+
+    uint32_t compute_mip_levels_count(uint32_t width);
+    uint32_t compute_mip_levels_count(uint32_t width, uint32_t height);
+    uint32_t compute_mip_levels_count(uint32_t width, uint32_t height, uint32_t depth);
 }
 
 

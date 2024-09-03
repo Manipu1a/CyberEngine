@@ -1,7 +1,7 @@
 #include "texture_loader_impl.hpp"
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
-#include "common/graphics_utils.h"
+#include "common/graphics_utils.hpp"
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
 
@@ -70,12 +70,50 @@ const RenderObject::TextureSubResData& TextureLoaderImpl::get_texture_sub_res_da
 void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
 {
     const auto& imgDesc = m_image->get_desc();
-    const auto channelDepth = GetValueSize(imgDesc.componentType) * 8;
+    const auto channelDepth = get_value_size(imgDesc.componentType) * 8;
 
     m_textureCreateDesc.m_dimension = TEX_DIMENSION_2D;
     m_textureCreateDesc.m_width = imgDesc.width;
     m_textureCreateDesc.m_height = imgDesc.height;
-    m_textureCreateDesc.m_mipLevels;
+    m_textureCreateDesc.m_mipLevels = compute_mip_levels_count(imgDesc.width, imgDesc.height);
+    if(texLoadInfo.mipLevels > 0)
+    {
+        m_textureCreateDesc.m_mipLevels = std::min(m_textureCreateDesc.m_mipLevels, texLoadInfo.mipLevels);
+    }
+
+    uint32_t num_components = 0;
+    if(m_textureCreateDesc.m_format == TEXTURE_FORMAT_UNDEFINED)
+    {
+        num_components = imgDesc.numComponents == 3 ? 4 : imgDesc.numComponents;
+        if(channelDepth == 8)
+        {
+            switch(num_components)
+            {
+                case 1 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R8_UNORM; break;
+                case 2 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R8G8_UNORM; break;
+                case 4 : m_textureCreateDesc.m_format = texLoadInfo.isSRGB ? TEXTURE_FORMAT_R8G8B8A8_SRGB : TEXTURE_FORMAT_R8G8B8A8_UNORM; break;
+                default: cyber_assert(false, "Unsupported number of components ({0})", num_components);
+            }
+        }
+        else if(channelDepth == 16)
+        {
+            switch(num_components)
+            {
+                case 1 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16_UNORM; break;
+                case 2 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16G16_UNORM; break;
+                case 4 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16G16B16A16_UNORM; break;
+                default: cyber_assert(false, "Unsupported number of components ({0})", num_components);
+            }
+        }
+        else 
+        {
+            cyber_assert(false, "Unsupported channel depth ({0})", channelDepth);
+        }
+    }
+    else
+    {
+        
+    }
 
 }
 void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
