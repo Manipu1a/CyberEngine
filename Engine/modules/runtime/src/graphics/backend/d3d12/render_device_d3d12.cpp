@@ -773,7 +773,7 @@ namespace Cyber
                     cyber_assert(pInitData->pCommandBuffer != nullptr, "Command Buffer is Nullptr!");
                     CommandBuffer_D3D12_Impl* pCmdBuffer = static_cast<CommandBuffer_D3D12_Impl*>(pInitData->pCommandBuffer);
                     auto list = pCmdBuffer->get_dx_cmd_list();
-                    auto uploadedSize = D3D12Util_UpdateSubresource(list, pTexture->native_resource, uploadBuffer, 0, 0, pInitData->numSubResources, subResourceData);
+                    auto uploadedSize = D3D12Util_UpdateSubresource(list, pTexture->native_resource, uploadBuffer, 0, pInitData->numSubResources, subResourceData);
 
                     cyber_assert(uploadedSize == uploadBufferSize, "Upload Buffer Size Mismatch!");
 
@@ -1550,7 +1550,7 @@ namespace Cyber
         depthStencilDesc.m_width = desc.m_width;
         depthStencilDesc.m_depth = 1;
         depthStencilDesc.m_arraySize = 1;
-        depthStencilDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilDesc.m_format = TEX_FORMAT_D24_UNORM_S8_UINT;
         depthStencilDesc.m_mipLevels = 1;
         depthStencilDesc.m_sampleCount = SAMPLE_COUNT_1;
         depthStencilDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL;
@@ -1564,7 +1564,7 @@ namespace Cyber
         TextureViewCreateDesc depthStencilViewDesc = {};
         depthStencilViewDesc.m_pTexture = dxSwapChain->get_back_buffer_depth();
         depthStencilViewDesc.m_dimension = TEX_DIMENSION_2D;
-        depthStencilViewDesc.m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilViewDesc.m_format = TEX_FORMAT_D24_UNORM_S8_UINT;
         depthStencilViewDesc.m_usages = TVU_RTV_DSV;
         depthStencilViewDesc.m_aspects = TVA_DEPTH;
         depthStencilViewDesc.m_arrayLayerCount = 1;
@@ -2425,7 +2425,7 @@ namespace Cyber
                 srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
                 if(DESCRIPTOR_TYPE_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
                 {
-                    if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                    if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
                     {
                         CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
                     }
@@ -2455,12 +2455,12 @@ namespace Cyber
                 uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
                 if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
                 {
-                    if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                    if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
                         CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
                     uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
                     uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
                 }
-                else if(createDesc.m_format != TEXTURE_FORMAT_UNDEFINED)
+                else if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
                 {
                     uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
                     D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};

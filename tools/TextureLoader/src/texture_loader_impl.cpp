@@ -82,16 +82,16 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     }
 
     uint32_t num_components = 0;
-    if(m_textureCreateDesc.m_format == TEXTURE_FORMAT_UNDEFINED)
+    if(m_textureCreateDesc.m_format == TEX_FORMAT_UNKNOWN)
     {
         num_components = imgDesc.numComponents == 3 ? 4 : imgDesc.numComponents;
         if(channelDepth == 8)
         {
             switch(num_components)
             {
-                case 1 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R8_UNORM; break;
-                case 2 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R8G8_UNORM; break;
-                case 4 : m_textureCreateDesc.m_format = texLoadInfo.isSRGB ? TEXTURE_FORMAT_R8G8B8A8_SRGB : TEXTURE_FORMAT_R8G8B8A8_UNORM; break;
+                case 1 : m_textureCreateDesc.m_format = TEX_FORMAT_R8_UNORM; break; 
+                case 2 : m_textureCreateDesc.m_format = TEX_FORMAT_RG8_UNORM; break; 
+                case 4 : m_textureCreateDesc.m_format = texLoadInfo.isSRGB ? TEX_FORMAT_RGBA8_UNORM_SRGB : TEX_FORMAT_RGBA8_UNORM; break; 
                 default: cyber_assert(false, "Unsupported number of components ({0})", num_components);
             }
         }
@@ -99,9 +99,9 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
         {
             switch(num_components)
             {
-                case 1 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16_UNORM; break;
-                case 2 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16G16_UNORM; break;
-                case 4 : m_textureCreateDesc.m_format = TEXTURE_FORMAT_R16G16B16A16_UNORM; break;
+                case 1 : m_textureCreateDesc.m_format = TEX_FORMAT_R16_UNORM; break; 
+                case 2 : m_textureCreateDesc.m_format = TEX_FORMAT_RG16_UNORM; break; 
+                case 4 : m_textureCreateDesc.m_format = TEX_FORMAT_RGBA16_UNORM; break; 
                 default: cyber_assert(false, "Unsupported number of components ({0})", num_components);
             }
         }

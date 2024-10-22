@@ -46,22 +46,22 @@ namespace Cyber
         };
 
         static TEXTURE_FORMAT gD3D12_TO_VERTEX_FORMAT[] = {
-            TEXTURE_FORMAT_UNDEFINED,
-            TEXTURE_FORMAT_R32_UINT,
-            TEXTURE_FORMAT_R32_SINT,
-            TEXTURE_FORMAT_R32_SFLOAT,
+            TEX_FORMAT_UNKNOWN,
+            TEX_FORMAT_R32_UINT,
+            TEX_FORMAT_R32_SINT,
+            TEX_FORMAT_R32_FLOAT,
 
-            TEXTURE_FORMAT_R32G32_UINT,
-            TEXTURE_FORMAT_R32G32_SINT,
-            TEXTURE_FORMAT_R32G32_SFLOAT,
+            TEX_FORMAT_RG32_UINT,
+            TEX_FORMAT_RG32_SINT,
+            TEX_FORMAT_RG32_FLOAT,
 
-            TEXTURE_FORMAT_R32G32B32_UINT,
-            TEXTURE_FORMAT_R32G32B32_SINT,
-            TEXTURE_FORMAT_R32G32B32_SFLOAT,
+            TEX_FORMAT_RGB32_UINT,
+            TEX_FORMAT_RGB32_SINT,
+            TEX_FORMAT_RGB32_FLOAT,
 
-            TEXTURE_FORMAT_R32G32B32A32_UINT,
-            TEXTURE_FORMAT_R32G32B32A32_SINT,
-            TEXTURE_FORMAT_R32G32B32A32_SFLOAT,
+            TEX_FORMAT_RGBA32_UINT,
+            TEX_FORMAT_RGBA32_SINT,
+            TEX_FORMAT_RGBA32_FLOAT,
         };
 
         void ShaderLibrary_D3D12_Impl::free_reflection()

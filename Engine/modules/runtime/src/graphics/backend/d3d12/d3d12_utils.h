@@ -32,86 +32,81 @@ namespace Cyber
     {
         switch(fmt)
         {
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R1_UNORM: return DXGI_FORMAT_R1_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R5G6B5_UNORM: return DXGI_FORMAT_B5G6R5_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B5G6R5_UNORM: return DXGI_FORMAT_B5G6R5_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B5G5R5A1_UNORM: return DXGI_FORMAT_B5G5R5A1_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_UNORM: return DXGI_FORMAT_R8_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_SNORM: return DXGI_FORMAT_R8_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_UINT: return DXGI_FORMAT_R8_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_SINT: return DXGI_FORMAT_R8_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_UNORM: return DXGI_FORMAT_R8G8_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_SNORM: return DXGI_FORMAT_R8G8_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_UINT: return DXGI_FORMAT_R8G8_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_SINT: return DXGI_FORMAT_R8G8_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM; 
+            case TEX_FORMAT_R1_UNORM: return DXGI_FORMAT_R1_UNORM;
+            case TEX_FORMAT_B5G6R5_UNORM: return DXGI_FORMAT_B5G6R5_UNORM; 
+            case TEX_FORMAT_B5G5R5A1_UNORM: return DXGI_FORMAT_B5G5R5A1_UNORM;
+            case TEX_FORMAT_R8_UNORM: return DXGI_FORMAT_R8_UNORM;
+            case TEX_FORMAT_R8_SNORM: return DXGI_FORMAT_R8_SNORM;
+            case TEX_FORMAT_R8_UINT: return DXGI_FORMAT_R8_UINT;
+            case TEX_FORMAT_R8_SINT: return DXGI_FORMAT_R8_SINT;
+            case TEX_FORMAT_RG8_UNORM: return DXGI_FORMAT_R8G8_UNORM;
+            case TEX_FORMAT_RG8_SNORM: return DXGI_FORMAT_R8G8_SNORM;
+            case TEX_FORMAT_RG8_UINT: return DXGI_FORMAT_R8G8_UINT;
+            case TEX_FORMAT_RG8_SINT: return DXGI_FORMAT_R8G8_SINT;
+            case TEX_FORMAT_BGRA4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
 
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SNORM: return DXGI_FORMAT_R8G8B8A8_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SINT: return DXGI_FORMAT_R8G8B8A8_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SRGB: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+            case TEX_FORMAT_RGBA8_UNORM: return DXGI_FORMAT_R8G8B8A8_UNORM;
+            case TEX_FORMAT_RGBA8_SNORM: return DXGI_FORMAT_R8G8B8A8_SNORM;
+            case TEX_FORMAT_RGBA8_UINT: return DXGI_FORMAT_R8G8B8A8_UINT;
+            case TEX_FORMAT_RGBA8_SINT: return DXGI_FORMAT_R8G8B8A8_SINT;
+            case TEX_FORMAT_RGBA8_UNORM_SRGB: return DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8X8_UNORM: return DXGI_FORMAT_B8G8R8X8_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_SRGB: return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
+            case TEX_FORMAT_BGRA8_UNORM: return DXGI_FORMAT_B8G8R8A8_UNORM;
+            case TEX_FORMAT_BGRX8_UNORM: return DXGI_FORMAT_B8G8R8X8_UNORM;
+            case TEX_FORMAT_BGRA8_UNORM_SRGB: return DXGI_FORMAT_B8G8R8A8_UNORM_SRGB;
 
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_UNORM: return DXGI_FORMAT_R10G10B10A2_UNORM;
-	        case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_UINT: return DXGI_FORMAT_R10G10B10A2_UINT;
+            case TEX_FORMAT_RGB10A2_UNORM: return DXGI_FORMAT_R10G10B10A2_UNORM; 
+	        case TEX_FORMAT_RGB10A2_UINT: return DXGI_FORMAT_R10G10B10A2_UINT;
 
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_UNORM: return DXGI_FORMAT_R16_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SNORM: return DXGI_FORMAT_R16_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_UINT: return DXGI_FORMAT_R16_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SINT: return DXGI_FORMAT_R16_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SFLOAT: return DXGI_FORMAT_R16_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_UNORM: return DXGI_FORMAT_R16G16_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SNORM: return DXGI_FORMAT_R16G16_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_UINT: return DXGI_FORMAT_R16G16_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SINT: return DXGI_FORMAT_R16G16_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SFLOAT: return DXGI_FORMAT_R16G16_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_UNORM: return DXGI_FORMAT_R16G16B16A16_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SNORM: return DXGI_FORMAT_R16G16B16A16_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_UINT: return DXGI_FORMAT_R16G16B16A16_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SINT: return DXGI_FORMAT_R16G16B16A16_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SFLOAT: return DXGI_FORMAT_R16G16B16A16_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_UINT: return DXGI_FORMAT_R32_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_SINT: return DXGI_FORMAT_R32_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_SFLOAT: return DXGI_FORMAT_R32_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_UINT: return DXGI_FORMAT_R32G32_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_SINT: return DXGI_FORMAT_R32G32_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_SFLOAT: return DXGI_FORMAT_R32G32_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_UINT: return DXGI_FORMAT_R32G32B32_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_SINT: return DXGI_FORMAT_R32G32B32_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_SFLOAT: return DXGI_FORMAT_R32G32B32_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_UINT: return DXGI_FORMAT_R32G32B32A32_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_SINT: return DXGI_FORMAT_R32G32B32A32_SINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_SFLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G11R11_UFLOAT: return DXGI_FORMAT_R11G11B10_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_E5B9G9R9_UFLOAT: return DXGI_FORMAT_R9G9B9E5_SHAREDEXP;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM: return ShaderResource ? DXGI_FORMAT_R16_UNORM : DXGI_FORMAT_D16_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X8_D24_UNORM: return ShaderResource ? DXGI_FORMAT_R24_UNORM_X8_TYPELESS : DXGI_FORMAT_D24_UNORM_S8_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT: return  ShaderResource ? DXGI_FORMAT_R32_FLOAT :DXGI_FORMAT_D32_FLOAT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D24_UNORM_S8_UINT: return  ShaderResource ? DXGI_FORMAT_R24_UNORM_X8_TYPELESS :DXGI_FORMAT_D24_UNORM_S8_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT_S8_UINT: return  ShaderResource ? DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS :DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGB_UNORM: return DXGI_FORMAT_BC1_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGB_SRGB: return DXGI_FORMAT_BC1_UNORM_SRGB;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGBA_UNORM: return DXGI_FORMAT_BC1_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGBA_SRGB: return DXGI_FORMAT_BC1_UNORM_SRGB;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC2_UNORM: return DXGI_FORMAT_BC2_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC2_SRGB: return DXGI_FORMAT_BC2_UNORM_SRGB;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC3_UNORM: return DXGI_FORMAT_BC3_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC3_SRGB: return DXGI_FORMAT_BC3_UNORM_SRGB;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC4_UNORM: return DXGI_FORMAT_BC4_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC4_SNORM: return DXGI_FORMAT_BC4_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC5_UNORM: return DXGI_FORMAT_BC5_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC5_SNORM: return DXGI_FORMAT_BC5_SNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC6H_UFLOAT: return DXGI_FORMAT_BC6H_UF16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC6H_SFLOAT: return DXGI_FORMAT_BC6H_SF16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC7_UNORM: return DXGI_FORMAT_BC7_UNORM;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC7_SRGB: return DXGI_FORMAT_BC7_UNORM_SRGB;
-
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM_S8_UINT:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R4G4_UNORM: 
+            case TEX_FORMAT_R16_UNORM: return DXGI_FORMAT_R16_UNORM;
+            case TEX_FORMAT_R16_SNORM: return DXGI_FORMAT_R16_SNORM;
+            case TEX_FORMAT_R16_UINT: return DXGI_FORMAT_R16_UINT;
+            case TEX_FORMAT_R16_SINT: return DXGI_FORMAT_R16_SINT;
+            case TEX_FORMAT_R16_FLOAT: return DXGI_FORMAT_R16_FLOAT;
+            case TEX_FORMAT_RG16_UNORM: return DXGI_FORMAT_R16G16_UNORM;
+            case TEX_FORMAT_RG16_SNORM: return DXGI_FORMAT_R16G16_SNORM;
+            case TEX_FORMAT_RG16_UINT: return DXGI_FORMAT_R16G16_UINT;
+            case TEX_FORMAT_RG16_SINT: return DXGI_FORMAT_R16G16_SINT;
+            case TEX_FORMAT_RG16_FLOAT: return DXGI_FORMAT_R16G16_FLOAT;
+            case TEX_FORMAT_RGBA16_UNORM: return DXGI_FORMAT_R16G16B16A16_UNORM;
+            case TEX_FORMAT_RGBA16_SNORM: return DXGI_FORMAT_R16G16B16A16_SNORM;
+            case TEX_FORMAT_RGBA16_UINT: return DXGI_FORMAT_R16G16B16A16_UINT;
+            case TEX_FORMAT_RGBA16_SINT: return DXGI_FORMAT_R16G16B16A16_SINT;
+            case TEX_FORMAT_RGBA16_FLOAT: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+            case TEX_FORMAT_R32_UINT: return DXGI_FORMAT_R32_UINT;
+            case TEX_FORMAT_R32_SINT: return DXGI_FORMAT_R32_SINT;
+            case TEX_FORMAT_R32_FLOAT: return DXGI_FORMAT_R32_FLOAT;
+            case TEX_FORMAT_D32_FLOAT: return  DXGI_FORMAT_D32_FLOAT;
+            case TEX_FORMAT_RG32_UINT: return DXGI_FORMAT_R32G32_UINT;
+            case TEX_FORMAT_RG32_SINT: return DXGI_FORMAT_R32G32_SINT;
+            case TEX_FORMAT_RG32_FLOAT: return DXGI_FORMAT_R32G32_FLOAT;
+            case TEX_FORMAT_RGB32_UINT: return DXGI_FORMAT_R32G32B32_UINT;
+            case TEX_FORMAT_RGB32_SINT: return DXGI_FORMAT_R32G32B32_SINT;
+            case TEX_FORMAT_RGB32_FLOAT: return DXGI_FORMAT_R32G32B32_FLOAT;
+            case TEX_FORMAT_RGBA32_UINT: return DXGI_FORMAT_R32G32B32A32_UINT;
+            case TEX_FORMAT_RGBA32_SINT: return DXGI_FORMAT_R32G32B32A32_SINT;
+            case TEX_FORMAT_RGBA32_FLOAT: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+            case TEX_FORMAT_R11G11B10_FLOAT: return DXGI_FORMAT_R11G11B10_FLOAT; 
+            case TEX_FORMAT_RGB9E5_SHAREDEXP: return DXGI_FORMAT_R9G9B9E5_SHAREDEXP;
+            case TEX_FORMAT_D16_UNORM: return DXGI_FORMAT_D16_UNORM;
+            case TEX_FORMAT_D24_UNORM_S8_UINT: return DXGI_FORMAT_D24_UNORM_S8_UINT;
+            case TEX_FORMAT_R24_UNORM_X8_TYPELESS: return DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+            case TEX_FORMAT_D32_FLOAT_S8X24_UINT: return DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+            case TEX_FORMAT_R32_FLOAT_X8X24_TYPELESS: return DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS;
+            case TEX_FORMAT_BC1_UNORM: return DXGI_FORMAT_BC1_UNORM;
+            case TEX_FORMAT_BC1_UNORM_SRGB: return DXGI_FORMAT_BC1_UNORM_SRGB;
+            case TEX_FORMAT_BC2_UNORM: return DXGI_FORMAT_BC2_UNORM;
+            case TEX_FORMAT_BC2_UNORM_SRGB: return DXGI_FORMAT_BC2_UNORM_SRGB;
+            case TEX_FORMAT_BC3_UNORM: return DXGI_FORMAT_BC3_UNORM;
+            case TEX_FORMAT_BC3_UNORM_SRGB: return DXGI_FORMAT_BC3_UNORM_SRGB;
+            case TEX_FORMAT_BC4_UNORM: return DXGI_FORMAT_BC4_UNORM;
+            case TEX_FORMAT_BC4_SNORM: return DXGI_FORMAT_BC4_SNORM;
+            case TEX_FORMAT_BC5_UNORM: return DXGI_FORMAT_BC5_UNORM;
+            case TEX_FORMAT_BC5_SNORM: return DXGI_FORMAT_BC5_SNORM;
+            case TEX_FORMAT_BC6H_UF16: return DXGI_FORMAT_BC6H_UF16;
+            case TEX_FORMAT_BC6H_SF16: return DXGI_FORMAT_BC6H_SF16;
+            case TEX_FORMAT_BC7_UNORM: return DXGI_FORMAT_BC7_UNORM;
+            case TEX_FORMAT_BC7_UNORM_SRGB: return DXGI_FORMAT_BC7_UNORM_SRGB;
             default: return DXGI_FORMAT_UNKNOWN;
         }
         return DXGI_FORMAT_UNKNOWN;
@@ -471,17 +466,28 @@ namespace Cyber
     }
 
     inline uint64_t UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
-                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t subresourceSize,
+                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t requiredSize,
                                         const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts, const uint32_t* pNumRows, const uint64_t* pRowSizeInBytes,
                                         const D3D12_SUBRESOURCE_DATA* pSrcData)
     {
         D3D12_RESOURCE_DESC IntermediateDesc = pIntermediate->GetDesc();
         D3D12_RESOURCE_DESC DestDesc = pDestResource->GetDesc();
-        
+        if(IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || 
+            IntermediateDesc.Width < requiredSize + pLayouts[0].Offset ||
+            requiredSize > (size_t)-1 || 
+            (DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER && (firstSubresource != 0 || numSubresources != 1)))
+        {
+            return 0;
+        }
+
         BYTE* pData;
-        pIntermediate->Map(0, NULL, reinterpret_cast<void**>(pData));
+        pIntermediate->Map(0, NULL, reinterpret_cast<void**>(&pData));
         for(uint32_t i = 0; i < numSubresources; ++i)
         {
+            if(pRowSizeInBytes[i] > (size_t)-1)
+            {
+                return 0;
+            }
             D3D12_MEMCPY_DEST DestData = {pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, pLayouts[i].Footprint.RowPitch * pNumRows[i]};
             MemcpySubresource(&DestData, &pSrcData[i], pRowSizeInBytes[i], pNumRows[i], pLayouts[i].Footprint.Depth);
         }
@@ -489,7 +495,7 @@ namespace Cyber
 
         if(DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
         {
-            pCmdList->CopyBufferRegion(pDestResource, firstSubresource * subresourceSize, pIntermediate, 0, subresourceSize);
+            pCmdList->CopyBufferRegion(pDestResource, 0, pIntermediate, pLayouts[0].Offset, pLayouts[0].Footprint.Width);
         }
         else
         {
@@ -501,12 +507,12 @@ namespace Cyber
             }
         }
 
-        return 0;
+        return requiredSize;
     }
 
     // Update Sub Resource Data
     inline uint64_t D3D12Util_UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
-                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t subresourceSize,
+                                        uint32_t firstSubresource, uint32_t numSubresources,
                                         const D3D12_SUBRESOURCE_DATA* pSrcData)
     {
         uint64_t RequiredSize = 0;
@@ -521,10 +527,11 @@ namespace Cyber
         ID3D12Device* pDevice = nullptr;
         pDestResource->GetDevice(IID_PPV_ARGS(&pDevice));
         pDevice->GetCopyableFootprints(&Desc, firstSubresource, numSubresources, 0, pLayouts, pNumRows, pRowSizeInBytes, &RequiredSize);
+
+        uint64_t Res = UpdateSubresource(pCmdList, pDestResource, pIntermediate, firstSubresource, numSubresources, RequiredSize, pLayouts, pNumRows, pRowSizeInBytes, pSrcData);
+        cyber_free(pMem);
         pDevice->Release();
 
-        uint64_t Res = UpdateSubresource(pCmdList, pDestResource, pIntermediate, firstSubresource, numSubresources, subresourceSize, pLayouts, pNumRows, pRowSizeInBytes, pSrcData);
-        cyber_free(pMem);
         return Res;
     }
 

@@ -182,7 +182,7 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
 
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
-            attachment_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             //attachments[1].m_sampleCount = 1;
             //attachments[1].m_format = TEXTURE_FORMAT_D24_UNORM_S8_UINT;
             //attachments[1].m_loadAction = LOAD_ACTION_CLEAR;

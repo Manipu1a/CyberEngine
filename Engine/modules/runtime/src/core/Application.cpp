@@ -41,8 +41,8 @@ namespace Cyber
             m_pInputSystem->initInputSystem();
             Editor::EditorCreateInfo createInfo = {};
             createInfo.pDevice = m_pRenderer->get_render_device();
-            createInfo.BackBufferFmt = TEXTURE_FORMAT_R32G32B32_SFLOAT;
-            createInfo.DepthBufferFmt = TEXTURE_FORMAT_D32_SFLOAT;
+            createInfo.BackBufferFmt = TEX_FORMAT_RGB32_FLOAT;
+            createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
             createInfo.Hwnd = m_pWindow->get_native_window();
 
             m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);

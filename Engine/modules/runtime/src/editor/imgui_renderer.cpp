@@ -119,6 +119,8 @@ namespace Cyber
             m_pPipeline = m_pDevice->create_render_pipeline(rp_desc);
             vs_shader->free();
             ps_shader->free();
+
+            create_fonts_texture();
         }
 
         void ImGuiRenderer::create_fonts_texture()
@@ -134,12 +136,15 @@ namespace Cyber
             RenderObject::TextureCreateDesc texture_desc = {};
             texture_desc.m_width = Width;
             texture_desc.m_height = Weight;
+            texture_desc.m_depth = 1;
             texture_desc.m_mipLevels = 1;
             texture_desc.m_arraySize = 1;
-            texture_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            texture_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE;
-            texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
-            
+            texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_COPY_DEST;
+            texture_desc.m_sampleCount = SAMPLE_COUNT_1;
+            texture_desc.m_sampleQuality = 1;
+
             RenderObject::TextureSubResData sub_res_data = {};
             sub_res_data.pData = pData;
             sub_res_data.stride = Width * 4;

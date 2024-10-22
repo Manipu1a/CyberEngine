@@ -326,135 +326,214 @@ namespace Cyber
         // Two-component, 32-bit half-precision floating-point format with 16-bit channels.
         TEX_FORMAT_RG16_FLOAT,
 
-        // 
+        // Two-component, 32-bit unsigned-normalized-integer format with 16-bit channels.
         TEX_FORMAT_RG16_UNORM,
 
+        // Two-component, 32-bit unsigned-integer format with 16-bit channels.
         TEX_FORMAT_RG16_UINT,
 
+        // Two-component, 32-bit signed-normalized-integer format with 16-bit channels.
         TEX_FORMAT_RG16_SNORM,
 
+        // Two-component, 32-bit signed-integer format with 16-bit channels.
         TEX_FORMAT_RG16_SINT,
 
+        // Single-component, 32-bit typeless format with 32-bit channel.
         TEX_FORMAT_R32_TYPELESS,
 
+        // Single-component, 32-bit floating-point depth format
         TEX_FORMAT_D32_FLOAT,
 
+        // Single-component, 32-bit floating-point format with 32-bit channel.
         TEX_FORMAT_R32_FLOAT,
 
+        // Single-component, 32-bit unsigned-integer format with 32-bit channel.
         TEX_FORMAT_R32_UINT,
 
+        // Single-component, 32-bit signed-integer format with 32-bit channel.
         TEX_FORMAT_R32_SINT,
 
+        // Two-component, 32-bit typeless format with 16-bit channel for R and 16-bit channel for G.
         TEX_FORMAT_R24G8_TYPELESS,
 
+        // Two-component, 32-bit format with 24-bit unsigned-normalized-integer depth channel and 8-bit unsigned-integer stencil channel.
         TEX_FORMAT_D24_UNORM_S8_UINT,
 
+        // Two-component, 32-bit format with 24-bit unsigned-normalized-integer depth channel and 8-bit unreferenced data.
         TEX_FORMAT_R24_UNORM_X8_TYPELESS,
 
+        // Two-component, 32-bit format with 24-bit unreferenced data and 8-bit unsigned-integer data.
         TEX_FORMAT_X24_TYPELESS_G8_UINT,
 
+        // Two-component, 16-bit typeless format with 8-bit channel for R and 8-bit channel for G.
         TEX_FORMAT_RG8_TYPELESS,
 
+        // Two-component, 16-bit unsigned-normalized-integer format with 8-bit channels.
         TEX_FORMAT_RG8_UNORM,
 
+        // Two-component, 16-bit unsigned-integer format with 8-bit channels.
         TEX_FORMAT_RG8_UINT,
 
+        // Two-component, 16-bit signed-normalized-integer format with 8-bit channels.
         TEX_FORMAT_RG8_SNORM,
 
+        // Two-component, 16-bit signed-integer format with 8-bit channels.
         TEX_FORMAT_RG8_SINT,
 
+        // Single-component, 16-bit typeless format with 16-bit channel.
         TEX_FORMAT_R16_TYPELESS,
 
+        // Single-component, 16-bit half-precision floating-point format.
         TEX_FORMAT_R16_FLOAT,
 
+        // Single-component, 16-bit unsigned-normalized-integer depth format.
         TEX_FORMAT_D16_UNORM,
 
+        // Single-component, 16-bit unsigned-normalized-integer format.
         TEX_FORMAT_R16_UNORM,
 
+        // Single-component, 16-bit unsigned-integer format.
         TEX_FORMAT_R16_UINT,
 
+        // Single-component, 16-bit signed-normalized-integer format.
         TEX_FORMAT_R16_SNORM,
 
+        // Single-component, 16-bit signed-integer format.
         TEX_FORMAT_R16_SINT,
 
+        // Single-component, 8-bit typeless format.
         TEX_FORMAT_R8_TYPELESS,
 
+        // Single-component, 8-bit unsigned-normalized-integer format.
         TEX_FORMAT_R8_UNORM,
 
+        // Single-component, 8-bit unsigned-integer format.
         TEX_FORMAT_R8_UINT,
 
+        // Single-component, 8-bit signed-normalized-integer format.
         TEX_FORMAT_R8_SNORM,
 
+        // Single-component, 8-bit signed-integer format.
         TEX_FORMAT_R8_SINT,
 
+        // Single-component, 8-bit unsigned-normalized-integer format for alpha only.
         TEX_FORMAT_A8_UNORM,
 
+        // Single-component, 1-bit format.
         TEX_FORMAT_R1_UNORM,
 
-        TEX_FORMAT_R9G9B9E5_SHAREDEXP,
+        // Three partial-precision floating pointer numbers sharing single exponent encoded into a 32-bit value.
+        TEX_FORMAT_RGB9E5_SHAREDEXP,
 
+        // Four-component, unsigned-normalized integer format analogous to UYVY encoding.
         TEX_FORMAT_RG8_B8G8_UNORM,
 
+        // Four-component, unsigned-normalized integer format analogous to YUY2 encoding.
         TEX_FORMAT_G8R8_G8B8_UNORM,
 
+        // Four-component typeless block-compression format with 1:8 compression ratio.
         TEX_FORMAT_BC1_TYPELESS,
 
+        // Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits for G, 5 bits for B, and 0 or 1 bit for A channel.
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format.
         TEX_FORMAT_BC1_UNORM,
 
+        // Four-component unsigned-normalized-integer block-compression sRGB format with 5 bits for R, 6 bits for G, 5 bits for B, and 0 or 1 bit for A channel.
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format.
         TEX_FORMAT_BC1_UNORM_SRGB,
 
+        // Four component typeless block-compression format with 1:4 compression ratio.\n
+        // D3D counterpart: DXGI_FORMAT_BC2_TYPELESS. OpenGL does not have direct counterpart, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT is used.
         TEX_FORMAT_BC2_TYPELESS,
 
+        // Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits for G, 5 bits for B, and 0 or 1 bit for A channel.
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format
         TEX_FORMAT_BC2_UNORM,
-
+        
+        // Four-component unsigned-normalized-integer block-compression sRGB format with 5 bits for R, 6 bits for G, 5 bits for B, and 0 or 1 bit for A channel. \n
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:8 compression ratio against RGBA8 format
         TEX_FORMAT_BC2_UNORM_SRGB,
 
+        // Four component typeless block-compression format with 1:4 compression ratio.\n
+        // D3D counterpart: DXGI_FORMAT_BC2_TYPELESS. OpenGL does not have direct counterpart, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT is used.
         TEX_FORMAT_BC3_TYPELESS,
 
+        // Four-component unsigned-normalized-integer block-compression format with 5 bits for R, 6 bits for G, 5 bits for B, and 8 bits for highly-coherent A channel.
+        // The pixel data is encoded using 16 bytes per 4x4 block (8 bits per pixel) providing 1:4 compression ratio against RGBA8 format.
         TEX_FORMAT_BC3_UNORM,
 
+        // Four-component unsigned-normalized-integer block-compression sRGB format with 5 bits for R, 6 bits for G, 5 bits for B, and 8 bits for highly-coherent A channel.
+        // The pixel data is encoded using 16 bytes per 4x4 block (8 bits per pixel) providing 1:4 compression ratio against RGBA8 format. 
         TEX_FORMAT_BC3_UNORM_SRGB,
 
+        // One-component typeless block-compression format with 1:2 compression ratio.
         TEX_FORMAT_BC4_TYPELESS,
 
+        // One-component unsigned-normalized-integer block-compression format with 8 bits for R channel.
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:2 compression ratio against R8 format.
         TEX_FORMAT_BC4_UNORM,
 
+        // One-component signed-normalized-integer block-compression format with 8 bits for R channel.
+        // The pixel data is encoded using 8 bytes per 4x4 block (4 bits per pixel) providing 1:2 compression ratio against R8 format.
         TEX_FORMAT_BC4_SNORM,
 
+        // Two-component typeless block-compression format with 1:2 compression ratio.
         TEX_FORMAT_BC5_TYPELESS,
 
+        // Two-component unsigned-normalized-integer block-compression format with 8 bits for R and 8 bits for G channel.
+        // The pixel data is encoded using 16 bytes per 4x4 block (8 bits per pixel) providing 1:2 compression ratio against RG8 format.
         TEX_FORMAT_BC5_UNORM,
 
+        // Two-component signed-normalized-integer block-compression format with 8 bits for R and 8 bits for G channel.
+        // The pixel data is encoded using 16 bytes per 4x4 block (8 bits per pixel) providing 1:2 compression ratio against RG8 format.
         TEX_FORMAT_BC5_SNORM,
 
+        // Three-component 16-bit unsigned-normalized-integer format with 5 bits for blue, 6 bits for green, and 5 bits for red channel.
         TEX_FORMAT_B5G6R5_UNORM,
 
+        // Four-component 16-bit unsigned-normalized-integer format with 5 bits for each color channel and 1-bit alpha.
         TEX_FORMAT_B5G5R5A1_UNORM,
 
+        // Four-component 32-bit unsigned-normalized-integer format with 8 bits for each channel.
         TEX_FORMAT_BGRA8_UNORM,
 
+        // Four-component 32-bit unsigned-normalized-integer format with 8 bits for each color channel and 8 bits unused.
         TEX_FORMAT_BGRX8_UNORM,
 
+        // Four-component 32-bit 2.8-biased fixed-point format with 10 bits for each color channel and 2-bit alpha.
         TEX_FORMAT_R10G10B10_XR_BIAS_A2_UNORM,
 
+        // Four-component 32-bit typeless format with 8 bits for each channel.
         TEX_FORMAT_BGRA8_TYPELESS,
 
+        // Four-component 32-bit unsigned-normalized sRGB format with 8 bits for each channel.
         TEX_FORMAT_BGRA8_UNORM_SRGB,
 
+        // Four-component 32-bit typeless format that with 8 bits for each color channel, and 8 bits are unused.
         TEX_FORMAT_BGRX8_TYPELESS,
 
+        // Four-component 32-bit unsigned-normalized sRGB format with 8 bits for each color channel, and 8 bits are unused.
         TEX_FORMAT_BGRX8_UNORM_SRGB,
+        
+        // Four-component 16-bit unsigned-normalized-integet that supports 4 bits for each channel including alpha.
+        TEX_FORMAT_BGRA4_UNORM, 
 
+        // Three-component typeless block-compression format.
         TEX_FORMAT_BC6H_TYPELESS,
 
+        // Three-component unsigned half-precision floating-point format with 16 bits for each channel.
         TEX_FORMAT_BC6H_UF16,
 
+        // Three-channel signed half-precision floating-point format with 16 bits per each channel.
         TEX_FORMAT_BC6H_SF16,
 
+        // Three-component typeless block-compression format.
         TEX_FORMAT_BC7_TYPELESS,
 
+        // Three-component block-compression unsigned-normalized-integer format with 4 to 7 bits per color channel and 0 to 8 bits of alpha.
         TEX_FORMAT_BC7_UNORM,
 
+        // Three-component block-compression unsigned-normalized-integer sRGB format with 4 to 7 bits per color channel and 0 to 8 bits of alpha.
         TEX_FORMAT_BC7_UNORM_SRGB,
 
         TEX_FORMAT_NUM_FORMATS
@@ -464,218 +543,21 @@ namespace Cyber
     {
         switch (fmt) 
         {
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_UNDEFINED: return 0;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R1_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R2_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R4_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R4G4_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G4R4_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A8_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_SNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_UINT: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_SINT: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8_SRGB: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B2G3R3_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R4G4B4A4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R4G4B4X4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B4G4R4A4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B4G4R4X4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A4R4G4B4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X4R4G4B4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A4B4G4R4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X4B4G4R4_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R5G6B5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B5G6R5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R5G5B5A1_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B5G5R5A1_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A1B5G5R5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A1R5G5B5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R5G5B5X1_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B5G5R5X1_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X1R5G5B5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X1B5G5R5_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B2G3R3A8_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_SNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G8R8_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G8R8_SNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_UINT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_SINT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8_SRGB: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_UINT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SINT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SFLOAT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16_SBFLOAT: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8_UNORM: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8_SNORM: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8_UINT: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8_SINT: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8_SRGB: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8_UNORM: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8_SNORM: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8_UINT: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8_SINT: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8_SRGB: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8A8_SRGB: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8A8_SRGB: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R8G8B8X8_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8X8_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G16R16_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G16R16_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16_SBFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32_SFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2R10G10B10_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2R10G10B10_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2R10G10B10_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2R10G10B10_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2B10G10R10_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2B10G10R10_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2B10G10R10_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_A2B10G10R10_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10G10B10A2_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G10R10A2_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G10R10A2_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G10R10A2_SNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G10R10A2_SINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10G11R11_UFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_E5B9G9R9_UFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_UNORM: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_SNORM: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_UINT: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_SINT: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_SFLOAT: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16_SBFLOAT: return 48;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_UINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SFLOAT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R16G16B16A16_SBFLOAT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_UINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_SINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32_SFLOAT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_UINT: return 96;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_SINT: return 96;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32_SFLOAT: return 96;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_UINT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_SINT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R32G32B32A32_SFLOAT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64_UINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64_SINT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64_SFLOAT: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64_UINT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64_SINT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64_SFLOAT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64_UINT: return 192;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64_SINT: return 192;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64_SFLOAT: return 192;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64A64_UINT: return 256;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64A64_SINT: return 256;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R64G64B64A64_SFLOAT: return 256;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X8_D24_UNORM: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_S8_UINT: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM_S8_UINT: return 24;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D24_UNORM_S8_UINT: return 32;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT_S8_UINT: return 40;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGB_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGB_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGBA_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC1_RGBA_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC2_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC2_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC3_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC3_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC4_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC4_SNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC5_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC5_SNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC6H_UFLOAT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC6H_SFLOAT: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC7_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_DXBC7_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC1_2BPP_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC1_4BPP_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC2_2BPP_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC2_4BPP_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC1_2BPP_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC1_4BPP_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC2_2BPP_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_PVRTC2_4BPP_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8A1_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8A1_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8A8_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_R8G8B8A8_SRGB: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_EAC_R11_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_EAC_R11_SNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_EAC_R11G11_UNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ETC2_EAC_R11G11_SNORM: return 64;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_4x4_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_4x4_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_5x4_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_5x4_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_5x5_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_5x5_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_6x5_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_6x5_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_6x6_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_6x6_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x5_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x5_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x6_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x6_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x8_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_8x8_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x5_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x5_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x6_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x6_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x8_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x8_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x10_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_10x10_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_12x10_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_12x10_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_12x12_UNORM: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_ASTC_12x12_SRGB: return 128;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_CLUT_P4: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_CLUT_P4A4: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_CLUT_P8: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_CLUT_P8A8: return 16;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G16B16G16R16_422_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B16G16R16G16_422_UNORM: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R12X4G12X4B12X4A12X4_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G12X4B12X4G12X4R12X4_422_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B12X4G12X4R12X4G12X4_422_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G10X6B10X6G10X6R10X6_422_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B10X6G10X6R10X6G10X6_422_UNORM_4PACK16: return 8;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_G8B8G8R8_422_UNORM: return 4;
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_B8G8R8G8_422_UNORM: return 4;
+            case TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN: return 0;
+            case TEXTURE_FORMAT::TEX_FORMAT_A8_UNORM: return 8;
+            case TEXTURE_FORMAT::TEX_FORMAT_R8_UNORM: return 8;
+            case TEXTURE_FORMAT::TEX_FORMAT_R8_SNORM: return 8;
+            case TEXTURE_FORMAT::TEX_FORMAT_R8_UINT: return 8;
+            case TEXTURE_FORMAT::TEX_FORMAT_R8_SINT: return 8;
+            case TEXTURE_FORMAT::TEX_FORMAT_B5G6R5_UNORM: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_B5G5R5A1_UNORM: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_R16_UNORM: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_R16_SNORM: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_R16_UINT: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_R16_SINT: return 16;
+            case TEXTURE_FORMAT::TEX_FORMAT_R32_UINT: return 32;
+            case TEXTURE_FORMAT::TEX_FORMAT_R32_SINT: return 32;
+
             default: return 32;
         }
     }
@@ -684,12 +566,10 @@ namespace Cyber
     {
         switch (fmt)
         {
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D24_UNORM_S8_UINT:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT_S8_UINT:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D32_SFLOAT:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_X8_D24_UNORM:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM:
-            case TEXTURE_FORMAT::TEXTURE_FORMAT_D16_UNORM_S8_UINT:
+            case TEX_FORMAT_D32_FLOAT:
+            case TEX_FORMAT_D24_UNORM_S8_UINT:
+            case TEX_FORMAT_D32_FLOAT_S8X24_UINT:
+            case TEX_FORMAT_D16_UNORM:
                 return true;
             default:
                 return false;

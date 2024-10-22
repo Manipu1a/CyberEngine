@@ -77,7 +77,7 @@ namespace Cyber
             chain_desc.m_pSurface = m_pSurface;
             chain_desc.m_width = Core::Application::getApp()->get_window()->get_width();
             chain_desc.m_height = Core::Application::getApp()->get_window()->get_height();
-            chain_desc.m_format = TEXTURE_FORMAT_R8G8B8A8_UNORM;
+            chain_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             chain_desc.m_imageCount = 3;
             chain_desc.m_presentQueue = m_pQueue;
             chain_desc.m_presentQueueCount = 1;
