@@ -70,7 +70,8 @@ namespace Cyber
             Editor& operator=(const Editor&) = delete;
             Editor& operator=(Editor&&) = delete;
             // Non-movable
-            void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
+            
+            virtual void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
             void run();
             void update(RenderObject::ICommandBuffer* encoder, float deltaTime);
             void finalize();

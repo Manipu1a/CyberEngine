@@ -16,6 +16,7 @@ namespace Cyber
             Editor_Impl_Win32(const EditorCreateInfo& createInfo);
             ~Editor_Impl_Win32();
 
+            virtual void initialize(RenderObject::IRenderDevice* device, HWND hwnd) override;
             virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight) override;
         };
     }

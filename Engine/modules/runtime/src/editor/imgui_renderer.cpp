@@ -23,12 +23,17 @@ namespace Cyber
 
         }
 
-        void ImGuiRenderer::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
+        void ImGuiRenderer::initialize()
         {
             if(!m_pPipeline)
             {
                 create_device_objects();
             }
+        }
+
+        void ImGuiRenderer::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
+        {
+
         }
         void ImGuiRenderer::end_frame()
         {

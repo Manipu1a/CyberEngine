@@ -1,5 +1,6 @@
 #include "editor/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_win32.h"
+#include "graphics/interface/render_device.hpp"
 
 namespace Cyber
 {
@@ -7,12 +8,18 @@ namespace Cyber
     {
         Editor_Impl_Win32::Editor_Impl_Win32(const EditorCreateInfo& createInfo) : Editor(createInfo)
         {
-            ImGui_ImplWin32_Init(createInfo.Hwnd);
         }
 
         Editor_Impl_Win32::~Editor_Impl_Win32()
         {
             ImGui_ImplWin32_Shutdown();
+        }
+
+        void Editor_Impl_Win32::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
+        {
+            Editor::initialize(device, hwnd);
+
+            ImGui_ImplWin32_Init(hwnd);
         }
 
         void Editor_Impl_Win32::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)

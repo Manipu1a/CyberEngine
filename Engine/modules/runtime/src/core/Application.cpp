@@ -46,6 +46,7 @@ namespace Cyber
             createInfo.Hwnd = m_pWindow->get_native_window();
 
             m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
+            m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
             m_pSampleApp->initialize();
         }
 
