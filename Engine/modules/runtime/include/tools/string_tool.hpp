@@ -22,3 +22,19 @@ inline eastl::string string_to_upper(const eastl::string& str)
     upperStr.make_upper();
     return upperStr;
 }
+
+inline bool safe_u8string_equal(const char8_t* str1, const char8_t* str2)
+{
+    if (str1 == nullptr || str2 == nullptr)
+        return str1 == str2;
+    
+    return strcmp( (const char*)str1,  (const char*)str2) == 0;
+}
+
+inline bool safe_string_equal(const char* str1, const char* str2)
+{
+    if (str1 == nullptr || str2 == nullptr)
+        return str1 == str2;
+    
+    return strcmp(str1, str2) == 0;
+}

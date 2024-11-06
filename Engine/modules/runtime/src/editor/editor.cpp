@@ -50,12 +50,12 @@ namespace Cyber
             ImGui::StyleColorsLight();
             
             // Setup Platform/Renderer backends
-           // ImGui_ImplWin32_Init(hwnd);
-            
-            ImGui_ImplDX12_Init(device_d3d12->GetD3D12Device(), 3,
+            m_imguiRenderer->initialize();
+
+            /* ImGui_ImplDX12_Init(device_d3d12->GetD3D12Device(), 3,
                 DXGI_FORMAT_R8G8B8A8_UNORM, native_heap,
                 native_heap->GetCPUDescriptorHandleForHeapStart(),
-                native_heap->GetGPUDescriptorHandleForHeapStart());
+                native_heap->GetGPUDescriptorHandleForHeapStart());*/
                 
         }
 
@@ -68,7 +68,8 @@ namespace Cyber
         {
             // Start the Dear ImGui frame
             ImGui_ImplDX12_NewFrame();
-            //  m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
+
+            m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
             //ImGui::NewFrame();
         }
 

@@ -5,7 +5,7 @@
 #include "core/Timestep.h"
 #include "core/window.h"
 #include "gameruntime/sampleapp.h"
-#include "editor/imgui_impl_win32.h"
+#include "editor/editor_impl_win32.h"
 
 namespace Cyber
 {

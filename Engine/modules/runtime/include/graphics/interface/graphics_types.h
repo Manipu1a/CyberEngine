@@ -868,13 +868,6 @@ namespace Cyber
         SHADER_COMPILER_COUNT=4,
     };
 
-    CYBER_TYPED_ENUM(VERTEX_INPUT_RATE, uint8_t)
-    {
-        INPUT_RATE_VERTEX = 0,
-        INPUT_RATE_INSTANCE = 1,
-        INPUT_RATE_COUNT,
-    };
-
     CYBER_TYPED_ENUM(PRIMITIVE_TOPOLOGY, uint8_t)
     {
         PRIM_TOPO_POINT_LIST = 0,
@@ -1514,22 +1507,6 @@ namespace Cyber
         bool enable_depth_clip : 1;
     };
 
-    struct CYBER_GRAPHICS_API VertexAttribute 
-    {
-        char8_t semantic_name[64];
-        uint32_t array_size;
-        TEXTURE_FORMAT format;
-        uint32_t binding;
-        uint32_t offset;
-        uint32_t elem_stride;
-        VERTEX_INPUT_RATE input_rate;
-    };
-
-    struct CYBER_GRAPHICS_API VertexLayout
-    {
-        uint32_t attribute_count;
-        VertexAttribute attributes[GRAPHICS_MAX_VERTEX_ATTRIBUTES];
-    };
 
     #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1
     #define GRAPHICS_SINGLE_GPU_NODE_MASK 1

@@ -49,10 +49,19 @@ namespace Cyber
         }
         void ImGuiRenderer::invalidate_device_objects()
         {
-
+            /*
+            m_pVB->free();
+            m_pIB->free();
+            m_pVertexConstantBuffer->free();
+            m_pPipeline->free();
+            m_pFontSRV->free();
+            m_pSRB->free();
+            */
         }
         void ImGuiRenderer::create_device_objects()
         {
+            invalidate_device_objects();
+
             // create shader
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
@@ -110,7 +119,8 @@ namespace Cyber
             
             RenderObject::IRootSignature* root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
 
-            VertexLayout vertex_layout = {};
+            VertexLayout vertex_layout = {
+            };
             RenderObject::RenderPipelineCreateDesc rp_desc = {
                 .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
