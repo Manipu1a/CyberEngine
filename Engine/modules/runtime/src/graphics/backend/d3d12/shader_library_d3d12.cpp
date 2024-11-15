@@ -1,6 +1,5 @@
 #include "backend/d3d12/shader_library_d3d12.h"
 #include "backend/d3d12/shader_reflection_d3d12.h"
-#include "backend/d3d12/vertex_input_d3d12.h"
 #include "backend/d3d12/shader_resource_d3d12.h"
 #include "platform/memory.h"
 #include "interface/graphics_types.h"
@@ -71,7 +70,7 @@ namespace Cyber
                 for(uint32_t i = 0; i < m_entryCount; ++i)
                 {
                     RenderObject::ShaderReflection_D3D12_Impl* reflection = static_cast<RenderObject::ShaderReflection_D3D12_Impl*>(m_pEntryReflections[i]);
-                    reflection->free_vertex_inputs();
+                    //reflection->free_vertex_inputs();
                     reflection->free_shader_resources();
                     cyber_free(reflection);
                 }
@@ -151,7 +150,7 @@ namespace Cyber
                 reflection->set_vertex_input_count(shaderDesc.InputParameters);
                 auto vertex_inputs = (RenderObject::IVertexInput**)cyber_calloc(shaderDesc.InputParameters, sizeof(RenderObject::IVertexInput*));
                 // Count the string sizes of the vertex inputs for the name pool
-                for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
+                /*for(UINT i = 0; i < shaderDesc.InputParameters; ++i)
                 {
                     D3D12_SIGNATURE_PARAMETER_DESC paramDesc;
                     d3d12Reflection->GetInputParameterDesc(i, &paramDesc);
@@ -173,7 +172,7 @@ namespace Cyber
                     const uint32_t comps = (uint32_t)log2(paramDesc.Mask);
                     vertex_inputs[i]->set_format(gD3D12_TO_VERTEX_FORMAT[(paramDesc.ComponentType + 3 * comps)]);
                 }
-                reflection->set_vertex_inputs(vertex_inputs);
+                reflection->set_vertex_inputs(vertex_inputs);*/
             }
             else if(stage == SHADER_STAGE_COMPUTE)
             {

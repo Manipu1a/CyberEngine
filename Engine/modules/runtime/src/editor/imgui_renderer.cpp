@@ -119,11 +119,16 @@ namespace Cyber
             
             RenderObject::IRootSignature* root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
 
-            VertexLayout vertex_layout = {
+            RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
+
+            RenderObject::VertexAttribute vertex_attributes[] = {
+                {0, 0, 2, VALUE_TYPE_FLOAT32},
+                {1, 0, 2, VALUE_TYPE_FLOAT32},
+                {2, 0, 4, VALUE_TYPE_UINT8, true}
             };
+            RenderObject::VertexLayoutDesc vertex_layout = {3, vertex_attributes};
+
             RenderObject::RenderPipelineCreateDesc rp_desc = {
-                .root_signature = root_signature,
-                .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
                 .color_formats = &m_backBufferFmt,

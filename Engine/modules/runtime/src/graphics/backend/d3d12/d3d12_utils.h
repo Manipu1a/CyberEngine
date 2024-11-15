@@ -252,6 +252,148 @@ namespace Cyber
             return DXGI_FORMAT_UNKNOWN;
     }
 
+    static DXGI_FORMAT D3D12Util_TypeToDXGI(VALUE_TYPE value_type, uint32_t num_components, bool is_normalized)
+    {
+        switch(value_type)
+        {
+            case VALUE_TYPE_FLOAT16:
+            {
+                cyber_assert(!is_normalized, "Floating point formats cannot be normalized");
+                switch(num_components)
+                {
+                    case 1: return DXGI_FORMAT_R16_FLOAT;
+                    case 2: return DXGI_FORMAT_R16G16_FLOAT;
+                    case 4: return DXGI_FORMAT_R16G16B16A16_FLOAT;
+                    default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                }
+            }
+
+            case VALUE_TYPE_FLOAT32:
+            {
+                cyber_assert(!is_normalized, "Floating point formats cannot be normalized");
+                switch(num_components)
+                {
+                    case 1: return DXGI_FORMAT_R32_FLOAT;
+                    case 2: return DXGI_FORMAT_R32G32_FLOAT;
+                    case 3: return DXGI_FORMAT_R32G32B32_FLOAT;
+                    case 4: return DXGI_FORMAT_R32G32B32A32_FLOAT;
+                    default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                }
+            }
+
+            case VALUE_TYPE_INT32:
+            {
+                cyber_assert(!is_normalized, "32-bit UNORM formats are not supported, Use R32_FLOAT instead");
+                switch(num_components)
+                {
+                    case 1: return DXGI_FORMAT_R32_SINT;
+                    case 2: return DXGI_FORMAT_R32G32_SINT;
+                    case 3: return DXGI_FORMAT_R32G32B32_SINT;
+                    case 4: return DXGI_FORMAT_R32G32B32A32_SINT;
+                    default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                }
+            }
+
+            case VALUE_TYPE_INT16:
+            {
+                if(is_normalized)
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R16_SNORM;
+                        case 2: return DXGI_FORMAT_R16G16_SNORM;
+                        case 4: return DXGI_FORMAT_R16G16B16A16_SNORM;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                else
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R16_SINT;
+                        case 2: return DXGI_FORMAT_R16G16_SINT;
+                        case 4: return DXGI_FORMAT_R16G16B16A16_SINT;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+            }
+
+            case VALUE_TYPE_UINT16:
+            {
+                if(is_normalized)
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R16_UNORM;
+                        case 2: return DXGI_FORMAT_R16G16_UNORM;
+                        case 4: return DXGI_FORMAT_R16G16B16A16_UNORM;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                else
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R16_UINT;
+                        case 2: return DXGI_FORMAT_R16G16_UINT;
+                        case 4: return DXGI_FORMAT_R16G16B16A16_UINT;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+            }
+
+            case VALUE_TYPE_INT8:
+            {
+                if(is_normalized)
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R8_SNORM;
+                        case 2: return DXGI_FORMAT_R8G8_SNORM;
+                        case 4: return DXGI_FORMAT_R8G8B8A8_SNORM;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                else
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R8_SINT;
+                        case 2: return DXGI_FORMAT_R8G8_SINT;
+                        case 4: return DXGI_FORMAT_R8G8B8A8_SINT;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+            }
+
+            case VALUE_TYPE_UINT8:
+            {
+                if(is_normalized)
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R8_UNORM;
+                        case 2: return DXGI_FORMAT_R8G8_UNORM;
+                        case 4: return DXGI_FORMAT_R8G8B8A8_UNORM;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                else
+                {
+                    switch(num_components)
+                    {
+                        case 1: return DXGI_FORMAT_R8_UINT;
+                        case 2: return DXGI_FORMAT_R8G8_UINT;
+                        case 4: return DXGI_FORMAT_R8G8B8A8_UINT;
+                        default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+            }
+
+            default: cyber_assert(false, "Unsupported value type"); return DXGI_FORMAT_UNKNOWN;
+        }
+    }
+
     static D3D12_RESOURCE_STATES D3D12Util_TranslateResourceState(GRAPHICS_RESOURCE_STATE state)
     {
         D3D12_RESOURCE_STATES ret = D3D12_RESOURCE_STATE_COMMON;

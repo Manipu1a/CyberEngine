@@ -1903,35 +1903,40 @@ namespace Cyber
     {
         RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(pipelineDesc.root_signature);
         RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>(this, pipelineDesc);
+        
         // Input layout
         DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
 
-        static const D3D12_INPUT_ELEMENT_DESC s_inputElementDesc[] =
+        /*static const D3D12_INPUT_ELEMENT_DESC s_inputElementDesc[] =
         {
             { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, D3D12_APPEND_ALIGNED_ELEMENT,
             D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
             { "TEXCOORD",    0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D12_APPEND_ALIGNED_ELEMENT,
             D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        };
+        };*/
 
-        if(pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_input_count() > 0)
+        DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, d3d_input_layout_desc);
+        d3d_input_layout_desc.pInputElementDescs = input_element_count ? input_elements : nullptr;
+        d3d_input_layout_desc.NumElements = input_element_count;
+
+        const auto& input_layout_desc = pipelineDesc.vertex_layout;
+        if(input_layout_desc->attribute_count > 0)
         {
-            eastl::string_hash_map<uint32_t> semantic_index_map;
-            for(uint32_t attrib_index = 0; attrib_index < pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_input_count(); ++attrib_index)
+            for(uint32_t i = 0; i < input_layout_desc->attribute_count; ++i)
             {
-                auto attribute = pipelineDesc.vertex_shader->m_library->get_entry_reflection(0)->get_vertex_input(attrib_index);
-                input_elements[input_element_count].SemanticName = (char*)attribute->get_semantics_name();
-                input_elements[input_element_count].SemanticIndex = attribute->get_semantics_index();
-                input_elements[input_element_count].Format = DXGIUtil_TranslatePixelFormat(attribute->get_format());
-                input_elements[input_element_count].InputSlot = 0;
-                input_elements[input_element_count].AlignedByteOffset = D3D12_APPEND_ALIGNED_ELEMENT;
-                input_elements[input_element_count].InputSlotClass = D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA;
-                input_elements[input_element_count].InstanceDataStepRate = 0;
+                const VertexAttribute* attribute = &input_layout_desc->attributes[i];
+                input_elements[input_element_count].SemanticName = (char*)attribute->hlsl_semantic;
+                input_elements[input_element_count].SemanticIndex = attribute->input_index;
+                input_elements[input_element_count].AlignedByteOffset = attribute->relative_offset;
+                input_elements[input_element_count].InputSlot = attribute->buffer_slot;
+                input_elements[input_element_count].Format = D3D12Util_TypeToDXGI(attribute->value_type, attribute->num_components, attribute->is_normalized);
+                input_elements[input_element_count].InputSlotClass = (attribute->input_rate == INPUT_RATE_VERTEX) ? D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA : D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA;
+                input_elements[input_element_count].InstanceDataStepRate = (attribute->input_rate == INPUT_RATE_VERTEX) ? 0 : attribute->instance_data_step_rate;
                 input_element_count++;
             }
         }
-        
+
         /*
         if(pipelineDesc.vertex_layout)
         {
@@ -1969,9 +1974,6 @@ namespace Cyber
             }
         }
         */
-        DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, input_layout_desc);
-        input_layout_desc.pInputElementDescs = input_element_count ? input_elements : nullptr;
-        input_layout_desc.NumElements = input_element_count;
 
         // Shader stages
         DECLARE_ZERO(D3D12_SHADER_BYTECODE, vertex_shader);
@@ -2069,7 +2071,7 @@ namespace Cyber
         pso_desc.RasterizerState = pipelineDesc.rasterizer_state ? D3D12Util_TranslateRasterizerState(pipelineDesc.rasterizer_state) : gDefaultRasterizerDesc;
         // Depth stencil
         pso_desc.DepthStencilState = pipelineDesc.depth_stencil_state ? D3D12Util_TranslateDepthStencilState(pipelineDesc.depth_stencil_state) : gDefaultDepthStencilDesc;
-        pso_desc.InputLayout = input_layout_desc;
+        pso_desc.InputLayout = d3d_input_layout_desc;
         pso_desc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
         pso_desc.PrimitiveTopologyType = D3D12Util_TranslatePrimitiveTopologyType(pipelineDesc.prim_topology);
         pso_desc.NumRenderTargets = (UINT)pipelineDesc.render_target_count;

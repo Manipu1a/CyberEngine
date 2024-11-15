@@ -14,6 +14,7 @@ CYBER_BEGIN_NAMESPACE(RenderObject)
 #define CYBER_LAYOUT_ELEMENT_AUTO_OFFSET 0xFFFFFFFFU
 // Compute layout element stride automatically
 #define CYBER_LAYOUT_ELEMENT_AUTO_STRIDE 0xFFFFFFFFU
+
 static const uint32_t MAX_LAYOUT_ELEMENTS = CYBER_MAX_LAYOUT_ELEMENTS;
 static const uint32_t LAYOUT_ELEMENT_AUTO_OFFSET = CYBER_LAYOUT_ELEMENT_AUTO_OFFSET;
 static const uint32_t LAYOUT_ELEMENT_AUTO_STRIDE = CYBER_LAYOUT_ELEMENT_AUTO_STRIDE;
@@ -84,6 +85,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
                               VERTEX_INPUT_RATE _input_rate = VertexAttribute{}.input_rate,
                               uint32_t _instance_data_step_rate = VertexAttribute{}.instance_data_step_rate) noexcept :
         input_index(_input_index),
+        buffer_slot(_buffer_slot),
         num_components(_num_components),
         value_type(_value_type),
         is_normalized(_is_normalized),
@@ -105,6 +107,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
                               uint32_t _instance_data_step_rate = VertexAttribute().instance_data_step_rate ) noexcept :
         hlsl_semantic(_hlsl_semantic),
         input_index(_input_index),
+        buffer_slot(_buffer_slot),
         num_components(_num_components),
         value_type(_value_type),
         is_normalized(_is_normalized),
@@ -118,8 +121,8 @@ struct CYBER_GRAPHICS_API VertexAttribute
                               uint32_t _buffer_slot,
                               uint32_t _num_components,
                               VALUE_TYPE _value_type,
-                              bool _is_normalized = VertexAttribute{}.is_normalized,
-                              VERTEX_INPUT_RATE _input_rate = VertexAttribute{}.input_rate,
+                              bool _is_normalized,
+                              VERTEX_INPUT_RATE _input_rate,
                               uint32_t _instance_data_step_rate = VertexAttribute{}.instance_data_step_rate) noexcept :
         input_index(_input_index),
         buffer_slot(_buffer_slot),
@@ -154,19 +157,19 @@ struct CYBER_GRAPHICS_API VertexAttribute
 
 typedef struct VertexAttribute VertexAttribute;
 
-struct CYBER_GRAPHICS_API VertexLayout
+struct CYBER_GRAPHICS_API VertexLayoutDesc
 {
     uint32_t attribute_count = 0;
     const VertexAttribute* attributes = nullptr;
 
-    constexpr VertexLayout() noexcept {}
+    constexpr VertexLayoutDesc() noexcept {}
 
-    constexpr VertexLayout(uint32_t _attribute_count, const VertexAttribute* _attributes) noexcept :
+    constexpr VertexLayoutDesc(uint32_t _attribute_count, const VertexAttribute* _attributes) noexcept :
         attribute_count(_attribute_count),
         attributes(_attributes)
     {}
 
-    bool operator == (const VertexLayout& rhs) const
+    bool operator == (const VertexLayoutDesc& rhs) const
     {
         if(attribute_count != rhs.attribute_count)
             return false;
@@ -179,13 +182,13 @@ struct CYBER_GRAPHICS_API VertexLayout
         return true;
     }
 
-    bool operator != (const VertexLayout& rhs) const
+    bool operator != (const VertexLayoutDesc& rhs) const
     {
         return !(*this == rhs);
     }
 };
 
-typedef struct VertexLayout VertexLayout;
+typedef struct VertexLayoutDesc VertexLayoutDesc;
 
 /*
 struct CYBER_GRAPHICS_API IVertexInput : public IDeviceObject

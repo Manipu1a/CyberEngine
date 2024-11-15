@@ -14,7 +14,6 @@
 #include "graphics/backend/d3d12/instance_d3d12.h"
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/shader_resource_d3d12.h"
-#include "graphics/backend/d3d12/vertex_input_d3d12.h"
 #include "graphics/interface/vertex_input.h"
 
 namespace Cyber

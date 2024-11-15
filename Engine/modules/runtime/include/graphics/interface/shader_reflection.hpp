@@ -19,12 +19,12 @@ namespace Cyber
             virtual void set_entry_name(const char8_t* name) = 0;
             virtual const char* get_name_pool() const = 0;
 
-            virtual IVertexInput** get_vertex_inputs() const = 0;
-            virtual IVertexInput* get_vertex_input(uint32_t index) const = 0;
-            virtual void set_vertex_inputs(IVertexInput** inputs) = 0;
-            virtual void set_vertex_input(IVertexInput* input, uint32_t index) = 0;
+            //virtual IVertexInput** get_vertex_inputs() const = 0;
+            //virtual IVertexInput* get_vertex_input(uint32_t index) const = 0;
+            //virtual void set_vertex_inputs(IVertexInput** inputs) = 0;
+            //virtual void set_vertex_input(IVertexInput* input, uint32_t index) = 0;
 
-            virtual void free_vertex_inputs() const = 0;
+            //virtual void free_vertex_inputs() const = 0;
 
             virtual RenderObject::IShaderResource** get_shader_resources() const = 0;
             virtual RenderObject::IShaderResource* get_shader_resource(uint32_t index) const = 0;
@@ -58,7 +58,7 @@ namespace Cyber
             { 
                 m_entryName = nullptr;
                 m_namePool = nullptr;
-                m_pVertexInputs = nullptr;
+               // m_pVertexInputs = nullptr;
                 m_ppShaderResources = nullptr;
                 m_shaderStage = SHADER_STAGE::SHADER_STAGE_NONE;
                 m_namePoolSize = 0;
@@ -69,6 +69,7 @@ namespace Cyber
                 m_threadGroupSizes[1] = 0;
                 m_threadGroupSizes[2] = 0;
             };
+            
             virtual ~ShaderReflectionBase() = default;
             
             virtual const char8_t* get_entry_name() const override final
@@ -85,7 +86,7 @@ namespace Cyber
             {
                 return m_namePool;
             }
-
+            /*
             virtual IVertexInput** get_vertex_inputs() const override final
             {
                 return m_pVertexInputs;
@@ -118,7 +119,7 @@ namespace Cyber
                     cyber_free(m_pVertexInputs);
                 }
             }
-
+            */
             virtual RenderObject::IShaderResource** get_shader_resources() const override final 
             {
                 return m_ppShaderResources;
@@ -202,7 +203,7 @@ namespace Cyber
         protected:
             const char8_t* m_entryName;
             char* m_namePool;
-            IVertexInput** m_pVertexInputs;
+            //IVertexInput** m_pVertexInputs;
             RenderObject::IShaderResource** m_ppShaderResources;
             SHADER_STAGE m_shaderStage;
             uint32_t m_namePoolSize;

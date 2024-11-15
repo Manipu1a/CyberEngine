@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/common/cyber_graphics_config.h"
+#include "constants.h"
 #include <EASTL/vector.h>
 #include <stdint.h>
 

@@ -1,7 +1,7 @@
-struct PSInput 
-{ 
-    float4 Pos   : SV_POSITION; 
-    float3 Color : COLOR; 
+struct PSInput
+{
+    float4 Pos : ATTRIB0;
+    float3 Color : ATTRIB1; 
 };
 
 void VSMain(in  uint    VertId : SV_VertexID,

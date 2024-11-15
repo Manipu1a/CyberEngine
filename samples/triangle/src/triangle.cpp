@@ -378,13 +378,15 @@ namespace Cyber
             };
             descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
-            VertexLayout vertex_layout = {.attribute_count = 0};
+           RenderObject::VertexLayoutDesc vertex_layout_desc = {
+           };
+            
             RenderObject::RenderPipelineCreateDesc rp_desc = 
             {
                 .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
-                .vertex_layout = &vertex_layout,
+                .vertex_layout = &vertex_layout_desc,
                 //.rasterizer_state = {},
                 .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
                 .render_target_count = 1,
