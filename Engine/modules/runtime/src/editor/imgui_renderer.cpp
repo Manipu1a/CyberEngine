@@ -5,6 +5,8 @@
 #include "graphics/interface/render_device.hpp"
 #include "platform/memory.h"
 #include "core/Application.h"
+#include "common/basic_math.hpp"
+
 namespace Cyber
 {
     namespace Editor
@@ -14,6 +16,8 @@ namespace Cyber
             , m_backBufferFmt(createInfo.BackBufferFmt)
             , m_depthBufferFmt(createInfo.DepthBufferFmt)
             , m_colorConversionMode(createInfo.ColorConversionMode)
+            , vertex_buffer_size(createInfo.InitialVBSize)
+            , index_buffer_size(createInfo.InitialIBSize)
         {
 
         }
@@ -25,7 +29,7 @@ namespace Cyber
 
         void ImGuiRenderer::initialize()
         {
-            if(!m_pPipeline)
+            if(!render_pipeline)
             {
                 create_device_objects();
             }
@@ -39,13 +43,84 @@ namespace Cyber
         {
 
         }
-        void ImGuiRenderer::render_draw_data(RenderObject::IRenderDevice* device, ImDrawData* drawData)
+        void ImGuiRenderer::render_draw_data(ImDrawData* draw_data)
         {
-            if(drawData->DisplaySize.x <= 0.0f || drawData->DisplaySize.y <= 0.0f || drawData->CmdListsCount == 0)
+            if(draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f || draw_data->CmdListsCount == 0)
             {
                 return;
             }
 
+            if(!vertex_buffer || static_cast<int>(vertex_buffer_size) < draw_data->TotalVtxCount)
+            {
+                if(vertex_buffer)
+                {
+                    vertex_buffer->free();
+                    vertex_buffer = nullptr;
+                }
+                while(static_cast<int>(vertex_buffer_size) < draw_data->TotalVtxCount)
+                {
+                    vertex_buffer_size *= 2;
+                }
+                RenderObject::BufferCreateDesc buffer_desc = {};
+                buffer_desc.m_size = vertex_buffer_size * sizeof(ImDrawVert);
+                vertex_buffer = m_pDevice->create_buffer(buffer_desc);
+            }
+
+            if(!index_buffer || static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
+            {
+                if(index_buffer)
+                {
+                    index_buffer->free();
+                    index_buffer = nullptr;
+                }
+                while(static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
+                {
+                    index_buffer_size *= 2;
+                }
+                RenderObject::BufferCreateDesc buffer_desc = {};
+                buffer_desc.m_size = index_buffer_size * sizeof(ImDrawIdx);
+                index_buffer = m_pDevice->create_buffer(buffer_desc);
+            }
+            BufferRange range;
+            range.offset = 0;
+            range.size = 0;
+            void* vtx_resource = m_pDevice->map_buffer(vertex_buffer, &range);
+            void* idx_resource = m_pDevice->map_buffer(index_buffer, &range);
+            
+            ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource;
+            ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
+            for(int n = 0; n < draw_data->CmdListsCount; n++)
+            {
+                const ImDrawList* cmd_list = draw_data->CmdLists[n];
+                memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+                memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+                vtx_dst += cmd_list->VtxBuffer.Size;
+                idx_dst += cmd_list->IdxBuffer.Size;
+            }
+            m_pDevice->unmap_buffer(vertex_buffer, &range);
+            m_pDevice->unmap_buffer(index_buffer, &range);
+
+            // Setup orthographic projection matrix into our constant buffer
+            // Our visible imgui space lies from pDrawData->DisplayPos (top left) to pDrawData->DisplayPos+data_data->DisplaySize (bottom right).
+            // DisplayPos is (0,0) for single viewport setup
+            {
+                // DisplaySize always refers to the logical dimensions that account for pre-transform, hence
+                // the aspect ratio will be correct after applying appropriate rotation.
+                float L = draw_data->DisplayPos.x;
+                float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
+                float T = draw_data->DisplayPos.y;
+                float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
+
+                float4x4 projection
+                {
+                2.0f / (R - L),                  0.0f,   0.0f,   0.0f,
+                0.0f,                  2.0f / (T - B),   0.0f,   0.0f,
+                0.0f,                            0.0f,   0.5f,   0.0f,
+                (R + L) / (L - R),  (T + B) / (B - T),   0.5f,   1.0f
+                };
+
+
+            }
         }
         void ImGuiRenderer::invalidate_device_objects()
         {
@@ -129,6 +204,8 @@ namespace Cyber
             RenderObject::VertexLayoutDesc vertex_layout = {3, vertex_attributes};
 
             RenderObject::RenderPipelineCreateDesc rp_desc = {
+                .root_signature = root_signature,
+                .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
                 .color_formats = &m_backBufferFmt,
@@ -136,10 +213,14 @@ namespace Cyber
                 .depth_stencil_format = m_depthBufferFmt,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
-            m_pPipeline = m_pDevice->create_render_pipeline(rp_desc);
+            render_pipeline = m_pDevice->create_render_pipeline(rp_desc);
             vs_shader->free();
             ps_shader->free();
 
+            RenderObject::BufferCreateDesc buffer_desc = {};
+            buffer_desc.m_size = sizeof(float4x4);
+
+            
             create_fonts_texture();
         }
 
@@ -178,9 +259,9 @@ namespace Cyber
             texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
 
             auto texture = m_pDevice->create_texture(texture_desc, &texture_data);
-            m_pFontSRV = texture->get_default_texture_view(TVU_SRV);
+            font_srv = texture->get_default_texture_view(TVU_SRV);
             
-            IO.Fonts->TexID = (ImTextureID)m_pFontSRV;
+            IO.Fonts->TexID = (ImTextureID)font_srv;
         }
     }
 }

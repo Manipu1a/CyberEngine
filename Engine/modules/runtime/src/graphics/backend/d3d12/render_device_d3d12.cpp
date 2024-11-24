@@ -1904,8 +1904,8 @@ namespace Cyber
         RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(pipelineDesc.root_signature);
         RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>(this, pipelineDesc);
         
-        // Input layout
-        DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
+
+       // DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
 
         /*static const D3D12_INPUT_ELEMENT_DESC s_inputElementDesc[] =
@@ -1916,11 +1916,12 @@ namespace Cyber
             D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         };*/
 
-        DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, d3d_input_layout_desc);
-        d3d_input_layout_desc.pInputElementDescs = input_element_count ? input_elements : nullptr;
-        d3d_input_layout_desc.NumElements = input_element_count;
 
         const auto& input_layout_desc = pipelineDesc.vertex_layout;
+        // Input layout
+        eastl::vector<D3D12_INPUT_ELEMENT_DESC> input_elements;
+        input_elements.resize(input_layout_desc->attribute_count);
+
         if(input_layout_desc->attribute_count > 0)
         {
             for(uint32_t i = 0; i < input_layout_desc->attribute_count; ++i)
@@ -1936,7 +1937,10 @@ namespace Cyber
                 input_element_count++;
             }
         }
-
+        
+        DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, d3d_input_layout_desc);
+        d3d_input_layout_desc.pInputElementDescs = input_elements.data();
+        d3d_input_layout_desc.NumElements = input_element_count;
         /*
         if(pipelineDesc.vertex_layout)
         {
@@ -2494,13 +2498,46 @@ namespace Cyber
     {
 
     }
-    void RenderDevice_D3D12_Impl::map_buffer(RenderObject::IBuffer* buffer, const BufferRange* range)
+    void* RenderDevice_D3D12_Impl::map_buffer(RenderObject::IBuffer* buffer, const BufferRange* range)
     {
+        RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
+        if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)
+        {
+            CB_CORE_ERROR("Cannot map GPU only buffer");
+            return nullptr;
+        }
+        D3D12_RANGE d3dRange = {};
+        memset(&d3dRange, 0, sizeof(D3D12_RANGE));
+        if(range)
+        {
+            d3dRange.Begin = range->offset;
+            d3dRange.End = range->offset + range->size;
+        }
 
+        void* pMappedData = nullptr;
+        if(buffer_d3d12->m_pDxResource->Map(0, &d3dRange, &pMappedData) != S_OK)
+        {
+            CB_CORE_ERROR("Failed to map buffer");
+            return nullptr;
+        }
+        return pMappedData;
     }
-    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer)
+    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer, const BufferRange* range)
     {
-
+        RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
+        if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)
+        {
+            CB_CORE_ERROR("Cannot unmap GPU only buffer");
+            return;
+        }
+        D3D12_RANGE d3dRange = {};
+        memset(&d3dRange, 0, sizeof(D3D12_RANGE));
+        if(range)
+        {
+            d3dRange.Begin = range->offset;
+            d3dRange.End = range->offset + range->size;
+        }
+        buffer_d3d12->m_pDxResource->Unmap(0, &d3dRange);
     }
     IShaderLibrary* RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {

@@ -111,8 +111,8 @@ namespace Cyber
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
             virtual void free_buffer(IBuffer* buffer) override;
-            virtual void map_buffer(IBuffer* buffer, const BufferRange* range) override;
-            virtual void unmap_buffer(IBuffer* buffer) override;
+            virtual void* map_buffer(IBuffer* buffer, const BufferRange* range) override;
+            virtual void unmap_buffer(IBuffer* buffer, const BufferRange* range) override;
 
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;

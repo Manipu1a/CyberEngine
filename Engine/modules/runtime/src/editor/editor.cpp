@@ -67,16 +67,16 @@ namespace Cyber
         void Editor::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
         {
             // Start the Dear ImGui frame
-            ImGui_ImplDX12_NewFrame();
+            //ImGui_ImplDX12_NewFrame();
 
             m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
-            //ImGui::NewFrame();
+            ImGui::NewFrame();
         }
 
         void Editor::update(RenderObject::ICommandBuffer* encoder, float deltaTime)
         {
             //ImGui_ImplWin32_NewFrame();
-            ImGui::NewFrame();
+            //ImGui::NewFrame();
             bool show_demo_window = true;
             ImGui::ShowDemoWindow(&show_demo_window);
 
@@ -84,9 +84,9 @@ namespace Cyber
             ImGui::Render();
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
             RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
-            Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
-            ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
-
+            //Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
+            //ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
+            m_imguiRenderer->render_draw_data(ImGui::GetDrawData());
             // Update and Render additional Platform Windows
             ImGuiIO& io = ImGui::GetIO();
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
