@@ -105,7 +105,7 @@ namespace Cyber
 
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) = 0;
             virtual void free_texture(ITexture* texture) = 0;
-            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) = 0;
+            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) = 0;
             virtual void free_buffer(IBuffer* buffer) = 0;
             virtual void* map_buffer(IBuffer* buffer, const BufferRange* range) = 0;
             virtual void unmap_buffer(IBuffer* buffer, const BufferRange* range) = 0;

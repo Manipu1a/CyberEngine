@@ -630,26 +630,64 @@ namespace Cyber
 
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_STATE, uint32_t)
     {
-        GRAPHICS_RESOURCE_STATE_UNDEFINED = 0,
-        GRAPHICS_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER = 0x1,
-        GRAPHICS_RESOURCE_STATE_INDEX_BUFFER = 0x2,
-        GRAPHICS_RESOURCE_STATE_RENDER_TARGET = 0x4,
-        GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS = 0x8,
-        GRAPHICS_RESOURCE_STATE_DEPTH_WRITE = 0x10,
-        GRAPHICS_RESOURCE_STATE_DEPTH_READ = 0x20,
-        GRAPHICS_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE = 0x40,
-        GRAPHICS_RESOURCE_STATE_PIXEL_SHADER_RESOURCE = 0x80,
-        GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE = 0x40 | 0x80,
-        GRAPHICS_RESOURCE_STATE_STREAM_OUT = 0x100,
-        GRAPHICS_RESOURCE_STATE_INDIRECT_ARGUMENT = 0x200,
-        GRAPHICS_RESOURCE_STATE_COPY_DEST = 0x400,
-        GRAPHICS_RESOURCE_STATE_COPY_SOURCE = 0x800,
-        GRAPHICS_RESOURCE_STATE_GENERIC_READ = (((((0x1 | 0x2) | 0x40) | 0x80) | 0x200) | 0x800),
-        GRAPHICS_RESOURCE_STATE_PRESENT = 0x1000,
-        GRAPHICS_RESOURCE_STATE_COMMON = 0x2000,
-        GRAPHICS_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE = 0x4000,
-        GRAPHICS_RESOURCE_STATE_SHADING_RATE_SOURCE = 0x8000,
+        // Unknown resource state
+        GRAPHICS_RESOURCE_STATE_UNKNOWN = 0,
+        // Undefined resource state
+        GRAPHICS_RESOURCE_STATE_UNDEFINED = 1U << 0U,
+        // Resource is used as a vertex buffer
+        GRAPHICS_RESOURCE_STATE_VERTEX_BUFFER = 1U << 1U,
+        // Resource is used as a constant buffer
+        GRAPHICS_RESOURCE_STATE_CONSTANT_BUFFER = 1U << 2U,
+        // Resource is used as an index buffer
+        GRAPHICS_RESOURCE_STATE_INDEX_BUFFER = 1U << 3U,
+        // Resource is used as a render target
+        GRAPHICS_RESOURCE_STATE_RENDER_TARGET = 1U << 4U,
+        // Resource is used for unordered access
+        GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS = 1U << 5U,
+        // Resource is used for depth write operations
+        GRAPHICS_RESOURCE_STATE_DEPTH_WRITE = 1U << 6U,
+        // Resource is used for depth read operations
+        GRAPHICS_RESOURCE_STATE_DEPTH_READ = 1U << 7U,
+        // Resource is used as a shader resource
+        GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE = 1U << 8U,
+        // Resource is used for stream output
+        GRAPHICS_RESOURCE_STATE_STREAM_OUT = 1U << 9U,
+        // Resource is used as an indirect argument buffer
+        GRAPHICS_RESOURCE_STATE_INDIRECT_ARGUMENT = 1U << 10U,
+        // Resource is used as a copy destination
+        GRAPHICS_RESOURCE_STATE_COPY_DEST = 1U << 11U,
+        // Resource is used as a copy source
+        GRAPHICS_RESOURCE_STATE_COPY_SOURCE = 1U << 12U,
+        // Resource is used as a resolve destination
+        GRAPHICS_RESOURCE_STATE_RESOLVE_DEST = 1U << 13U,
+        // Resource is used as a resolve source
+        GRAPHICS_RESOURCE_STATE_RESOLVE_SOURCE = 1U << 14U,
+        // Resource is used as an input attachment
+        GRAPHICS_RESOURCE_STATE_INPUT_ATTACHMENT = 1U << 15U,
+        // Resource is in present state
+        GRAPHICS_RESOURCE_STATE_PRESENT = 1U << 16U,
+        // Resource is used for acceleration structure read
+        GRAPHICS_RESOURCE_STATE_BUILD_AS_READ = 1U << 17U,
+        // Resource is used for acceleration structure write
+        GRAPHICS_RESOURCE_STATE_BUILD_AS_WRITE = 1U << 18U,
+        // Resource is used for ray tracing
+        GRAPHICS_RESOURCE_STATE_RAY_TRACING = 1U << 19U,
+        // Resource is in common state
+        GRAPHICS_RESOURCE_STATE_COMMON = 1U << 20U,
+        // Resource is used for variable rate shading
+        GRAPHICS_RESOURCE_STATE_SHADING_RATE = 1U << 21U,
+        // Maximum state bit value
+        GRAPHICS_RESOURCE_STATE_MAX_BIT = GRAPHICS_RESOURCE_STATE_SHADING_RATE,
+        // Combined state for generic read operations
+        GRAPHICS_RESOURCE_STATE_GENERIC_READ = GRAPHICS_RESOURCE_STATE_VERTEX_BUFFER | 
+                                                GRAPHICS_RESOURCE_STATE_CONSTANT_BUFFER | 
+                                                GRAPHICS_RESOURCE_STATE_INDEX_BUFFER | 
+                                                GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE | 
+                                                GRAPHICS_RESOURCE_STATE_INDIRECT_ARGUMENT | 
+                                                GRAPHICS_RESOURCE_STATE_COPY_SOURCE,
+
     };
+    
     DEFINE_FLAG_ENUM_OPERATORS(GRAPHICS_RESOURCE_STATE);
 
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_MEMORY_USAGE, uint32_t)
@@ -667,6 +705,7 @@ namespace Cyber
 
     };
     
+    /// Specifies how a resource will be used and where it should be allocated
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_USAGE, uint32_t)
     {
         GRAPHICS_RESOURCE_USAGE_UNIFIED = 0,
@@ -675,7 +714,7 @@ namespace Cyber
         /// initialized when it is created, since it cannot be altered after creation.
         GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
         /// A resource that can be read by the GPU and written to by the GPU and can also
-        /// be accessed by the CPU.
+        /// be accasionally written by the CPU.
         GRAPHICS_RESOURCE_USAGE_DEFAULT,
         /// A resource that can be read by the GPU and written at least once per frame by the CPU.
         GRAPHICS_RESOURCE_USAGE_DYNAMIC,
@@ -688,34 +727,34 @@ namespace Cyber
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_BIND_FLAGS, uint32_t)
     {
         // Undefined binding.
-        GRAPHICS_RESOURCE_BIND_FLAGS_NONE = 0,
+        GRAPHICS_RESOURCE_BIND_NONE = 0,
         // A buffer can be bound as a vertex buffer.
-        GRAPHICS_RESOURCE_BIND_FLAGS_VERTEX_BUFFER = 1u << 0u,
+        GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER = 1u << 0u,
         // A buffer can be bound as an index buffer.
-        GRAPHICS_RESOURCE_BIND_FLAGS_INDEX_BUFFER = 1u << 1u,
+        GRAPHICS_RESOURCE_BIND_INDEX_BUFFER = 1u << 1u,
         // A buffer can be bound as a uniform buffer.
-        GRAPHICS_RESOURCE_BIND_FLAGS_UNIFORM_BUFFER = 1u << 2u,
+        GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER = 1u << 2u,
         // A buffer or a texture can be bound as a shader resource.
-        GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE = 1u << 3u,
+        GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE = 1u << 3u,
         // A buffer can be bound as a target for stream output stage.
-        GRAPHICS_RESOURCE_BIND_FLAGS_STREAM_OUTPUT = 1u << 4u,
+        GRAPHICS_RESOURCE_BIND_STREAM_OUTPUT = 1u << 4u,
         // A texture can be bound as a render target.
-        GRAPHICS_RESOURCE_BIND_FLAGS_RENDER_TARGET = 1u << 5u,
+        GRAPHICS_RESOURCE_BIND_RENDER_TARGET = 1u << 5u,
         // A texture can be bound as a depth-stencil target.
-        GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL = 1u << 6u,
+        GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL = 1u << 6u,
         // A buffer or a texture can be bound as an unordered access view.
-        GRAPHICS_RESOURCE_BIND_FLAGS_UNORDERED_ACCESS = 1u << 7u,
+        GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS = 1u << 7u,
         // A buffer can be bound as the source buffer for indirect draw commands.
-        GRAPHICS_RESOURCE_BIND_FLAGS_DRAW_ARGS = 1u << 8u,
+        GRAPHICS_RESOURCE_BIND_DRAW_ARGS = 1u << 8u,
         // A texture can be used as render pass input attachment.
-        GRAPHICS_RESOURCE_BIND_FLAGS_INPUT_ATTACHMENT = 1u << 9u,
+        GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT = 1u << 9u,
         // A buffer can be used as a scratch buffer or as the source of primitive data
         // for acceleration structures building.
-        GRAPHICS_RESOURCE_BIND_FLAGS_RAY_TRACING = 1u << 10u,
+        GRAPHICS_RESOURCE_BIND_RAY_TRACING = 1u << 10u,
         // A texture can be used as a shading rate source.
-        GRAPHICS_RESOURCE_BIND_FLAGS_SHADING_RATE = 1u << 11u,
+        GRAPHICS_RESOURCE_BIND_SHADING_RATE = 1u << 11u,
         
-        GRAPHICS_RESOURCE_BIND_FLAGS_LAST = GRAPHICS_RESOURCE_BIND_FLAGS_SHADING_RATE
+        GRAPHICS_RESOURCE_BIND_LAST = GRAPHICS_RESOURCE_BIND_SHADING_RATE
     };
     CYBER_TYPED_ENUM(CPU_ACCESS_FLAGS, uint8_t)
     {

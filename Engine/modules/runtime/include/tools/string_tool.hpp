@@ -23,6 +23,16 @@ inline eastl::string string_to_upper(const eastl::string& str)
     return upperStr;
 }
 
+inline eastl::wstring to_wstring(const char* str)
+{
+    return eastl::wstring(str);
+}
+
+inline eastl::wstring u8_to_wstring(const char8_t* str)
+{
+    return eastl::wstring((const char*)str);
+}
+
 inline bool safe_u8string_equal(const char8_t* str1, const char8_t* str2)
 {
     if (str1 == nullptr || str2 == nullptr)

@@ -80,6 +80,7 @@ namespace Cyber
                 RenderObject::BufferCreateDesc buffer_desc = {};
                 buffer_desc.m_size = index_buffer_size * sizeof(ImDrawIdx);
                 index_buffer = m_pDevice->create_buffer(buffer_desc);
+                
             }
             BufferRange range;
             range.offset = 0;
@@ -219,7 +220,7 @@ namespace Cyber
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.m_size = sizeof(float4x4);
-
+            vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
             
             create_fonts_texture();
         }

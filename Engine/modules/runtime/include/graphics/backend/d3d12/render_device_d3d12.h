@@ -109,7 +109,7 @@ namespace Cyber
             virtual void free_texture_view(ITextureView* view) override;
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) override;
             virtual void free_texture(ITexture* texture) override;
-            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc) override;
+            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
             virtual void free_buffer(IBuffer* buffer) override;
             virtual void* map_buffer(IBuffer* buffer, const BufferRange* range) override;
             virtual void unmap_buffer(IBuffer* buffer, const BufferRange* range) override;

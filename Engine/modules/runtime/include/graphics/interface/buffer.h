@@ -10,39 +10,59 @@ namespace Cyber
     {
 
         /// Buffer Group
+
+        struct CYBER_GRAPHICS_API BufferData
+        {
+            const void* data;
+
+            uint64_t data_size;
+
+            class IRenderDevice* pDevice;
+
+            class ICommandBuffer* pCommandBuffer;
+
+            constexpr BufferData() noexcept {}
+
+            constexpr BufferData(const void* _data, uint64_t _data_size, IRenderDevice* _pDevice, ICommandBuffer* _pCommandBuffer) noexcept
+                : data(_data), data_size(_data_size), pDevice(_pDevice), pCommandBuffer(_pCommandBuffer) {}
+        };
+
+
         struct CYBER_GRAPHICS_API BufferCreateDesc
         {
             /// Size of the buffer (in bytes)
-            uint64_t m_size;
+            uint64_t size;
             /// Set this to specify a counter buffer for this buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
-            class IBuffer* m_pCounterBuffer;
+            class IBuffer* pCounterBuffer;
             /// Index of the first element accessible by the SRV/UAV (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
-            uint64_t m_firstElement;
+            uint64_t firstElement;
             /// Number of elements in the buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
-            uint64_t m_elementCount;
+            uint64_t elementCount;
             /// Size of each element (in bytes) in the buffer (applicable to BUFFER_USAGE_STORAGE_SRV, BUFFER_USAGE_STORAGE_UAV)
-            uint64_t m_structStride;
+            uint64_t structStride;
             /// Debug name used in gpu profile
-            const char8_t* m_pName;
-            uint32_t* m_pSharedNodeIndices;
+            const char8_t* Name;
+            uint32_t* pSharedNodeIndices;
             /// Alignment
-            uint32_t m_alignment;
+            uint32_t alignment;
             /// Decides which memory heap buffer will use (default, upload, readback)
-            GRAPHICS_RESOURCE_MEMORY_USAGE m_memoryUsage;
+            GRAPHICS_RESOURCE_USAGE usage;
             /// Creation flags of the buffer
-            BUFFER_CREATION_FLAG m_flags;
+            GRAPHICS_RESOURCE_BIND_FLAGS bind_flags;
+            /// CPU access flags
+            CPU_ACCESS_FLAGS cpu_access_flags;
             /// What type of queue the buffer is owned by
-            QUEUE_TYPE m_queueType;
+            QUEUE_TYPE queueType;
             /// What state will the buffer get created in
-            GRAPHICS_RESOURCE_STATE m_startState;
+            GRAPHICS_RESOURCE_STATE startState;
             /// ICB draw type
-            INDIRECT_ARGUMENT_TYPE m_icbDrawType;
+            INDIRECT_ARGUMENT_TYPE icbDrawType;
             /// ICB max vertex buffers slots count
-            uint32_t m_icbMaxCommandCount;
+            uint32_t icbMaxCommandCount;
             /// Image format
-            TEXTURE_FORMAT m_format;
+            TEXTURE_FORMAT format;
             /// Descriptor creation
-            DESCRIPTOR_TYPE m_descriptors;
+            DESCRIPTOR_TYPE descriptors;
         };
 
         
@@ -55,6 +75,8 @@ namespace Cyber
             virtual uint64_t get_memory_usage() const = 0;
             virtual uint64_t get_node_index() const = 0;
             virtual BufferCreateDesc get_create_desc() = 0;
+            virtual void set_buffer_state(GRAPHICS_RESOURCE_STATE state) = 0;
+            virtual GRAPHICS_RESOURCE_STATE get_buffer_state() const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -106,6 +128,16 @@ namespace Cyber
             {
                 return m_desc;
             }
+
+            virtual void set_buffer_state(GRAPHICS_RESOURCE_STATE state) override final
+            {
+                buffer_state = state;
+            }
+
+            virtual GRAPHICS_RESOURCE_STATE get_buffer_state() const override final
+            {
+                return buffer_state;
+            }
         protected:
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
             void* m_pCpuMappedAddress;
@@ -114,6 +146,7 @@ namespace Cyber
             uint64_t m_memoryUsage : 3;
             uint64_t m_nodeIndex : 4;
             BufferCreateDesc m_desc;
+            GRAPHICS_RESOURCE_STATE buffer_state;
 
             friend RenderDeviceImplType;
         };

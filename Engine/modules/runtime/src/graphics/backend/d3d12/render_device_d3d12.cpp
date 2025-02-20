@@ -2299,199 +2299,292 @@ namespace Cyber
         }
     }
 
-    RenderObject::IBuffer* RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& createDesc)
+    RenderObject::IBuffer* RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& create_desc, BufferData* initial_data)
     {
         Adapter_D3D12_Impl* DxAdapter = static_cast<Adapter_D3D12_Impl*>(m_pAdapter);
         
-        RenderObject::Buffer_D3D12_Impl* pBuffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this, createDesc);
+        RenderObject::Buffer_D3D12_Impl* d3d12_buffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this, create_desc);
 
-        uint64_t allocationSize = createDesc.m_size;
-        // Align the buffer size to multiples of the dynamic uniform buffer minimum size
-        if(createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        uint32_t buffer_alignment = 1;
+        if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS)
+            buffer_alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
+
+        if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING && create_desc.cpu_access_flags == CPU_ACCESS_WRITE)
         {
-            allocationSize = round_up_64(allocationSize, DxAdapter->m_adapterDetail.m_uniformBufferAlignment);
+           buffer_alignment = std::max(buffer_alignment, (uint32_t)D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
         }
+        
+        uint64_t allocationSize = round_up(create_desc.size, buffer_alignment);
 
-        DECLARE_ZERO(D3D12_RESOURCE_DESC, desc);
-        desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-        //Alignment must be 64KB (D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) or 0, which is effectively 64KB.
-        desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
-        desc.Width = allocationSize;
-        desc.Height = 1;
-        desc.DepthOrArraySize = 1;
-        desc.MipLevels = 1;
-        desc.Format = DXGI_FORMAT_UNKNOWN;
-        desc.SampleDesc.Count = 1;
-        desc.SampleDesc.Quality = 0;
-        desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-        desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-
-        if(createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
+        if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_UNIFIED)
         {
-            // UAV
-            desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+            CB_CORE_ERROR("Unified resource usage is not supported");
+            return nullptr;
         }
-
-        // Adjust for padding
-        uint64_t padded_size = 0;
-        m_pDxDevice->GetCopyableFootprints(&desc, 0, 1, 0, NULL, NULL, NULL, &padded_size);
-        allocationSize = (uint64_t)padded_size;
-        // Buffer is 1D
-        desc.Width = padded_size;
-
-        GRAPHICS_RESOURCE_STATE start_state = createDesc.m_startState;
-        if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU || createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY)
+        
+        if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC && 
+          (create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS) == 0)
         {
-            // Your application should generally avoid transitioning to D3D12_RESOURCE_STATE_GENERIC_READ when possible, 
-            // since that can result in premature cache flushes, or resource layout changes (for example, compress/decompress),
-            // causing unnecessary pipeline stalls.
-            start_state = GRAPHICS_RESOURCE_STATE_GENERIC_READ;
-        }
-        else if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
-        {
-            start_state = GRAPHICS_RESOURCE_STATE_COPY_DEST;
-        }
-
-        D3D12_RESOURCE_STATES res_states = D3D12Util_TranslateResourceState(start_state);
-
-        D3D12MA::ALLOCATION_DESC alloc_desc = {};
-
-        if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY || createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU)
-        {
-            alloc_desc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
-        }
-        else if(createDesc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
-        {
-            alloc_desc.HeapType = D3D12_HEAP_TYPE_READBACK;
-            desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_GENERIC_READ);
         }
         else
-        {
-            alloc_desc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
-        }
-        
-        // for commit resource
-        if(createDesc.m_flags & BCF_OWN_MEMORY_BIT)
-            alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
-
-        if(alloc_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT && (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
-        {
-            D3D12_HEAP_PROPERTIES heapProps = {};
-            heapProps.Type = D3D12_HEAP_TYPE_CUSTOM;
-            heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
-            heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-            heapProps.VisibleNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
-            heapProps.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
-            CHECK_HRESULT(m_pDxDevice->CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, NULL, IID_ARGS(&pBuffer->m_pDxResource)));
-            CB_CORE_TRACE("[D3D12] Create Committed Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
-        }
-        else
-        {
-            CHECK_HRESULT(m_pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, NULL, &pBuffer->m_pDxAllocation, IID_ARGS(&pBuffer->m_pDxResource)));
-            CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
-        }
-        
-        if(createDesc.m_memoryUsage != GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY && createDesc.m_flags & BCF_PERSISTENT_MAP_BIT)
-            pBuffer->m_pDxResource->Map(0, NULL, &pBuffer->m_pCpuMappedAddress);
-        
-        pBuffer->m_dxGpuAddress = pBuffer->m_pDxResource->GetGPUVirtualAddress();
-        
-        // Create Descriptors
-        if(!(createDesc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
-        {
-            DescriptorHeap_D3D12* pHeap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-            uint32_t handleCount = ((createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
-                                    ((createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
-                                    ((createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
-            pBuffer->m_dxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(pHeap, handleCount).mCpu;
-        
-            // Create CBV
-            if(createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+        {   
+            D3D12_RESOURCE_DESC d3d12_buffer_desc = {};
+            d3d12_buffer_desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            d3d12_buffer_desc.Width = allocationSize;
+            d3d12_buffer_desc.Height = 1;
+            d3d12_buffer_desc.DepthOrArraySize = 1;
+            d3d12_buffer_desc.MipLevels = 1;
+            d3d12_buffer_desc.Format = DXGI_FORMAT_UNKNOWN;
+            d3d12_buffer_desc.SampleDesc.Count = 1;
+            d3d12_buffer_desc.SampleDesc.Quality = 0;
+            d3d12_buffer_desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            d3d12_buffer_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+            if((create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS) || (create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_RAY_TRACING))
             {
-                pBuffer->m_srvDescriptorOffset = 1;
-
-                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                cbvDesc.BufferLocation = pBuffer->m_dxGpuAddress;
-                cbvDesc.SizeInBytes = (UINT)allocationSize;
-                create_constant_buffer_view( &cbvDesc, pBuffer->m_dxDescriptorHandles);
+                d3d12_buffer_desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
+            }
+            if(!(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE) && !(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_RAY_TRACING))
+            {
+                d3d12_buffer_desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
             }
 
-            // Create SRV
-            if(createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER)
+            if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_SPARSE)
             {
-                D3D12_CPU_DESCRIPTOR_HANDLE srv = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_srvDescriptorOffset};
-                pBuffer->m_uavDescriptorOffset = pBuffer->m_srvDescriptorOffset + pHeap->get_descriptor_size() * 1;
+                auto hr = m_pDxDevice->CreateReservedResource(&d3d12_buffer_desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
+                if(FAILED(hr))
+                {
+                    CB_CORE_ERROR("Failed to create reserved resource");
+                    return nullptr;
+                }
 
-                D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-                srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                srvDesc.Buffer.FirstElement = createDesc.m_firstElement;
-                srvDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
-                srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-                srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
-                if(DESCRIPTOR_TYPE_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
+                d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+            }
+            else
+            {
+                D3D12_HEAP_PROPERTIES heap_properties = {};
+                if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING)
+                    heap_properties.Type = create_desc.cpu_access_flags == CPU_ACCESS_READ ? D3D12_HEAP_TYPE_READBACK : D3D12_HEAP_TYPE_UPLOAD;
+                else
+                    heap_properties.Type = D3D12_HEAP_TYPE_DEFAULT;
+
+                if(heap_properties.Type == D3D12_HEAP_TYPE_READBACK)
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_COPY_DEST);
+                else if(heap_properties.Type == D3D12_HEAP_TYPE_UPLOAD)
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_GENERIC_READ);
+
+                heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+                heap_properties.CreationNodeMask = 1;
+                heap_properties.VisibleNodeMask = 1;
+                
+                const auto initial_data_size = (initial_data != nullptr && initial_data->data != nullptr) ? 
+                    std::min(initial_data->data_size, allocationSize) : 0;
+
+                if(initial_data_size > 0)
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_COPY_DEST);
+
+                if(d3d12_buffer->get_buffer_state() == GRAPHICS_RESOURCE_STATE_UNKNOWN)
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+
+                // todo : check commandlist support
+                D3D12_RESOURCE_STATES res_states = D3D12Util_TranslateResourceState(d3d12_buffer->get_buffer_state());
+
+                const auto d3d12_heap_flags = initial_data_size > 0 ? D3D12_HEAP_FLAG_CREATE_NOT_ZEROED : D3D12_HEAP_FLAG_NONE;
+
+                auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
+                if(FAILED(hr))
                 {
-                    if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
-                    {
-                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
-                    }
-                    srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-                    srvDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
+                    CB_CORE_ERROR("Failed to create D3D12 Buffer Resource");
+                    return nullptr;
                 }
-                // Cannot create a typed StructuredBuffer
-                if(srvDesc.Format != DXGI_FORMAT_UNKNOWN)
-                {
-                    srvDesc.Buffer.StructureByteStride = 0;
-                }
-                create_shader_resource_view(pBuffer->m_pDxResource, &srvDesc, srv);
+                if(create_desc.Name != nullptr)
+                    d3d12_buffer->m_pDxResource->SetName(u8_to_wstring(create_desc.Name).c_str());
+
             }
 
-            // Create UAV
+            if(create_desc.memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU || create_desc.memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY)
+            {
+                // Your application should generally avoid transitioning to D3D12_RESOURCE_STATE_GENERIC_READ when possible, 
+                // since that can result in premature cache flushes, or resource layout changes (for example, compress/decompress),
+                // causing unnecessary pipeline stalls.
+                start_state = GRAPHICS_RESOURCE_STATE_GENERIC_READ;
+            }
+            else if(create_desc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
+            {
+                start_state = GRAPHICS_RESOURCE_STATE_COPY_DEST;
+            }
+
+           
+
+            D3D12MA::ALLOCATION_DESC alloc_desc = {};
+
+            if(create_desc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_ONLY || create_desc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU)
+            {
+                alloc_desc.HeapType = D3D12_HEAP_TYPE_UPLOAD;
+            }
+            else if(create_desc.m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU)
+            {
+                alloc_desc.HeapType = D3D12_HEAP_TYPE_READBACK;
+                desc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+            }
+            else
+            {
+                alloc_desc.HeapType = D3D12_HEAP_TYPE_DEFAULT;
+            }
+            
+            // for commit resource
+            if(createDesc.m_flags & BCF_OWN_MEMORY_BIT)
+                alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
+
+            DECLARE_ZERO(D3D12_RESOURCE_DESC, desc);
+            desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+            //Alignment must be 64KB (D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT) or 0, which is effectively 64KB.
+            desc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT;
+            desc.Width = allocationSize;
+            desc.Height = 1;
+            desc.DepthOrArraySize = 1;
+            desc.MipLevels = 1;
+            desc.Format = DXGI_FORMAT_UNKNOWN;
+            desc.SampleDesc.Count = 1;
+            desc.SampleDesc.Quality = 0;
+            desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+            desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
             if(createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
             {
-                D3D12_CPU_DESCRIPTOR_HANDLE uav = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_uavDescriptorOffset};
-
-                D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-                uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-                uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-                uavDesc.Buffer.FirstElement = createDesc.m_firstElement;
-                uavDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
-                uavDesc.Buffer.StructureByteStride = (UINT)createDesc.m_structStride;
-                uavDesc.Buffer.CounterOffsetInBytes = 0;
-                uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-                if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
-                {
-                    if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
-                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
-                    uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-                    uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
-                }
-                else if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
-                {
-                    uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
-                    D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
-                    HRESULT hr = m_pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
-                    if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
-                        !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
-                    {
-                        CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)createDesc.m_format);
-                        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-                    }
-                }
-                // Cannot create a typed RWStructuredBuffer
-                if(uavDesc.Format != DXGI_FORMAT_UNKNOWN)
-                {
-                    uavDesc.Buffer.StructureByteStride = 0;
-                }
-
-                ID3D12Resource* pCounterResource = createDesc.m_pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(createDesc.m_pCounterBuffer)->m_pDxResource : nullptr;
-                create_unordered_access_view(pBuffer->m_pDxResource, pCounterResource, &uavDesc, uav);
+                // UAV
+                desc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
             }
-        }
 
-        pBuffer->m_size = (uint32_t)createDesc.m_size;
-        pBuffer->m_memoryUsage = createDesc.m_memoryUsage;
-        pBuffer->m_descriptors = createDesc.m_descriptors;
+            // Adjust for padding
+            uint64_t padded_size = 0;
+            m_pDxDevice->GetCopyableFootprints(&desc, 0, 1, 0, NULL, NULL, NULL, &padded_size);
+            allocationSize = (uint64_t)padded_size;
+            // Buffer is 1D
+            desc.Width = padded_size;
+
+
+            if(alloc_desc.HeapType != D3D12_HEAP_TYPE_DEFAULT && (desc.Flags & D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS))
+            {
+                D3D12_HEAP_PROPERTIES heapProps = {};
+                heapProps.Type = D3D12_HEAP_TYPE_CUSTOM;
+                heapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_COMBINE;
+                heapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+                heapProps.VisibleNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
+                heapProps.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
+                CHECK_HRESULT(m_pDxDevice->CreateCommittedResource(&heapProps, alloc_desc.ExtraHeapFlags, &desc, res_states, NULL, IID_ARGS(&pBuffer->m_pDxResource)));
+                CB_CORE_TRACE("[D3D12] Create Committed Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
+            }
+            else
+            {
+                CHECK_HRESULT(m_pResourceAllocator->CreateResource(&alloc_desc, &desc, res_states, NULL, &pBuffer->m_pDxAllocation, IID_ARGS(&pBuffer->m_pDxResource)));
+                CB_CORE_TRACE("[D3D12] Create Buffer Resource Succeed! \n\t With Name: [0]\n\t Size: [1] \n\t Format: [2]", (char*)(createDesc.m_pName ? createDesc.m_pName : CYBER_UTF8("")), allocationSize, createDesc.m_format);
+            }
+            
+            if(createDesc.m_memoryUsage != GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY && createDesc.m_flags & BCF_PERSISTENT_MAP_BIT)
+                pBuffer->m_pDxResource->Map(0, NULL, &pBuffer->m_pCpuMappedAddress);
+            
+            pBuffer->m_dxGpuAddress = pBuffer->m_pDxResource->GetGPUVirtualAddress();
+            
+            // Create Descriptors
+            if(!(createDesc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
+            {
+                DescriptorHeap_D3D12* pHeap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+                uint32_t handleCount = ((createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
+                                        ((createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
+                                        ((createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
+                pBuffer->m_dxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(pHeap, handleCount).mCpu;
+            
+                // Create CBV
+                if(createDesc.m_descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
+                {
+                    pBuffer->m_srvDescriptorOffset = 1;
+
+                    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+                    cbvDesc.BufferLocation = pBuffer->m_dxGpuAddress;
+                    cbvDesc.SizeInBytes = (UINT)allocationSize;
+                    create_constant_buffer_view( &cbvDesc, pBuffer->m_dxDescriptorHandles);
+                }
+
+                // Create SRV
+                if(createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER)
+                {
+                    D3D12_CPU_DESCRIPTOR_HANDLE srv = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_srvDescriptorOffset};
+                    pBuffer->m_uavDescriptorOffset = pBuffer->m_srvDescriptorOffset + pHeap->get_descriptor_size() * 1;
+
+                    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+                    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+                    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+                    srvDesc.Buffer.FirstElement = createDesc.m_firstElement;
+                    srvDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
+                    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+                    srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
+                    if(DESCRIPTOR_TYPE_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
+                    {
+                        if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
+                        {
+                            CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                        }
+                        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                        srvDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
+                    }
+                    // Cannot create a typed StructuredBuffer
+                    if(srvDesc.Format != DXGI_FORMAT_UNKNOWN)
+                    {
+                        srvDesc.Buffer.StructureByteStride = 0;
+                    }
+                    create_shader_resource_view(pBuffer->m_pDxResource, &srvDesc, srv);
+                }
+
+                // Create UAV
+                if(createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
+                {
+                    D3D12_CPU_DESCRIPTOR_HANDLE uav = {pBuffer->m_dxDescriptorHandles.ptr + pBuffer->m_uavDescriptorOffset};
+
+                    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+                    uavDesc.Buffer.FirstElement = createDesc.m_firstElement;
+                    uavDesc.Buffer.NumElements = (UINT)createDesc.m_elementCount;
+                    uavDesc.Buffer.StructureByteStride = (UINT)createDesc.m_structStride;
+                    uavDesc.Buffer.CounterOffsetInBytes = 0;
+                    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+                    if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (createDesc.m_descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
+                    {
+                        if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
+                            CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                        uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                        uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
+                    }
+                    else if(createDesc.m_format != TEX_FORMAT_UNKNOWN)
+                    {
+                        uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(createDesc.m_format);
+                        D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
+                        HRESULT hr = m_pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+                        if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
+                            !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
+                        {
+                            CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)createDesc.m_format);
+                            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                        }
+                    }
+                    // Cannot create a typed RWStructuredBuffer
+                    if(uavDesc.Format != DXGI_FORMAT_UNKNOWN)
+                    {
+                        uavDesc.Buffer.StructureByteStride = 0;
+                    }
+
+                    ID3D12Resource* pCounterResource = createDesc.m_pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(createDesc.m_pCounterBuffer)->m_pDxResource : nullptr;
+                    create_unordered_access_view(pBuffer->m_pDxResource, pCounterResource, &uavDesc, uav);
+                }
+            }
+
+                pBuffer->m_size = (uint32_t)createDesc.m_size;      
+            pBuffer->m_memoryUsage = createDesc.m_memoryUsage;
+            pBuffer->m_descriptors = createDesc.m_descriptors;
+        }   
+
         return pBuffer;
     }
     void RenderDevice_D3D12_Impl::free_buffer(RenderObject::IBuffer* buffer)
