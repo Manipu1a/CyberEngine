@@ -2354,8 +2354,7 @@ namespace Cyber
                 auto hr = m_pDxDevice->CreateReservedResource(&d3d12_buffer_desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
                 if(FAILED(hr))
                 {
-                    CB_CORE_ERROR("Failed to create reserved resource");
-                    return nullptr;
+                    cyber_error("Failed to create reserved resource");
                 }
 
                 d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
@@ -2395,11 +2394,43 @@ namespace Cyber
                 auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
                 if(FAILED(hr))
                 {
-                    CB_CORE_ERROR("Failed to create D3D12 Buffer Resource");
-                    return nullptr;
+                    cyber_error("Failed to create D3D12 Buffer Resource");
                 }
                 if(create_desc.Name != nullptr)
                     d3d12_buffer->m_pDxResource->SetName(u8_to_wstring(create_desc.Name).c_str());
+                
+                if(initial_data_size > 0)
+                {
+                    D3D12_HEAP_PROPERTIES upload_heap_properties = {};
+                    upload_heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
+                    upload_heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
+                    upload_heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
+                    upload_heap_properties.CreationNodeMask = 1;
+                    upload_heap_properties.VisibleNodeMask = 1;
+
+                    d3d12_buffer_desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+                    ID3D12Resource* upload_buffer;
+                    hr = m_pDxDevice->CreateCommittedResource(&upload_heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_ARGS(&upload_buffer));
+                    if(FAILED(hr))
+                    {
+                        cyber_error("Failed to create upload buffer");
+                    }
+                    
+                    const auto upload_buffer_name = eastl::wstring(L"Upload buffer for buffer '") + u8_to_wstring(create_desc.Name) + L"\'";
+                    upload_buffer->SetName(upload_buffer_name.c_str());
+
+                    void* dest_address = nullptr;
+                    hr = upload_buffer->Map(0, nullptr, reinterpret_cast<void**>(&dest_address));
+
+                    if(FAILED(hr))
+                    {
+                        cyber_error("Failed to map upload buffer");
+                    }
+
+                    memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
+                    upload_buffer->Unmap(0, nullptr);
+
+                }
 
             }
 
