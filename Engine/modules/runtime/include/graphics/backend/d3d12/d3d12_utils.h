@@ -594,6 +594,7 @@ namespace Cyber
 
     D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(PRIMITIVE_TOPOLOGY topology);
 
+    uint32_t d3d12_command_list_type_to_queue_id(D3D12_COMMAND_LIST_TYPE type);
     inline void MemcpySubresource(D3D12_MEMCPY_DEST* pDest, const D3D12_SUBRESOURCE_DATA* pSrc, uint64_t RowSizeInBytes, uint32_t numRows, uint32_t numSlices)
     {
         for(uint32_t z = 0; z < numSlices; ++z)
@@ -708,4 +709,8 @@ namespace Cyber
         void d3d12_util_unload_dxc_dll();
         DxcCreateInstanceProc d3d12_util_get_dxc_create_instance_proc();
     #endif
+
+    static constexpr uint8_t d3d12_queue_index_graphics{0};
+    static constexpr uint8_t d3d12_queue_index_compute{1};
+    static constexpr uint8_t d3d12_queue_index_copy{2};
 }

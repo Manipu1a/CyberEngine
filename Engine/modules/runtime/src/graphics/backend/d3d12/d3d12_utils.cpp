@@ -410,6 +410,20 @@ namespace Cyber
             default: CB_ERROR("Unknown compare mode"); return D3D12_COMPARISON_FUNC_NEVER;
         }
     }
+
+    uint32_t d3d12_command_list_type_to_queue_id(D3D12_COMMAND_LIST_TYPE type)
+    {
+        switch(type)
+        {
+            case D3D12_COMMAND_LIST_TYPE_DIRECT: return d3d12_queue_index_graphics;
+            case D3D12_COMMAND_LIST_TYPE_COMPUTE: return d3d12_queue_index_compute;
+            case D3D12_COMMAND_LIST_TYPE_COPY: return d3d12_queue_index_copy;
+            default:
+            cyber_error(false, "Unknown command list type");
+            return 0;
+        }
+    }
+    
 #if !defined (XBOX) && defined (_WIN32)
     static D3D12Util_DXCLoader DxcLoader;
 

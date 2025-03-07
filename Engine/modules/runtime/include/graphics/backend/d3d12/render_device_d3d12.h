@@ -2,6 +2,7 @@
 #include "d3d12.config.h"
 #include "interface/render_device.hpp"
 #include "backend/d3d12/graphics_types_d3d12.h"
+#include "graphics/backend/d3d12/command_list_manager.h"
 #include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
@@ -9,6 +10,8 @@ namespace Cyber
     namespace RenderObject
     {
         class DescriptorHeap_D3D12;
+        //class CommandListManager;
+        class CommandContext;
 
         // Render device interface
         struct CYBER_GRAPHICS_API IRenderDevice_D3D12 : public IRenderDevice
@@ -25,9 +28,7 @@ namespace Cyber
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(adapter, deviceDesc)
-            {
-            }
+            RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
 
             virtual ~RenderDevice_D3D12_Impl();
 
@@ -143,13 +144,20 @@ namespace Cyber
 
             void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
-        protected:
+        private:
+            CYBER_FORCE_INLINE CommandListManager& get_command_list_manager(uint8_t index)
+            {
+                return cmd_list_managers[index];
+            }
+
+            CommandContext* allocate_command_context(D3D12_COMMAND_LIST_TYPE type);
+
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
 
-
             class D3D12MA::Allocator* m_pResourceAllocator;
 
+            CommandListManager cmd_list_managers[3];
             // API specific descriptor heap and memory allocator
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;

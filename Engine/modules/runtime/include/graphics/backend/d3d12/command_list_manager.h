@@ -20,13 +20,13 @@ public:
     void request_allocator(ID3D12CommandAllocator** command_allocator);
 
 
-    D3D12_COMMAND_LIST_TYPE get_list_type() const { return list_type; }
+    D3D12_COMMAND_LIST_TYPE get_command_list_type() const { return command_list_type; }
 
 private:
     std::mutex allocator_mutex;
     std::atomic<uint32_t> num_allocators;
     
-    const D3D12_COMMAND_LIST_TYPE list_type;
+    const D3D12_COMMAND_LIST_TYPE command_list_type;
     class RenderDevice_D3D12_Impl* device;
 };
 

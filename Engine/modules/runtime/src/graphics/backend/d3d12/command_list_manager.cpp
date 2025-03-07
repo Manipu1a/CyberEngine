@@ -5,7 +5,7 @@ CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
 CommandListManager::CommandListManager(class RenderDevice_D3D12_Impl* device, D3D12_COMMAND_LIST_TYPE list_type)
-    : device(device), list_type(list_type)
+    : device(device), command_list_type(list_type)
 {
 
 }
@@ -36,7 +36,7 @@ void CommandListManager::create_new_command_list(ID3D12GraphicsCommandList** com
     HRESULT hr = E_FAIL;
     for(uint32_t i = 0; i < _countof(cmd_list_iids); ++i)
     {
-        hr = d3d12_device->CreateCommandList(0, list_type, *command_allocator, nullptr, cmd_list_iids[i], command_list);
+        hr = d3d12_device->CreateCommandList(0, command_list_type, *command_allocator, nullptr, cmd_list_iids[i], reinterpret_cast<void**>(command_list));
         if(SUCCEEDED(hr))
         {
             version = _countof(cmd_list_iids) - 1 - i;
@@ -56,7 +56,7 @@ void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allo
     *command_allocator = nullptr;
 
     auto* d3d12_device = device->GetD3D12Device();
-    auto hr = d3d12_device->CreateCommandAllocator(list_type, IID_PPV_ARGS(command_allocator));
+    auto hr = d3d12_device->CreateCommandAllocator(command_list_type, IID_PPV_ARGS(command_allocator));
     cyber_assert(hr == S_OK, "Failed to create command allocator");
 
     eastl::wstring allocator_name(eastl::wstring::CtorSprintf(), L"Cmd list allocator %d", num_allocators.fetch_add(1));
