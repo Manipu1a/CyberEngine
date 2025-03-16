@@ -62,7 +62,10 @@ namespace Cyber
                     vertex_buffer_size *= 2;
                 }
                 RenderObject::BufferCreateDesc buffer_desc = {};
-                buffer_desc.m_size = vertex_buffer_size * sizeof(ImDrawVert);
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
+                buffer_desc.size = vertex_buffer_size * sizeof(ImDrawVert);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 vertex_buffer = m_pDevice->create_buffer(buffer_desc);
             }
 
@@ -78,7 +81,7 @@ namespace Cyber
                     index_buffer_size *= 2;
                 }
                 RenderObject::BufferCreateDesc buffer_desc = {};
-                buffer_desc.m_size = index_buffer_size * sizeof(ImDrawIdx);
+                buffer_desc.size = index_buffer_size * sizeof(ImDrawIdx);
                 index_buffer = m_pDevice->create_buffer(buffer_desc);
                 
             }
@@ -219,7 +222,7 @@ namespace Cyber
             ps_shader->free();
 
             RenderObject::BufferCreateDesc buffer_desc = {};
-            buffer_desc.m_size = sizeof(float4x4);
+            buffer_desc.size = sizeof(float4x4);
             vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
             
             create_fonts_texture();
@@ -242,7 +245,7 @@ namespace Cyber
             texture_desc.m_mipLevels = 1;
             texture_desc.m_arraySize = 1;
             texture_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
-            texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE;
+            texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
             texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_COPY_DEST;
             texture_desc.m_sampleCount = SAMPLE_COUNT_1;
             texture_desc.m_sampleQuality = 1;

@@ -42,6 +42,7 @@
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
+#include "graphics/backend/d3d12//command_context.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -2412,7 +2413,7 @@ namespace Cyber
                     auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
                     if(FAILED(hr))
                     {
-                        cyber_error("Failed to create D3D12 Buffer Resource");
+                        cyber_error(false, "Failed to create D3D12 Buffer Resource");
                     }
                 }
                 else
@@ -2441,7 +2442,7 @@ namespace Cyber
                     auto hr = m_pDxDevice->CreateCommittedResource(&upload_heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_ARGS(&upload_buffer));
                     if(FAILED(hr))
                     {
-                        cyber_error("Failed to create upload buffer");
+                        cyber_error(false, "Failed to create upload buffer");
                     }
                     
                     const auto upload_buffer_name = eastl::wstring(L"Upload buffer for buffer '") + u8_to_wstring(create_desc.Name) + L"\'";
@@ -2452,7 +2453,7 @@ namespace Cyber
 
                     if(FAILED(hr))
                     {
-                        cyber_error("Failed to map upload buffer");
+                        cyber_error(false, "Failed to map upload buffer");
                     }
 
                     memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
@@ -2551,17 +2552,17 @@ namespace Cyber
                         uavDesc.Buffer.StructureByteStride = 0;
                     }
 
-                    ID3D12Resource* pCounterResource = create_desc.m_pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(create_desc.m_pCounterBuffer)->m_pDxResource : nullptr;
-                    create_unordered_access_view(pBuffer->m_pDxResource, pCounterResource, &uavDesc, uav);
+                    ID3D12Resource* pCounterResource = create_desc.pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(create_desc.pCounterBuffer)->m_pDxResource : nullptr;
+                    create_unordered_access_view(d3d12_buffer->m_pDxResource, pCounterResource, &uavDesc, uav);
                 }
             }
 
-            pBuffer->m_size = (uint32_t)createDesc.m_size;      
-            pBuffer->m_memoryUsage = createDesc.m_memoryUsage;
-            pBuffer->m_descriptors = createDesc.m_descriptors;
+            d3d12_buffer->m_size = create_desc.size;      
+            d3d12_buffer->m_memoryUsage = create_desc.usage;
+            d3d12_buffer->m_descriptors = create_desc.descriptors;
         }   
 
-        return pBuffer;
+        return d3d12_buffer;
     }
     void RenderDevice_D3D12_Impl::free_buffer(RenderObject::IBuffer* buffer)
     {
@@ -2864,5 +2865,4 @@ namespace Cyber
     }
 
     }
-}
 }

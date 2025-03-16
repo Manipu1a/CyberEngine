@@ -1,4 +1,4 @@
-#include "d3d12_utils.h"
+#include "graphics/backend/d3d12/d3d12_utils.h"
 //#include "platform/configure.h"
 #include <d3d12.h>
 #include <d3d12shader.h>
@@ -419,7 +419,7 @@ namespace Cyber
             case D3D12_COMMAND_LIST_TYPE_COMPUTE: return d3d12_queue_index_compute;
             case D3D12_COMMAND_LIST_TYPE_COPY: return d3d12_queue_index_copy;
             default:
-            cyber_error(false, "Unknown command list type");
+            cyber_error("Unknown command list type");
             return 0;
         }
     }

@@ -709,16 +709,24 @@ namespace Cyber
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_USAGE, uint32_t)
     {
         GRAPHICS_RESOURCE_USAGE_UNIFIED = 0,
-        /// A resource that can only be read on the GPU, cannot be written by the GPU.
-        /// and cannot be accessed at all by the CPU. This type of resource must be 
-        /// initialized when it is created, since it cannot be altered after creation.
+        /// 资源在创建后完全不可修改（CPU和GPU均不可写）。数据必须在创建时一次性初始化。
+        /// 例如：静态几何体（如地形、模型顶点数据）、贴图
+        /// 保存在显存VRAM中，访问速度最快
+        /// 限制：无法通过任何方式更新
         GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
-        /// A resource that can be read by the GPU and written to by the GPU and can also
-        /// be accasionally written by the CPU.
+        /// 资源由GPU读写，且CPU无法直接访问。通常用于需要频繁GPU访问且不需要CPU修改的资源
+        /// 例如：纹理、顶点/索引缓冲区（GPU频繁读写）、渲染目标或深度模板缓冲区
+        /// 保存在显存VRAM中，访问速度最快
+        /// 限制：无法直接从CPU修改，需要通过GPU命令（如CopyBufferRegion或UpdateSubresources）间接修改
         GRAPHICS_RESOURCE_USAGE_DEFAULT,
-        /// A resource that can be read by the GPU and written at least once per frame by the CPU.
+        /// CPU可频繁写入，GPU可读取。适用于需要每帧更新的数据。
+        /// 例如：动态顶点/索引缓冲区（如粒子、UI），频繁更新的常量缓冲区
+        /// 保存在系统内存RAM中，通过映射（Map/Unmap）更新
+        /// 限制：GPU只能读取，不能写入
         GRAPHICS_RESOURCE_USAGE_DYNAMIC,
-        /// A resource that supports data transfer (copy) from the CPU to the GPU.
+        /// CPU可读写，GPU可读写。用于将数据从GPU复制到CPU（如截图、读取渲染结果）
+        /// 适用从GPU读取数据到CPU，临时中转数据
+        /// 保存在系统内存RAM中
         GRAPHICS_RESOURCE_USAGE_STAGING,
         /// A resource that can be partially committed to physical memory.
         GRAPHICS_RESOURCE_USAGE_SPARSE,

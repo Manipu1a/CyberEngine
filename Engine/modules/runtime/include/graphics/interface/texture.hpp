@@ -184,17 +184,17 @@ namespace Cyber
                     default_views[default_view_index++] = view;
                 };
 
-                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_RENDER_TARGET)
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_RENDER_TARGET)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_SRV);
                 }
                 
-                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_DEPTH_STENCIL || m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_SHADER_RESOURCE)
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL || m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_RTV_DSV);
                 }
 
-                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_FLAGS_UNORDERED_ACCESS)
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS)
                 {
                     CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_UAV);
                 }

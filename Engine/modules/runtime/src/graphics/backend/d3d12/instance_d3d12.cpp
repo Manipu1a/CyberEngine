@@ -3,7 +3,7 @@
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "backend/d3d12/adapter_d3d12.h"
 #include "platform/memory.h"
-#include "d3d12_utils.h"
+#include "backend/d3d12/d3d12_utils.h"
 
 namespace Cyber
 {
