@@ -7,6 +7,9 @@
     #define CB_ENABLE_ASSERTS
 #endif
 
+#define cyber_log(x, ...) CB_TRACE(x, __VA_ARGS__)
+#define cyber_info(x, ...) CB_INFO(x, __VA_ARGS__)
+
 #ifdef CB_ENABLE_ASSERTS
     #define cyber_check(x) if(!(x)) {__debugbreak();}
     #define cyber_assert(x, ...) if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}

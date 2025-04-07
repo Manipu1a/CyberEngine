@@ -1,6 +1,7 @@
 #pragma once
 
 #include <float.h>
+#include <type_traits>
 
 namespace Cyber
 {
@@ -14,4 +15,20 @@ namespace Cyber
     static inline uint32_t round_down(uint32_t value, uint32_t multiple) { return value - value % multiple; }
     static inline uint64_t round_down_64(uint64_t value, uint64_t multiple) { return value - value % multiple; }
      
+     template <typename T>
+     bool is_power_of_two(T value)
+     {
+        return (value != 0) && ((value & (value - 1)) == 0);
+     }
+
+     template <typename T1, typename T2>
+     inline typename std::conditional<sizeof(T1) >= (sizeof(T2)), T1, T2>::type align_up(T1 value, T2 alignment)
+     {
+        static_assert(std::is_unsigned<T1>::value == std::is_unsigned<T2>::value, "both types must be signed or unsigned");
+        static_assert(!std::is_pointer<T1>::value && !std::is_pointer<T2>::value, "types must not be pointers");
+
+        cyber_assert(is_power_of_two(alignment), "alignment must be a power of two");
+        using T = typename std::conditional<sizeof(T1) >= (sizeof(T2)), T1, T2>::type;
+        return (static_cast<T>(value) + static_cast<T>(alignment) - 1) & ~(static_cast<T>(alignment) - 1);
+     }
 }
