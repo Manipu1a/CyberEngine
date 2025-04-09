@@ -2568,9 +2568,44 @@ namespace Cyber
     {
 
     }
-    void* RenderDevice_D3D12_Impl::map_buffer(RenderObject::IBuffer* buffer, const BufferRange* range)
+    void* RenderDevice_D3D12_Impl::map_buffer(RenderObject::IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags)
     {
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
+        const auto& buffer_desc = buffer_d3d12->get_create_desc();
+        auto* d3d12_resource = buffer_d3d12->m_pDxResource;
+
+        if(map_type == MAP_READ)
+        {
+
+        }
+        else if(map_type == MAP_WRITE)
+        {
+            if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING)
+            {
+
+            }
+            else if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC)
+            {
+                auto& dynamic_data = buffer_d3d12->m_dynamicData[0];
+                if((map_flags & MAP_FLAG_DISCARD) != 0 || dynamic_data.cpu_address == nullptr)
+                {
+                    uint32_t alignment = (buffer_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : 16;
+                    dynamic_data;
+                }
+            }
+            else 
+            {
+                
+            }
+        }
+        else if(map_type == MAP_READ_WRITE)
+        {
+
+        }
+        else {
+            
+        }
+        
         if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)
         {
             CB_CORE_ERROR("Cannot map GPU only buffer");
@@ -2592,7 +2627,7 @@ namespace Cyber
         }
         return pMappedData;
     }
-    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer, const BufferRange* range)
+    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer)
     {
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
         if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)

@@ -11,7 +11,6 @@ namespace Cyber
     #define GRAPHICS_MAX_MRT_COUNT 8u
     #define GRAPHICS_ARRAY_LEN(array) ((sizeof(array)/ sizeof(array[0])))
     
-
     namespace RenderObject
     {
         class IRenderDevice;
@@ -771,6 +770,45 @@ namespace Cyber
         CPU_ACCESS_WRITE = 0x02, ///< A resource can be mapped for writing
     };
 
+    /// Describes how a mapped resource will be accessed. This enumeration generally
+    /// mirrors [D3D11_MAP][] enumeration.
+    CYBER_TYPED_ENUM(MAP_TYPE, uint8_t)
+    {
+        /// The resource is mapped for reading
+        /// D3D11 counterpart: D3D11_MAP_READ
+        MAP_READ = 0x01,
+
+        /// The resource is mapped for writing
+        /// D3D11 counterpart: D3D11_MAP_WRITE
+        MAP_WRITE = 0x02,
+
+        /// The resource is mapped for reading and writing
+        /// D3D11 counterpart: D3D11_MAP_READ_WRITE
+        MAP_READ_WRITE = 0x03
+    };
+
+    /// Describes special arguments for a map operation.
+    CYBER_TYPED_ENUM(MAP_FLAGS, uint8_t)
+    {
+        /// No flags
+        MAP_FLAG_NONE = 0x000,
+        
+        /// Specifies that map operation should not wait until previous command that
+        /// using the same resource completes. Map return null pointer if the resource is still in use
+        /// D3D11 counterpart: D3D11_MAP_FLAG_DO_NOT_WAIT
+        MAP_FLAG_DO_NOT_WAIT = 0x001,
+
+        /// Previous contents of the resource will be undefined. This flag is only compatible with MAP_WRITE
+        /// D3D11 counterpart: D3D11_MAP_WRITE_DISCARD
+        MAP_FLAG_DISCARD = 0X002,
+
+        /// The system will not synchronize pending operations before mapping the buffer. It is responsibility
+        /// of the application to make sure that the buffer contents is not overwritten while it is in use by
+        /// the GPU.
+        /// D3D11 counterpart: D3D11_MAP_FLAG_NO_OVERWRITE
+        MAP_FLAG_NO_OVERWRITE = 0x004
+    };
+    
     CYBER_TYPED_ENUM(BUFFER_CREATION_FLAG, uint32_t)
     {
         /// Default flag (Buffer will use aliased memory, buffer will not be cpu accessible until mapBuffer is called)

@@ -28,6 +28,7 @@ private:
     };
 
     RenderDevice_D3D12_Impl& render_device;
+    
     ID3D12Fence* fence;
     uint64_t current_fence_value;
     eastl::vector<Pending_Resource> pending_resources;

@@ -25,7 +25,6 @@ namespace Cyber
             IFrameBuffer* m_pBoundFrameBuffer = nullptr;
         };
 
-
     }
 }
 

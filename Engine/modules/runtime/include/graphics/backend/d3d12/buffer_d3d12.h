@@ -2,6 +2,7 @@
 
 #include "graphics/interface/buffer.h"
 #include "engine_impl_traits_d3d12.hpp"
+#include "dynamic_heap_d3d12.hpp"
 
 namespace Cyber
 {
@@ -58,6 +59,21 @@ namespace Cyber
             ID3D12Resource* m_pDxResource;
             /// Contains resource allocation info such as parent heap, offset in heap
             D3D12MA::Allocation* m_pDxAllocation;
+
+            static constexpr size_t cache_line_size = 64;
+            struct alignas(cache_line_size) DynamicData : Dynamic_Allocation_D3D12
+            {
+                DynamicData& operator=(const Dynamic_Allocation_D3D12& other)
+                {
+                    *static_cast<Dynamic_Allocation_D3D12*>(this) = other;
+                    return *this;
+                }
+                uint8_t padding[cache_line_size - sizeof(Dynamic_Allocation_D3D12)];
+            };
+            static_assert(sizeof(DynamicData) == cache_line_size, "DynamicData must be aligned to cache line size");
+            
+            eastl::vector<DynamicData> m_dynamicData;
+            
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

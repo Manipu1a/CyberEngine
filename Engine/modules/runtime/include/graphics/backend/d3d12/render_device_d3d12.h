@@ -4,6 +4,7 @@
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/backend/d3d12/command_list_manager.h"
 #include "engine_impl_traits_d3d12.hpp"
+#include "dynamic_heap_d3d12.hpp"
 
 namespace Cyber
 {
@@ -112,8 +113,9 @@ namespace Cyber
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
             virtual void free_buffer(IBuffer* buffer) override;
-            virtual void* map_buffer(IBuffer* buffer, const BufferRange* range) override;
-            virtual void unmap_buffer(IBuffer* buffer, const BufferRange* range) override;
+
+            virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) override;
+            virtual void unmap_buffer(IBuffer* buffer) override;
 
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
@@ -162,6 +164,7 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
+
             struct EmptyDescriptors_D3D12* m_pNullDescriptors;
             eastl::map<uint32_t, ID3D12CommandQueue**> m_commandQueues;
             eastl::map<uint32_t, uint32_t> m_commandQueueCounts;
