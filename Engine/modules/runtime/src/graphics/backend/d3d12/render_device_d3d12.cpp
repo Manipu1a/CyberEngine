@@ -61,7 +61,8 @@ namespace Cyber
         {this, D3D12_COMMAND_LIST_TYPE_DIRECT},
         {this, D3D12_COMMAND_LIST_TYPE_COMPUTE},
         {this, D3D12_COMMAND_LIST_TYPE_COPY}
-    }
+    },
+    m_dynamic_mem_mgr{*this, 1, 1024 * 1024}
     {
         
     }
@@ -138,6 +139,8 @@ namespace Cyber
             DescriptorHeap_D3D12::create_descriptor_heap(m_pDxDevice, desc, &m_cpuDescriptorHeaps[i]);
         }
             
+        m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
+
         // One shader visible heap for each linked node
         for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
         {
@@ -2573,10 +2576,24 @@ namespace Cyber
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
         const auto& buffer_desc = buffer_d3d12->get_create_desc();
         auto* d3d12_resource = buffer_d3d12->m_pDxResource;
+        void* pMappedData = nullptr;
 
         if(map_type == MAP_READ)
         {
+            cyber_assert(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING, "Buffer must be a staging buffer to map for reading");
+            cyber_assert(d3d12_resource != nullptr, "USAGE_STAGING buffer must initialize D3D12 resource");
 
+            if((map_flags & MAP_FLAG_DO_NOT_WAIT) == 0)
+            {
+                cyber_warn("D3D12 backend never waits for GPU when mapping staging buffers for reading. "
+                                "Applications must use fences or other synchronization methods to explicitly synchronize "
+                                "access and use MAP_FLAG_DO_NOT_WAIT flag.");
+            }
+            
+            D3D12_RANGE d3d12_range = {};
+            d3d12_range.Begin = 0;
+            d3d12_range.End = static_cast<size_t>(buffer_desc.size);
+            d3d12_resource->Map(0, &d3d12_range, &pMappedData);
         }
         else if(map_type == MAP_WRITE)
         {
@@ -2590,43 +2607,40 @@ namespace Cyber
                 if((map_flags & MAP_FLAG_DISCARD) != 0 || dynamic_data.cpu_address == nullptr)
                 {
                     uint32_t alignment = (buffer_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : 16;
-                    dynamic_data;
+                    dynamic_data = allocate_dynamic_memory(buffer_desc.size, alignment);
                 }
+                else 
+                {
+                    cyber_check(map_flags & MAP_FLAG_NO_OVERWRITE);
+
+                    if(d3d12_resource != nullptr)
+                    {
+                        cyber_error("Formatted buffers require actual Direct3D12 backing resource and cannot be suballocated "
+                                "from dynamic heap. In current implementation, the entire contents of the backing buffer is updated when the buffer is unmapped. "
+                                "As a consequence, the buffer cannot be mapped with MAP_FLAG_NO_OVERWRITE flag because updating the whole "
+                                "buffer will overwrite regions that may still be in use by the GPU.");
+
+                        return nullptr;
+                    }
+                }
+
+                pMappedData = dynamic_data.cpu_address;
             }
             else 
             {
-                
+                cyber_error("Only USAGE_DYNAMIC and USAGE_STAGING D3D12 buffers can be mapped for writing");
             }
         }
         else if(map_type == MAP_READ_WRITE)
         {
-
+            cyber_error("MAP_READ_WRITE is not supported in D3D12");
         }
-        else {
-            
-        }
-        
-        if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)
+        else 
         {
-            CB_CORE_ERROR("Cannot map GPU only buffer");
-            return nullptr;
+            cyber_error("Only MAP_WRITE_DISCARD and MAP_READ are currently implemented in D3D12");
         }
-        D3D12_RANGE d3dRange = {};
-        memset(&d3dRange, 0, sizeof(D3D12_RANGE));
-        if(range)
-        {
-            d3dRange.Begin = range->offset;
-            d3dRange.End = range->offset + range->size;
-        }
-
-        void* pMappedData = nullptr;
-        if(buffer_d3d12->m_pDxResource->Map(0, &d3dRange, &pMappedData) != S_OK)
-        {
-            CB_CORE_ERROR("Failed to map buffer");
-            return nullptr;
-        }
-        return pMappedData;
     }
+
     void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer)
     {
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
@@ -2852,6 +2866,11 @@ namespace Cyber
         auto& cmd_list_manager = get_command_list_manager(d3d12_command_list_type_to_queue_id(type));
         CommandContext* command_context = new CommandContext(cmd_list_manager);
         return command_context;
+    }
+
+    Dynamic_Allocation_D3D12 RenderDevice_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)
+    {
+        return m_pDynamicHeap->allocate(size_in_bytes, alignment);
     }
 
     HRESULT RenderDevice_D3D12_Impl::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)

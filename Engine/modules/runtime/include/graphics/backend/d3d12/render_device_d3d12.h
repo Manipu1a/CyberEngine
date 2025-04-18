@@ -143,7 +143,6 @@ namespace Cyber
             ID3D12Debug* GetDxDebug() { return m_pDxDebug; }
             
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
-
             void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
         private:
@@ -153,6 +152,8 @@ namespace Cyber
             }
 
             CommandContext* allocate_command_context(D3D12_COMMAND_LIST_TYPE type);
+            //todo: move to device context
+            Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
 
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
@@ -164,6 +165,9 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
+
+            Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;
+            Dynamic_Heap_D3D12* m_pDynamicHeap;
 
             struct EmptyDescriptors_D3D12* m_pNullDescriptors;
             eastl::map<uint32_t, ID3D12CommandQueue**> m_commandQueues;
