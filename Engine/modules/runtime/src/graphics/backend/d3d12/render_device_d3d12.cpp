@@ -82,6 +82,8 @@ namespace Cyber
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
         }
 
+        auto command_context = allocate_command_context(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);   
+
         // Create Requested Queues
         m_pNullDescriptors = (RenderObject::EmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RenderObject::EmptyDescriptors_D3D12));
 
@@ -2462,7 +2464,6 @@ namespace Cyber
                     memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
                     upload_buffer->Unmap(0, nullptr);
 
-                    auto command_context = allocate_command_context(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);   
 
                 }
             }
@@ -2567,10 +2568,12 @@ namespace Cyber
 
         return d3d12_buffer;
     }
+
     void RenderDevice_D3D12_Impl::free_buffer(RenderObject::IBuffer* buffer)
     {
 
     }
+
     void* RenderDevice_D3D12_Impl::map_buffer(RenderObject::IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags)
     {
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
@@ -2580,8 +2583,8 @@ namespace Cyber
 
         if(map_type == MAP_READ)
         {
-            cyber_assert(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING, "Buffer must be a staging buffer to map for reading");
-            cyber_assert(d3d12_resource != nullptr, "USAGE_STAGING buffer must initialize D3D12 resource");
+            cyber_check_msg(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING, "Buffer must be a staging buffer to map for reading");
+            cyber_check_msg(d3d12_resource != nullptr, "USAGE_STAGING buffer must initialize D3D12 resource");
 
             if((map_flags & MAP_FLAG_DO_NOT_WAIT) == 0)
             {
@@ -2599,10 +2602,12 @@ namespace Cyber
         {
             if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING)
             {
-
+                cyber_check_msg(d3d12_resource != nullptr, "USAGE_STAGING buffer mapped for writing must initialize D3D12 resource");
+                d3d12_resource->Map(0, nullptr, &pMappedData);
             }
             else if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC)
             {
+                cyber_check_msg((map_flags & (MAP_FLAG_DISCARD | MAP_FLAG_NO_OVERWRITE)) != 0, "MAP_FLAG_DISCARD or MAP_FLAG_NO_OVERWRITE must be set for dynamic buffer mapping");
                 auto& dynamic_data = buffer_d3d12->m_dynamicData[0];
                 if((map_flags & MAP_FLAG_DISCARD) != 0 || dynamic_data.cpu_address == nullptr)
                 {
@@ -2641,22 +2646,34 @@ namespace Cyber
         }
     }
 
-    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer)
+    void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer, MAP_TYPE map_type)
     {
         RenderObject::Buffer_D3D12_Impl* buffer_d3d12= static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
-        if(buffer_d3d12->m_memoryUsage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY)
+        const auto& buffer_desc = buffer_d3d12->get_create_desc();
+        auto* d3d12_resource = buffer_d3d12->m_pDxResource;
+
+        if(map_type == MAP_READ)
         {
-            CB_CORE_ERROR("Cannot unmap GPU only buffer");
-            return;
+            D3D12_RANGE d3d12_range = {};
+            d3d12_range.Begin = 1;
+            d3d12_range.End = 0;
+            d3d12_resource->Unmap(0, &d3d12_range);
         }
-        D3D12_RANGE d3dRange = {};
-        memset(&d3dRange, 0, sizeof(D3D12_RANGE));
-        if(range)
+        else if(map_type == MAP_WRITE)
         {
-            d3dRange.Begin = range->offset;
-            d3dRange.End = range->offset + range->size;
+            if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING)
+            {
+                d3d12_resource->Unmap(0, nullptr);
+            }
+            else if(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC)
+            {
+                if(d3d12_resource)
+                {
+                     
+                }
+            }
         }
-        buffer_d3d12->m_pDxResource->Unmap(0, &d3dRange);
+
     }
     IShaderLibrary* RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {

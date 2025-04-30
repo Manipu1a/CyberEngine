@@ -108,7 +108,7 @@ namespace Cyber
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) = 0;
             virtual void free_buffer(IBuffer* buffer) = 0;
             virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) = 0;
-            virtual void unmap_buffer(IBuffer* buffer) = 0;
+            virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) = 0;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) = 0;
             // Shader
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
@@ -142,6 +142,7 @@ namespace Cyber
             using TextureImplType = typename EngineImplTraits::TextureImplType;
             using TextureViewImplType = typename EngineImplTraits::TextureViewImplType;
             using BufferImplType = typename EngineImplTraits::BufferImplType;
+            using DeviceContextImplType = typename EngineImplTraits::DeviceContextImplType;
             using RenderDeviceInterface = typename EngineImplTraits::RenderDeviceInterface;
             using TRenderDeviceBase = ObjectBase<RenderDeviceInterface>;
 
@@ -172,6 +173,16 @@ namespace Cyber
             {
                 m_subpassIndex++;
             }
+            
+            void set_device_context(size_t ctx_id, DeviceContextImplType* device_context)
+            {
+                m_deviceContexts[ctx_id] = device_context;
+            }
+
+            DeviceContextImplType* get_device_context(uint32_t index) const
+            {
+                return m_deviceContexts[index];
+            }
 
         protected:
             virtual void create_render_device_impl() = 0;
@@ -184,6 +195,7 @@ namespace Cyber
             BeginRenderPassAttribs m_beginRenderPassAttribs;
             IRenderPass* m_pRenderPass = nullptr;
             IFrameBuffer* m_pFrameBuffer = nullptr;
+            eastl::vector<DeviceContextImplType*> m_deviceContexts;
         public:
             friend TextureImplType;
             friend TextureViewImplType;
