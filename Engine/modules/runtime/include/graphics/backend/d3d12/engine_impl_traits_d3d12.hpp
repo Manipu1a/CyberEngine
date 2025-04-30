@@ -12,6 +12,7 @@ namespace Cyber
         class IFrameBuffer_D3D12;
         class ICommandBuffer_D3D12;
         class ICommandPool_D3D12;
+        class IDeviceContext_D3D12;
         class IFence_D3D12;
         class IQueue_D3D12;
         class IInstance_D3D12;
@@ -36,6 +37,7 @@ namespace Cyber
         class FrameBuffer_D3D12_Impl;
         class CommandBuffer_D3D12_Impl;
         class CommandPool_D3D12_Impl;
+        class DeviceContext_D3D12_Impl;
         class Fence_D3D12_Impl;
         class Queue_D3D12_Impl;
         class Instance_D3D12_Impl;
@@ -63,6 +65,7 @@ namespace Cyber
             using FrameBufferInterface = IFrameBuffer_D3D12;
             using CommandBufferInterface = ICommandBuffer_D3D12;
             using CommandPoolInterface = ICommandPool_D3D12;
+            using DeviceContextInterface = IDeviceContext_D3D12;
             using FenceInterface = IFence_D3D12;
             using QueueInterface = IQueue_D3D12;
             using InstanceInterface = IInstance_D3D12;
@@ -88,6 +91,7 @@ namespace Cyber
             using FrameBufferImplType = FrameBuffer_D3D12_Impl;
             using CommandBufferImplType = CommandBuffer_D3D12_Impl;
             using CommandPoolImplType = CommandPool_D3D12_Impl;
+            using DeviceContextImplType = DeviceContext_D3D12_Impl;
             using FenceImplType = Fence_D3D12_Impl;
             using QueueImplType = Queue_D3D12_Impl;
             using InstanceImplType = Instance_D3D12_Impl;

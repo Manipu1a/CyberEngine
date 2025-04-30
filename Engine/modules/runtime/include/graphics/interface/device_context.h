@@ -8,23 +8,27 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class CYBER_GRAPHICS_API CEDeviceContext
+        struct DeviceContextDesc
         {
-        public:
-            CEDeviceContext(IRenderDevice* device);
-            virtual ~CEDeviceContext();
 
-        public:
-            void BeginRenderPass(const RenderPassDesc& desc);
-            void EndRenderPass();
-
-            IRenderDevice* get_device() const { return m_pRenderDevice; }
-        protected:
-            IRenderDevice* m_pRenderDevice;
-            RenderPassDesc m_activeRenderPassDesc;
-            IFrameBuffer* m_pBoundFrameBuffer = nullptr;
         };
 
+        struct CYBER_GRAPHICS_API IDeviceContext
+        {
+
+        };
+
+        template<typename EngineImplTraits>
+        class CYBER_GRAPHICS_API DeviceContextBase : public ObjectBase<EngineImplTraits::DeviceContextInterface>
+        {
+        public:
+            using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+
+            DeviceContextBase(RenderDeviceImplType* device, const DeviceContextDesc& desc) : m_pRenderDevice(device) {}
+
+        private:
+            RenderDeviceImplType* m_pRenderDevice;
+        };
     }
 }
 
