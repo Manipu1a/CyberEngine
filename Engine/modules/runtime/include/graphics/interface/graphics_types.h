@@ -100,12 +100,22 @@ namespace Cyber
         PIPELINE_TYPE_COUNT,
     };
 
-    CYBER_TYPED_ENUM(QUEUE_TYPE, uint8_t)
+    CYBER_TYPED_ENUM(COMMAND_QUEUE_TYPE, uint8_t)
     {
-        QUEUE_TYPE_GRAPHICS = 0,
-        QUEUE_TYPE_COMPUTE,
-        QUEUE_TYPE_TRANSFER,
-        QUEUE_TYPE_COUNT,
+        COMMAND_QUEUE_TYPE_UNKNOWN = 0,
+        /// Command queue that only supports memory transfer operations.
+        COMMAND_QUEUE_TYPE_TRANSFER = 1u << 0,
+        /// Command queue that supports compute, ray tracing and transfer commands.
+        COMMAND_QUEUE_TYPE_COMPUTE = (1u << 1) | COMMAND_QUEUE_TYPE_TRANSFER,
+        /// Command queue that supports graphics, compute, ray tracing and transfer commands.
+        COMMAND_QUEUE_TYPE_GRAPHICS = (1u << 2) | COMMAND_QUEUE_TYPE_COMPUTE,
+        /// Mask to extract primary command queue type.
+        COMMAND_QUEUE_TYPE_PRIMARY_MASK   = COMMAND_QUEUE_TYPE_TRANSFER | COMMAND_QUEUE_TYPE_COMPUTE | COMMAND_QUEUE_TYPE_GRAPHICS,
+        /// Command queue that supports sparse binding commands,
+        /// see IDeviceContext::BindSparseResourceMemory().
+        COMMAND_QUEUE_TYPE_SPARSE_BINDING = (1u << 3),
+        
+        COMMAND_QUEUE_TYPE_COUNT,
     };
 
     CYBER_TYPED_ENUM(QUEUE_FLAG, uint8_t)
@@ -1469,7 +1479,7 @@ namespace Cyber
         GRAPHICS_RESOURCE_STATE dst_state;
         uint8_t queue_acquire : 1;
         uint8_t queue_release : 1;
-        QUEUE_TYPE queue_type : 5;
+        COMMAND_QUEUE_TYPE queue_type : 5;
         struct {
             uint8_t begin_only : 1;
             uint8_t end_only : 1;
@@ -1483,7 +1493,7 @@ namespace Cyber
         GRAPHICS_RESOURCE_STATE dst_state;
         uint8_t queue_acquire : 1;
         uint8_t queue_release : 1;
-        QUEUE_TYPE queue_type : 5;
+        COMMAND_QUEUE_TYPE queue_type : 5;
         /// Specify whether following barrier targets particular subresource
         uint8_t subresource_barrier : 1;
         /// Following values are ignored if subresource_barrier is false
@@ -1506,7 +1516,7 @@ namespace Cyber
     /// Device Group
     struct CYBER_GRAPHICS_API QueueGroupDesc
     {
-        QUEUE_TYPE m_queueType;
+        COMMAND_QUEUE_TYPE m_queueType;
         uint32_t m_queueCount;
     };
 
@@ -1597,4 +1607,7 @@ namespace Cyber
     #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1
     #define GRAPHICS_SINGLE_GPU_NODE_MASK 1
     #define GRAPHICS_SINGLE_GPU_NODE_INDEX 0
+
+    using DeviceContextIndex = uint8_t;
+    using SoftwareQueueIndex = uint8_t;
 }

@@ -52,7 +52,7 @@ namespace Cyber
             /// CPU access flags
             CPU_ACCESS_FLAGS cpu_access_flags;
             /// What type of queue the buffer is owned by
-            QUEUE_TYPE queueType;
+            COMMAND_QUEUE_TYPE queueType;
             /// What state will the buffer get created in
             GRAPHICS_RESOURCE_STATE startState;
             /// ICB draw type

@@ -252,6 +252,17 @@ namespace Cyber
             return DXGI_FORMAT_UNKNOWN;
     }
 
+    static D3D12_COMMAND_LIST_TYPE D3D12Util_TranslateCommandQueueType(COMMAND_QUEUE_TYPE type)
+    {
+        switch(type)
+        {
+            case COMMAND_QUEUE_TYPE_GRAPHICS: return D3D12_COMMAND_LIST_TYPE_DIRECT;
+            case COMMAND_QUEUE_TYPE_COMPUTE: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+            case COMMAND_QUEUE_TYPE_TRANSFER: return D3D12_COMMAND_LIST_TYPE_COPY;
+            default: cyber_assert(false, "Unsupported command queue type"); return D3D12_COMMAND_LIST_TYPE_DIRECT;
+        }
+    }
+
     static DXGI_FORMAT D3D12Util_TypeToDXGI(VALUE_TYPE value_type, uint32_t num_components, bool is_normalized)
     {
         switch(value_type)

@@ -66,7 +66,7 @@ namespace Cyber
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
             // Queue APIs
-            virtual IQueue* get_queue(QUEUE_TYPE type, uint32_t index) override;
+            virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
             virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
             virtual void wait_queue_idle(IQueue* queue) override;
@@ -145,13 +145,13 @@ namespace Cyber
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
             void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
+            CommandContext* allocate_command_context(SoftwareQueueIndex command_queue_id);
         private:
             CYBER_FORCE_INLINE CommandListManager& get_command_list_manager(uint8_t index)
             {
                 return cmd_list_managers[index];
             }
 
-            CommandContext* allocate_command_context(D3D12_COMMAND_LIST_TYPE type);
             //todo: move to device context
             Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
 

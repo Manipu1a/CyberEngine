@@ -14,19 +14,19 @@ struct IDeviceContext_D3D12 : public IDeviceContext
 class CYBER_GRAPHICS_API DeviceContext_D3D12_Impl final : public DeviceContextBase<EngineD3D12ImplTraits>
 {
 public:
-    DeviceContext_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc) : DeviceContextBase(device, desc)
-    {
+    using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-    }
+    DeviceContext_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc);
 
     CommandContext& get_command_context()
     {
         return *command_context;
     }
     
+    void request_command_context();
+
 private:
     CommandContext* command_context = nullptr;
-
 };
 
 CYBER_END_NAMESPACE

@@ -97,12 +97,7 @@ namespace Cyber
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0
     };
+    
+    
 
-    static const D3D12_COMMAND_LIST_TYPE gDx12CmdTypeTranslator[(uint8_t)QUEUE_TYPE::QUEUE_TYPE_COUNT] = {
-        D3D12_COMMAND_LIST_TYPE_DIRECT,
-        D3D12_COMMAND_LIST_TYPE_COMPUTE,
-        D3D12_COMMAND_LIST_TYPE_COPY
-    };
-    
-    
 }

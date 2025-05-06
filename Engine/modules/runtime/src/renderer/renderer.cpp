@@ -45,11 +45,13 @@ namespace Cyber
             {
                 m_pInstance = cyber_new<RenderObject::Instance_D3D12_Impl>(instance_desc);
             }
+            
         }
         
         void Renderer::create_gfx_objects()
         {
             create_render_device(GRAPHICS_BACKEND_D3D12);
+
             // Filter adapters
             uint32_t adapter_count = 0;
             m_pInstance->enum_adapters(nullptr, &adapter_count);
@@ -60,14 +62,14 @@ namespace Cyber
             // Create device
             DECLARE_ZERO(QueueGroupDesc, queue_group_desc);
             queue_group_desc.m_queueCount = 1;
-            queue_group_desc.m_queueType = QUEUE_TYPE_GRAPHICS;
+            queue_group_desc.m_queueType = COMMAND_QUEUE_TYPE_GRAPHICS;
             DECLARE_ZERO(RenderObject::RenderDeviceCreateDesc, device_desc);
             device_desc.m_queueGroupCount = 1;
             device_desc.m_queueGroups = { queue_group_desc };
             m_pRenderDevice = m_pInstance->create_render_device(m_pAdapter, device_desc);
-            m_pQueue = m_pRenderDevice->get_queue(QUEUE_TYPE_GRAPHICS, 0);
+            m_pQueue = m_pRenderDevice->get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0);
 
-            
+            m_pRenderDevice;
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)
             m_pSurface = m_pRenderDevice->surface_from_hwnd(Core::Application::getApp()->get_window()->get_native_window());

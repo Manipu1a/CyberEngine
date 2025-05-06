@@ -20,6 +20,7 @@
 #include "common/graphics_utils.hpp"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
 #include "graphics/interface/render_device.hpp"
+#include "graphics/interface/device_context.h"
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/texture_view_d3d12.h"
 #include "graphics/backend/d3d12/buffer_d3d12.h"
@@ -82,8 +83,6 @@ namespace Cyber
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
         }
 
-        auto command_context = allocate_command_context(D3D12_COMMAND_LIST_TYPE::D3D12_COMMAND_LIST_TYPE_DIRECT);   
-
         // Create Requested Queues
         m_pNullDescriptors = (RenderObject::EmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RenderObject::EmptyDescriptors_D3D12));
 
@@ -100,13 +99,13 @@ namespace Cyber
                 DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
                 switch(type)
                 {
-                    case QUEUE_TYPE_GRAPHICS:
+                    case COMMAND_QUEUE_TYPE_GRAPHICS:
                         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
                         break;
-                    case QUEUE_TYPE_COMPUTE:
+                    case COMMAND_QUEUE_TYPE_COMPUTE:
                         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
                         break;
-                    case QUEUE_TYPE_TRANSFER:
+                    case COMMAND_QUEUE_TYPE_TRANSFER:
                         queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
                         break;
                     default:
@@ -121,6 +120,16 @@ namespace Cyber
                 }
             }
         }
+
+        // Create Device Context
+        DeviceContextDesc context_desc = {};
+        context_desc.context_id = 0;
+        context_desc.queue_type = COMMAND_QUEUE_TYPE_GRAPHICS;
+        context_desc.is_deferrd_context = false;
+        context_desc.name = CYBER_UTF8("ImmediateContext");
+
+        DeviceContext_D3D12_Impl* deviceContext = cyber_new<DeviceContext_D3D12_Impl>(this, context_desc);
+        set_device_context(0, deviceContext);
 
         // Create D3D12MA Allocator
         create_dma_allocallor(dxAdapter);
@@ -240,9 +249,9 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::free_device()
     {
-        for(uint32_t i = 0; i < QUEUE_TYPE::QUEUE_TYPE_COUNT; ++i)
+        for(uint32_t i = 0; i < COMMAND_QUEUE_TYPE::COMMAND_QUEUE_TYPE_COUNT; ++i)
         {
-            QUEUE_TYPE type;
+            COMMAND_QUEUE_TYPE type;
             for(uint32_t j = 0; j < m_commandQueueCounts[i]; ++j)
             {
                 SAFE_RELEASE(m_commandQueues[i][j]);
@@ -874,7 +883,7 @@ namespace Cyber
         cyber_delete(fence);
     }
 
-    IQueue* RenderDevice_D3D12_Impl::get_queue(QUEUE_TYPE type, uint32_t index)
+    IQueue* RenderDevice_D3D12_Impl::get_queue(COMMAND_QUEUE_TYPE type, uint32_t index)
     {
         Queue_D3D12_Impl* dxQueue = cyber_new<Queue_D3D12_Impl>(this);
         dxQueue->m_pCommandQueue = m_commandQueues[type][index];
@@ -956,8 +965,8 @@ namespace Cyber
     // Command Objects
     void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, IQueue* queue)
     {
-        D3D12_COMMAND_LIST_TYPE type = queue->get_type() == QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
-                            (queue->get_type() == QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
+        D3D12_COMMAND_LIST_TYPE type = queue->get_type() == COMMAND_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
+                            (queue->get_type() == COMMAND_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
         
         //auto command_allocator = commandPool->get_native_command_allocator();
         ID3D12CommandAllocator* command_allocator = nullptr;
@@ -1007,7 +1016,7 @@ namespace Cyber
         uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
         ID3D12PipelineState* initialState = nullptr;
         ID3D12GraphicsCommandList* cmd_list = nullptr;
-        CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask,gDx12CmdTypeTranslator[dxCommandBuffer->m_type] , 
+        CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask, D3D12Util_TranslateCommandQueueType((COMMAND_QUEUE_TYPE)dxCommandBuffer->m_type) , 
                 dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&cmd_list)));
         dxCommandBuffer->set_dx_cmd_list(cmd_list);
         // Command lists are add in the recording state, but there is nothing
@@ -1051,7 +1060,7 @@ namespace Cyber
         CHECK_HRESULT(cmd->get_dx_cmd_list()->Reset(pool->m_pDxCmdAlloc, nullptr));
 
         // Reset the descriptor heaps
-        if(cmd->m_type != QUEUE_TYPE_TRANSFER)
+        if(cmd->m_type != COMMAND_QUEUE_TYPE_TRANSFER)
         {
             ID3D12DescriptorHeap* heaps[] = {
                 cmd->m_pBoundHeaps[0]->get_heap(),
@@ -1505,7 +1514,7 @@ namespace Cyber
         }
         else 
         {
-            queue = static_cast<Queue_D3D12_Impl*>(get_queue(QUEUE_TYPE_GRAPHICS, 0));
+            queue = static_cast<Queue_D3D12_Impl*>(get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0));
         }
         
         auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(queue->get_native_queue(), hwnd, &chinDesc, NULL, NULL, &swapchain));
@@ -2878,9 +2887,9 @@ namespace Cyber
         }
     }
 
-    CommandContext* RenderDevice_D3D12_Impl::allocate_command_context(D3D12_COMMAND_LIST_TYPE type)
+    CommandContext* RenderDevice_D3D12_Impl::allocate_command_context(SoftwareQueueIndex command_queue_id)
     {
-        auto& cmd_list_manager = get_command_list_manager(d3d12_command_list_type_to_queue_id(type));
+        auto& cmd_list_manager = get_command_list_manager(command_queue_id);
         CommandContext* command_context = new CommandContext(cmd_list_manager);
         return command_context;
     }

@@ -33,8 +33,8 @@ namespace Cyber
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
             virtual void wait_fence(class IFence* fence, uint64_t value) = 0;
-            virtual QUEUE_TYPE get_type() const = 0;
-            virtual void set_type(QUEUE_TYPE type) = 0;
+            virtual COMMAND_QUEUE_TYPE get_type() const = 0;
+            virtual void set_type(COMMAND_QUEUE_TYPE type) = 0;
             virtual QueueIndex get_index() const = 0;
             virtual void set_index(QueueIndex index) = 0;
         };
@@ -51,12 +51,12 @@ namespace Cyber
 
             virtual ~QueueBase() = default;
 
-            CYBER_FORCE_INLINE virtual QUEUE_TYPE get_type() const override
+            CYBER_FORCE_INLINE virtual COMMAND_QUEUE_TYPE get_type() const override
             {
                 return m_type;
             }
 
-            CYBER_FORCE_INLINE virtual void set_type(QUEUE_TYPE type) override
+            CYBER_FORCE_INLINE virtual void set_type(COMMAND_QUEUE_TYPE type) override
             {
                 m_type = type;
             }
@@ -71,7 +71,7 @@ namespace Cyber
                 m_index = index;
             }
         protected:
-            QUEUE_TYPE m_type;
+            COMMAND_QUEUE_TYPE m_type;
             QueueIndex m_index;
         };
     }
