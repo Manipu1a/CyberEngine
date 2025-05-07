@@ -699,6 +699,20 @@ namespace Cyber
     
     DEFINE_FLAG_ENUM_OPERATORS(GRAPHICS_RESOURCE_STATE);
 
+    /// Defines the resource state transition mode performed by various command.
+    CYBER_TYPED_ENUM(GRAPHICS_RESOUCE_STATE_TRANSTION_MODE, uint8_t)
+    {
+        /// Perform no state transition and no state validation.
+        GRAPH_RESOURCE_STATE_TRANSITION_MODE_NONE = 0,
+        
+        /// Transition resources to the states required by the specific command.
+        /// Resources in unknown state are ignored.
+        GRAPH_RESOURCE_STATE_TRANSITION_MODE_TRANSITION = 1,
+        
+        /// Do not transition, but verify that stated are correct.
+        GRAPH_RESOURCE_STATE_TRANSITION_MODE_VERIFY = 2,
+    };
+
     CYBER_TYPED_ENUM(GRAPHICS_RESOURCE_MEMORY_USAGE, uint32_t)
     {
         /// No intended memory usage specified.

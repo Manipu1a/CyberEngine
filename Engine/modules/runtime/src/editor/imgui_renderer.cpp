@@ -88,8 +88,8 @@ namespace Cyber
             BufferRange range;
             range.offset = 0;
             range.size = 0;
-            void* vtx_resource = m_pDevice->map_buffer(vertex_buffer, &range);
-            void* idx_resource = m_pDevice->map_buffer(index_buffer, &range);
+            void* vtx_resource = m_pDevice->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
+            void* idx_resource = m_pDevice->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             
             ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource;
             ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
@@ -101,8 +101,8 @@ namespace Cyber
                 vtx_dst += cmd_list->VtxBuffer.Size;
                 idx_dst += cmd_list->IdxBuffer.Size;
             }
-            m_pDevice->unmap_buffer(vertex_buffer, &range);
-            m_pDevice->unmap_buffer(index_buffer, &range);
+            m_pDevice->unmap_buffer(vertex_buffer, MAP_WRITE);
+            m_pDevice->unmap_buffer(index_buffer, MAP_WRITE);
 
             // Setup orthographic projection matrix into our constant buffer
             // Our visible imgui space lies from pDrawData->DisplayPos (top left) to pDrawData->DisplayPos+data_data->DisplaySize (bottom right).

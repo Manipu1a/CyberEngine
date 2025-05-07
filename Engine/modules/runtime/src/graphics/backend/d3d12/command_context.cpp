@@ -37,7 +37,25 @@ void CommandContext::reset(CommandListManager& command_list_manager)
     }
 }
 
+void CommandContext::transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state)
+{
+    transition_resource(texture, TextureBarrier{&texture, GRAPHICS_RESOURCE_STATE_UNKNOWN, new_state});
+}
 
+void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RESOURCE_STATE new_state)
+{
+    transition_resource(buffer, BufferBarrier{&buffer, GRAPHICS_RESOURCE_STATE_UNKNOWN, new_state});
+}
+
+void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier)
+{
+    
+}
+
+void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier)
+{
+
+}
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE
 

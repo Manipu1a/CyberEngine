@@ -27,7 +27,7 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API DeviceContextBase : public ObjectBase<EngineImplTraits::DeviceContextInterface>
+        class CYBER_GRAPHICS_API DeviceContextBase : public ObjectBase<typename EngineImplTraits::DeviceContextInterface>
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;

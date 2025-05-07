@@ -43,7 +43,8 @@
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
-#include "graphics/backend/d3d12//command_context.h"
+#include "graphics/backend/d3d12/command_context.h"
+#include "graphics/backend/d3d12/device_context_d3d12.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -62,8 +63,7 @@ namespace Cyber
         {this, D3D12_COMMAND_LIST_TYPE_DIRECT},
         {this, D3D12_COMMAND_LIST_TYPE_COMPUTE},
         {this, D3D12_COMMAND_LIST_TYPE_COPY}
-    },
-    m_dynamic_mem_mgr{*this, 1, 1024 * 1024}
+    }
     {
         
     }
@@ -150,8 +150,6 @@ namespace Cyber
             DescriptorHeap_D3D12::create_descriptor_heap(m_pDxDevice, desc, &m_cpuDescriptorHeaps[i]);
         }
             
-        m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
-
         // One shader visible heap for each linked node
         for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
         {
@@ -2597,7 +2595,7 @@ namespace Cyber
 
             if((map_flags & MAP_FLAG_DO_NOT_WAIT) == 0)
             {
-                cyber_warn("D3D12 backend never waits for GPU when mapping staging buffers for reading. "
+                cyber_warn(false, "D3D12 backend never waits for GPU when mapping staging buffers for reading. "
                                 "Applications must use fences or other synchronization methods to explicitly synchronize "
                                 "access and use MAP_FLAG_DO_NOT_WAIT flag.");
             }
@@ -2621,7 +2619,8 @@ namespace Cyber
                 if((map_flags & MAP_FLAG_DISCARD) != 0 || dynamic_data.cpu_address == nullptr)
                 {
                     uint32_t alignment = (buffer_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER) ? D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT : 16;
-                    dynamic_data = allocate_dynamic_memory(buffer_desc.size, alignment);
+                    DeviceContext_D3D12_Impl* pContext = static_cast<DeviceContext_D3D12_Impl*>(m_deviceContexts[0]);
+                    dynamic_data = pContext->allocate_dynamic_memory(buffer_desc.size, alignment);
                 }
                 else 
                 {
@@ -2682,8 +2681,8 @@ namespace Cyber
                 }
             }
         }
-
     }
+    
     IShaderLibrary* RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {
         ShaderLibrary_D3D12_Impl* pLibrary = cyber_new<ShaderLibrary_D3D12_Impl>(this, desc);
@@ -2892,11 +2891,6 @@ namespace Cyber
         auto& cmd_list_manager = get_command_list_manager(command_queue_id);
         CommandContext* command_context = new CommandContext(cmd_list_manager);
         return command_context;
-    }
-
-    Dynamic_Allocation_D3D12 RenderDevice_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)
-    {
-        return m_pDynamicHeap->allocate(size_in_bytes, alignment);
     }
 
     HRESULT RenderDevice_D3D12_Impl::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)

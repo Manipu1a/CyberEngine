@@ -1,6 +1,10 @@
 #pragma once
 #include "platform/configure.h"
 #include "command_list_manager.h"
+#include "interface/graphics_types.h"
+#include "graphics/backend/d3d12/texture_d3d12.h"
+#include "graphics/backend/d3d12/buffer_d3d12.h"
+
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
@@ -19,7 +23,12 @@ public:
     ID3D12GraphicsCommandList* close(ID3D12CommandAllocator* out_command_allocator);
     void reset(CommandListManager& command_list_manager);
     
-    
+public:
+    void transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state);
+    void transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RESOURCE_STATE new_state);
+
+    void transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier);
+    void transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier);
 private:
     ID3D12GraphicsCommandList* command_list;
     ID3D12CommandAllocator* command_allocator;
