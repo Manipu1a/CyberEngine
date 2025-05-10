@@ -23,7 +23,7 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API IDeviceContext
         {
-
+            virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) = 0;
         };
 
         template<typename EngineImplTraits>

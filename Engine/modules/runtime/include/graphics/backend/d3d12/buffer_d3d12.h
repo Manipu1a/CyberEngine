@@ -19,13 +19,16 @@ namespace Cyber
             
         };
 
-        class CYBER_GRAPHICS_API Buffer_D3D12_Impl : public Buffer<EngineD3D12ImplTraits>
+        class CYBER_GRAPHICS_API Buffer_D3D12_Impl : public BufferBase<EngineD3D12ImplTraits>
         {
         public:
-            using TBufferBase = Buffer<EngineD3D12ImplTraits>;
+            using TBufferBase = BufferBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Buffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, BufferCreateDesc desc) : TBufferBase(device, desc) {}
+            Buffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, BufferCreateDesc buffer_desc) : 
+            TBufferBase(device, buffer_desc),
+            m_dynamicData(buffer_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC ? 1 : 0, DynamicData())
+            {}
 
             virtual ~Buffer_D3D12_Impl() = default;
 

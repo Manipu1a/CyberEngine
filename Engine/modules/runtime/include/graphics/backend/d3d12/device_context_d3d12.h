@@ -24,6 +24,9 @@ public:
         return *command_context;
     }
     
+
+    virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) override final;
+
     void request_command_context();
 
     //todo: move to device context
@@ -31,10 +34,7 @@ public:
 
     void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
 
-    void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl* buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
-
-    void transition_resource_state();
-
+    void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
 private:
     CommandContext* command_context = nullptr;
 

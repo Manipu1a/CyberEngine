@@ -11,6 +11,23 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* devi
     request_command_context();
 }
 
+void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDesc& barrierDesc)
+{
+    for(uint32_t i = 0;i < barrierDesc.buffer_barrier_count; i++)
+    {
+        const BufferBarrier& buffer_barrier = barrierDesc.buffer_barriers[i];
+        Buffer_D3D12_Impl* buffer = static_cast<Buffer_D3D12_Impl*>(buffer_barrier.buffer);
+        command_context->transition_resource(*buffer, buffer_barrier);
+    }
+
+    for(uint32_t i = 0;i < barrierDesc.texture_barrier_count; i++)
+    {
+        const TextureBarrier& texture_barrier = barrierDesc.texture_barriers[i];
+        Texture_D3D12_Impl* texture = static_cast<Texture_D3D12_Impl*>(texture_barrier.texture);
+        command_context->transition_resource(*texture, texture_barrier);
+    }
+}
+
 void DeviceContext_D3D12_Impl::request_command_context()
 {
     command_context = render_device->allocate_command_context(get_command_queue_id());
@@ -22,11 +39,14 @@ Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint6
     return m_pDynamicHeap->allocate(size_in_bytes, alignment);
 }
 
-void DeviceContext_D3D12_Impl::transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl* buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state)
+void DeviceContext_D3D12_Impl::transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state)
 {
     if(transition_mode == GRAPH_RESOURCE_STATE_TRANSITION_MODE_TRANSITION)
     {
-        
+        if(buffer.is_known_state())
+        {
+            cmd_ctx.transition_resource(buffer, required_state);
+        }
     }
     else if(transition_mode == GRAPH_RESOURCE_STATE_TRANSITION_MODE_VERIFY)
     {

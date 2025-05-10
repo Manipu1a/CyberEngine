@@ -85,12 +85,6 @@ namespace Cyber
 
             Texture(RenderDeviceImplType* device, TextureCreateDesc desc) : TTextureBase(device), m_desc(desc) 
             { 
-                m_width = desc.m_width;
-                m_height = desc.m_height;
-                m_depth = desc.m_depth;
-                m_arraySize = desc.m_arraySize;
-                m_mipLevels = desc.m_mipLevels;
-                m_format = desc.m_format;
                 m_aspectMask = 0;
                 m_nodeIndex = 0;
                 m_isCube = 0;
@@ -203,12 +197,6 @@ namespace Cyber
             }
             
         protected:
-            uint32_t m_width;
-            uint32_t m_height;
-            uint32_t m_depth;
-            uint32_t m_arraySize;
-            uint32_t m_mipLevels;
-            uint32_t m_format;
             /// Flags specifying which aspects (COLOR,DEPTH,STENCIL) are included in the pVkImageView
             uint32_t m_aspectMask;
             uint32_t m_nodeIndex;

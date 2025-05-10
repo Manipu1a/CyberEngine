@@ -80,14 +80,14 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class CYBER_GRAPHICS_API Buffer : public DeviceObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CYBER_GRAPHICS_API BufferBase : public DeviceObjectBase<typename EngineImplTraits::BufferInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
             using BufferInterface = typename EngineImplTraits::BufferInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TBufferBase = typename DeviceObjectBase<BufferInterface, RenderDeviceImplType>;
+            using TDeviceObjectBase = DeviceObjectBase<BufferInterface, RenderDeviceImplType>;
 
-            Buffer(RenderDeviceImplType* device, BufferCreateDesc desc) : TBufferBase(device) 
+            BufferBase(RenderDeviceImplType* device, BufferCreateDesc desc) : TDeviceObjectBase(device) 
             {
                 m_pCpuMappedAddress = nullptr;
                 m_size = 0;
@@ -97,7 +97,7 @@ namespace Cyber
                 m_desc = desc;
             }
 
-            virtual ~Buffer() = default;
+            virtual ~BufferBase() = default;
 
             virtual void* get_mapped_data() override final
             {
@@ -137,6 +137,11 @@ namespace Cyber
             virtual GRAPHICS_RESOURCE_STATE get_buffer_state() const override final
             {
                 return buffer_state;
+            }
+
+            bool is_known_state() const
+            {
+                return buffer_state != GRAPHICS_RESOURCE_STATE_UNKNOWN;
             }
         protected:
             /// CPU address of the mapped buffer (applicable to buffers created in CPU accessible heaps (CPU, CPU_TO_GPU, GPU_TO_CPU)
