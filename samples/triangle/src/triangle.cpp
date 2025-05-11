@@ -57,7 +57,7 @@ namespace Cyber
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            auto cmd = renderer->get_command_buffer();
+            //auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
             auto pool = renderer->get_command_pool();
@@ -92,7 +92,7 @@ namespace Cyber
                 .pRenderPass = renderpass,
                 .ClearValueCount = 1,
                 .pClearValues = &clear_value,
-                .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_NONE
+                .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             };
 
             TextureBarrier draw_barrier = {

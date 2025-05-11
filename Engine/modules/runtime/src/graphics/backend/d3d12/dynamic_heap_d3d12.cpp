@@ -28,7 +28,7 @@ Dynamic_Page_D3D12::Dynamic_Page_D3D12(ID3D12Device* d3d12_device, uint64_t size
     D3D12_RESOURCE_STATES default_usage = D3D12_RESOURCE_STATE_GENERIC_READ;
 
     auto hr = d3d12_device->CreateCommittedResource(&heap_properties, D3D12_HEAP_FLAG_NONE, &resource_desc, 
-                                    D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&d3d12_buffer));
+                                default_usage, nullptr, IID_PPV_ARGS(&d3d12_buffer));
 
     if (FAILED(hr))
     {

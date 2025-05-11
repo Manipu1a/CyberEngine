@@ -1083,7 +1083,8 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc)
     {
-        
+        const auto& cmd_context = get_device_context(0);
+        cmd_context->transition_resource_state(barrierDesc);
     }
 
     void reset_root_signature(CommandBuffer_D3D12_Impl* cmd, PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)

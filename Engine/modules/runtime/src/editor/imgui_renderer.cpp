@@ -81,7 +81,10 @@ namespace Cyber
                     index_buffer_size *= 2;
                 }
                 RenderObject::BufferCreateDesc buffer_desc = {};
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
                 buffer_desc.size = index_buffer_size * sizeof(ImDrawIdx);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 index_buffer = m_pDevice->create_buffer(buffer_desc);
                 
             }
@@ -122,9 +125,8 @@ namespace Cyber
                 0.0f,                            0.0f,   0.5f,   0.0f,
                 (R + L) / (L - R),  (T + B) / (B - T),   0.5f,   1.0f
                 };
-
-
             }
+            
         }
         void ImGuiRenderer::invalidate_device_objects()
         {
