@@ -64,39 +64,15 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
-            // Queue APIs
+            
             virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
             virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
             virtual void wait_queue_idle(IQueue* queue) override;
             virtual void free_queue(IQueue* queue) override;
-            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
-            virtual void reset_command_pool(ICommandPool* pool) override;
-            virtual void free_command_pool(ICommandPool* pool) override;
-            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
-            virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
+
             virtual void set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) override;
 
-            virtual void cmd_begin(ICommandBuffer* commandBuffer) override;
-            virtual void cmd_end(ICommandBuffer* commandBuffer) override;
-            virtual void cmd_resource_barrier(ICommandBuffer* cmd, const ResourceBarrierDesc& barrierDesc) override;
-
-            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
-            virtual void cmd_begin_render_pass(ICommandBuffer* commandBuffer, const BeginRenderPassAttribs& beginRenderPassDesc) override;
-            virtual void cmd_next_sub_pass(ICommandBuffer* commandBuffer) override;
-            virtual void cmd_end_render_pass(ICommandBuffer* commandBuffer) override;
-            virtual void render_encoder_bind_descriptor_set(RenderPassEncoder* encoder, IDescriptorSet* descriptorSet) override;
-            virtual void render_encoder_set_viewport(RenderPassEncoder* encoder, float x, float y, float width, float height, float min_depth, float max_depth) override;
-            virtual void render_encoder_set_scissor(RenderPassEncoder* encoder, uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
-            virtual void render_encoder_bind_pipeline(RenderPassEncoder* encoder, IRenderPipeline* pipeline) override;
-            virtual void render_encoder_bind_vertex_buffer(RenderPassEncoder* encoder, uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
-            virtual void render_encoder_bind_index_buffer(RenderPassEncoder* encoder, IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
-            virtual void render_encoder_push_constants(RenderPassEncoder* encoder, IRootSignature* rs, const char8_t* name, const void* data) override;
-            virtual void render_encoder_draw(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex) override;
-            virtual void render_encoder_draw_instanced(RenderPassEncoder* encoder, uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) override;
-            virtual void render_encoder_draw_indexed(RenderPassEncoder* encoder, uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
-            virtual void render_encoder_draw_indexed_instanced(RenderPassEncoder*encoder, uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
-            
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
             virtual void free_root_signature(IRootSignature* rootSignature) override;
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) override;
@@ -118,6 +94,8 @@ namespace Cyber
 
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
+            
+            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
 
             // create view
             void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
@@ -161,7 +139,6 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
-
 
             struct EmptyDescriptors_D3D12* m_pNullDescriptors;
             eastl::map<uint32_t, ID3D12CommandQueue**> m_commandQueues;

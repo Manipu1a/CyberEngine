@@ -31,14 +31,7 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
             auto cmd = renderer->get_command_buffer();
 
-            render_device->cmd_begin(cmd);
-            {
-
-            }
-            render_device->cmd_end(cmd);
-
             create_render_pipeline();
-
         }
 
         void TrignaleApp::run()
@@ -55,6 +48,7 @@ namespace Cyber
 
         void TrignaleApp::raster_draw()
         {
+            /*
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             //auto cmd = renderer->get_command_buffer();
@@ -129,12 +123,15 @@ namespace Cyber
             auto editor = m_pApp->get_editor();
             editor->update(cmd, 0.0f);
             */
+
+            
         }
 
         void TrignaleApp::present()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
+            auto device_context = render_device->get_device_context();
             auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();

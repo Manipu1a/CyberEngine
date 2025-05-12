@@ -11,6 +11,339 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* devi
     request_command_context();
 }
 
+ICommandPool* DeviceContext_D3D12_Impl::create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
+{
+    CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>(this, commandPoolDesc);
+    allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
+    return dxCommandPool;
+}
+
+void DeviceContext_D3D12_Impl::reset_command_pool(ICommandPool* pool)
+{
+    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
+    dxPool->m_pDxCmdAlloc->Reset();
+}
+
+void DeviceContext_D3D12_Impl::free_command_pool(ICommandPool* pool)
+{
+    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
+    SAFE_RELEASE(dxPool->m_pDxCmdAlloc);
+    cyber_delete(pool);
+}
+
+ICommandBuffer* DeviceContext_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc)
+{
+    CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>(this, commandBufferDesc);
+    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
+    Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->get_queue());
+
+    // set command pool of new command
+    dxCommandBuffer->set_node_index(GRAPHICS_SINGLE_GPU_NODE_INDEX);
+    dxCommandBuffer->set_type(dxQueue->get_type());
+    dxCommandBuffer->set_bound_heap(0, m_cbvSrvUavHeaps[dxCommandBuffer->m_nodeIndex]);
+    dxCommandBuffer->set_bound_heap(1, m_samplerHeaps[dxCommandBuffer->m_nodeIndex]);
+
+    dxCommandBuffer->m_pCmdPool = pool;
+    
+    uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
+    ID3D12PipelineState* initialState = nullptr;
+    ID3D12GraphicsCommandList* cmd_list = nullptr;
+    CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask, D3D12Util_TranslateCommandQueueType((COMMAND_QUEUE_TYPE)dxCommandBuffer->m_type) , 
+            dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&cmd_list)));
+    dxCommandBuffer->set_dx_cmd_list(cmd_list);
+    // Command lists are add in the recording state, but there is nothing
+    // to record yet. The main loop expects it to be closed, so close it now.
+    CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
+    return dxCommandBuffer;
+}
+
+void DeviceContext_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer)
+{
+    CommandBuffer_D3D12_Impl* dxCommandBuffer = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
+    dxCommandBuffer->free();
+}
+
+void DeviceContext_D3D12_Impl::cmd_begin(ICommandBuffer* commandBuffer)
+{
+    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
+    CommandPool_D3D12_Impl* pool = static_cast<CommandPool_D3D12_Impl*>(cmd->m_pCmdPool);
+    CHECK_HRESULT(cmd->get_dx_cmd_list()->Reset(pool->m_pDxCmdAlloc, nullptr));
+
+    // Reset the descriptor heaps
+    if(cmd->m_type != COMMAND_QUEUE_TYPE_TRANSFER)
+    {
+        ID3D12DescriptorHeap* heaps[] = {
+            cmd->m_pBoundHeaps[0]->get_heap(),
+            cmd->m_pBoundHeaps[1]->get_heap()
+        };
+        cmd->get_dx_cmd_list()->SetDescriptorHeaps(2, heaps);
+
+        cmd->m_boundHeapStartHandles[0] = cmd->m_pBoundHeaps[0]->get_heap()->GetGPUDescriptorHandleForHeapStart();
+        cmd->m_boundHeapStartHandles[1] = cmd->m_pBoundHeaps[1]->get_heap()->GetGPUDescriptorHandleForHeapStart();
+    }
+    // Reset CPU side data
+    cmd->m_pBoundRootSignature = nullptr;
+}
+
+void DeviceContext_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
+{
+    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
+    cyber_check(cmd->get_dx_cmd_list());
+    CHECK_HRESULT(cmd->get_dx_cmd_list()->Close());
+}
+
+void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
+{
+    const auto& cmd_context = get_device_context(0);
+    cmd_context->transition_resource_state(barrierDesc);
+}
+
+IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
+{
+    RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);
+    return dxRenderPass;
+}
+void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc)
+{
+    TRenderDeviceBase::cmd_begin_render_pass(cmd, beginRenderPassDesc);
+
+    commit_subpass_rendertargets(cmd);
+}
+void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
+{
+    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
+    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
+        cmdList4->EndRenderPass();
+    #endif
+    TRenderDeviceBase::cmd_next_sub_pass(cmd);
+
+    if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
+    {
+        cyber_assert(false, "RenderPass or FrameBuffer is nullptr!");
+    }
+    commit_subpass_rendertargets(cmd);
+}
+
+void DeviceContext_D3D12_Impl::cmd_end_render_pass()
+{
+    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
+    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
+        cmdList4->EndRenderPass();
+        return;
+    #endif
+    cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    const RenderObject::DescriptorSet_D3D12_Impl* Set = static_cast<const RenderObject::DescriptorSet_D3D12_Impl*>(descriptorSet);
+    RenderObject::RootSignature_D3D12_Impl* RS = static_cast<RenderObject::RootSignature_D3D12_Impl*>(Set->get_root_signature());
+
+    cyber_check(RS);
+    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+    {
+        Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+    }
+    else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+    {
+        Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[1].ptr + Set->sampler_handle});
+    }
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
+    Cmd->get_dx_cmd_list()->RSSetViewports(1, &viewport);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    D3D12_RECT rect;
+    rect.left = x;
+    rect.top = y;
+    rect.right = x + width;
+    rect.bottom = y + height;
+    Cmd->get_dx_cmd_list()->RSSetScissorRects(1, &rect);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pipeline)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    RenderObject::RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderObject::RenderPipeline_D3D12_Impl*>(pipeline);
+    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
+    Cmd->get_dx_cmd_list()->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
+    Cmd->get_dx_cmd_list()->SetPipelineState(Pipeline->pDxPipelineState);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+
+    DECLARE_ZERO(D3D12_VERTEX_BUFFER_VIEW, views[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
+    for(uint32_t i = 0;i < buffer_count; ++i)
+    {
+        const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffers[i]);
+        cyber_check(Buffer->get_dx_gpu_address() != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
+
+        views[i].BufferLocation = Buffer->get_dx_gpu_address() + (offsets ? offsets[i] : 0);
+        views[i].SizeInBytes = (UINT)(Buffer->get_size() - (offsets ? offsets[i] : 0));
+        views[i].StrideInBytes = (UINT)strides[i];  
+    }
+    Cmd->get_dx_cmd_list()->IASetVertexBuffers(0, buffer_count, views);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
+
+    DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
+    view.BufferLocation = Buffer->get_dx_gpu_address() + offset;
+    view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
+    view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
+    Cmd->get_dx_cmd_list()->IASetIndexBuffer(&view);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_push_constants(IRootSignature* rs, const char8_t* name, const void* data)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(rs);
+    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    Cmd->get_dx_cmd_list()->SetGraphicsRoot32BitConstants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_draw(uint32_t vertex_count, uint32_t first_vertex)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)1, (UINT)first_vertex, (UINT)0);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_draw_instanced(uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)1, (UINT)first_index, (UINT)first_vertex, (UINT)0);
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
+{
+    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
+    Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
+}
+
+void DeviceContext_D3D12_Impl::commit_subpass_rendertargets(RenderPassEncoder* encoder)
+{
+       CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
+   #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+       ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->get_dx_cmd_list();
+       DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[GRAPHICS_MAX_MRT_COUNT]);
+       DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
+       DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
+       DECLARE_ZERO(D3D12_RENDER_PASS_RENDER_TARGET_DESC, renderPassRenderTargetDescs[GRAPHICS_MAX_MRT_COUNT]);
+       DECLARE_ZERO(D3D12_RENDER_PASS_DEPTH_STENCIL_DESC, renderPassDepthStencilDesc);
+       uint32_t colorTargetCount = 0;
+       
+       m_pRenderPass = m_beginRenderPassAttribs.pRenderPass;
+       m_pFrameBuffer = m_beginRenderPassAttribs.pFramebuffer;
+
+       auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_beginRenderPassAttribs.pRenderPass);
+       auto RenderPassDesc = RenderPass->get_create_desc();
+       auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_beginRenderPassAttribs.pFramebuffer);
+       auto FramebufferDesc = Framebuffer->get_create_desc();
+       cyber_assert(RenderPassDesc.m_subpassCount > m_subpassIndex, "Subpass index out of range!");
+       auto SubPassDesc = RenderPassDesc.m_pSubpasses[m_subpassIndex];
+
+       // color
+       for(uint32_t i = 0; i < SubPassDesc.m_renderTargetCount; ++i)
+       {
+           auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
+           auto attachmentIndex = attachmentRef.m_attachmentIndex;
+           auto view = Framebuffer->get_attachment(attachmentIndex);
+           TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
+
+           clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().m_format);
+           clearValues[i].Color[0] = m_beginRenderPassAttribs.pClearValues[i].r;
+           clearValues[i].Color[1] = m_beginRenderPassAttribs.pClearValues[i].g;
+           clearValues[i].Color[2] = m_beginRenderPassAttribs.pClearValues[i].b;
+           clearValues[i].Color[3] = m_beginRenderPassAttribs.pClearValues[i].a;
+           
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachmentRef.m_loadAction];
+           TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
+           if(attachmentRef.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
+           {
+               Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().m_pTexture);
+               Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().m_pTexture);
+               D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
+               renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
+               renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
+               renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
+               auto& resolve = renderPassRenderTargetDescs[colorTargetCount].EndingAccess.Resolve;
+               resolve.ResolveMode = D3D12_RESOLVE_MODE_AVERAGE;
+               resolve.Format = clearValues[i].Format;
+               resolve.pSrcResource = tex->get_d3d12_resource();
+               resolve.pDstResource = tex_resolve->get_d3d12_resource();
+               
+               Cmd->m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->get_create_desc().m_width, (LONG)tex->get_create_desc().m_height };
+               Cmd->m_subResolveResource[i].DstX = 0;
+               Cmd->m_subResolveResource[i].DstY = 0;
+               Cmd->m_subResolveResource[i].SrcSubresource = 0;
+               Cmd->m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->get_create_desc().m_mipLevels, tex_resolve->get_create_desc().m_arraySize + 1);
+               resolve.PreserveResolveSource = false;
+               resolve.SubresourceCount = 1;
+               resolve.pSubresourceParameters = &Cmd->m_subResolveResource[i];
+           }
+           else
+           {
+               // Load & Store action
+               D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attachmentRef.m_storeAction];
+               renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
+               renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
+               renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
+           }
+           ++colorTargetCount;
+       }
+       // depth stencil
+       D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* pRenderPassDepthStencilDesc = nullptr;
+       if(SubPassDesc.m_pDepthStencilAttachment != nullptr)
+       {
+           auto attachmentRef = SubPassDesc.m_pDepthStencilAttachment;
+           auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex;
+           auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
+           auto clearValue = m_beginRenderPassAttribs.pClearValues[depthStencilAttachIndex];
+           TextureView_D3D12_Impl* dt_view = static_cast<TextureView_D3D12_Impl*>(Framebuffer->get_attachment(depthStencilAttachIndex));
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_loadAction];
+           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_storeAction];
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_stencilLoadAction];
+           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_stencilStoreAction];
+           clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);
+           clearDepth.DepthStencil.Depth = clearValue.depth;
+           clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);;
+           clearStencil.DepthStencil.Stencil = clearValue.stencil;
+           renderPassDepthStencilDesc.cpuDescriptor = dt_view->m_rtvDsvDescriptorHandle;
+           renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };
+           renderPassDepthStencilDesc.DepthEndingAccess = { depthEndingAccess, {} };
+           renderPassDepthStencilDesc.StencilBeginningAccess = { stencilBeginningAccess, clearStencil };
+           renderPassDepthStencilDesc.StencilEndingAccess = { stencilEndingAccess, {} };
+           pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
+       }
+       D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
+       cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
+   #else
+       cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+   #endif
+}
+
 void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDesc& barrierDesc)
 {
     for(uint32_t i = 0;i < barrierDesc.buffer_barrier_count; i++)
