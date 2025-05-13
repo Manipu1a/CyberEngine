@@ -891,6 +891,7 @@ namespace Cyber
         dxQueue->set_index(index);
         return dxQueue;
     }
+
     void RenderDevice_D3D12_Impl::submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc)
     {
         uint32_t cmd_count = submitDesc.m_cmdsCount;
@@ -914,19 +915,6 @@ namespace Cyber
         }
         // Execute
         dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
-        /*
-        // Signal fences
-        if(dx_fence)
-        {
-            dx_queue->signal_fence(dx_fence, ++dx_fence->m_fenceValue);
-        }
-        // Signal semaphores
-        for(uint32_t i = 0; i < submitDesc.m_signalSemaphoreCount; i++)
-        {
-            Semaphore_D3D12_Impl* dx_semaphore = static_cast<Semaphore_D3D12_Impl*>(submitDesc.m_ppSignalSemaphores[i]);
-            dx_queue->get_native_queue()->Signal(dx_semaphore->dx_fence, dx_semaphore->fence_value++);
-        }
-        */
     }
 
     void RenderDevice_D3D12_Impl::present_queue(IQueue* queue, const QueuePresentDesc& presentDesc)
@@ -2463,11 +2451,41 @@ namespace Cyber
         }
     }
 
-    CommandContext* RenderDevice_D3D12_Impl::allocate_command_context(SoftwareQueueIndex command_queue_id)
+    RenderDevice_D3D12_Impl::PooledCommandContext RenderDevice_D3D12_Impl::allocate_command_context(SoftwareQueueIndex command_queue_id)
     {
         auto& cmd_list_manager = get_command_list_manager(command_queue_id);
+        {
+            std::lock_guard<std::mutex> lock_guard(command_pool_mutex);
+            if(!command_pools.empty())
+            {
+                PooledCommandContext command_context = eastl::move(command_pools.back());
+                command_pools.pop_back();
+                command_context->reset(cmd_list_manager);
+                return command_context;
+            }   
+        }
+
         CommandContext* command_context = new CommandContext(cmd_list_manager);
-        return command_context;
+        return PooledCommandContext{command_context};
+    }
+
+    void RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)
+    {
+        auto& cmd_list_manager = get_command_list_manager(command_queue_id);
+        cyber_check(cmd_list_manager.get_command_list_type() == command_context->get_command_list_type());
+        
+        ID3D12CommandAllocator* command_allocator;
+        ID3D12CommandList* const cmd_list = command_context->close(command_allocator);
+        cyber_check_msg(cmd_list != nullptr, "Command list is null");
+        
+        cmd_list_manager;
+        free_command_context(eastl::move(command_context));
+    }
+
+    void RenderDevice_D3D12_Impl::free_command_context(PooledCommandContext&& command_context)
+    {
+        std::lock_guard<std::mutex> lock_guard(command_pool_mutex);
+        command_pools.push_back(eastl::move(command_context));
     }
 
     HRESULT RenderDevice_D3D12_Impl::hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize)

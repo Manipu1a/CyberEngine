@@ -124,12 +124,17 @@ namespace Cyber
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
             void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
-            CommandContext* allocate_command_context(SoftwareQueueIndex command_queue_id);
+            using PooledCommandContext = eastl::unique_ptr<CommandContext>;
+            PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);
+            
+            void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
+
         private:
             CYBER_FORCE_INLINE CommandListManager& get_command_list_manager(uint8_t index)
             {
                 return cmd_list_managers[index];
             }
+            void free_command_context(PooledCommandContext&& command_context);
 
             HRESULT hook_CheckFeatureSupport(D3D12_FEATURE pFeature, void* pFeatureSupportData, UINT pFeatureSupportDataSize);
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
@@ -137,6 +142,8 @@ namespace Cyber
             class D3D12MA::Allocator* m_pResourceAllocator;
 
             CommandListManager cmd_list_managers[3];
+            std::mutex command_pool_mutex;
+            eastl::vector<PooledCommandContext> command_pools;
             // API specific descriptor heap and memory allocator
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;

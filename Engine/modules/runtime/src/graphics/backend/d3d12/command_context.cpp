@@ -21,7 +21,7 @@ ID3D12GraphicsCommandList* CommandContext::close(ID3D12CommandAllocator* out_com
     auto hr = command_list->Close();
     cyber_assert(SUCCEEDED(hr), "Failed to close command list");
 
-    out_command_allocator = std::move(command_allocator);
+    out_command_allocator = eastl::move(command_allocator);
     return command_list;
 }
 

@@ -16,8 +16,8 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* devi
 
 void DeviceContext_D3D12_Impl::reset_command_pool(ICommandPool* pool)
 {
-    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-    dxPool->m_pDxCmdAlloc->Reset();
+    
+
 }
 
 void DeviceContext_D3D12_Impl::free_command_pool(ICommandPool* pool)
