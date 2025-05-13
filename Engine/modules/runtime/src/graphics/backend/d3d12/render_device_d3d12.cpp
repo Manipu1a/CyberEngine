@@ -986,17 +986,6 @@ namespace Cyber
         allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
         return dxCommandPool;
     }
-    void RenderDevice_D3D12_Impl::reset_command_pool(ICommandPool* pool)
-    {
-        CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-        dxPool->m_pDxCmdAlloc->Reset();
-    }
-    void RenderDevice_D3D12_Impl::free_command_pool(ICommandPool* pool)
-    {
-        CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-        SAFE_RELEASE(dxPool->m_pDxCmdAlloc);
-        cyber_delete(pool);
-    }
 
     ICommandBuffer* RenderDevice_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) 
     {
@@ -1022,12 +1011,6 @@ namespace Cyber
         // to record yet. The main loop expects it to be closed, so close it now.
         CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
         return dxCommandBuffer;
-    }
-
-    void RenderDevice_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer)
-    {
-        CommandBuffer_D3D12_Impl* dxCommandBuffer = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-        dxCommandBuffer->free();
     }
 
     void RenderDevice_D3D12_Impl::set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)

@@ -1,5 +1,8 @@
 #include "graphics/backend/d3d12/device_context_d3d12.h"
 #include "graphics/backend/d3d12//render_device_d3d12.h"
+#include "graphics/backend/d3d12/command_buffer_d3d12.h"
+#include "graphics/backend/d3d12/command_pool_d3d12.h"
+
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
@@ -9,13 +12,6 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* devi
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
     request_command_context();
-}
-
-ICommandPool* DeviceContext_D3D12_Impl::create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
-{
-    CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>(this, commandPoolDesc);
-    allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
-    return dxCommandPool;
 }
 
 void DeviceContext_D3D12_Impl::reset_command_pool(ICommandPool* pool)
@@ -29,32 +25,6 @@ void DeviceContext_D3D12_Impl::free_command_pool(ICommandPool* pool)
     CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
     SAFE_RELEASE(dxPool->m_pDxCmdAlloc);
     cyber_delete(pool);
-}
-
-ICommandBuffer* DeviceContext_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc)
-{
-    CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>(this, commandBufferDesc);
-    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-    Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->get_queue());
-
-    // set command pool of new command
-    dxCommandBuffer->set_node_index(GRAPHICS_SINGLE_GPU_NODE_INDEX);
-    dxCommandBuffer->set_type(dxQueue->get_type());
-    dxCommandBuffer->set_bound_heap(0, m_cbvSrvUavHeaps[dxCommandBuffer->m_nodeIndex]);
-    dxCommandBuffer->set_bound_heap(1, m_samplerHeaps[dxCommandBuffer->m_nodeIndex]);
-
-    dxCommandBuffer->m_pCmdPool = pool;
-    
-    uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
-    ID3D12PipelineState* initialState = nullptr;
-    ID3D12GraphicsCommandList* cmd_list = nullptr;
-    CHECK_HRESULT(m_pDxDevice->CreateCommandList(nodeMask, D3D12Util_TranslateCommandQueueType((COMMAND_QUEUE_TYPE)dxCommandBuffer->m_type) , 
-            dxPool->m_pDxCmdAlloc, initialState, IID_PPV_ARGS(&cmd_list)));
-    dxCommandBuffer->set_dx_cmd_list(cmd_list);
-    // Command lists are add in the recording state, but there is nothing
-    // to record yet. The main loop expects it to be closed, so close it now.
-    CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
-    return dxCommandBuffer;
 }
 
 void DeviceContext_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer)
@@ -94,35 +64,26 @@ void DeviceContext_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
 
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
 {
-    const auto& cmd_context = get_device_context(0);
-    cmd_context->transition_resource_state(barrierDesc);
+    transition_resource_state(barrierDesc);
 }
 
-IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
-{
-    RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);
-    return dxRenderPass;
-}
 void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc)
 {
-    TRenderDeviceBase::cmd_begin_render_pass(cmd, beginRenderPassDesc);
+    TDeviceContextBase::cmd_begin_render_pass( beginRenderPassDesc);
 
-    commit_subpass_rendertargets(cmd);
+    commit_subpass_rendertargets();
 }
+
 void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 {
-    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
-    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
-        cmdList4->EndRenderPass();
-    #endif
-    TRenderDeviceBase::cmd_next_sub_pass(cmd);
+    command_context->end_render_pass();
+    TDeviceContextBase::cmd_next_sub_pass();
 
     if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
     {
         cyber_assert(false, "RenderPass or FrameBuffer is nullptr!");
     }
-    commit_subpass_rendertargets(cmd);
+    commit_subpass_rendertargets();
 }
 
 void DeviceContext_D3D12_Impl::cmd_end_render_pass()
@@ -242,7 +203,7 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t in
     Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
 }
 
-void DeviceContext_D3D12_Impl::commit_subpass_rendertargets(RenderPassEncoder* encoder)
+void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
 {
        CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__

@@ -15,6 +15,7 @@ struct IDeviceContext_D3D12 : public IDeviceContext
 class CYBER_GRAPHICS_API DeviceContext_D3D12_Impl final : public DeviceContextBase<EngineD3D12ImplTraits>
 {
 public:
+    using TDeviceContextBase = DeviceContextBase<EngineD3D12ImplTraits>;
     using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
     DeviceContext_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc);
@@ -26,10 +27,8 @@ public:
 
     virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) override final;
 
-    virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
     virtual void reset_command_pool(ICommandPool* pool) override;
     virtual void free_command_pool(ICommandPool* pool) override;
-    virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
     virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
 
     virtual void cmd_begin(ICommandBuffer* commandBuffer) override;

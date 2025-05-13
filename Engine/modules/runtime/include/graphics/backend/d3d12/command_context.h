@@ -20,6 +20,7 @@ public:
 
     ~CommandContext();
     
+
     ID3D12GraphicsCommandList* close(ID3D12CommandAllocator* out_command_allocator);
     void reset(CommandListManager& command_list_manager);
     
@@ -29,6 +30,10 @@ public:
 
     void transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier);
     void transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier);
+
+    void begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags);
+    void end_render_pass();
+
 private:
     ID3D12GraphicsCommandList* command_list;
     ID3D12CommandAllocator* command_allocator;

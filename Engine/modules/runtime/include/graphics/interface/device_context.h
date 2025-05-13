@@ -31,16 +31,15 @@ namespace Cyber
             virtual void wait_queue_idle(IQueue* queue) = 0;
             virtual void free_queue(IQueue* queue) = 0;
             // Command APIs
-            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
             virtual void reset_command_pool(ICommandPool* pool) = 0;
             virtual void free_command_pool(ICommandPool* pool) = 0;
-            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
             virtual void free_command_buffer(ICommandBuffer* CommandBuffer) = 0;
             /// CMDS
             virtual void cmd_begin(ICommandBuffer* cmd) = 0;
             virtual void cmd_end(ICommandBuffer* cmd) = 0;
             virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) = 0;
             // Render Pass
+            virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_next_sub_pass() = 0;
             virtual void cmd_end_render_pass() = 0;
             virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) = 0;
@@ -76,7 +75,6 @@ namespace Cyber
             {
                 m_subpassIndex++;
             }
-            
 
             bool is_deferred_context() const { return desc.is_deferrd_context; }
             

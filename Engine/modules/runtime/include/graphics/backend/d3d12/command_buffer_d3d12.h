@@ -79,7 +79,9 @@ namespace Cyber
             uint32_t m_nodeIndex;
             ICommandPool* m_pCmdPool;
             D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS m_subResolveResource[GRAPHICS_MAX_MRT_COUNT];
+
             friend class RenderObject::RenderDevice_D3D12_Impl;
+            friend class RenderObject::DeviceContext_D3D12_Impl;
         };
 
     }

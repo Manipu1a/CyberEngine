@@ -32,6 +32,7 @@ namespace Cyber
             struct ID3D12CommandAllocator* m_pDxCmdAlloc;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
+            friend class RenderObject::DeviceContext_D3D12_Impl;
         };
 
     }

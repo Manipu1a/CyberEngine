@@ -174,6 +174,15 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const Buffer
         command_list->ResourceBarrier(1, &d3d_barrier);
 }
 
+void CommandContext::begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags)
+{
+    static_cast<ID3D12GraphicsCommandList4*>(command_list)->BeginRenderPass(num_render_targets, render_targets, depth_stencil, flags);
+}
+
+void CommandContext::end_render_pass()
+{
+    static_cast<ID3D12GraphicsCommandList4*>(command_list)->EndRenderPass();
+}
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE
 
