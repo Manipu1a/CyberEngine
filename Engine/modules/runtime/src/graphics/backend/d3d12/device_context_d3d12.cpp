@@ -88,13 +88,7 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 
 void DeviceContext_D3D12_Impl::cmd_end_render_pass()
 {
-    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(pCommandBuffer);
-    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-        ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)cmd->get_dx_cmd_list();
-        cmdList4->EndRenderPass();
-        return;
-    #endif
-    cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+    command_context->end_render_pass();
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)

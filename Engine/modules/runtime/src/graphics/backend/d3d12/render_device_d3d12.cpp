@@ -2478,6 +2478,9 @@ namespace Cyber
         ID3D12CommandList* const cmd_list = command_context->close(command_allocator);
         cyber_check_msg(cmd_list != nullptr, "Command list is null");
         
+        auto& cmd = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
+        cmd->ExecuteCommandLists(1, &cmd_list);
+        
         cmd_list_manager;
         free_command_context(eastl::move(command_context));
     }

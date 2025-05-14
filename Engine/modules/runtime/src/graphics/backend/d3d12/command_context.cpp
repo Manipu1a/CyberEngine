@@ -181,7 +181,11 @@ void CommandContext::begin_render_pass(uint32_t num_render_targets, const D3D12_
 
 void CommandContext::end_render_pass()
 {
-    static_cast<ID3D12GraphicsCommandList4*>(command_list)->EndRenderPass();
+    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+        static_cast<ID3D12GraphicsCommandList4*>(command_list)->EndRenderPass();
+    #else
+        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+    #endif
 }
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

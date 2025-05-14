@@ -29,7 +29,7 @@ namespace Cyber
             uint32_t m_index;
         };
 
-        struct CYBER_GRAPHICS_API IQueue : public IDeviceObject
+        struct CYBER_GRAPHICS_API ICommandQueue : public IDeviceObject
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;
             virtual void wait_fence(class IFence* fence, uint64_t value) = 0;
@@ -40,16 +40,16 @@ namespace Cyber
         };
 
         template<typename EngineImplTraits>
-        class QueueBase : public DeviceObjectBase<typename EngineImplTraits::QueueInterface, typename EngineImplTraits::RenderDeviceImplType>
+        class CommandQueueBase : public DeviceObjectBase<typename EngineImplTraits::CommandQueueInterface, typename EngineImplTraits::RenderDeviceImplType>
         {
         public:
-            using QueueInterface = typename EngineImplTraits::QueueInterface;
+            using CommandQueueInterface = typename EngineImplTraits::CommandQueueInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TQueueBase = typename DeviceObjectBase<QueueInterface, RenderDeviceImplType>;
+            using TCommandQueueBase = DeviceObjectBase<CommandQueueInterface, RenderDeviceImplType>;
 
-            QueueBase(RenderDeviceImplType* device) : TQueueBase(device) {  };
+            CommandQueueBase(RenderDeviceImplType* device) : TCommandQueueBase(device) {  };
 
-            virtual ~QueueBase() = default;
+            virtual ~CommandQueueBase() = default;
 
             CYBER_FORCE_INLINE virtual COMMAND_QUEUE_TYPE get_type() const override
             {

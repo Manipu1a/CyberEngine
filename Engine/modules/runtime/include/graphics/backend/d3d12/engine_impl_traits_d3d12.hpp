@@ -14,7 +14,7 @@ namespace Cyber
         class ICommandPool_D3D12;
         class IDeviceContext_D3D12;
         class IFence_D3D12;
-        class IQueue_D3D12;
+        class ICommandQueue_D3D12;
         class IInstance_D3D12;
         class IQueryPool_D3D12;
         class IRenderPipeline_D3D12;
@@ -39,7 +39,7 @@ namespace Cyber
         class CommandPool_D3D12_Impl;
         class DeviceContext_D3D12_Impl;
         class Fence_D3D12_Impl;
-        class Queue_D3D12_Impl;
+        class CommandQueue_D3D12_Impl;
         class Instance_D3D12_Impl;
         class QueryPool_D3D12_Impl;
         class RenderPipeline_D3D12_Impl;
@@ -67,7 +67,7 @@ namespace Cyber
             using CommandPoolInterface = ICommandPool_D3D12;
             using DeviceContextInterface = IDeviceContext_D3D12;
             using FenceInterface = IFence_D3D12;
-            using QueueInterface = IQueue_D3D12;
+            using CommandQueueInterface = ICommandQueue_D3D12;
             using InstanceInterface = IInstance_D3D12;
             using QueryPoolInterface = IQueryPool_D3D12;
             using RenderPipelineInterface = IRenderPipeline_D3D12;
@@ -93,7 +93,7 @@ namespace Cyber
             using CommandPoolImplType = CommandPool_D3D12_Impl;
             using DeviceContextImplType = DeviceContext_D3D12_Impl;
             using FenceImplType = Fence_D3D12_Impl;
-            using QueueImplType = Queue_D3D12_Impl;
+            using CommandQueueImplType = CommandQueue_D3D12_Impl;
             using InstanceImplType = Instance_D3D12_Impl;
             using QueryPoolImplType = QueryPool_D3D12_Impl;
             using RenderPipelineImplType = RenderPipeline_D3D12_Impl;
