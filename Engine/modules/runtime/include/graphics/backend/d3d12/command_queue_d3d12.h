@@ -29,17 +29,23 @@ namespace Cyber
 
             virtual void signal_fence(class IFence* fence, uint64_t value) override;
             virtual void wait_fence(class IFence* fence, uint64_t value) override;
-            void submit(uint32_t num_cmd_lists, ID3D12CommandList* const* command_lists);
+            uint64_t submit(uint32_t num_cmd_lists, ID3D12CommandList* const* command_lists);
 
             ID3D12CommandQueue* get_native_queue() const { return command_queue; }
         protected:
-            std::mutex queue_mutex;
+            // A value that will be signaled by the command queue next
+            std::atomic<uint64_t> next_fence_value{1};
+            // Last fence value completed by the GPU
+            std::atomic<uint64_t> last_fence_value{0};
 
+            std::mutex queue_mutex;
             ID3D12CommandQueue* command_queue;
             const D3D12_COMMAND_QUEUE_DESC command_queue_desc;
 
-            IFence* m_pFence;
+            ID3D12Fence* d3d12_fence;
 
+            IFence* m_pFence;
+            
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

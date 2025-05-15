@@ -7,7 +7,8 @@ CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
 DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc)
-    : DeviceContextBase<EngineD3D12ImplTraits>(device, desc), m_dynamic_mem_mgr{*device, 1, 1024 * 1024}
+    : TDeviceContextBase{device, desc},
+     m_dynamic_mem_mgr{*device, 1, 1024 * 1024}
 {
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
@@ -35,31 +36,16 @@ void DeviceContext_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer
 
 void DeviceContext_D3D12_Impl::cmd_begin(ICommandBuffer* commandBuffer)
 {
-    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-    CommandPool_D3D12_Impl* pool = static_cast<CommandPool_D3D12_Impl*>(cmd->m_pCmdPool);
-    CHECK_HRESULT(cmd->get_dx_cmd_list()->Reset(pool->m_pDxCmdAlloc, nullptr));
-
-    // Reset the descriptor heaps
-    if(cmd->m_type != COMMAND_QUEUE_TYPE_TRANSFER)
-    {
-        ID3D12DescriptorHeap* heaps[] = {
-            cmd->m_pBoundHeaps[0]->get_heap(),
-            cmd->m_pBoundHeaps[1]->get_heap()
-        };
-        cmd->get_dx_cmd_list()->SetDescriptorHeaps(2, heaps);
-
-        cmd->m_boundHeapStartHandles[0] = cmd->m_pBoundHeaps[0]->get_heap()->GetGPUDescriptorHandleForHeapStart();
-        cmd->m_boundHeapStartHandles[1] = cmd->m_pBoundHeaps[1]->get_heap()->GetGPUDescriptorHandleForHeapStart();
-    }
-    // Reset CPU side data
-    cmd->m_pBoundRootSignature = nullptr;
+    request_command_context();
 }
 
 void DeviceContext_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
 {
-    CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-    cyber_check(cmd->get_dx_cmd_list());
-    CHECK_HRESULT(cmd->get_dx_cmd_list()->Close());
+    ID3D12CommandAllocator* command_allocator = nullptr;
+    command_context->close(command_allocator);
+
+    //todo release command allocator
+    
 }
 
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)

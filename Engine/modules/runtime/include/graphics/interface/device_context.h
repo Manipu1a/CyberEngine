@@ -24,12 +24,6 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IDeviceContext
         {
             virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) = 0;
-            // Queue APIs
-            virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
-            virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) = 0;
-            virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) = 0;
-            virtual void wait_queue_idle(IQueue* queue) = 0;
-            virtual void free_queue(IQueue* queue) = 0;
             // Command APIs
             virtual void reset_command_pool(ICommandPool* pool) = 0;
             virtual void free_command_pool(ICommandPool* pool) = 0;

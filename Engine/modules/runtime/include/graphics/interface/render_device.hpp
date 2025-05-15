@@ -8,7 +8,7 @@
 #include "frame_buffer.h"
 #include "render_pass.h"
 #include "swap_chain.hpp"
-#include "queue.h"
+#include "command_queue.h"
 #include "command_buffer.h"
 #include "command_pool.h"
 #include "fence.h"
