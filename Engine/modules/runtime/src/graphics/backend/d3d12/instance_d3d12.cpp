@@ -2,6 +2,7 @@
 #include "EASTL/vector.h"
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "backend/d3d12/adapter_d3d12.h"
+#include "backend/d3d12/device_context_d3d12.h"
 #include "platform/memory.h"
 #include "backend/d3d12/d3d12_utils.h"
 
@@ -45,6 +46,30 @@ namespace Cyber
             IRenderDevice* render_device = cyber_new<RenderDevice_D3D12_Impl>(adapter, desc);
             render_device->initialize_render_device();
             return render_device;
+        }
+
+        void Instance_D3D12_Impl::create_device_and_context(IAdapter* adapter, const EngineCreateDesc& desc, IRenderDevice** render_device, IDeviceContext** device_context)
+        {
+            RenderDeviceCreateDesc device_desc;
+            device_desc.m_disablePipelineCache = desc.m_disablePipelineCache;
+            device_desc.m_queueGroups = desc.m_queueGroups;
+            device_desc.m_queueGroupCount = desc.m_queueGroupCount;
+
+            *render_device = create_render_device(adapter, device_desc);
+
+
+            // Create Device Context
+            DeviceContextDesc context_desc = {};
+            context_desc.context_id = desc.context_id;
+            context_desc.queue_type = desc.queue_type;
+            context_desc.is_deferrd_context = desc.is_deferrd_context;
+            context_desc.name = CYBER_UTF8("ImmediateContext");
+
+            auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(*render_device, context_desc);
+            *device_context = d3d12_context;
+            
+            RenderDevice_D3D12_Impl* render_device_impl = static_cast<RenderDevice_D3D12_Impl*>(*render_device);
+            render_device_impl->set_device_context(0, d3d12_context);
         }
 
         void Instance_D3D12_Impl::initialize_environment()

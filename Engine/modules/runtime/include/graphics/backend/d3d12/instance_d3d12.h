@@ -34,6 +34,7 @@ namespace Cyber
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) override final;
             virtual void enum_adapters(IAdapter** adapters, uint32_t* adapterCount) override final;
             virtual IRenderDevice* create_render_device(IAdapter* adapter, const RenderDeviceCreateDesc& desc) override final;
+            virtual void create_device_and_context(IAdapter* adapter, const EngineCreateDesc& desc, IRenderDevice** render_device, IDeviceContext** device_context) override final;
 
             virtual void free() override final;
 

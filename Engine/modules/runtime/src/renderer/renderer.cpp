@@ -63,13 +63,16 @@ namespace Cyber
             DECLARE_ZERO(QueueGroupDesc, queue_group_desc);
             queue_group_desc.m_queueCount = 1;
             queue_group_desc.m_queueType = COMMAND_QUEUE_TYPE_GRAPHICS;
-            DECLARE_ZERO(RenderObject::RenderDeviceCreateDesc, device_desc);
-            device_desc.m_queueGroupCount = 1;
-            device_desc.m_queueGroups = { queue_group_desc };
-            m_pRenderDevice = m_pInstance->create_render_device(m_pAdapter, device_desc);
+
+            DECLARE_ZERO(EngineCreateDesc, engine_desc);
+            engine_desc.m_queueGroupCount = 1;
+            engine_desc.m_queueGroups = { queue_group_desc };
+            engine_desc.context_id = 0;
+            engine_desc.queue_type = COMMAND_QUEUE_TYPE_GRAPHICS;
+            engine_desc.is_deferrd_context = false;
+            m_pInstance->create_device_and_context(m_pAdapter, engine_desc, &m_pRenderDevice, &device_context);
             m_pQueue = m_pRenderDevice->get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0);
 
-            m_pRenderDevice;
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)
             m_pSurface = m_pRenderDevice->surface_from_hwnd(Core::Application::getApp()->get_window()->get_native_window());

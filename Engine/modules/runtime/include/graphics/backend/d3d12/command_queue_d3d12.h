@@ -32,6 +32,7 @@ namespace Cyber
             uint64_t submit(uint32_t num_cmd_lists, ID3D12CommandList* const* command_lists);
 
             ID3D12CommandQueue* get_native_queue() const { return command_queue; }
+            void set_native_queue(ID3D12CommandQueue* queue) { command_queue = queue; }
         protected:
             // A value that will be signaled by the command queue next
             std::atomic<uint64_t> next_fence_value{1};

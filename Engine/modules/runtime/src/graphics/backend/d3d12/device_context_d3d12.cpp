@@ -34,15 +34,15 @@ void DeviceContext_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer
     dxCommandBuffer->free();
 }
 
-void DeviceContext_D3D12_Impl::cmd_begin(ICommandBuffer* commandBuffer)
+void DeviceContext_D3D12_Impl::cmd_begin()
 {
     request_command_context();
 }
 
-void DeviceContext_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
+void DeviceContext_D3D12_Impl::cmd_end()
 {
     ID3D12CommandAllocator* command_allocator = nullptr;
-    command_context->close(command_allocator);
+    curr_command_context->close(command_allocator);
 
     //todo release command allocator
     
@@ -51,6 +51,11 @@ void DeviceContext_D3D12_Impl::cmd_end(ICommandBuffer* commandBuffer)
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
 {
     transition_resource_state(barrierDesc);
+}
+
+void DeviceContext_D3D12_Impl::flush()
+{
+
 }
 
 void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc)
@@ -62,7 +67,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
 
 void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 {
-    command_context->end_render_pass();
+    curr_command_context->end_render_pass();
     TDeviceContextBase::cmd_next_sub_pass();
 
     if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
@@ -74,7 +79,7 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 
 void DeviceContext_D3D12_Impl::cmd_end_render_pass()
 {
-    command_context->end_render_pass();
+    curr_command_context->end_render_pass();
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)
@@ -311,6 +316,37 @@ void DeviceContext_D3D12_Impl::request_command_context()
 Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)
 {
     return m_pDynamicHeap->allocate(size_in_bytes, alignment);
+}
+
+void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists)
+{
+    cyber_check_msg(!is_deferred_context() || num_command_lists == 0 && command_lists == nullptr, "Deferred contexts cannot execute command lists directly");
+
+    eastl::vector<RenderDevice_D3D12_Impl::PooledCommandContext> contexts;
+    contexts.reserve(num_command_lists + 1);
+
+    if(curr_command_context)
+    {
+        if(state.num_command != 0)
+        {
+            contexts.emplace(std::move(curr_command_context));
+        }
+        else if(!request_new_command_context)
+        {
+            render_device;
+        }
+    }
+
+    // for deferred context
+    for(uint32_t i = 0; i < num_command_lists; ++i)
+    {
+
+    }
+
+    if(!contexts.empty())
+    {
+        render_device->close_and_execute_command_context(get_command_queue_id(), contexts.data(), (uint32_t)contexts.size());
+    }
 }
 
 void DeviceContext_D3D12_Impl::transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state)

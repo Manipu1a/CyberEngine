@@ -22,7 +22,7 @@ public:
 
     CommandContext& get_command_context()
     {
-        return *command_context;
+        return *curr_command_context;
     }
 
     virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) override final;
@@ -31,9 +31,11 @@ public:
     virtual void free_command_pool(ICommandPool* pool) override;
     virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
 
-    virtual void cmd_begin(ICommandBuffer* commandBuffer) override;
-    virtual void cmd_end(ICommandBuffer* commandBuffer) override;
+    virtual void cmd_begin() override;
+    virtual void cmd_end() override;
     virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) override;
+
+    virtual void flush() override;
 
     virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override;
     virtual void cmd_next_sub_pass() override;
@@ -56,11 +58,18 @@ public:
     //todo: move to device context
     Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
 
-    void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
-
-    void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
 private:
-    CommandContext* command_context = nullptr;
+    struct State
+    {
+        size_t num_command = 0;
+
+    } state;
+
+    void flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists);
+    void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
+    void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
+
+    CommandContext* curr_command_context = nullptr;
 
     Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;
     Dynamic_Heap_D3D12* m_pDynamicHeap;

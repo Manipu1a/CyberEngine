@@ -21,14 +21,6 @@ namespace Cyber
             uint32_t m_signalSemaphoreCount;
         };
 
-        struct CYBER_GRAPHICS_API QueuePresentDesc
-        {
-            class ISwapChain* m_pSwapChain;
-            const ISemaphore** m_ppwaitSemaphores;
-            uint32_t m_waitSemaphoreCount;
-            uint32_t m_index;
-        };
-
         struct CYBER_GRAPHICS_API ICommandQueue : public IDeviceObject
         {
             virtual void signal_fence(class IFence* fence, uint64_t value) = 0;

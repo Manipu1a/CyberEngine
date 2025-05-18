@@ -32,7 +32,7 @@
 #include "graphics/backend/d3d12/command_pool_d3d12.h"
 #include "graphics/backend/d3d12/frame_buffer_d3d12.h"
 #include "graphics/backend/d3d12/query_pool_d3d12.h"
-#include "graphics/backend/d3d12/queue_d3d12.h"
+#include "graphics/backend/d3d12/command_queue_d3d12.h"
 #include "graphics/backend/d3d12/adapter_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_set_d3d12.h"
@@ -92,8 +92,8 @@ namespace Cyber
             auto type = queueGroup.m_queueType;
 
             m_commandQueueCounts[type] = queueGroup.m_queueCount;
-            m_commandQueues[type] = (ID3D12CommandQueue**)cyber_malloc(sizeof(ID3D12CommandQueue*) * queueGroup.m_queueCount);
 
+            ID3D12CommandQueue* dxCommandQueue = nullptr;
             for(uint32_t j = 0u; j < queueGroup.m_queueCount; j++)
             {
                 DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
@@ -114,23 +114,14 @@ namespace Cyber
                 }
                 queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 
-                if(!SUCCEEDED(m_pDxDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueues[type][j]))))
+                if(!SUCCEEDED(m_pDxDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&dxCommandQueue))))
                 {
                     cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
                 }
+
+                cyber_placement_new<CommandQueue_D3D12_Impl>(m_commandQueues[type]+j, this, dxCommandQueue);
             }
         }
-
-        // Create Device Context
-        DeviceContextDesc context_desc = {};
-        context_desc.context_id = 0;
-        context_desc.queue_type = COMMAND_QUEUE_TYPE_GRAPHICS;
-        context_desc.is_deferrd_context = false;
-        context_desc.name = CYBER_UTF8("ImmediateContext");
-
-        m_deviceContexts.resize(1);
-        DeviceContext_D3D12_Impl* deviceContext = cyber_new<DeviceContext_D3D12_Impl>(this, context_desc);
-        set_device_context(0, deviceContext);
 
         // Create D3D12MA Allocator
         create_dma_allocallor(dxAdapter);
@@ -858,6 +849,11 @@ namespace Cyber
             return FENCE_STATUS_COMPLETE;
     }
 
+    void RenderDevice_D3D12_Impl::signal_fence(IFence* fence, uint64_t value)
+    {
+        m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0]->signal_fence(fence, value);
+    }
+
     void RenderDevice_D3D12_Impl::wait_fences(IFence** fences, uint32_t fenceCount)
     {
         for(uint32_t i = 0; i < fenceCount; ++i)
@@ -894,6 +890,7 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc)
     {
+        /*
         uint32_t cmd_count = submitDesc.m_cmdsCount;
         Queue_D3D12_Impl* dx_queue = static_cast<Queue_D3D12_Impl*>(queue);
         Fence_D3D12_Impl* dx_fence = static_cast<Fence_D3D12_Impl*>(submitDesc.m_pSignalFence);
@@ -915,11 +912,12 @@ namespace Cyber
         }
         // Execute
         dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
+        */
     }
 
-    void RenderDevice_D3D12_Impl::present_queue(IQueue* queue, const QueuePresentDesc& presentDesc)
+    void RenderDevice_D3D12_Impl::present(ISwapChain* swap_chain)
     {
-        SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(presentDesc.m_pSwapChain);
+        SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(swap_chain);
         
         HRESULT hr =  dx_swapchain->get_dx_swap_chain()->Present(1, dx_swapchain->get_flags());
 
@@ -2469,6 +2467,28 @@ namespace Cyber
         return PooledCommandContext{command_context};
     }
 
+    void RenderDevice_D3D12_Impl::close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[])
+    {
+        cyber_check(num_contexts > 0 && command_contexts != nullptr);
+
+        eastl::vector<ID3D12CommandList*> d3d12_command_lists;
+        eastl::vector<ID3D12CommandAllocator*> d3d12_command_allocators;
+        d3d12_command_lists.reserve(num_contexts);
+        d3d12_command_allocators.reserve(num_contexts);
+
+        auto& cmd_list_manager = get_command_list_manager(command_queue_id);
+        for(uint32_t i = 0; i < num_contexts; ++i)
+        {
+            auto& context = command_contexts[i];
+            ID3D12CommandAllocator* command_allocator;
+            d3d12_command_lists.emplace_back(context->close(command_allocator));
+            d3d12_command_allocators.emplace_back(command_allocator);
+        }
+
+        auto& command_queue = m_commandQueues[command_queue_id][0];
+        command_queue->submit( num_contexts, d3d12_command_lists.data());
+    }
+
     void RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)
     {
         auto& cmd_list_manager = get_command_list_manager(command_queue_id);
@@ -2480,7 +2500,7 @@ namespace Cyber
         
         auto& cmd = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
         //todo 
-        cmd->ExecuteCommandLists(1, &cmd_list);
+        cmd->submit(1, &cmd_list);
         
         cmd_list_manager;
         free_command_context(eastl::move(command_context));

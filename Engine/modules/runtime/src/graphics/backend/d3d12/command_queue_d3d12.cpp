@@ -37,7 +37,7 @@ namespace Cyber
                 command_queue->ExecuteCommandLists(num_cmd_lists, command_lists);
             }
 
-            command_queue->Signal(d3d12_fence, fence_value);
+            //command_queue->Signal(d3d12_fence, fence_value);
 
             return fence_value;
         }

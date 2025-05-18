@@ -56,6 +56,7 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) override;
             virtual void free_surface(Surface* surface) override;
             virtual IFence* create_fence() override;
+            virtual void signal_fence(IFence* fence, uint64_t value) override;
             virtual void wait_fences(IFence** fences, uint32_t fenceCount) override;
             virtual void free_fence(IFence* fence) override;
             virtual FENCE_STATUS query_fence_status(IFence* fence) override;
@@ -69,7 +70,7 @@ namespace Cyber
 
             virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
-            virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) override;
+            virtual void present(ISwapChain* swap_chain) override;
             virtual void wait_queue_idle(IQueue* queue) override;
             virtual void free_queue(IQueue* queue) override;
 
@@ -127,6 +128,8 @@ namespace Cyber
             using PooledCommandContext = eastl::unique_ptr<CommandContext>;
             PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);
             
+            void close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
+            
             void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
 
         private:
@@ -150,8 +153,8 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
 
             struct EmptyDescriptors_D3D12* m_pNullDescriptors;
-            eastl::map<uint32_t, ID3D12CommandQueue**> m_commandQueues;
-            eastl::map<uint32_t, uint32_t> m_commandQueueCounts;
+
+
             IDXGIFactory6* m_pDXGIFactory;
             IDXGIAdapter4* m_pDxActiveGPU;
             ID3D12Device* m_pDxDevice;

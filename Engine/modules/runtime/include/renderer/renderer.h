@@ -6,6 +6,11 @@
 
 namespace Cyber
 {
+    namespace RenderObject
+    {
+        class IDeviceContext;
+    }
+
     namespace Core
     {
         class Application;
@@ -27,6 +32,7 @@ namespace Cyber
             void create_gfx_objects();
 
             CYBER_FORCE_INLINE RenderObject::IRenderDevice* get_render_device() const { return m_pRenderDevice; }
+            CYBER_FORCE_INLINE RenderObject::IDeviceContext* get_device_context() const { return device_context; }
             CYBER_FORCE_INLINE RenderObject::IInstance* get_instance() const { return m_pInstance; }
             CYBER_FORCE_INLINE RenderObject::IAdapter* get_adapter() const { return m_pAdapter; }
             CYBER_FORCE_INLINE RenderObject::IQueue* get_queue() const { return m_pQueue; }
@@ -45,6 +51,7 @@ namespace Cyber
             static const uint32_t MAX_FRAMES_IN_FLIGHT = 3;
             static const uint32_t BACK_BUFFER_COUNT = 3;
             RenderObject::IRenderDevice* m_pRenderDevice = nullptr;
+            RenderObject::IDeviceContext* device_context = nullptr;
             RenderObject::IInstance* m_pInstance = nullptr;
             RenderObject::IAdapter* m_pAdapter = nullptr;
             RenderObject::IFence* m_pPresentFence = nullptr;

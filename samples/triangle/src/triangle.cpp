@@ -48,10 +48,9 @@ namespace Cyber
 
         void TrignaleApp::raster_draw()
         {
-            /*
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            //auto cmd = renderer->get_command_buffer();
+            auto device_context = renderer->get_device_context();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
             auto pool = renderer->get_command_pool();
@@ -66,9 +65,9 @@ namespace Cyber
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
-            render_device->reset_command_pool(pool);
+            device_context->reset_command_pool(pool);
             // record
-            render_device->cmd_begin(cmd);
+            device_context->cmd_begin();
 
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             
@@ -103,14 +102,14 @@ namespace Cyber
             };
 
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            render_device->cmd_resource_barrier(cmd, barrier_desc0);
-            render_device->cmd_begin_render_pass(cmd, RenderPassBeginInfo);
-            render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
-            render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
-            render_device->render_encoder_bind_pipeline(cmd, pipeline);
+            device_context->cmd_resource_barrier(barrier_desc0);
+            device_context->cmd_begin_render_pass(RenderPassBeginInfo);
+            device_context->render_encoder_set_viewport( 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            device_context->render_encoder_set_scissor( 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            device_context->render_encoder_bind_pipeline( pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            render_device->render_encoder_draw(cmd, 3, 0);
-            render_device->cmd_end_render_pass(cmd);
+            device_context->render_encoder_draw(3, 0);
+            device_context->cmd_end_render_pass();
             
             // ui pass
             //render_device->cmd_next_sub_pass(cmd);
@@ -118,20 +117,17 @@ namespace Cyber
             //render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
             //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            /*
-            render_device->set_render_target(cmd, 1, &back_buffer_view, nullptr);
-            auto editor = m_pApp->get_editor();
-            editor->update(cmd, 0.0f);
-            */
-
             
+            render_device->set_render_target( 1, &back_buffer_view, nullptr);
+            auto editor = m_pApp->get_editor();
+            editor->update(cmd, 0.0f);          
         }
 
         void TrignaleApp::present()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            auto device_context = render_device->get_device_context();
+            auto device_context = renderer->get_device_context();
             auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
@@ -146,29 +142,25 @@ namespace Cyber
                 .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
             };
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            render_device->cmd_resource_barrier(cmd, barrier_desc2);
-            render_device->cmd_end(cmd);
+            device_context->cmd_resource_barrier(barrier_desc2);
+            device_context->cmd_end();
+
             // submit
             RenderObject::QueueSubmitDesc submit_desc = {
                 .m_ppCmds = &cmd,
                 .m_pSignalFence = renderer->get_present_semaphore(),
                 .m_cmdsCount = 1
             };
-            render_device->submit_queue(queue, submit_desc);
+
+            device_context->flush();
+            
+            //render_device->submit_queue(queue, submit_desc);
 
             // present
-            RenderObject::QueuePresentDesc present_desc = {
-                .m_pSwapChain = swap_chain,
-                .m_ppwaitSemaphores = nullptr,
-                .m_waitSemaphoreCount = 0,
-                .m_index = m_backBufferIndex,
-            };
-            render_device->present_queue(queue, present_desc);
+            render_device->present(swap_chain);
 
             // sync & reset
-            //m_pRenderDevice->wait_queue_idle(m_pQueue);
-            queue->signal_fence(present_fence, present_fence->get_fence_value());
-            
+            render_device->signal_fence(present_fence, present_fence->get_fence_value());
             render_device->wait_fences(&present_fence, 1);
         }
 

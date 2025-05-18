@@ -9,6 +9,8 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class IDeviceContext;
+
         struct CYBER_GRAPHICS_API InstanceCreateDesc
         {
             bool m_enableDebugLayer;
@@ -25,7 +27,7 @@ namespace Cyber
             virtual void enum_adapters(IAdapter** adapters, uint32_t* adapterCount) = 0;
             virtual void query_all_adapters(uint32_t& count, bool& foundSoftwareAdapter) = 0;
             virtual IRenderDevice* create_render_device(IAdapter* adapter, const RenderDeviceCreateDesc& desc) = 0;
-
+            virtual void create_device_and_context(IAdapter* adapter, const EngineCreateDesc& desc, IRenderDevice** render_device, IDeviceContext** device_context) = 0;
             virtual void free() = 0;
         };
 

@@ -2,7 +2,8 @@
 #include "common/cyber_graphics_config.h"
 #include "graphics_types.h"
 #include "frame_buffer.h"
-#include "render_device.hpp"
+#include "descriptor_set.h"
+#include "render_pipeline.h"
 
 namespace Cyber
 {
@@ -21,6 +22,29 @@ namespace Cyber
             uint8_t queue_id = 0xFF;
         };
 
+        
+        /// Defines resource state transition mode performed by various commands.
+        CYBER_TYPED_ENUM(RESOURCE_STATE_TRANSITION_MODE, uint8_t)
+        {
+            /// Perform no state transitions and no state validation.
+            /// Resource states are not accessed (either read or written) by the command.
+            RESOURCE_STATE_TRANSITION_MODE_NONE = 0,
+            /// Transition resources to the states required by the specific command.
+            /// Resources in unknown state are ignored.
+            RESOURCE_STATE_TRANSITION_MODE_TRANSITION = 1,
+            /// Do not transition, but verify that states are correct.
+            RESOURCE_STATE_TRANSITION_MODE_VERIFY = 2
+        };
+
+        struct BeginRenderPassAttribs
+        {
+            IFrameBuffer* pFramebuffer;
+            IRenderPass* pRenderPass;
+            uint32_t ClearValueCount;
+            GRAPHICS_CLEAR_VALUE* pClearValues;
+            RESOURCE_STATE_TRANSITION_MODE TransitionMode;
+        };
+
         struct CYBER_GRAPHICS_API IDeviceContext
         {
             virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) = 0;
@@ -29,9 +53,11 @@ namespace Cyber
             virtual void free_command_pool(ICommandPool* pool) = 0;
             virtual void free_command_buffer(ICommandBuffer* CommandBuffer) = 0;
             /// CMDS
-            virtual void cmd_begin(ICommandBuffer* cmd) = 0;
-            virtual void cmd_end(ICommandBuffer* cmd) = 0;
+            virtual void cmd_begin() = 0;
+            virtual void cmd_end() = 0;
             virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) = 0;
+
+            virtual void flush() = 0;
             // Render Pass
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_next_sub_pass() = 0;

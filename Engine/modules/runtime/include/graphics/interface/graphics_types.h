@@ -1617,6 +1617,19 @@ namespace Cyber
         bool enable_depth_clip : 1;
     };
 
+    struct CYBER_GRAPHICS_API EngineCreateDesc
+    {
+        // device
+        bool m_disablePipelineCache;
+        eastl::vector<QueueGroupDesc> m_queueGroups;
+        uint32_t m_queueGroupCount;
+        // context
+        const char8_t* name;     
+        COMMAND_QUEUE_TYPE queue_type;
+        bool is_deferrd_context = false;
+        uint8_t context_id = 0;   
+        uint8_t queue_id = 0xFF;
+    };
 
     #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1
     #define GRAPHICS_SINGLE_GPU_NODE_MASK 1

@@ -12,13 +12,13 @@
 #include "command_buffer.h"
 #include "command_pool.h"
 #include "fence.h"
-#include "render_pipeline.h"
 #include "root_signature.hpp"
 #include "shader_library.h"
 #include "sampler.h"
 #include "adapter.h"
-#include "descriptor_set.h"
 #include "object_base.h"
+#include "device_context.h"
+#include "EASTL/map.h"
 
 
 namespace Cyber
@@ -30,28 +30,6 @@ namespace Cyber
             bool m_disablePipelineCache;
             eastl::vector<QueueGroupDesc> m_queueGroups;
             uint32_t m_queueGroupCount;
-        };
-
-        /// Defines resource state transition mode performed by various commands.
-        CYBER_TYPED_ENUM(RESOURCE_STATE_TRANSITION_MODE, uint8_t)
-        {
-            /// Perform no state transitions and no state validation.
-            /// Resource states are not accessed (either read or written) by the command.
-            RESOURCE_STATE_TRANSITION_MODE_NONE = 0,
-            /// Transition resources to the states required by the specific command.
-            /// Resources in unknown state are ignored.
-            RESOURCE_STATE_TRANSITION_MODE_TRANSITION = 1,
-            /// Do not transition, but verify that states are correct.
-            RESOURCE_STATE_TRANSITION_MODE_VERIFY = 2
-        };
-
-        struct BeginRenderPassAttribs
-        {
-            IFrameBuffer* pFramebuffer;
-            IRenderPass* pRenderPass;
-            uint32_t ClearValueCount;
-            GRAPHICS_CLEAR_VALUE* pClearValues;
-            RESOURCE_STATE_TRANSITION_MODE TransitionMode;
         };
 
         // Render device interface
@@ -70,6 +48,7 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) = 0;
             virtual void free_surface(Surface* surface) = 0;
             virtual IFence* create_fence() = 0;
+            virtual void signal_fence(IFence* fence, uint64_t value) = 0;
             virtual void wait_fences(IFence** fences, uint32_t fenceCount) = 0;
             virtual void free_fence(IFence* fence) = 0;
             virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
@@ -84,7 +63,7 @@ namespace Cyber
             // Queue APIs
             virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
             virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) = 0;
-            virtual void present_queue(IQueue* queue, const QueuePresentDesc& presentDesc) = 0;
+            virtual void present(ISwapChain* swap_chain) = 0;
             virtual void wait_queue_idle(IQueue* queue) = 0;
             virtual void free_queue(IQueue* queue) = 0;
 
@@ -124,6 +103,7 @@ namespace Cyber
             using BufferImplType = typename EngineImplTraits::BufferImplType;
             using DeviceContextImplType = typename EngineImplTraits::DeviceContextImplType;
             using RenderDeviceInterface = typename EngineImplTraits::RenderDeviceInterface;
+            using CommandQueueImplType = typename EngineImplTraits::CommandQueueImplType;
             using TRenderDeviceBase = ObjectBase<RenderDeviceInterface>;
 
             RenderDeviceBase(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc) : TRenderDeviceBase(), m_desc(deviceDesc)
@@ -159,20 +139,12 @@ namespace Cyber
             RenderDeviceCreateDesc m_desc;
 
             eastl::vector<DeviceContextImplType*> m_deviceContexts;
+            eastl::map<uint32_t, CommandQueueImplType**> m_commandQueues;
+            eastl::map<uint32_t, uint32_t> m_commandQueueCounts;
         public:
             friend TextureImplType;
             friend TextureViewImplType;
             friend BufferImplType;
         };
-        
-        /*
-        template<typename EngineImplTraits>
-        inline void RenderDeviceBase<EngineImplTraits>::cmd_begin_render_pass(ICommandBuffer* cmd, const BeginRenderPassAttribs& beginRenderPassDesc)
-        {
-            m_pRenderPass = beginRenderPassDesc.pRenderPass;
-            m_pFrameBuffer = beginRenderPassDesc.pFramebuffer;
-            m_beginRenderPassAttribs = beginRenderPassDesc;
-        }
-        */
     }
 }
