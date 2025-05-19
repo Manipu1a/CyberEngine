@@ -110,34 +110,26 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet
     RenderObject::RootSignature_D3D12_Impl* RS = static_cast<RenderObject::RootSignature_D3D12_Impl*>(Set->get_root_signature());
 
     cyber_check(RS);
-    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
 
     if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
     }
     else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
     }
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
-    Cmd->get_dx_cmd_list()->RSSetViewports(1, &viewport);
+    curr_command_context->set_viewport(x, y, width, height, min_depth, max_depth);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    D3D12_RECT rect;
-    rect.left = x;
-    rect.top = y;
-    rect.right = x + width;
-    rect.bottom = y + height;
-    Cmd->get_dx_cmd_list()->RSSetScissorRects(1, &rect);
+    curr_command_context->set_scissor_rects(x, y, width, height);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pipeline)
@@ -176,6 +168,20 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer,
     view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
     view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
     Cmd->get_dx_cmd_list()->IASetIndexBuffer(&view);
+}
+
+
+void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
+{
+    if(get_bound_root_signature() != rootSignature)
+    {
+        set_bound_root_signature(rootSignature);
+
+        if(type == PIPELINE_TYPE_GRAPHICS)
+            curr_command_context->set_graphics_root_signature(rootSignature);
+        else
+            curr_command_context->set_compute_root_signature(rootSignature);
+    }
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_push_constants(IRootSignature* rs, const char8_t* name, const void* data)

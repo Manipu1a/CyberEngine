@@ -80,7 +80,8 @@ private:
     void flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists);
     void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
     void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
-
+    void reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature);
+    
     CommandContext* curr_command_context = nullptr;
 
     Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;

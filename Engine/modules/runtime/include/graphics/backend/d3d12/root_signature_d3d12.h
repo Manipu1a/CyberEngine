@@ -31,7 +31,7 @@ namespace Cyber
             D3D12_ROOT_PARAMETER1 root_constant_parameter;
             uint32_t root_parameter_index;
             
-            friend class RenderObject::RenderDevice_D3D12_Impl;
+            friend class DeviceContext_D3D12_Impl;
         };
 
     }

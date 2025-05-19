@@ -998,18 +998,6 @@ namespace Cyber
         return dxCommandBuffer;
     }
 
-    void reset_root_signature(CommandBuffer_D3D12_Impl* cmd, PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
-    {
-        if(cmd->get_bound_root_signature() != rootSignature)
-        {
-            cmd->set_bound_root_signature(rootSignature);
-            if(type == PIPELINE_TYPE_GRAPHICS)
-                cmd->get_dx_cmd_list()->SetGraphicsRootSignature(rootSignature);
-            else
-                cmd->get_dx_cmd_list()->SetComputeRootSignature(rootSignature);
-        }
-    }
-
     IRenderPass* RenderDevice_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
     {
         RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);

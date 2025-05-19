@@ -50,6 +50,16 @@ void CommandContext::set_render_target(uint32_t num_render_targets, const D3D12_
     command_list->OMSetRenderTargets(num_render_targets, rt_descriptor, rt_single_handle_to_descriptor_range, depth_stencil_descriptor);
 }
 
+void CommandContext::set_graphics_root_signature(ID3D12RootSignature* root_signature)
+{
+    command_list->SetGraphicsRootSignature(root_signature);
+}
+
+void CommandContext::set_compute_root_signature(ID3D12RootSignature* root_signature)
+{
+    command_list->SetComputeRootSignature(root_signature);
+}
+
 void CommandContext::set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor)
 {
     command_list->SetGraphicsRootDescriptorTable(root_parameter_index, base_descriptor);
@@ -190,6 +200,22 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const Buffer
             }
         }
         command_list->ResourceBarrier(1, &d3d_barrier);
+}
+
+void CommandContext::set_scissor_rects(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+    D3D12_RECT rect;
+    rect.left = x;
+    rect.top = y;
+    rect.right = x + width;
+    rect.bottom = y + height;
+    command_list->RSSetScissorRects(1, &rect);
+}
+
+void CommandContext::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+{
+    D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
+    command_list->RSSetViewports(1, &viewport);
 }
 
 void CommandContext::begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags)
