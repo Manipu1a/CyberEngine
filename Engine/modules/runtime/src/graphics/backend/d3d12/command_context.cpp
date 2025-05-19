@@ -7,6 +7,13 @@ CYBER_BEGIN_NAMESPACE(RenderObject)
 CommandContext::CommandContext(CommandListManager& command_list_manager)
 {
     command_list_manager.create_new_command_list(&command_list, &command_allocator, max_interface_version);
+
+    m_pBoundHeaps[0] = nullptr;
+    m_pBoundHeaps[1] = nullptr;
+    m_boundHeapStartHandles[0].ptr = 0;
+    m_boundHeapStartHandles[1].ptr = 0;
+    m_pBoundRootSignature = nullptr;
+    m_nodeIndex = 0;
 }
 
 CommandContext::~CommandContext()
@@ -35,6 +42,17 @@ void CommandContext::reset(CommandListManager& command_list_manager)
         command_list_manager.request_allocator(&command_allocator);
         command_list->Reset(command_allocator, nullptr);
     }
+}
+
+void CommandContext::set_render_target(uint32_t num_render_targets, const D3D12_CPU_DESCRIPTOR_HANDLE *rt_descriptor,BOOL rt_single_handle_to_descriptor_range,
+    const D3D12_CPU_DESCRIPTOR_HANDLE *depth_stencil_descriptor)
+{
+    command_list->OMSetRenderTargets(num_render_targets, rt_descriptor, rt_single_handle_to_descriptor_range, depth_stencil_descriptor);
+}
+
+void CommandContext::set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor)
+{
+    command_list->SetGraphicsRootDescriptorTable(root_parameter_index, base_descriptor);
 }
 
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state)

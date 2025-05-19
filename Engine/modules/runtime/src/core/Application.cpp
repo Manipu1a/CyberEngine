@@ -74,7 +74,6 @@ namespace Cyber
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(back_buffer_index);
             auto cmd = m_pRenderer->get_command_buffer();
             auto render_device = m_pRenderer->get_render_device();
-            render_device->set_render_target(cmd, 1, &back_buffer_view, nullptr);
             //m_pEditor->update(cmd, deltaTime);
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
             m_pEditor->update(m_pRenderer->get_command_buffer(), deltaTime);

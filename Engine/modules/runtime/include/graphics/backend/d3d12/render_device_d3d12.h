@@ -74,8 +74,6 @@ namespace Cyber
             virtual void wait_queue_idle(IQueue* queue) override;
             virtual void free_queue(IQueue* queue) override;
 
-            virtual void set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) override;
-
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
             virtual void free_root_signature(IRootSignature* rootSignature) override;
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) override;
@@ -131,6 +129,8 @@ namespace Cyber
             void close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
             
             void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
+
+            void bind_descriptor_heap();
 
         private:
             CYBER_FORCE_INLINE CommandListManager& get_command_list_manager(uint8_t index)

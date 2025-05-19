@@ -19,14 +19,21 @@ public:
     CommandContext& operator=(CommandContext&&) = delete;
 
     ~CommandContext();
-    
 
     ID3D12GraphicsCommandList* close(ID3D12CommandAllocator* out_command_allocator);
     void reset(CommandListManager& command_list_manager);
     
     ID3D12GraphicsCommandList* get_command_list() const { return command_list; }
     D3D12_COMMAND_LIST_TYPE get_command_list_type() const { return command_list->GetType(); }
+
 public:
+    void set_render_target(uint32_t num_render_targets,
+        const D3D12_CPU_DESCRIPTOR_HANDLE *rt_descriptor,
+        BOOL rt_single_handle_to_descriptor_range,
+        const D3D12_CPU_DESCRIPTOR_HANDLE *depth_stencil_descriptor);
+
+    void set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor);
+
     void transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state);
     void transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RESOURCE_STATE new_state);
 
@@ -37,7 +44,6 @@ public:
     void end_render_pass();
 
     void reset();
-
 private:
     ID3D12GraphicsCommandList* command_list;
     ID3D12CommandAllocator* command_allocator;

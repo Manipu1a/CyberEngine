@@ -2,7 +2,8 @@
 #include "graphics/backend/d3d12//render_device_d3d12.h"
 #include "graphics/backend/d3d12/command_buffer_d3d12.h"
 #include "graphics/backend/d3d12/command_pool_d3d12.h"
-
+#include "graphics/backend/d3d12/descriptor_set_d3d12.h"
+#include "graphics/backend/d3d12/root_signature_d3d12.h"
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
@@ -58,6 +59,27 @@ void DeviceContext_D3D12_Impl::flush()
 
 }
 
+void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
+{
+    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[8] = {};
+    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
+
+    for(uint32_t i = 0; i < numRenderTargets; i++)
+    {
+        RenderObject::TextureView_D3D12_Impl* rtv = static_cast<RenderObject::TextureView_D3D12_Impl*>(renderTargets[i]);
+        rtvHandles[i] = rtv->m_rtvDsvDescriptorHandle;
+    }
+
+    if(depthTarget)
+    {
+        RenderObject::TextureView_D3D12_Impl* dsv = static_cast<RenderObject::TextureView_D3D12_Impl*>(depthTarget);
+        dsvHandle = dsv->m_rtvDsvDescriptorHandle;
+    }
+
+    curr_command_context->set_render_target(numRenderTargets, rtvHandles, false,depthTarget ? &dsvHandle : nullptr);
+}
+
+
 void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc)
 {
     TDeviceContextBase::cmd_begin_render_pass( beginRenderPassDesc);
@@ -84,19 +106,19 @@ void DeviceContext_D3D12_Impl::cmd_end_render_pass()
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
     const RenderObject::DescriptorSet_D3D12_Impl* Set = static_cast<const RenderObject::DescriptorSet_D3D12_Impl*>(descriptorSet);
     RenderObject::RootSignature_D3D12_Impl* RS = static_cast<RenderObject::RootSignature_D3D12_Impl*>(Set->get_root_signature());
 
     cyber_check(RS);
     reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+
     if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
     }
     else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        Cmd->get_dx_cmd_list()->SetGraphicsRootDescriptorTable(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[1].ptr + Set->sampler_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {Cmd->m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
     }
 }
 
@@ -296,20 +318,20 @@ void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDe
     {
         const BufferBarrier& buffer_barrier = barrierDesc.buffer_barriers[i];
         Buffer_D3D12_Impl* buffer = static_cast<Buffer_D3D12_Impl*>(buffer_barrier.buffer);
-        command_context->transition_resource(*buffer, buffer_barrier);
+        curr_command_context->transition_resource(*buffer, buffer_barrier);
     }
 
     for(uint32_t i = 0;i < barrierDesc.texture_barrier_count; i++)
     {
         const TextureBarrier& texture_barrier = barrierDesc.texture_barriers[i];
         Texture_D3D12_Impl* texture = static_cast<Texture_D3D12_Impl*>(texture_barrier.texture);
-        command_context->transition_resource(*texture, texture_barrier);
+        curr_command_context->transition_resource(*texture, texture_barrier);
     }
 }
 
 void DeviceContext_D3D12_Impl::request_command_context()
 {
-    command_context = render_device->allocate_command_context(get_command_queue_id());
+    curr_command_context = render_device->allocate_command_context(get_command_queue_id());
 }
 
 

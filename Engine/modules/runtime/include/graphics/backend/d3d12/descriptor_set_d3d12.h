@@ -36,7 +36,7 @@ namespace Cyber
             /// Stride of the sampler descriptor table (number of descriptors * descriptor size)
             uint32_t sampler_stride;
 
-            friend class RenderObject::RenderDevice_D3D12_Impl;
+            friend class RenderObject::DeviceContext_D3D12_Impl;
         };
 
     }

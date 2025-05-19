@@ -29,7 +29,7 @@ namespace Cyber
             CommandBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const CommandBufferCreateDesc& desc) : TCommandBufferBase(device, desc) 
             {
                 m_pDxCmdList = nullptr;
-                m_pBoundHeaps[0] = nullptr;
+                //m_pBoundHeaps[0] = nullptr;
                 m_pBoundHeaps[1] = nullptr;
                 m_boundHeapStartHandles[0].ptr = 0;
                 m_boundHeapStartHandles[1].ptr = 0;
@@ -44,7 +44,7 @@ namespace Cyber
             ID3D12GraphicsCommandList** get_dx_cmd_list_addr() { return &m_pDxCmdList; }
             ID3D12GraphicsCommandList* get_dx_cmd_list() const { return m_pDxCmdList; }
             void set_dx_cmd_list(ID3D12GraphicsCommandList* cmdList) { m_pDxCmdList = cmdList; }
-
+            /*
             struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
             void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap) { m_pBoundHeaps[index] = heap; }
 
@@ -62,7 +62,7 @@ namespace Cyber
 
             ICommandPool* get_cmd_pool() const { return m_pCmdPool; }
             void set_cmd_pool(ICommandPool* cmdPool) { m_pCmdPool = cmdPool; }
-            
+            */
             virtual void free() override final
             {
                 SAFE_RELEASE(m_pDxCmdList);
@@ -70,15 +70,6 @@ namespace Cyber
             }
         protected:
             ID3D12GraphicsCommandList* m_pDxCmdList;
-            // Cached in beginCmd to avoid fetching them during rendering
-            struct DescriptorHeap_D3D12* m_pBoundHeaps[2];
-            D3D12_GPU_DESCRIPTOR_HANDLE m_boundHeapStartHandles[2];
-            // Command buffer state
-            const ID3D12RootSignature* m_pBoundRootSignature;
-            uint32_t m_type;
-            uint32_t m_nodeIndex;
-            ICommandPool* m_pCmdPool;
-            D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS m_subResolveResource[GRAPHICS_MAX_MRT_COUNT];
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
             friend class RenderObject::DeviceContext_D3D12_Impl;

@@ -141,7 +141,7 @@ namespace Cyber
             m_cpuDescriptorHeaps[i] = (DescriptorHeap_D3D12*)cyber_malloc(sizeof(DescriptorHeap_D3D12));
             DescriptorHeap_D3D12::create_descriptor_heap(m_pDxDevice, desc, &m_cpuDescriptorHeaps[i]);
         }
-            
+        
         // One shader visible heap for each linked node
         for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
         {
@@ -984,7 +984,6 @@ namespace Cyber
         dxCommandBuffer->set_type(dxQueue->get_type());
         dxCommandBuffer->set_bound_heap(0, m_cbvSrvUavHeaps[dxCommandBuffer->m_nodeIndex]);
         dxCommandBuffer->set_bound_heap(1, m_samplerHeaps[dxCommandBuffer->m_nodeIndex]);
-
         dxCommandBuffer->m_pCmdPool = pool;
         
         uint32_t nodeMask = dxCommandBuffer->m_nodeIndex;
@@ -997,28 +996,6 @@ namespace Cyber
         // to record yet. The main loop expects it to be closed, so close it now.
         CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
         return dxCommandBuffer;
-    }
-
-    void RenderDevice_D3D12_Impl::set_render_target(ICommandBuffer* commandBuffer, uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
-    {
-        CommandBuffer_D3D12_Impl* cmd = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-        ID3D12GraphicsCommandList* dx_cmd_list = cmd->get_dx_cmd_list();
-        
-        D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[8] = {};
-        D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
-
-        for(uint32_t i = 0; i < numRenderTargets; i++)
-        {
-            RenderObject::TextureView_D3D12_Impl* rtv = static_cast<RenderObject::TextureView_D3D12_Impl*>(renderTargets[i]);
-            rtvHandles[i] = rtv->m_rtvDsvDescriptorHandle;
-        }
-
-        if(depthTarget)
-        {
-            RenderObject::TextureView_D3D12_Impl* dsv = static_cast<RenderObject::TextureView_D3D12_Impl*>(depthTarget);
-            dsvHandle = dsv->m_rtvDsvDescriptorHandle;
-        }
-        dx_cmd_list->OMSetRenderTargets(numRenderTargets, rtvHandles, false,depthTarget ? &dsvHandle : nullptr);
     }
 
     void reset_root_signature(CommandBuffer_D3D12_Impl* cmd, PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
@@ -2504,6 +2481,12 @@ namespace Cyber
         
         cmd_list_manager;
         free_command_context(eastl::move(command_context));
+    }
+
+    void RenderDevice_D3D12_Impl::bind_descriptor_heap()
+    {
+        m_deviceContexts[0]->set_bound_heap(0, m_cbvSrvUavHeaps[m_deviceContexts[0]->m_nodeIndex]);
+        m_deviceContexts[0]->set_bound_heap(1, m_samplerHeaps[m_deviceContexts[0]->m_nodeIndex]);
     }
 
     void RenderDevice_D3D12_Impl::free_command_context(PooledCommandContext&& command_context)

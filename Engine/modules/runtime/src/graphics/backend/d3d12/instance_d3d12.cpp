@@ -70,6 +70,7 @@ namespace Cyber
             
             RenderDevice_D3D12_Impl* render_device_impl = static_cast<RenderDevice_D3D12_Impl*>(*render_device);
             render_device_impl->set_device_context(0, d3d12_context);
+            render_device_impl->bind_descriptor_heap();
         }
 
         void Instance_D3D12_Impl::initialize_environment()

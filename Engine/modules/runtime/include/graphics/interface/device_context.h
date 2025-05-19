@@ -58,6 +58,8 @@ namespace Cyber
             virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) = 0;
 
             virtual void flush() = 0;
+
+            virtual void set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) = 0;
             // Render Pass
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_next_sub_pass() = 0;
@@ -109,7 +111,6 @@ namespace Cyber
             {
                 return (SoftwareQueueIndex)get_execution_context_id();
             }
-            
         protected:
             RenderDeviceImplType* render_device = nullptr;
 

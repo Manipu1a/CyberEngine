@@ -118,9 +118,7 @@ namespace Cyber
             //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
             
-            render_device->set_render_target( 1, &back_buffer_view, nullptr);
-            auto editor = m_pApp->get_editor();
-            editor->update(cmd, 0.0f);          
+            device_context->set_render_target( 1, &back_buffer_view, nullptr);     
         }
 
         void TrignaleApp::present()
@@ -408,8 +406,6 @@ namespace Cyber
             }
             render_device->free_swap_chain(swap_chain);
             render_device->free_surface(surface);
-            render_device->free_command_buffer(cmd);
-            render_device->free_command_pool(pool);
             render_device->free_render_pipeline(pipeline);
             render_device->free_root_signature(root_signature);
             render_device->free_queue(queue);
