@@ -29,7 +29,8 @@ namespace Cyber
             ID3D12PipelineState* pDxPipelineState;
             ID3D12RootSignature* pDxRootSignature;
             D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
-            friend class RenderObject::RenderDevice_D3D12_Impl;
+
+            friend class DeviceContext_D3D12_Impl;
         };
 
     }

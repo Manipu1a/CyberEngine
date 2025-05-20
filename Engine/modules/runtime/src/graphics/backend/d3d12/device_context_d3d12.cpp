@@ -1,9 +1,31 @@
 #include "graphics/backend/d3d12/device_context_d3d12.h"
-#include "graphics/backend/d3d12//render_device_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/texture_d3d12.h"
+#include "graphics/backend/d3d12/texture_view_d3d12.h"
+#include "graphics/backend/d3d12/buffer_d3d12.h"
+#include "graphics/backend/d3d12/swap_chain_d3d12.h"
+#include "graphics/backend/d3d12/fence_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
+#include "graphics/backend/d3d12/instance_d3d12.h"
 #include "graphics/backend/d3d12/command_buffer_d3d12.h"
 #include "graphics/backend/d3d12/command_pool_d3d12.h"
+#include "graphics/backend/d3d12/frame_buffer_d3d12.h"
+#include "graphics/backend/d3d12/query_pool_d3d12.h"
+#include "graphics/backend/d3d12/command_queue_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
+#include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_set_d3d12.h"
+#include "graphics/backend/d3d12/semaphore_d3d12.h"
+#include "graphics/backend/d3d12/render_pipeline_d3d12.h"
 #include "graphics/backend/d3d12/root_signature_d3d12.h"
+#include "graphics/backend/d3d12/sampler_d3d12.h"
+#include "graphics/backend/d3d12/shader_library_d3d12.h"
+#include "graphics/backend/d3d12/shader_reflection_d3d12.h"
+#include "graphics/backend/d3d12/render_pass_d3d12.h"
+#include "graphics/backend/d3d12/command_context.h"
+#include "common/graphics_utils.hpp"
+#include "graphics/backend/d3d12/d3d12_utils.h"
+
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
@@ -134,17 +156,14 @@ void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t 
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pipeline)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
     RenderObject::RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderObject::RenderPipeline_D3D12_Impl*>(pipeline);
-    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
-    Cmd->get_dx_cmd_list()->IASetPrimitiveTopology(Pipeline->mPrimitiveTopologyType);
-    Cmd->get_dx_cmd_list()->SetPipelineState(Pipeline->pDxPipelineState);
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
+    curr_command_context->set_primitive_topology(Pipeline->mPrimitiveTopologyType);
+    curr_command_context->set_pipeline_state(Pipeline->pDxPipelineState);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-
     DECLARE_ZERO(D3D12_VERTEX_BUFFER_VIEW, views[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
     for(uint32_t i = 0;i < buffer_count; ++i)
     {
@@ -155,21 +174,19 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer
         views[i].SizeInBytes = (UINT)(Buffer->get_size() - (offsets ? offsets[i] : 0));
         views[i].StrideInBytes = (UINT)strides[i];  
     }
-    Cmd->get_dx_cmd_list()->IASetVertexBuffers(0, buffer_count, views);
+    curr_command_context->set_vertex_buffers(0, buffer_count, views);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
     const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
 
     DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
     view.BufferLocation = Buffer->get_dx_gpu_address() + offset;
     view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
     view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
-    Cmd->get_dx_cmd_list()->IASetIndexBuffer(&view);
+    curr_command_context->set_index_buffer(&view);
 }
-
 
 void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
 {
@@ -186,41 +203,34 @@ void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12Ro
 
 void DeviceContext_D3D12_Impl::render_encoder_push_constants(IRootSignature* rs, const char8_t* name, const void* data)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
     RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(rs);
-    reset_root_signature(Cmd, PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-    Cmd->get_dx_cmd_list()->SetGraphicsRoot32BitConstants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    curr_command_context->set_graphics_rrot_constants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw(uint32_t vertex_count, uint32_t first_vertex)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)1, (UINT)first_vertex, (UINT)0);
+    curr_command_context->draw_instanced(vertex_count, 1, first_vertex, 0);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_instanced(uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    Cmd->get_dx_cmd_list()->DrawInstanced((UINT)vertex_count, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
+    curr_command_context->draw_instanced(vertex_count, instance_count, first_vertex, first_instance);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)1, (UINT)first_index, (UINT)first_vertex, (UINT)0);
+    curr_command_context->draw_indexed_instanced(index_count, 1, first_index, 0, 0);
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
 {
-    CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(encoder);
-    Cmd->get_dx_cmd_list()->DrawIndexedInstanced((UINT)index_count, (UINT)instance_count, (UINT)first_index, (UINT)first_vertex, (UINT)first_instance);
+    curr_command_context->draw_indexed_instanced(index_count, instance_count, first_index, first_vertex, first_instance);
 }
 
 void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
 {
-       CommandBuffer_D3D12_Impl* Cmd = static_cast<CommandBuffer_D3D12_Impl*>(cmd);
    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
-       ID3D12GraphicsCommandList4* cmdList4 = (ID3D12GraphicsCommandList4*)Cmd->get_dx_cmd_list();
        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearValues[GRAPHICS_MAX_MRT_COUNT]);
        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearDepth);
        DECLARE_ZERO(D3D12_CLEAR_VALUE, clearStencil);
@@ -268,14 +278,14 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
                resolve.pSrcResource = tex->get_d3d12_resource();
                resolve.pDstResource = tex_resolve->get_d3d12_resource();
                
-               Cmd->m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->get_create_desc().m_width, (LONG)tex->get_create_desc().m_height };
-               Cmd->m_subResolveResource[i].DstX = 0;
-               Cmd->m_subResolveResource[i].DstY = 0;
-               Cmd->m_subResolveResource[i].SrcSubresource = 0;
-               Cmd->m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->get_create_desc().m_mipLevels, tex_resolve->get_create_desc().m_arraySize + 1);
+               m_subResolveResource[i].SrcRect = { 0, 0, (LONG)tex->get_create_desc().m_width, (LONG)tex->get_create_desc().m_height };
+               m_subResolveResource[i].DstX = 0;
+               m_subResolveResource[i].DstY = 0;
+               m_subResolveResource[i].SrcSubresource = 0;
+               m_subResolveResource[i].DstSubresource = CALC_SUBRESOURCE_INDEX(0, 0, 0, tex_resolve->get_create_desc().m_mipLevels, tex_resolve->get_create_desc().m_arraySize + 1);
                resolve.PreserveResolveSource = false;
                resolve.SubresourceCount = 1;
-               resolve.pSubresourceParameters = &Cmd->m_subResolveResource[i];
+               resolve.pSubresourceParameters = &m_subResolveResource[i];
            }
            else
            {
@@ -312,7 +322,8 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
        }
        D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
-       cmdList4->BeginRenderPass(colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
+       curr_command_context->begin_render_pass( 
+           colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
    #else
        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
    #endif
@@ -339,7 +350,6 @@ void DeviceContext_D3D12_Impl::request_command_context()
 {
     curr_command_context = render_device->allocate_command_context(get_command_queue_id());
 }
-
 
 Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)
 {

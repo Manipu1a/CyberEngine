@@ -32,9 +32,22 @@ public:
         BOOL rt_single_handle_to_descriptor_range,
         const D3D12_CPU_DESCRIPTOR_HANDLE *depth_stencil_descriptor);
 
+    // Root Signature
     void set_graphics_root_signature(ID3D12RootSignature* root_signature);
     void set_compute_root_signature(ID3D12RootSignature* root_signature);
+    // Root Parameters
     void set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor);
+    void set_graphics_rrot_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues);
+
+    void set_pipeline_state(ID3D12PipelineState* pipeline_state);
+
+    // Input Assembler
+    void set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY primitive_topology);
+    void set_vertex_buffers(uint32_t start_slot, uint32_t buffer_count, const D3D12_VERTEX_BUFFER_VIEW* views);
+    void set_index_buffer(const D3D12_INDEX_BUFFER_VIEW* view);
+
+    void draw_instanced(uint32_t vertex_count_per_instance, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
+    void draw_indexed_instanced(uint32_t index_count_per_instance, uint32_t instance_count, uint32_t first_index, int32_t base_vertex, uint32_t first_instance);
 
     void transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state);
     void transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RESOURCE_STATE new_state);

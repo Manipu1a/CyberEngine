@@ -54,7 +54,8 @@ public:
     virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
     virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
 
-    void commit_subpass_rendertargets(RenderPassEncoder* encoder);
+    void commit_subpass_rendertargets();
+
     void request_command_context();
 
     //todo: move to device context

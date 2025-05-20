@@ -121,7 +121,6 @@ namespace Cyber
             ID3D12Debug* GetDxDebug() { return m_pDxDebug; }
             
             void create_dma_allocallor(RenderObject::Adapter_D3D12_Impl* adapter);
-            void commit_subpass_rendertargets(RenderPassEncoder* encoder);
 
             using PooledCommandContext = eastl::unique_ptr<CommandContext>;
             PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);

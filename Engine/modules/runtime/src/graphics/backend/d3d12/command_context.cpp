@@ -65,6 +65,45 @@ void CommandContext::set_graphics_root_descriptor_table(uint32_t root_parameter_
     command_list->SetGraphicsRootDescriptorTable(root_parameter_index, base_descriptor);
 }
 
+void CommandContext::set_pipeline_state(ID3D12PipelineState* pipeline_state)
+{
+    command_list->SetPipelineState(pipeline_state);
+}
+
+void CommandContext::set_primitive_topology(D3D12_PRIMITIVE_TOPOLOGY primitive_topology)
+{
+    command_list->IASetPrimitiveTopology(primitive_topology);
+}
+
+void CommandContext::set_vertex_buffers(uint32_t start_slot, uint32_t buffer_count, const D3D12_VERTEX_BUFFER_VIEW* views)
+{
+    cyber_check_msg(start_slot < D3D12_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT - 1, "D3D12 ERROR: Vertex buffer slot out of range!");
+
+    command_list->IASetVertexBuffers(start_slot, buffer_count, views);
+}
+
+void CommandContext::set_index_buffer(const D3D12_INDEX_BUFFER_VIEW* view)
+{
+    cyber_check_msg(view != nullptr, "D3D12 ERROR: Index buffer view is null!");
+
+    command_list->IASetIndexBuffer(view);
+}
+
+void CommandContext::draw_instanced(uint32_t vertex_count_per_instance, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
+{
+    command_list->DrawInstanced((UINT)vertex_count_per_instance, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
+}
+
+void CommandContext::draw_indexed_instanced(uint32_t index_count_per_instance, uint32_t instance_count, uint32_t first_index, int32_t base_vertex, uint32_t first_instance)
+{
+    command_list->DrawIndexedInstanced((UINT)index_count_per_instance, (UINT)instance_count, (UINT)first_index, (INT)base_vertex, (UINT)first_instance);
+}
+
+void CommandContext::set_graphics_rrot_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues)
+{
+    command_list->SetGraphicsRoot32BitConstants(root_parameter_index, num_32bit_values_to_set, p_src_data, DestOffsetIn32BitValues);
+}
+
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state)
 {
     transition_resource(texture, TextureBarrier{&texture, GRAPHICS_RESOURCE_STATE_UNKNOWN, new_state});
