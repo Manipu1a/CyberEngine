@@ -24,13 +24,19 @@ namespace Cyber
             using TFenceBase = FenceBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            Fence_D3D12_Impl(class RenderDevice_D3D12_Impl* device) : TFenceBase(device) {}
+            Fence_D3D12_Impl(class RenderDevice_D3D12_Impl* device) 
+            : TFenceBase(device) 
+            {
+                m_pDxFence = nullptr;
+                m_dxWaitIdleFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+            }
 
             ID3D12Fence* get_native_fence() const { return m_pDxFence; }
         protected:
             ID3D12Fence* m_pDxFence;
             HANDLE m_dxWaitIdleFenceEvent;
             uint64_t m_padA;
+            
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 

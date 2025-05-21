@@ -367,7 +367,7 @@ void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t 
     {
         if(state.num_command != 0)
         {
-            contexts.emplace(std::move(curr_command_context));
+            contexts.emplace_back(eastl::move(curr_command_context));
         }
         else if(!request_new_command_context)
         {
@@ -383,7 +383,7 @@ void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t 
 
     if(!contexts.empty())
     {
-        render_device->close_and_execute_command_context(get_command_queue_id(), contexts.data(), (uint32_t)contexts.size());
+        render_device->close_and_execute_command_context(get_command_queue_id(), (uint32_t)contexts.size(), contexts.data());
     }
 }
 

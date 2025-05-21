@@ -20,10 +20,19 @@
 #include "common/graphics_utils.hpp"
 #include "graphics/backend/d3d12/D3D12MemAlloc.h"
 #include "graphics/interface/render_device.hpp"
-#include "graphics/interface/device_context.h"
+#include "graphics/backend/d3d12/device_context_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
+#include "graphics/backend/d3d12/adapter_d3d12.h"
 #include "graphics/backend/d3d12/texture_d3d12.h"
-
+#include "graphics/backend/d3d12/instance_d3d12.h"
+#include "graphics/backend/d3d12/command_buffer_d3d12.h"
+#include "graphics/backend/d3d12/fence_d3d12.h"
+#include "graphics/backend/d3d12/command_queue_d3d12.h"
+#include "graphics/backend/d3d12/swap_chain_d3d12.h"
+#include "graphics/backend/d3d12/command_pool_d3d12.h"
+#include "graphics/backend/d3d12/render_pass_d3d12.h"
+#include "graphics/backend/d3d12/frame_buffer_d3d12.h"
+#include "graphics/backend/d3d12/sampler_d3d12.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -56,7 +65,7 @@ namespace Cyber
     {
         RenderObject::Adapter_D3D12_Impl* dxAdapter = static_cast<RenderObject::Adapter_D3D12_Impl*>(m_pAdapter);
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(dxAdapter->get_instance());
-            
+        
         if(!SUCCEEDED(D3D12CreateDevice(dxAdapter->get_native_adapter(), dxAdapter->get_feature_level(), IID_PPV_ARGS(&m_pDxDevice))))
         {
             cyber_assert(false, "[D3D12 Fatal]: Create D3D12Device Failed!");
@@ -220,12 +229,7 @@ namespace Cyber
     {
         for(uint32_t i = 0; i < COMMAND_QUEUE_TYPE::COMMAND_QUEUE_TYPE_COUNT; ++i)
         {
-            COMMAND_QUEUE_TYPE type;
-            for(uint32_t j = 0; j < m_commandQueueCounts[i]; ++j)
-            {
-                SAFE_RELEASE(m_commandQueues[i][j]);
-            }
-            cyber_free((ID3D12CommandQueue**)m_commandQueues[i]);
+            cyber_free((CommandQueueImplType**)m_commandQueues[i]);
         }
         // Free D3D12MA Allocator
         SAFE_RELEASE(m_pResourceAllocator);
@@ -812,9 +816,6 @@ namespace Cyber
         Fence_D3D12_Impl* dxFence = cyber_new<Fence_D3D12_Impl>(this);
         cyber_assert(dxFence, "Fence create failed!");
         CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->m_pDxFence)));
-        dxFence->m_fenceValue = 0;
-
-        dxFence->m_dxWaitIdleFenceEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
         return dxFence;
     }
 
@@ -857,9 +858,9 @@ namespace Cyber
         cyber_delete(fence);
     }
 
-    IQueue* RenderDevice_D3D12_Impl::get_queue(COMMAND_QUEUE_TYPE type, uint32_t index)
+    ICommandQueue* RenderDevice_D3D12_Impl::get_queue(COMMAND_QUEUE_TYPE type, uint32_t index)
     {
-        Queue_D3D12_Impl* dxQueue = cyber_new<Queue_D3D12_Impl>(this);
+        CommandQueue_D3D12_Impl* dxQueue = cyber_new<CommandQueue_D3D12_Impl>(this);
         dxQueue->m_pCommandQueue = m_commandQueues[type][index];
         dxQueue->m_pFence = create_fence();
         dxQueue->set_type(type);
@@ -867,7 +868,7 @@ namespace Cyber
         return dxQueue;
     }
 
-    void RenderDevice_D3D12_Impl::submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc)
+    void RenderDevice_D3D12_Impl::submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc)
     {
         /*
         uint32_t cmd_count = submitDesc.m_cmdsCount;
@@ -907,9 +908,9 @@ namespace Cyber
             #endif
         }
     }
-    void RenderDevice_D3D12_Impl::wait_queue_idle(IQueue* queue)
+    void RenderDevice_D3D12_Impl::wait_queue_idle(ICommandQueue* queue)
     {
-        Queue_D3D12_Impl* Queue = static_cast<Queue_D3D12_Impl*>(queue);
+        CommandQueue_D3D12_Impl* Queue = static_cast<CommandQueue_D3D12_Impl*>(queue);
         Fence_D3D12_Impl* Fence = static_cast<Fence_D3D12_Impl*>(Queue->m_pFence);
         uint64_t fence_value = Fence->m_fenceValue;
         Queue->signal_fence(Fence, fence_value);
@@ -921,13 +922,13 @@ namespace Cyber
         }
     }
 
-    void RenderDevice_D3D12_Impl::free_queue(IQueue* queue)
+    void RenderDevice_D3D12_Impl::free_queue(ICommandQueue* queue)
     {
 
     }
 
     // Command Objects
-    void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, IQueue* queue)
+    void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, ICommandQueue* queue)
     {
         D3D12_COMMAND_LIST_TYPE type = queue->get_type() == COMMAND_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->get_type() == COMMAND_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -945,7 +946,7 @@ namespace Cyber
         commandPool->set_queue(queue);
     }
 
-    ICommandPool* RenderDevice_D3D12_Impl::create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
+    ICommandPool* RenderDevice_D3D12_Impl::create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
     {
         CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>(this, commandPoolDesc);
         allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
@@ -956,7 +957,7 @@ namespace Cyber
     {
         CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>(this, commandBufferDesc);
         CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-        Queue_D3D12_Impl* dxQueue = static_cast<Queue_D3D12_Impl*>(dxPool->get_queue());
+        CommandQueue_D3D12_Impl* dxQueue = static_cast<CommandQueue_D3D12_Impl*>(dxPool->get_queue());
 
         // set command pool of new command
         dxCommandBuffer->set_node_index(GRAPHICS_SINGLE_GPU_NODE_INDEX);
@@ -1012,14 +1013,14 @@ namespace Cyber
 
         HWND hwnd = desc.m_pSurface->handle;
 
-        Queue_D3D12_Impl* queue = nullptr;
+        CommandQueue_D3D12_Impl* queue = nullptr;
         if(desc.m_presentQueue)
         {
-            queue = static_cast<Queue_D3D12_Impl*>(desc.m_presentQueue);
+            queue = static_cast<CommandQueue_D3D12_Impl*>(desc.m_presentQueue);
         }
         else 
         {
-            queue = static_cast<Queue_D3D12_Impl*>(get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0));
+            queue = static_cast<CommandQueue_D3D12_Impl*>(get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0));
         }
         
         auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(queue->get_native_queue(), hwnd, &chinDesc, NULL, NULL, &swapchain));

@@ -20,7 +20,10 @@ namespace Cyber
             using FenceInterface = typename EngineImplTraits::FenceInterface;
             using TFenceBase = typename DeviceObjectBase<FenceInterface, RenderDeviceImplType>;
 
-            FenceBase(RenderDeviceImplType* device) : TFenceBase(device) {  };
+            FenceBase(RenderDeviceImplType* device) : TFenceBase(device) 
+            {
+                m_fenceValue = 0;
+            };
             virtual ~FenceBase() = default;
 
             virtual uint64_t get_fence_value() const override

@@ -57,15 +57,15 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             
-            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
+            virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
             virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
 
             // Queue APIs
-            virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
-            virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) = 0;
+            virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
+            virtual void submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc) = 0;
             virtual void present(ISwapChain* swap_chain) = 0;
-            virtual void wait_queue_idle(IQueue* queue) = 0;
-            virtual void free_queue(IQueue* queue) = 0;
+            virtual void wait_queue_idle(ICommandQueue* queue) = 0;
+            virtual void free_queue(ICommandQueue* queue) = 0;
 
             /// RootSignature
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) = 0;

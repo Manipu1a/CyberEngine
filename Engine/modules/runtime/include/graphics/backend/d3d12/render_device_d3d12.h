@@ -65,14 +65,14 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
-            virtual ICommandPool* create_command_pool(IQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
+            virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
             virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
-            virtual IQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
-            virtual void submit_queue(IQueue* queue, const QueueSubmitDesc& submitDesc) override;
+            virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
+            virtual void submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc) override;
             virtual void present(ISwapChain* swap_chain) override;
-            virtual void wait_queue_idle(IQueue* queue) override;
-            virtual void free_queue(IQueue* queue) override;
+            virtual void wait_queue_idle(ICommandQueue* queue) override;
+            virtual void free_queue(ICommandQueue* queue) override;
 
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
             virtual void free_root_signature(IRootSignature* rootSignature) override;
@@ -124,8 +124,8 @@ namespace Cyber
 
             using PooledCommandContext = eastl::unique_ptr<CommandContext>;
             PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);
-            
             void close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
+            
             
             void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
 

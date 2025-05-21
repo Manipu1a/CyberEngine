@@ -32,6 +32,7 @@ namespace Cyber
             /// Offset from mDxDescriptors for rtv descriptor handle
             D3D12_CPU_DESCRIPTOR_HANDLE m_rtvDsvDescriptorHandle;
 
+            friend class RenderObject::RenderDevice_D3D12_Impl;
             friend class RenderObject::DeviceContext_D3D12_Impl;
         };
     }
