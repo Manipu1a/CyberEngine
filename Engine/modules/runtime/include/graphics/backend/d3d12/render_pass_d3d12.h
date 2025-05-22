@@ -24,7 +24,7 @@ namespace Cyber
             using TRenderPassBase = RenderPassBase<EngineD3D12ImplTraits>;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-            RenderPass_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const RenderPassDesc& desc) : TRenderPassBase(device, desc) {}
+            RenderPass_D3D12_Impl(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device, desc) {}
         protected:
             ID3D12PipelineState* pDxPipelineState;
             ID3D12RootSignature* pDxRootSignature;

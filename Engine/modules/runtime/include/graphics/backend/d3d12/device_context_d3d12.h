@@ -18,7 +18,7 @@ public:
     using TDeviceContextBase = DeviceContextBase<EngineD3D12ImplTraits>;
     using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
-    DeviceContext_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc);
+    DeviceContext_D3D12_Impl(RenderDeviceImplType* device, const DeviceContextDesc& desc);
 
     CommandContext& get_command_context()
     {
@@ -26,10 +26,6 @@ public:
     }
 
     virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) override final;
-
-    virtual void reset_command_pool(ICommandPool* pool) override;
-    virtual void free_command_pool(ICommandPool* pool) override;
-    virtual void free_command_buffer(ICommandBuffer* commandBuffer) override;
 
     virtual void cmd_begin() override;
     virtual void cmd_end() override;
@@ -54,6 +50,8 @@ public:
     virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
     virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
 
+    virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
+    
     void commit_subpass_rendertargets();
 
     void request_command_context();

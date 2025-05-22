@@ -10,7 +10,7 @@
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
 #include "graphics/backend/d3d12/adapter_d3d12.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
-#include "graphics/backend/d3d12/queue_d3d12.h"
+#include "graphics/backend/d3d12/command_queue_d3d12.h"
 #include "graphics/backend/d3d12/instance_d3d12.h"
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/shader_resource_d3d12.h"

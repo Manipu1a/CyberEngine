@@ -6,11 +6,9 @@
 #include "texture_view.h"
 #include "buffer.h"
 #include "frame_buffer.h"
-#include "render_pass.h"
 #include "swap_chain.hpp"
 #include "command_queue.h"
 #include "command_buffer.h"
-#include "command_pool.h"
 #include "fence.h"
 #include "root_signature.hpp"
 #include "shader_library.h"
@@ -19,6 +17,7 @@
 #include "object_base.h"
 #include "device_context.h"
 #include "EASTL/map.h"
+//#include <map>
 
 
 namespace Cyber
@@ -57,8 +56,8 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             
-            virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
-            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
+            //virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
+            //virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
 
             // Queue APIs
             virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
@@ -88,9 +87,6 @@ namespace Cyber
             // Shader
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;
-            // Render Pass
-            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
-
         };
 
         template<typename EngineImplTraits>
@@ -129,6 +125,8 @@ namespace Cyber
             {
                 return m_deviceContexts[index];
             }
+
+            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_commandQueueCounts; }
 
         protected:
             virtual void create_render_device_impl() = 0;

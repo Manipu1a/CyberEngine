@@ -71,7 +71,7 @@ namespace Cyber
             engine_desc.queue_type = COMMAND_QUEUE_TYPE_GRAPHICS;
             engine_desc.is_deferrd_context = false;
             m_pInstance->create_device_and_context(m_pAdapter, engine_desc, &m_pRenderDevice, &device_context);
-            m_pQueue = m_pRenderDevice->get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0);
+            //m_pQueue = m_pRenderDevice->get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0);
 
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)
@@ -84,16 +84,14 @@ namespace Cyber
             chain_desc.m_height = Core::Application::getApp()->get_window()->get_height();
             chain_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             chain_desc.m_imageCount = 3;
-            chain_desc.m_presentQueue = m_pQueue;
-            chain_desc.m_presentQueueCount = 1;
             chain_desc.m_enableVsync = true;
             m_pSwapChain = m_pRenderDevice->create_swap_chain(chain_desc);
 
             m_pPresentFence = m_pRenderDevice->create_fence();
-            m_pPool = m_pRenderDevice->create_command_pool(m_pQueue, RenderObject::CommandPoolCreateDesc());
+            //m_pPool = m_pRenderDevice->create_command_pool(m_pQueue, RenderObject::CommandPoolCreateDesc());
 
-            RenderObject::CommandBufferCreateDesc cmd_buffer_desc = {.m_isSecondary = false};
-            m_pCmd = m_pRenderDevice->create_command_buffer(m_pPool, cmd_buffer_desc);
+            //RenderObject::CommandBufferCreateDesc cmd_buffer_desc = {.m_isSecondary = false};
+            //m_pCmd = m_pRenderDevice->create_command_buffer(m_pPool, cmd_buffer_desc);
         }
     }
 }

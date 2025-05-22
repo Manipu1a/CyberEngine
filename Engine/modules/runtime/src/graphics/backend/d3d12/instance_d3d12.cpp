@@ -65,10 +65,11 @@ namespace Cyber
             context_desc.is_deferrd_context = desc.is_deferrd_context;
             context_desc.name = CYBER_UTF8("ImmediateContext");
 
-            auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(*render_device, context_desc);
-            *device_context = d3d12_context;
-            
             RenderDevice_D3D12_Impl* render_device_impl = static_cast<RenderDevice_D3D12_Impl*>(*render_device);
+            
+            auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(render_device_impl, context_desc);
+            *device_context = d3d12_context;
+
             render_device_impl->set_device_context(0, d3d12_context);
             render_device_impl->bind_descriptor_heap();
         }

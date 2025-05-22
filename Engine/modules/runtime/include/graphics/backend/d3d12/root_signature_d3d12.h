@@ -32,6 +32,7 @@ namespace Cyber
             uint32_t root_parameter_index;
             
             friend class DeviceContext_D3D12_Impl;
+            friend class RenderDevice_D3D12_Impl;
         };
 
     }

@@ -7,6 +7,7 @@
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
 #include "filesystem"
+#include "interface/render_device.hpp"
 #include "interface/device_context.h"
 #include "interface/shader_library.h"
 

@@ -26,7 +26,7 @@ namespace Cyber
 
             DescriptorSet_D3D12_Impl(class RenderDevice_D3D12_Impl* device, DescriptorSetCreateDesc desc) : TDescriptorSetBase(device, desc) {}
 
-        private:
+        protected:
             /// Start handle to cbv srv uav descriptor table
             uint64_t cbv_srv_uav_handle;
             /// Stride of the cbv srv uav descriptor table (number of descriptors * descriptor size)
@@ -37,6 +37,7 @@ namespace Cyber
             uint32_t sampler_stride;
 
             friend class RenderObject::DeviceContext_D3D12_Impl;
+            friend class RenderObject::RenderDevice_D3D12_Impl;
         };
 
     }

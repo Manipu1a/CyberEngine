@@ -8,12 +8,10 @@
 #include "graphics/backend/d3d12/adapter_d3d12.h"
 #include "graphics/backend/d3d12/instance_d3d12.h"
 #include "graphics/backend/d3d12/command_buffer_d3d12.h"
-#include "graphics/backend/d3d12/command_pool_d3d12.h"
 #include "graphics/backend/d3d12/frame_buffer_d3d12.h"
 #include "graphics/backend/d3d12/query_pool_d3d12.h"
 #include "graphics/backend/d3d12/command_queue_d3d12.h"
 #include "graphics/backend/d3d12/adapter_d3d12.h"
-#include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "graphics/backend/d3d12/descriptor_set_d3d12.h"
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "graphics/backend/d3d12/render_pipeline_d3d12.h"
@@ -23,38 +21,18 @@
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
 #include "graphics/backend/d3d12/command_context.h"
-#include "common/graphics_utils.hpp"
 #include "graphics/backend/d3d12/d3d12_utils.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
-DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDevice_D3D12_Impl* device, const DeviceContextDesc& desc)
+DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device, const DeviceContextDesc& desc)
     : TDeviceContextBase{device, desc},
      m_dynamic_mem_mgr{*device, 1, 1024 * 1024}
 {
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
     request_command_context();
-}
-
-void DeviceContext_D3D12_Impl::reset_command_pool(ICommandPool* pool)
-{
-    
-
-}
-
-void DeviceContext_D3D12_Impl::free_command_pool(ICommandPool* pool)
-{
-    CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
-    SAFE_RELEASE(dxPool->m_pDxCmdAlloc);
-    cyber_delete(pool);
-}
-
-void DeviceContext_D3D12_Impl::free_command_buffer(ICommandBuffer* commandBuffer)
-{
-    CommandBuffer_D3D12_Impl* dxCommandBuffer = static_cast<CommandBuffer_D3D12_Impl*>(commandBuffer);
-    dxCommandBuffer->free();
 }
 
 void DeviceContext_D3D12_Impl::cmd_begin()
@@ -226,6 +204,12 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_indexed(uint32_t index_count,
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
 {
     curr_command_context->draw_indexed_instanced(index_count, instance_count, first_index, first_vertex, first_instance);
+}
+
+IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
+{
+    RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(render_device, renderPassDesc);
+    return dxRenderPass;
 }
 
 void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()

@@ -2,7 +2,7 @@
 #include <EASTL/vector.h>
 #include "common/flags.h"
 #include "interface/graphics_types.h"
-#include "interface/device_context.h"
+#include "interface/render_device.hpp"
 #include "parallel_hashmap/phmap.h"
 #include "platform/memory.h"
 #include "interface/root_signature.hpp"

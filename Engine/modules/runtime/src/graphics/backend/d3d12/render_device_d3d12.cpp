@@ -29,10 +29,13 @@
 #include "graphics/backend/d3d12/fence_d3d12.h"
 #include "graphics/backend/d3d12/command_queue_d3d12.h"
 #include "graphics/backend/d3d12/swap_chain_d3d12.h"
-#include "graphics/backend/d3d12/command_pool_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
 #include "graphics/backend/d3d12/frame_buffer_d3d12.h"
 #include "graphics/backend/d3d12/sampler_d3d12.h"
+#include "graphics/backend/d3d12/root_signature_d3d12.h"
+#include "graphics/backend/d3d12/descriptor_set_d3d12.h"
+#include "graphics/backend/d3d12/shader_library_d3d12.h"
+#include "graphics/backend/d3d12/render_pipeline_d3d12.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -860,12 +863,17 @@ namespace Cyber
 
     ICommandQueue* RenderDevice_D3D12_Impl::get_queue(COMMAND_QUEUE_TYPE type, uint32_t index)
     {
-        CommandQueue_D3D12_Impl* dxQueue = cyber_new<CommandQueue_D3D12_Impl>(this);
+        cyber_assert(type < COMMAND_QUEUE_TYPE_COUNT, "Invalid Command Queue Type!");
+        cyber_assert(index < m_commandQueueCounts[type], "Invalid Command Queue Index!");
+
+        return m_commandQueues[type][index];
+
+        /*CommandQueue_D3D12_Impl* dxQueue = cyber_new<CommandQueue_D3D12_Impl>(this);
         dxQueue->m_pCommandQueue = m_commandQueues[type][index];
         dxQueue->m_pFence = create_fence();
         dxQueue->set_type(type);
         dxQueue->set_index(index);
-        return dxQueue;
+        return dxQueue;*/
     }
 
     void RenderDevice_D3D12_Impl::submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc)
@@ -928,7 +936,7 @@ namespace Cyber
     }
 
     // Command Objects
-    void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, ICommandQueue* queue)
+    /*void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, ICommandQueue* queue)
     {
         D3D12_COMMAND_LIST_TYPE type = queue->get_type() == COMMAND_QUEUE_TYPE_TRANSFER ? D3D12_COMMAND_LIST_TYPE_COPY : 
                             (queue->get_type() == COMMAND_QUEUE_TYPE_COMPUTE ? D3D12_COMMAND_LIST_TYPE_COMPUTE : D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -944,16 +952,17 @@ namespace Cyber
             commandPool->set_native_command_allocator(command_allocator);
         }
         commandPool->set_queue(queue);
-    }
+    }*/
 
+    /*
     ICommandPool* RenderDevice_D3D12_Impl::create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc)
     {
         CommandPool_D3D12_Impl* dxCommandPool = cyber_new<CommandPool_D3D12_Impl>(this, commandPoolDesc);
         allocate_transient_command_allocator(m_pDxDevice, dxCommandPool, queue);
         return dxCommandPool;
-    }
+    }*/
 
-    ICommandBuffer* RenderDevice_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) 
+    /*ICommandBuffer* RenderDevice_D3D12_Impl::create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) 
     {
         CommandBuffer_D3D12_Impl* dxCommandBuffer = cyber_new<CommandBuffer_D3D12_Impl>(this, commandBufferDesc);
         CommandPool_D3D12_Impl* dxPool = static_cast<CommandPool_D3D12_Impl*>(pool);
@@ -976,13 +985,7 @@ namespace Cyber
         // to record yet. The main loop expects it to be closed, so close it now.
         CHECK_HRESULT(dxCommandBuffer->get_dx_cmd_list()->Close());
         return dxCommandBuffer;
-    }
-
-    IRenderPass* RenderDevice_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
-    {
-        RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(this, renderPassDesc);
-        return dxRenderPass;
-    }
+    }*/
 
     ISwapChain* RenderDevice_D3D12_Impl::create_swap_chain(const SwapChainDesc& desc)
     {
@@ -1013,16 +1016,8 @@ namespace Cyber
 
         HWND hwnd = desc.m_pSurface->handle;
 
-        CommandQueue_D3D12_Impl* queue = nullptr;
-        if(desc.m_presentQueue)
-        {
-            queue = static_cast<CommandQueue_D3D12_Impl*>(desc.m_presentQueue);
-        }
-        else 
-        {
-            queue = static_cast<CommandQueue_D3D12_Impl*>(get_queue(COMMAND_QUEUE_TYPE_GRAPHICS, 0));
-        }
-        
+        CommandQueue_D3D12_Impl* queue = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
+
         auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(queue->get_native_queue(), hwnd, &chinDesc, NULL, NULL, &swapchain));
         cyber_assert(bCreated, "Failed to try to create swapchain! An existed swapchain might be destroyed!");
 
@@ -1416,6 +1411,7 @@ namespace Cyber
 
         return descSet;
     }
+
     D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {};
     const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
         {
@@ -2453,8 +2449,8 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::bind_descriptor_heap()
     {
-        m_deviceContexts[0]->set_bound_heap(0, m_cbvSrvUavHeaps[m_deviceContexts[0]->m_nodeIndex]);
-        m_deviceContexts[0]->set_bound_heap(1, m_samplerHeaps[m_deviceContexts[0]->m_nodeIndex]);
+        m_deviceContexts[0]->set_bound_heap(0, m_cbvSrvUavHeaps[0]);
+        m_deviceContexts[0]->set_bound_heap(1, m_samplerHeaps[0]);
     }
 
     void RenderDevice_D3D12_Impl::free_command_context(PooledCommandContext&& command_context)

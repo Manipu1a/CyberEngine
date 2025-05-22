@@ -7,13 +7,6 @@ CYBER_BEGIN_NAMESPACE(RenderObject)
 CommandContext::CommandContext(CommandListManager& command_list_manager)
 {
     command_list_manager.create_new_command_list(&command_list, &command_allocator, max_interface_version);
-
-    m_pBoundHeaps[0] = nullptr;
-    m_pBoundHeaps[1] = nullptr;
-    m_boundHeapStartHandles[0].ptr = 0;
-    m_boundHeapStartHandles[1].ptr = 0;
-    m_pBoundRootSignature = nullptr;
-    m_nodeIndex = 0;
 }
 
 CommandContext::~CommandContext()

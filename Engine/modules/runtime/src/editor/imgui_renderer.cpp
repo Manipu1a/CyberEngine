@@ -262,7 +262,7 @@ namespace Cyber
             texture_data.pSubResources = &sub_res_data;
             texture_data.numSubResources = 1;
             texture_data.pDevice = m_pDevice;
-            texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
+            //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
 
             auto texture = m_pDevice->create_texture(texture_desc, &texture_data);
             font_srv = texture->get_default_texture_view(TVU_SRV);

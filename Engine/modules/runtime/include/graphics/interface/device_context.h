@@ -4,6 +4,7 @@
 #include "frame_buffer.h"
 #include "descriptor_set.h"
 #include "render_pipeline.h"
+#include "render_pass.h"
 
 namespace Cyber
 {
@@ -48,10 +49,6 @@ namespace Cyber
         struct CYBER_GRAPHICS_API IDeviceContext
         {
             virtual void transition_resource_state(const ResourceBarrierDesc& barrierDesc) = 0;
-            // Command APIs
-            virtual void reset_command_pool(ICommandPool* pool) = 0;
-            virtual void free_command_pool(ICommandPool* pool) = 0;
-            virtual void free_command_buffer(ICommandBuffer* CommandBuffer) = 0;
             /// CMDS
             virtual void cmd_begin() = 0;
             virtual void cmd_end() = 0;
@@ -75,6 +72,9 @@ namespace Cyber
             virtual void render_encoder_draw_instanced(uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance) = 0;
             virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) = 0;
             virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) = 0;
+
+            // Render Pass
+            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -82,7 +82,6 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-
             DeviceContextBase(RenderDeviceImplType* device, const DeviceContextDesc& desc) : render_device(device), desc(desc) {}
 
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override

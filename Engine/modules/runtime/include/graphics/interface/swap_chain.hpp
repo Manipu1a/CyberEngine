@@ -10,10 +10,6 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API SwapChainDesc
         {
-            /// Present Queues
-            class ICommandQueue* m_presentQueue;
-            /// Present Queues Count
-            uint32_t m_presentQueueCount;
             /// Number of backbuffers in the swapchain
             uint32_t m_imageCount;
             /// Width of the swapchain

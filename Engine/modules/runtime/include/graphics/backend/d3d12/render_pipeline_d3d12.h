@@ -31,6 +31,7 @@ namespace Cyber
             D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
 
             friend class DeviceContext_D3D12_Impl;
+            friend class RenderDevice_D3D12_Impl;
         };
 
     }

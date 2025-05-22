@@ -29,7 +29,7 @@ namespace Cyber
 
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            auto cmd = renderer->get_command_buffer();
+            //auto cmd = renderer->get_command_buffer();
 
             create_render_pipeline();
         }
@@ -53,8 +53,8 @@ namespace Cyber
             auto device_context = renderer->get_device_context();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
-            auto pool = renderer->get_command_pool();
-            auto queue = renderer->get_queue();
+            //auto pool = renderer->get_command_pool();
+            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
 
             AcquireNextDesc acquire_desc = {
@@ -65,7 +65,7 @@ namespace Cyber
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
-            device_context->reset_command_pool(pool);
+            //device_context->reset_command_pool(pool);
             // record
             device_context->cmd_begin();
 
@@ -126,11 +126,11 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
-            auto cmd = renderer->get_command_buffer();
+            //auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
-            auto pool = renderer->get_command_pool();
-            auto queue = renderer->get_queue();
+            //auto pool = renderer->get_command_pool();
+            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
 
@@ -144,11 +144,11 @@ namespace Cyber
             device_context->cmd_end();
 
             // submit
-            RenderObject::QueueSubmitDesc submit_desc = {
+            /*RenderObject::QueueSubmitDesc submit_desc = {
                 .m_ppCmds = &cmd,
                 .m_pSignalFence = renderer->get_present_semaphore(),
                 .m_cmdsCount = 1
-            };
+            };*/
 
             device_context->flush();
             
@@ -167,7 +167,7 @@ namespace Cyber
             //m_pApp->get_renderer()->create_gfx_objects();
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-
+            auto device_context = renderer->get_device_context();
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
             attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             //attachments[1].m_sampleCount = 1;
@@ -224,7 +224,7 @@ namespace Cyber
                 .m_pSubpasses = subpass_desc
             };
             
-            auto render_pass = render_device->create_render_pass(rp_desc1);
+            auto render_pass = device_context->create_render_pass(rp_desc1);
             renderer->set_render_pass(render_pass);
         }
 
@@ -388,16 +388,16 @@ namespace Cyber
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            auto cmd = renderer->get_command_buffer();
+            //auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
             auto present_fence = renderer->get_present_semaphore();
-            auto pool = renderer->get_command_pool();
-            auto queue = renderer->get_queue();
+            //auto pool = renderer->get_command_pool();
+            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
             auto surface = renderer->get_surface();
             auto instance = renderer->get_instance();
 
-            render_device->wait_queue_idle(queue);
+            //render_device->wait_queue_idle(queue);
             render_device->wait_fences(&present_fence, 1);
             render_device->free_fence(present_fence);
             for(uint32_t i = 0;i < swap_chain->get_buffer_srv_count(); ++i)
@@ -408,7 +408,7 @@ namespace Cyber
             render_device->free_surface(surface);
             render_device->free_render_pipeline(pipeline);
             render_device->free_root_signature(root_signature);
-            render_device->free_queue(queue);
+            //render_device->free_queue(queue);
             render_device->free_device();
             render_device->free_instance(instance);
         }

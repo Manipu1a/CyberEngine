@@ -65,8 +65,8 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
-            virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
-            virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
+            //virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
+            //virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
             virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
             virtual void submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc) override;
@@ -96,8 +96,6 @@ namespace Cyber
             virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
             
-            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
-
             // create view
             void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
             void create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
@@ -112,8 +110,6 @@ namespace Cyber
             eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_samplerHeaps; }
             eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_cbvSrvUavHeaps; }
             struct EmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
-            eastl::map<uint32_t, ID3D12CommandQueue**>& GetCommandQueues() { return m_commandQueues; }
-            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_commandQueueCounts; }
             IDXGIFactory6* GetDXGIFactory() { return m_pDXGIFactory; }
             IDXGIAdapter4* GetDXActiveGPU() { return m_pDxActiveGPU; }
             ID3D12PipelineLibrary* GetPipelineLibrary() { return m_pPipelineLibrary; }

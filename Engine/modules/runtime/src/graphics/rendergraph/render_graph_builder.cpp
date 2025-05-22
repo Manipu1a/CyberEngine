@@ -1,7 +1,8 @@
 #include "rendergraph/render_graph_builder.h"
 #include "platform/memory.h"
 #include "rendergraph/render_graph.h"
-#include "interface/queue.h"
+#include "interface/command_queue.h"
+
 namespace Cyber
 {
     namespace render_graph
