@@ -56,7 +56,7 @@ namespace Cyber
         {this, D3D12_COMMAND_LIST_TYPE_COPY}
     }
     {
-        
+        m_deviceContexts.reserve(1);
     }
 
     RenderDevice_D3D12_Impl::~RenderDevice_D3D12_Impl()
@@ -85,6 +85,8 @@ namespace Cyber
             m_commandQueueCounts[type] = queueGroup.m_queueCount;
 
             ID3D12CommandQueue* dxCommandQueue = nullptr;
+            m_commandQueues[type] = (CommandQueueImplType**)cyber_malloc(sizeof(CommandQueueImplType*) * (queueGroup.m_queueCount));
+
             for(uint32_t j = 0u; j < queueGroup.m_queueCount; j++)
             {
                 DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
@@ -109,8 +111,9 @@ namespace Cyber
                 {
                     cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
                 }
-
-                cyber_placement_new<CommandQueue_D3D12_Impl>(m_commandQueues[type]+j, this, dxCommandQueue);
+                //cyber_placement_new<CommandQueue_D3D12_Impl>(m_commandQueues[type]+j, this, dxCommandQueue);
+                m_commandQueues[type][j] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue);
+                m_commandQueues[type][j]->set_name(CYBER_UTF8("Test"));
             }
         }
 

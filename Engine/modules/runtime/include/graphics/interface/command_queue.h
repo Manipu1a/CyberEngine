@@ -62,7 +62,19 @@ namespace Cyber
             {
                 m_index = index;
             }
+
+            CYBER_FORCE_INLINE const char8_t* get_name() const
+            {
+                return queue_name;
+            }
+
+            CYBER_FORCE_INLINE void set_name(const char8_t* name)
+            {
+                queue_name = const_cast<char8_t*>(name);
+            }
+
         protected:
+            const char8_t* queue_name;
             COMMAND_QUEUE_TYPE m_type;
             QueueIndex m_index;
         };

@@ -11,7 +11,6 @@ namespace Cyber
             command_queue_desc{native_queue->GetDesc()},
             next_fence_value(1)
         {
-
         }
 
         void CommandQueue_D3D12_Impl::signal_fence(class IFence* fence, uint64_t value)
