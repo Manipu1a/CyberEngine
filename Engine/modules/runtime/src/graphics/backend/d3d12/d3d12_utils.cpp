@@ -477,8 +477,8 @@ namespace Cyber
         DxcLoader.Load();
 
         auto procDxcCreateInstance = DxcLoader.Get();
-        TestModel();
-
+        //TestModel();
+        CB_INFO("DX Shader Compiler loaded successfully");
         if(procDxcCreateInstance)
         {
             IDxcValidator* pValidator = nullptr;

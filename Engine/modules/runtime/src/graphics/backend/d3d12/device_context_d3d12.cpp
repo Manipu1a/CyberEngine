@@ -37,16 +37,19 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device,
 
 void DeviceContext_D3D12_Impl::cmd_begin()
 {
-    request_command_context();
+
+    //request_command_context();
+    curr_command_context->reset();
 }
 
 void DeviceContext_D3D12_Impl::cmd_end()
 {
     ID3D12CommandAllocator* command_allocator = nullptr;
-    curr_command_context->close(command_allocator);
+    //curr_command_context->close(command_allocator);
 
     //todo release command allocator
     
+    m_pBoundRootSignature = nullptr;
 }
 
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
@@ -56,7 +59,7 @@ void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& b
 
 void DeviceContext_D3D12_Impl::flush()
 {
-
+    render_device->close_and_execute_command_context(COMMAND_QUEUE_TYPE_GRAPHICS, 1, &curr_command_context);
 }
 
 void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
@@ -333,6 +336,8 @@ void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDe
 void DeviceContext_D3D12_Impl::request_command_context()
 {
     curr_command_context = render_device->allocate_command_context(get_command_queue_id());
+
+    flush();
 }
 
 Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)

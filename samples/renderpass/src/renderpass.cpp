@@ -365,7 +365,7 @@ namespace Cyber
                 .m_pSignalFence = m_pPresentFence,
                 .m_cmdsCount = 1
             };
-            m_pRenderDevice->submit_queue(m_pQueue, submit_desc);
+            //m_pRenderDevice->submit_queue(submit_desc);
 
             // present
             RenderObject::QueuePresentDesc present_desc = {

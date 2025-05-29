@@ -26,6 +26,7 @@ namespace Cyber
             using TexureImplType = EngineD3D12ImplTraits::TextureImplType;
             using BufferImplType = EngineD3D12ImplTraits::BufferImplType;
             using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
+            using IFenceImplType = EngineD3D12ImplTraits::FenceImplType;
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
             RenderDevice_D3D12_Impl(IAdapter* adapter, const RenderDeviceCreateDesc& deviceDesc);
@@ -56,8 +57,8 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) override;
             virtual void free_surface(Surface* surface) override;
             virtual IFence* create_fence() override;
-            virtual void signal_fence(IFence* fence, uint64_t value) override;
-            virtual void wait_fences(IFence** fences, uint32_t fenceCount) override;
+            virtual void signal_fence(uint64_t value) override;
+            virtual void wait_fences() override;
             virtual void free_fence(IFence* fence) override;
             virtual FENCE_STATUS query_fence_status(IFence* fence) override;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
@@ -69,7 +70,7 @@ namespace Cyber
             //virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
             virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
-            virtual void submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc) override;
+            //virtual void submit_queue(const QueueSubmitDesc& submitDesc) override;
             virtual void present(ISwapChain* swap_chain) override;
             virtual void wait_queue_idle(ICommandQueue* queue) override;
             virtual void free_queue(ICommandQueue* queue) override;
@@ -120,8 +121,8 @@ namespace Cyber
 
             using PooledCommandContext = eastl::unique_ptr<CommandContext>;
             PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);
+
             void close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
-            
             
             void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
 
@@ -142,6 +143,10 @@ namespace Cyber
             CommandListManager cmd_list_managers[3];
             std::mutex command_pool_mutex;
             eastl::vector<PooledCommandContext> command_pools;
+
+            IFenceImplType* fence;
+            uint64_t fence_value;
+
             // API specific descriptor heap and memory allocator
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;

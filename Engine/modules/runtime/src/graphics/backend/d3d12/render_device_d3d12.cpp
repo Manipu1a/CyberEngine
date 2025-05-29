@@ -36,6 +36,7 @@
 #include "graphics/backend/d3d12/descriptor_set_d3d12.h"
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
 #include "graphics/backend/d3d12/render_pipeline_d3d12.h"
+#include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -229,6 +230,11 @@ namespace Cyber
                 SAFE_RELEASE(device1);
             }
         }
+        
+        // Create Fence
+        fence = cyber_new<Fence_D3D12_Impl>(this);
+        CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence->m_pDxFence)));
+        fence_value = 1;
     }
 
     void RenderDevice_D3D12_Impl::free_device()
@@ -835,13 +841,14 @@ namespace Cyber
             return FENCE_STATUS_COMPLETE;
     }
 
-    void RenderDevice_D3D12_Impl::signal_fence(IFence* fence, uint64_t value)
+    void RenderDevice_D3D12_Impl::signal_fence(uint64_t value)
     {
         m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0]->signal_fence(fence, value);
     }
 
-    void RenderDevice_D3D12_Impl::wait_fences(IFence** fences, uint32_t fenceCount)
+    void RenderDevice_D3D12_Impl::wait_fences()
     {
+        /*
         for(uint32_t i = 0; i < fenceCount; ++i)
         {
             FENCE_STATUS fence_status = query_fence_status(fences[i]);
@@ -853,6 +860,16 @@ namespace Cyber
                 dxFence->m_pDxFence->SetEventOnCompletion(fence_value, dxFence->m_dxWaitIdleFenceEvent);
                 WaitForSingleObject(dxFence->m_dxWaitIdleFenceEvent, INFINITE);
             }
+        }
+        */
+        const uint64_t wait_value = fence_value;
+        signal_fence(wait_value);
+        fence_value++;
+
+        if(fence->get_fence_value() < wait_value)
+        {
+            fence->m_pDxFence->SetEventOnCompletion(wait_value, fence->m_dxWaitIdleFenceEvent);
+            WaitForSingleObject(fence->m_dxWaitIdleFenceEvent, INFINITE);
         }
     }
 
@@ -879,22 +896,23 @@ namespace Cyber
         return dxQueue;*/
     }
 
-    void RenderDevice_D3D12_Impl::submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc)
+    /*void RenderDevice_D3D12_Impl::submit_queue(const QueueSubmitDesc& submitDesc)
     {
-        /*
         uint32_t cmd_count = submitDesc.m_cmdsCount;
-        Queue_D3D12_Impl* dx_queue = static_cast<Queue_D3D12_Impl*>(queue);
+        CommandQueue_D3D12_Impl* dx_queue = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
         Fence_D3D12_Impl* dx_fence = static_cast<Fence_D3D12_Impl*>(submitDesc.m_pSignalFence);
 
         cyber_check(submitDesc.m_cmdsCount > 0);
         cyber_check(submitDesc.m_ppCmds);
 
         ID3D12CommandList** cmds = (ID3D12CommandList**)cyber_malloc(sizeof(ID3D12CommandList*) * cmd_count);
+        
         for(uint32_t i = 0; i < cmd_count; i++)
         {
             CommandBuffer_D3D12_Impl* dx_cmd = static_cast<CommandBuffer_D3D12_Impl*>(submitDesc.m_ppCmds[i]);
             cmds[i] = dx_cmd->get_dx_cmd_list();
         }
+
         // Wait semaphores
         for(uint32_t i = 0; i < submitDesc.m_waitSemaphoreCount; i++)
         {
@@ -903,8 +921,8 @@ namespace Cyber
         }
         // Execute
         dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
-        */
     }
+    */
 
     void RenderDevice_D3D12_Impl::present(ISwapChain* swap_chain)
     {
@@ -2426,11 +2444,14 @@ namespace Cyber
             auto& context = command_contexts[i];
             ID3D12CommandAllocator* command_allocator;
             d3d12_command_lists.emplace_back(context->close(command_allocator));
-            d3d12_command_allocators.emplace_back(command_allocator);
+            //d3d12_command_allocators.emplace_back(command_allocator);
         }
 
         auto& command_queue = m_commandQueues[command_queue_id][0];
         command_queue->submit( num_contexts, d3d12_command_lists.data());
+
+        // wait for command queue to finish
+        wait_fences();
     }
 
     void RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)

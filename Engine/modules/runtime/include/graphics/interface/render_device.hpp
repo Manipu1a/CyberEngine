@@ -47,8 +47,8 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) = 0;
             virtual void free_surface(Surface* surface) = 0;
             virtual IFence* create_fence() = 0;
-            virtual void signal_fence(IFence* fence, uint64_t value) = 0;
-            virtual void wait_fences(IFence** fences, uint32_t fenceCount) = 0;
+            virtual void signal_fence(uint64_t value) = 0;
+            virtual void wait_fences() = 0;
             virtual void free_fence(IFence* fence) = 0;
             virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
@@ -61,7 +61,7 @@ namespace Cyber
 
             // Queue APIs
             virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
-            virtual void submit_queue(ICommandQueue* queue, const QueueSubmitDesc& submitDesc) = 0;
+            //virtual void submit_queue(const QueueSubmitDesc& submitDesc) = 0;
             virtual void present(ISwapChain* swap_chain) = 0;
             virtual void wait_queue_idle(ICommandQueue* queue) = 0;
             virtual void free_queue(ICommandQueue* queue) = 0;

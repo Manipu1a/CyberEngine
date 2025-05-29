@@ -35,6 +35,7 @@ namespace Cyber
 
         void Application::initialize()
         {
+            CB_CORE_INFO("Application :: initialize()");
             m_pRenderer = cyber_new<Renderer::Renderer>();
             m_pRenderer->create_gfx_objects();
             m_pInputSystem = cyber_new<InputSystem>();
@@ -45,17 +46,20 @@ namespace Cyber
             createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
             createInfo.Hwnd = m_pWindow->get_native_window();
 
-            m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
-            m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
+            //m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
+            //m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
             m_pSampleApp->initialize();
         }
 
         void Application::run()
         {
+            CB_CORE_INFO("Application :: run()");
             while(m_running)
             {
                 update(0.0f);
             }
+
+            CB_CORE_INFO("Application :: run() - finished");
         }
 
         void Application::update(float deltaTime)
@@ -75,10 +79,10 @@ namespace Cyber
             //auto cmd = m_pRenderer->get_command_buffer();
             auto render_device = m_pRenderer->get_render_device();
             //m_pEditor->update(cmd, deltaTime);
-            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+            //m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
             //m_pEditor->update(m_pRenderer->get_command_buffer(), deltaTime);
-            m_pEditor->render(m_pRenderer->get_render_device());
-            m_pEditor->end_frame();
+            //m_pEditor->render(m_pRenderer->get_render_device());
+            //m_pEditor->end_frame();
             m_pSampleApp->present();
         }
         

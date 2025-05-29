@@ -16,13 +16,20 @@ CommandContext::~CommandContext()
 
 ID3D12GraphicsCommandList* CommandContext::close(ID3D12CommandAllocator* out_command_allocator)
 {
-
     cyber_assert(command_allocator != nullptr, "Command allocator is not initialized");
     auto hr = command_list->Close();
     cyber_assert(SUCCEEDED(hr), "Failed to close command list");
 
     out_command_allocator = eastl::move(command_allocator);
     return command_list;
+}
+
+void CommandContext::reset()
+{
+    cyber_check(command_list != nullptr);
+    cyber_check(command_allocator != nullptr);
+    CHECK_HRESULT(command_allocator->Reset());
+    CHECK_HRESULT(command_list->Reset(command_allocator, nullptr));
 }
 
 void CommandContext::reset(CommandListManager& command_list_manager)

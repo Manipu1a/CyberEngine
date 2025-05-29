@@ -117,8 +117,7 @@ namespace Cyber
             //render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
             //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            
-            device_context->set_render_target( 1, &back_buffer_view, nullptr);     
+            //device_context->set_render_target( 1, &back_buffer_view, nullptr);
         }
 
         void TrignaleApp::present()
@@ -149,17 +148,15 @@ namespace Cyber
                 .m_pSignalFence = renderer->get_present_semaphore(),
                 .m_cmdsCount = 1
             };*/
-
             device_context->flush();
-            
             //render_device->submit_queue(queue, submit_desc);
 
             // present
             render_device->present(swap_chain);
 
             // sync & reset
-            render_device->signal_fence(present_fence, present_fence->get_fence_value());
-            render_device->wait_fences(&present_fence, 1);
+            //render_device->signal_fence(present_fence->get_fence_value());
+            //render_device->wait_fences();
         }
 
         void TrignaleApp::create_gfx_objects()
@@ -249,6 +246,7 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto swap_chain = renderer->get_swap_chain();
+
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
             /*
             namespace render_graph = Cyber::render_graph;
@@ -398,7 +396,7 @@ namespace Cyber
             auto instance = renderer->get_instance();
 
             //render_device->wait_queue_idle(queue);
-            render_device->wait_fences(&present_fence, 1);
+            render_device->wait_fences();
             render_device->free_fence(present_fence);
             for(uint32_t i = 0;i < swap_chain->get_buffer_srv_count(); ++i)
             {
