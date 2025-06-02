@@ -78,44 +78,19 @@ namespace Cyber
         // Create Requested Queues
         m_pNullDescriptors = (RenderObject::EmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RenderObject::EmptyDescriptors_D3D12));
 
-        for(uint32_t i = 0u; i < m_desc.m_queueGroupCount;i++)
+        m_commandQueues.resize(m_desc.command_queue_count);
+
+        for(uint32_t i = 0; i < m_desc.command_queue_count; i++)
         {
-            auto& queueGroup = m_desc.m_queueGroups[i];
-            auto type = queueGroup.m_queueType;
-
-            m_commandQueueCounts[type] = queueGroup.m_queueCount;
-
             ID3D12CommandQueue* dxCommandQueue = nullptr;
-            m_commandQueues[type] = (CommandQueueImplType**)cyber_malloc(sizeof(CommandQueueImplType*) * (queueGroup.m_queueCount));
-
-            for(uint32_t j = 0u; j < queueGroup.m_queueCount; j++)
+            DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
+            queueDesc.Type = d3d12_queue_id_to_command_list_type(i);
+            queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+            if(!SUCCEEDED(m_pDxDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&dxCommandQueue))))
             {
-                DECLARE_ZERO(D3D12_COMMAND_QUEUE_DESC, queueDesc)
-                switch(type)
-                {
-                    case COMMAND_QUEUE_TYPE_GRAPHICS:
-                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-                        break;
-                    case COMMAND_QUEUE_TYPE_COMPUTE:
-                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-                        break;
-                    case COMMAND_QUEUE_TYPE_TRANSFER:
-                        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-                        break;
-                    default:
-                        cyber_assert(false, "[D3D12 Fatal]: Create D3D12CommandQueue Failed!");
-                        break;
-                }
-                queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-
-                if(!SUCCEEDED(m_pDxDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&dxCommandQueue))))
-                {
-                    cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
-                }
-                //cyber_placement_new<CommandQueue_D3D12_Impl>(m_commandQueues[type]+j, this, dxCommandQueue);
-                m_commandQueues[type][j] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue);
-                m_commandQueues[type][j]->set_name(CYBER_UTF8("Test"));
+                cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
             }
+            m_commandQueues[i] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue);
         }
 
         // Create D3D12MA Allocator
@@ -239,9 +214,9 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::free_device()
     {
-        for(uint32_t i = 0; i < COMMAND_QUEUE_TYPE::COMMAND_QUEUE_TYPE_COUNT; ++i)
+        for(uint32_t i = 0; i < m_desc.command_queue_count;++i)
         {
-            cyber_free((CommandQueueImplType**)m_commandQueues[i]);
+            cyber_free((CommandQueueImplType*)m_commandQueues[i]);
         }
         // Free D3D12MA Allocator
         SAFE_RELEASE(m_pResourceAllocator);
@@ -779,11 +754,8 @@ namespace Cyber
                         subResourceData[subres].RowPitch = pInitData->pSubResources[subres].stride;
                         subResourceData[subres].SlicePitch = pInitData->pSubResources[subres].depthStride;
                     }
-                    
-                    cyber_assert(pInitData->pCommandBuffer != nullptr, "Command Buffer is Nullptr!");
-                    CommandBuffer_D3D12_Impl* pCmdBuffer = static_cast<CommandBuffer_D3D12_Impl*>(pInitData->pCommandBuffer);
-                    auto list = pCmdBuffer->get_dx_cmd_list();
-                    auto uploadedSize = D3D12Util_UpdateSubresource(list, pTexture->native_resource, uploadBuffer, 0, pInitData->numSubResources, subResourceData);
+
+                    auto uploadedSize = m_deviceContexts[0]->get_command_context().update_sub_resource(pTexture->native_resource, uploadBuffer, 0, pInitData->numSubResources, subResourceData);
 
                     cyber_assert(uploadedSize == uploadBufferSize, "Upload Buffer Size Mismatch!");
 
@@ -841,29 +813,15 @@ namespace Cyber
             return FENCE_STATUS_COMPLETE;
     }
 
-    void RenderDevice_D3D12_Impl::signal_fence(uint64_t value)
+    void RenderDevice_D3D12_Impl::signal_fence(SoftwareQueueIndex command_queue_id, uint64_t value)
     {
-        m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0]->signal_fence(fence, value);
+        m_commandQueues[command_queue_id]->signal_fence(fence, value);
     }
 
-    void RenderDevice_D3D12_Impl::wait_fences()
+    void RenderDevice_D3D12_Impl::wait_fences(SoftwareQueueIndex command_queue_id)
     {
-        /*
-        for(uint32_t i = 0; i < fenceCount; ++i)
-        {
-            FENCE_STATUS fence_status = query_fence_status(fences[i]);
-            Fence_D3D12_Impl* dxFence = static_cast<Fence_D3D12_Impl*>(fences[i]);
-            uint64_t fence_value = dxFence->m_fenceValue;
-            dxFence->m_fenceValue++;
-            if(fence_status == FENCE_STATUS_INCOMPLETE)
-            {
-                dxFence->m_pDxFence->SetEventOnCompletion(fence_value, dxFence->m_dxWaitIdleFenceEvent);
-                WaitForSingleObject(dxFence->m_dxWaitIdleFenceEvent, INFINITE);
-            }
-        }
-        */
         const uint64_t wait_value = fence_value;
-        signal_fence(wait_value);
+        signal_fence(command_queue_id, wait_value);
         fence_value++;
 
         if(fence->get_fence_value() < wait_value)
@@ -881,49 +839,6 @@ namespace Cyber
         cyber_delete(fence);
     }
 
-    ICommandQueue* RenderDevice_D3D12_Impl::get_queue(COMMAND_QUEUE_TYPE type, uint32_t index)
-    {
-        cyber_assert(type < COMMAND_QUEUE_TYPE_COUNT, "Invalid Command Queue Type!");
-        cyber_assert(index < m_commandQueueCounts[type], "Invalid Command Queue Index!");
-
-        return m_commandQueues[type][index];
-
-        /*CommandQueue_D3D12_Impl* dxQueue = cyber_new<CommandQueue_D3D12_Impl>(this);
-        dxQueue->m_pCommandQueue = m_commandQueues[type][index];
-        dxQueue->m_pFence = create_fence();
-        dxQueue->set_type(type);
-        dxQueue->set_index(index);
-        return dxQueue;*/
-    }
-
-    /*void RenderDevice_D3D12_Impl::submit_queue(const QueueSubmitDesc& submitDesc)
-    {
-        uint32_t cmd_count = submitDesc.m_cmdsCount;
-        CommandQueue_D3D12_Impl* dx_queue = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
-        Fence_D3D12_Impl* dx_fence = static_cast<Fence_D3D12_Impl*>(submitDesc.m_pSignalFence);
-
-        cyber_check(submitDesc.m_cmdsCount > 0);
-        cyber_check(submitDesc.m_ppCmds);
-
-        ID3D12CommandList** cmds = (ID3D12CommandList**)cyber_malloc(sizeof(ID3D12CommandList*) * cmd_count);
-        
-        for(uint32_t i = 0; i < cmd_count; i++)
-        {
-            CommandBuffer_D3D12_Impl* dx_cmd = static_cast<CommandBuffer_D3D12_Impl*>(submitDesc.m_ppCmds[i]);
-            cmds[i] = dx_cmd->get_dx_cmd_list();
-        }
-
-        // Wait semaphores
-        for(uint32_t i = 0; i < submitDesc.m_waitSemaphoreCount; i++)
-        {
-            Semaphore_D3D12_Impl* dx_semaphore = static_cast<Semaphore_D3D12_Impl*>(submitDesc.m_ppWaitSemaphores[i]);
-            dx_queue->get_native_queue()->Wait(dx_semaphore->dx_fence, dx_semaphore->fence_value - 1);
-        }
-        // Execute
-        dx_queue->get_native_queue()->ExecuteCommandLists(cmd_count, cmds);
-    }
-    */
-
     void RenderDevice_D3D12_Impl::present(ISwapChain* swap_chain)
     {
         SwapChain_D3D12_Impl* dx_swapchain = static_cast<SwapChain_D3D12_Impl*>(swap_chain);
@@ -937,6 +852,7 @@ namespace Cyber
             #endif
         }
     }
+
     void RenderDevice_D3D12_Impl::wait_queue_idle(ICommandQueue* queue)
     {
         CommandQueue_D3D12_Impl* Queue = static_cast<CommandQueue_D3D12_Impl*>(queue);
@@ -1037,7 +953,7 @@ namespace Cyber
 
         HWND hwnd = desc.m_pSurface->handle;
 
-        CommandQueue_D3D12_Impl* queue = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
+        CommandQueue_D3D12_Impl* queue = m_commandQueues[0];
 
         auto bCreated = SUCCEEDED(dxInstance->get_dxgi_factory()->CreateSwapChainForHwnd(queue->get_native_queue(), hwnd, &chinDesc, NULL, NULL, &swapchain));
         cyber_assert(bCreated, "Failed to try to create swapchain! An existed swapchain might be destroyed!");
@@ -1398,10 +1314,11 @@ namespace Cyber
             uint32_t sampler_offset = 0;
             for(uint32_t i = 0; i < param_table->m_resourceCount; ++i)
             {
-                const auto dimension = param_table->m_ppResources[i]->get_dimension();
+                const auto resource = param_table->m_ppResources[i];
+                const auto dimension = resource->get_dimension();
                 auto src_handle = D3D12_DESCRIPTOR_ID_NONE;
                 auto src_sampler_handle = D3D12_DESCRIPTOR_ID_NONE;
-                switch (param_table->m_ppResources[i]->get_type())
+                switch (resource->get_type())
                 {
                     case GRAPHICS_RESOURCE_TYPE_TEXTURE: src_handle = m_pNullDescriptors->TextureSRV[dimension]; break;
                     case GRAPHICS_RESOURCE_TYPE_BUFFER: src_handle = m_pNullDescriptors->BufferSRV; break;
@@ -1413,7 +1330,7 @@ namespace Cyber
 
                 if(src_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
                 {
-                    for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
+                    //for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
                     {
                         cbv_srv_uav_heap->copy_descriptor_handle(src_handle, descSet->cbv_srv_uav_handle, cbv_srv_uav_offset);
                         cbv_srv_uav_offset++;
@@ -1421,7 +1338,7 @@ namespace Cyber
                 }
                 if(src_sampler_handle.ptr != D3D12_DESCRIPTOR_ID_NONE.ptr)
                 {
-                    for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
+                    //for(uint32_t j = 0; j < param_table->m_ppResources[i]->get_size(); ++j)
                     {
                         sampler_heap->copy_descriptor_handle(src_sampler_handle, descSet->sampler_handle, sampler_offset);
                         sampler_offset++;
@@ -2444,14 +2361,20 @@ namespace Cyber
             auto& context = command_contexts[i];
             ID3D12CommandAllocator* command_allocator;
             d3d12_command_lists.emplace_back(context->close(command_allocator));
-            //d3d12_command_allocators.emplace_back(command_allocator);
+            d3d12_command_allocators.emplace_back(command_allocator);
         }
 
-        auto& command_queue = m_commandQueues[command_queue_id][0];
+        auto& command_queue = m_commandQueues[command_queue_id];
         command_queue->submit( num_contexts, d3d12_command_lists.data());
 
         // wait for command queue to finish
-        wait_fences();
+        wait_fences(command_queue_id);
+
+        for(uint32_t i = 0; i < num_contexts; ++i)
+        {
+            cmd_list_manager;
+            free_command_context(eastl::move(command_contexts[i]));
+        }
     }
 
     void RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)
@@ -2463,7 +2386,7 @@ namespace Cyber
         ID3D12CommandList* const cmd_list = command_context->close(command_allocator);
         cyber_check_msg(cmd_list != nullptr, "Command list is null");
         
-        auto& cmd = m_commandQueues[COMMAND_QUEUE_TYPE_GRAPHICS][0];
+        auto& cmd = m_commandQueues[command_queue_id];
         //todo 
         cmd->submit(1, &cmd_list);
         
@@ -2493,35 +2416,35 @@ namespace Cyber
         return m_pDxDevice->CreateCommittedResource(pHeapProperties, HeapFlags, pDesc, InitialResourceState, pOptimizedClearValue, riidResource, ppvResource);
     }
 
-    void RenderDevice_D3D12_Impl::create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    void RenderDevice_D3D12_Impl::create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle)
     {
         if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->consume_descriptor_handles(1).mCpu;
         GetD3D12Device()->CreateConstantBufferView(desc, destHandle);
     }
 
-    void RenderDevice_D3D12_Impl::create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    void RenderDevice_D3D12_Impl::create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle)
     {
         if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->consume_descriptor_handles(1).mCpu;
         GetD3D12Device()->CreateShaderResourceView(resource, desc, destHandle);
     }
 
-    void RenderDevice_D3D12_Impl::create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    void RenderDevice_D3D12_Impl::create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle)
     {
         if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_DSV)->consume_descriptor_handles(1).mCpu;
         GetD3D12Device()->CreateDepthStencilView(resource, desc, destHandle);
     }
 
-    void RenderDevice_D3D12_Impl::create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    void RenderDevice_D3D12_Impl::create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle)
     {
         if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->consume_descriptor_handles(1).mCpu;
         GetD3D12Device()->CreateUnorderedAccessView(resource, counterResource, desc, destHandle);
     }
 
-    void RenderDevice_D3D12_Impl::create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle)
+    void RenderDevice_D3D12_Impl::create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle)
     {
         if(destHandle.ptr == D3D12_GPU_VIRTUAL_ADDRESS_NULL)
             destHandle = GetCPUDescriptorHeaps(D3D12_DESCRIPTOR_HEAP_TYPE_RTV)->consume_descriptor_handles(1).mCpu;

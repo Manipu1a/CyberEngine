@@ -9,6 +9,7 @@ namespace Cyber
     namespace RenderObject
     {
         class IRenderDevice;
+        class IDeviceContext;
     }
 
     namespace Editor
@@ -72,18 +73,17 @@ namespace Cyber
             // Non-movable
             
             virtual void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
-            void run();
-            void update(RenderObject::ICommandBuffer* encoder, float deltaTime);
             void finalize();
 
             struct RenderObject::DescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;
             /**/
             virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
-            void render(RenderObject::IRenderDevice* device);
+            void render(RenderObject::IDeviceContext* device_context, RenderObject::IRenderDevice* device);
+
             void invalidate_device_objects();
             void create_device_objects();
-            void create_fonts_texture();
+            void update_fonts_texture();
         protected:
             class ImGuiRenderer* m_imguiRenderer;
         };

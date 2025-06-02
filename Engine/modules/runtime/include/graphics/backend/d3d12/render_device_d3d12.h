@@ -57,8 +57,8 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) override;
             virtual void free_surface(Surface* surface) override;
             virtual IFence* create_fence() override;
-            virtual void signal_fence(uint64_t value) override;
-            virtual void wait_fences() override;
+            virtual void signal_fence(SoftwareQueueIndex command_queue_id, uint64_t value) override;
+            virtual void wait_fences(SoftwareQueueIndex command_queue_id) override;
             virtual void free_fence(IFence* fence) override;
             virtual FENCE_STATUS query_fence_status(IFence* fence) override;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
@@ -66,11 +66,7 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
-            //virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) override;
-            //virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) override;
 
-            virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) override;
-            //virtual void submit_queue(const QueueSubmitDesc& submitDesc) override;
             virtual void present(ISwapChain* swap_chain) override;
             virtual void wait_queue_idle(ICommandQueue* queue) override;
             virtual void free_queue(ICommandQueue* queue) override;
@@ -98,11 +94,11 @@ namespace Cyber
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
             
             // create view
-            void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
-            void create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
-            void create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
-            void create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
-            void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE destHandle);
+            void create_constant_buffer_view(const D3D12_CONSTANT_BUFFER_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
+            void create_shader_resource_view(ID3D12Resource* resource, const D3D12_SHADER_RESOURCE_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
+            void create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
+            void create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
+            void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
 
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }

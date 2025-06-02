@@ -6,6 +6,9 @@ namespace Cyber
     namespace RenderObject
     {
         class IRenderPipeline;
+        class IDescriptorSet;
+        class IDeviceContext;
+
     }
     namespace Editor
     {
@@ -18,7 +21,7 @@ namespace Cyber
             void initialize();
             void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
-            void render_draw_data(ImDrawData* drawData);
+            void render_draw_data(RenderObject::IDeviceContext* device_context, ImDrawData* drawData);
             void invalidate_device_objects();
             void create_device_objects();
             void create_fonts_texture();
@@ -28,6 +31,8 @@ namespace Cyber
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
+            RenderObject::IRootSignature* root_signature = nullptr;
+            RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* render_pipeline = nullptr;
             RenderObject::ITextureView* font_srv = nullptr;
             RenderObject::IShaderResource* m_pSRB = nullptr;

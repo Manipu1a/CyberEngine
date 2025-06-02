@@ -37,9 +37,7 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device,
 
 void DeviceContext_D3D12_Impl::cmd_begin()
 {
-
     //request_command_context();
-    curr_command_context->reset();
 }
 
 void DeviceContext_D3D12_Impl::cmd_end()
@@ -48,18 +46,12 @@ void DeviceContext_D3D12_Impl::cmd_end()
     //curr_command_context->close(command_allocator);
 
     //todo release command allocator
-    
     m_pBoundRootSignature = nullptr;
 }
 
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
 {
     transition_resource_state(barrierDesc);
-}
-
-void DeviceContext_D3D12_Impl::flush()
-{
-    render_device->close_and_execute_command_context(COMMAND_QUEUE_TYPE_GRAPHICS, 1, &curr_command_context);
 }
 
 void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
@@ -80,6 +72,7 @@ void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITex
     }
 
     curr_command_context->set_render_target(numRenderTargets, rtvHandles, false,depthTarget ? &dsvHandle : nullptr);
+    ++state.num_command;
 }
 
 
@@ -93,6 +86,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
 void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 {
     curr_command_context->end_render_pass();
+    ++state.num_command;
     TDeviceContextBase::cmd_next_sub_pass();
 
     if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
@@ -105,6 +99,7 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 void DeviceContext_D3D12_Impl::cmd_end_render_pass()
 {
     curr_command_context->end_render_pass();
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)
@@ -118,21 +113,44 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet
     if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
         curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+        ++state.num_command;
     }
     else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
         curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
+        ++state.num_command;
     }
 }
 
-void DeviceContext_D3D12_Impl::render_encoder_set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+void DeviceContext_D3D12_Impl::render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps)
 {
-    curr_command_context->set_viewport(x, y, width, height, min_depth, max_depth);
+    D3D12_VIEWPORT views[MAX_VIEWPORTS];
+
+    for(uint32_t i = 0; i < num_viewport; ++i)
+    {
+        const Viewport& vp = vps[i];
+        views[i].TopLeftX = vp.top_left_x;
+        views[i].TopLeftY = vp.top_left_y;
+        views[i].Width = vp.width;
+        views[i].Height = vp.height;
+        views[i].MinDepth = vp.min_depth;
+        views[i].MaxDepth = vp.max_depth;
+    }
+    curr_command_context->set_viewport(num_viewport, views);
+    ++state.num_command;
+
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     curr_command_context->set_scissor_rects(x, y, width, height);
+    ++state.num_command;
+}
+
+void DeviceContext_D3D12_Impl::render_encoder_set_blend_factor(const float* blend_factor)
+{
+    curr_command_context.set_blend_factor(blend_factor);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pipeline)
@@ -140,7 +158,9 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pi
     RenderObject::RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderObject::RenderPipeline_D3D12_Impl*>(pipeline);
     reset_root_signature(PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
     curr_command_context->set_primitive_topology(Pipeline->mPrimitiveTopologyType);
+    ++state.num_command;
     curr_command_context->set_pipeline_state(Pipeline->pDxPipelineState);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
@@ -156,6 +176,7 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer
         views[i].StrideInBytes = (UINT)strides[i];  
     }
     curr_command_context->set_vertex_buffers(0, buffer_count, views);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset)
@@ -167,6 +188,7 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer,
     view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
     view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
     curr_command_context->set_index_buffer(&view);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
@@ -179,6 +201,8 @@ void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12Ro
             curr_command_context->set_graphics_root_signature(rootSignature);
         else
             curr_command_context->set_compute_root_signature(rootSignature);
+        
+        ++state.num_command;
     }
 }
 
@@ -186,27 +210,32 @@ void DeviceContext_D3D12_Impl::render_encoder_push_constants(IRootSignature* rs,
 {
     RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(rs);
     reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-    curr_command_context->set_graphics_rrot_constants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+    curr_command_context->set_graphics_root_constants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw(uint32_t vertex_count, uint32_t first_vertex)
 {
     curr_command_context->draw_instanced(vertex_count, 1, first_vertex, 0);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_instanced(uint32_t vertex_count, uint32_t first_vertex, uint32_t instance_count, uint32_t first_instance)
 {
     curr_command_context->draw_instanced(vertex_count, instance_count, first_vertex, first_instance);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
 {
     curr_command_context->draw_indexed_instanced(index_count, 1, first_index, 0, 0);
+    ++state.num_command;
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex)
 {
     curr_command_context->draw_indexed_instanced(index_count, instance_count, first_index, first_vertex, first_instance);
+    ++state.num_command;
 }
 
 IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
@@ -311,6 +340,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
        curr_command_context->begin_render_pass( 
            colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
+        ++state.num_command;
    #else
        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
    #endif
@@ -323,6 +353,7 @@ void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDe
         const BufferBarrier& buffer_barrier = barrierDesc.buffer_barriers[i];
         Buffer_D3D12_Impl* buffer = static_cast<Buffer_D3D12_Impl*>(buffer_barrier.buffer);
         curr_command_context->transition_resource(*buffer, buffer_barrier);
+        ++state.num_command;
     }
 
     for(uint32_t i = 0;i < barrierDesc.texture_barrier_count; i++)
@@ -330,19 +361,25 @@ void DeviceContext_D3D12_Impl::transition_resource_state(const ResourceBarrierDe
         const TextureBarrier& texture_barrier = barrierDesc.texture_barriers[i];
         Texture_D3D12_Impl* texture = static_cast<Texture_D3D12_Impl*>(texture_barrier.texture);
         curr_command_context->transition_resource(*texture, texture_barrier);
+        ++state.num_command;
     }
 }
 
 void DeviceContext_D3D12_Impl::request_command_context()
 {
     curr_command_context = render_device->allocate_command_context(get_command_queue_id());
-
-    flush();
 }
 
 Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment)
 {
     return m_pDynamicHeap->allocate(size_in_bytes, alignment);
+}
+
+
+void DeviceContext_D3D12_Impl::flush()
+{
+    flush(true);
+    //render_device->close_and_execute_command_context(COMMAND_QUEUE_TYPE_GRAPHICS, 1, &curr_command_context);
 }
 
 void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists)
@@ -374,6 +411,13 @@ void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t 
     {
         render_device->close_and_execute_command_context(get_command_queue_id(), (uint32_t)contexts.size(), contexts.data());
     }
+
+    if(!curr_command_context && request_new_command_context)
+    {
+        request_command_context();
+    }
+
+    state.num_command = 0;
 }
 
 void DeviceContext_D3D12_Impl::transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state)

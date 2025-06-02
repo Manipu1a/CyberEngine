@@ -29,7 +29,6 @@ namespace Cyber
 
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            //auto cmd = renderer->get_command_buffer();
 
             create_render_pipeline();
         }
@@ -52,20 +51,14 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
             auto swap_chain = renderer->get_swap_chain();
-            auto present_fence = renderer->get_present_semaphore();
-            //auto pool = renderer->get_command_pool();
-            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
 
-            AcquireNextDesc acquire_desc = {
-                .fence = present_fence
-            };
+            AcquireNextDesc acquire_desc = {};
             m_backBufferIndex = render_device->acquire_next_image(swap_chain, acquire_desc);
             renderer->set_back_buffer_index(m_backBufferIndex);
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
-            //device_context->reset_command_pool(pool);
             // record
             device_context->cmd_begin();
 
@@ -117,7 +110,8 @@ namespace Cyber
             //render_device->render_encoder_set_viewport(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
             //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
-            //device_context->set_render_target( 1, &back_buffer_view, nullptr);
+            
+            device_context->set_render_target( 1, &back_buffer_view, nullptr);     
         }
 
         void TrignaleApp::present()
@@ -125,11 +119,7 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
-            //auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
-            auto present_fence = renderer->get_present_semaphore();
-            //auto pool = renderer->get_command_pool();
-            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
 
@@ -143,20 +133,10 @@ namespace Cyber
             device_context->cmd_end();
 
             // submit
-            /*RenderObject::QueueSubmitDesc submit_desc = {
-                .m_ppCmds = &cmd,
-                .m_pSignalFence = renderer->get_present_semaphore(),
-                .m_cmdsCount = 1
-            };*/
             device_context->flush();
-            //render_device->submit_queue(queue, submit_desc);
 
             // present
             render_device->present(swap_chain);
-
-            // sync & reset
-            //render_device->signal_fence(present_fence->get_fence_value());
-            //render_device->wait_fences();
         }
 
         void TrignaleApp::create_gfx_objects()
@@ -221,6 +201,7 @@ namespace Cyber
                 .m_pSubpasses = subpass_desc
             };
             
+
             auto render_pass = device_context->create_render_pass(rp_desc1);
             renderer->set_render_pass(render_pass);
         }
@@ -246,7 +227,6 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto swap_chain = renderer->get_swap_chain();
-
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
             /*
             namespace render_graph = Cyber::render_graph;
@@ -386,18 +366,10 @@ namespace Cyber
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            //auto cmd = renderer->get_command_buffer();
             auto swap_chain = renderer->get_swap_chain();
-            auto present_fence = renderer->get_present_semaphore();
-            //auto pool = renderer->get_command_pool();
-            //auto queue = renderer->get_queue();
             auto renderpass = renderer->get_render_pass();
             auto surface = renderer->get_surface();
             auto instance = renderer->get_instance();
-
-            //render_device->wait_queue_idle(queue);
-            render_device->wait_fences();
-            render_device->free_fence(present_fence);
             for(uint32_t i = 0;i < swap_chain->get_buffer_srv_count(); ++i)
             {
                 render_device->free_texture_view(swap_chain->get_back_buffer_srv_view(i));
@@ -406,46 +378,8 @@ namespace Cyber
             render_device->free_surface(surface);
             render_device->free_render_pipeline(pipeline);
             render_device->free_root_signature(root_signature);
-            //render_device->free_queue(queue);
             render_device->free_device();
             render_device->free_instance(instance);
         }
-
     }
 }
-
-/*
-int WINAPI WinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     PSTR    lpCmdLine,
-                     int       nCmdShow)
-{
-    AllocConsole();
-    FILE* stream;
-    freopen_s(&stream, "CON", "r", stdin);
-    freopen_s(&stream, "CON", "w", stdout);
-    SetConsoleTitle(L"Console");
-    //std::cout << "test log" << std::endl;
-    Cyber::Log::initLog();
-    CB_CORE_INFO("initLog");
-
-    Cyber::WindowDesc desc;
-    desc.title = L"Cyber";
-    desc.mWndW = 1280;
-    desc.mWndH = 720;
-    desc.hInstance = hInstance;
-    desc.cmdShow = nCmdShow;
-
-    Cyber::Samples::TrignaleApp app;
-    app.initialize(desc);
-    app.run();
-
-    while(Cyber::Core::Application::getApp().is_running())
-    {
-        app.update(0.0f);
-    }
-
-    FreeConsole();
-    return 1;
-}
-*/

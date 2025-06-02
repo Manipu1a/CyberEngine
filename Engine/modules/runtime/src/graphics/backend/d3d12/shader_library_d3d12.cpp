@@ -214,7 +214,7 @@ namespace Cyber
                 resource->set_binding(bindDesc.BindPoint);
                 resource->set_size(bindDesc.BindCount);
                 resource->set_stages(stage);
-                resource->set_dimension(TEX_DIMENSION_UNDEFINED);
+                resource->set_dimension(DXGIUtil_TranslateSRVDimension(bindDesc.Dimension));
                 if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)
                 {
                     ID3D12ShaderReflectionConstantBuffer* buffer = d3d12Reflection->GetConstantBufferByName(bindDesc.Name);

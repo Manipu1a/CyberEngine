@@ -52,11 +52,8 @@ namespace Cyber
         {
             RenderDeviceCreateDesc device_desc;
             device_desc.m_disablePipelineCache = desc.m_disablePipelineCache;
-            device_desc.m_queueGroups = desc.m_queueGroups;
-            device_desc.m_queueGroupCount = desc.m_queueGroupCount;
-
+            device_desc.command_queue_count = 1;
             *render_device = create_render_device(adapter, device_desc);
-
 
             // Create Device Context
             DeviceContextDesc context_desc = {};
@@ -67,10 +64,16 @@ namespace Cyber
 
             RenderDevice_D3D12_Impl* render_device_impl = static_cast<RenderDevice_D3D12_Impl*>(*render_device);
             
-            auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(render_device_impl, context_desc);
-            *device_context = d3d12_context;
+            const auto num_immediate_contexts = desc.num_immediate_contexts > 0 ? desc.num_immediate_contexts : 1;
+            for(uint32_t ctx_id = 0; ctx_id < num_immediate_contexts; ++ctx_id)
+            {
+                context_desc.context_id = ctx_id;
+                context_desc.queue_id = ctx_id;
+                auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(render_device_impl, context_desc);
+                render_device_impl->set_device_context(ctx_id, d3d12_context);
+                device_context[ctx_id] = d3d12_context;
+            }
 
-            render_device_impl->set_device_context(0, d3d12_context);
             render_device_impl->bind_descriptor_heap();
         }
 

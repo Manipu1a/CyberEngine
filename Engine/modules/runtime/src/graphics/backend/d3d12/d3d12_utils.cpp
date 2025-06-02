@@ -424,6 +424,19 @@ namespace Cyber
         }
     }
     
+    D3D12_COMMAND_LIST_TYPE d3d12_queue_id_to_command_list_type(uint32_t queue_id)
+    {
+        switch(queue_id)
+        {
+            case d3d12_queue_index_graphics: return D3D12_COMMAND_LIST_TYPE_DIRECT;
+            case d3d12_queue_index_compute: return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+            case d3d12_queue_index_copy: return D3D12_COMMAND_LIST_TYPE_COPY;
+            default:
+                cyber_error("Unknown queue id");
+                return D3D12_COMMAND_LIST_TYPE_DIRECT;
+        }
+    }
+    
 #if !defined (XBOX) && defined (_WIN32)
     static D3D12Util_DXCLoader DxcLoader;
 

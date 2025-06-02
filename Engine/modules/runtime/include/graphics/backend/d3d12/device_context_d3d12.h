@@ -39,8 +39,9 @@ public:
     virtual void cmd_next_sub_pass() override;
     virtual void cmd_end_render_pass() override;
     virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) override;
-    virtual void render_encoder_set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) override;
+    virtual void render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps) override;
     virtual void render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
+    virtual void render_encoder_set_blend_factor(const float* blend_factor) override;
     virtual void render_encoder_bind_pipeline( IRenderPipeline* pipeline) override;
     virtual void render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
     virtual void render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
@@ -58,7 +59,6 @@ public:
 
     //todo: move to device context
     Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
-
                 
     struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
     void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap) { m_pBoundHeaps[index] = heap; }
@@ -76,7 +76,7 @@ private:
 
     } state;
 
-    void flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists);
+    void flush(bool request_new_command_context, uint32_t num_command_lists = 0, ICommandBuffer** command_lists = nullptr);
     void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
     void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
     void reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature);

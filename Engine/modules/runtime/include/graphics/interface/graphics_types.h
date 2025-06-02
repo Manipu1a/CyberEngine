@@ -80,13 +80,13 @@ namespace Cyber
     {
         TEX_DIMENSION_UNDEFINED = 0,
         TEX_DIMENSION_1D,
+        TEX_DIMENSION_1D_ARRAY,
         TEX_DIMENSION_2D,
+        TEX_DIMENSION_2D_ARRAY,
         TEX_DIMENSION_2DMS,
+        TEX_DIMENSION_2DMS_ARRAY,
         TEX_DIMENSION_3D,
         TEX_DIMENSION_CUBE,
-        TEX_DIMENSION_1D_ARRAY,
-        TEX_DIMENSION_2D_ARRAY,
-        TEX_DIMENSION_2DMS_ARRAY,
         TEX_DIMENSION_CUBE_ARRAY,
         TEX_DIMENSION_COUNT,
     };
@@ -1629,6 +1629,9 @@ namespace Cyber
         bool is_deferrd_context = false;
         uint8_t context_id = 0;   
         uint8_t queue_id = 0xFF;
+
+        uint32_t num_immediate_contexts;
+        uint32_t num_deferred_contexts;
     };
 
     #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1

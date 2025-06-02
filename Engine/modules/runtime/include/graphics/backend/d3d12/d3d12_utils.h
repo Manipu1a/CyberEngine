@@ -112,6 +112,21 @@ namespace Cyber
         return DXGI_FORMAT_UNKNOWN;
     }
 
+    static TEXTURE_DIMENSION DXGIUtil_TranslateSRVDimension(D3D_SRV_DIMENSION dimension)
+    {
+        switch (dimension) {
+            case D3D_SRV_DIMENSION_UNKNOWN: return TEX_DIMENSION_UNDEFINED;
+            case D3D_SRV_DIMENSION_TEXTURE1D: return TEX_DIMENSION_1D;
+            case D3D_SRV_DIMENSION_TEXTURE1DARRAY: return TEX_DIMENSION_1D_ARRAY;
+            case D3D_SRV_DIMENSION_TEXTURE2D: return TEX_DIMENSION_2D;
+            case D3D_SRV_DIMENSION_TEXTURE2DARRAY: return TEX_DIMENSION_2D_ARRAY;
+            case D3D_SRV_DIMENSION_TEXTURE3D: return TEX_DIMENSION_3D;
+            case D3D_SRV_DIMENSION_TEXTURECUBE: return TEX_DIMENSION_CUBE;
+            case D3D_SRV_DIMENSION_TEXTURECUBEARRAY: return TEX_DIMENSION_CUBE_ARRAY;
+            default: return TEX_DIMENSION_UNDEFINED;
+        }
+    }
+
     static DXGI_FORMAT DXGIUtil_FormatToTypeless(DXGI_FORMAT fmt)
     {
         switch (fmt) {
@@ -587,6 +602,8 @@ namespace Cyber
     D3D12_PRIMITIVE_TOPOLOGY_TYPE D3D12Util_TranslatePrimitiveTopologyType(PRIMITIVE_TOPOLOGY topology);
 
     uint32_t d3d12_command_list_type_to_queue_id(D3D12_COMMAND_LIST_TYPE type);
+    D3D12_COMMAND_LIST_TYPE d3d12_queue_id_to_command_list_type(uint32_t queue_id);
+
     inline void MemcpySubresource(D3D12_MEMCPY_DEST* pDest, const D3D12_SUBRESOURCE_DATA* pSrc, uint64_t RowSizeInBytes, uint32_t numRows, uint32_t numSlices)
     {
         for(uint32_t z = 0; z < numSlices; ++z)
@@ -598,76 +615,6 @@ namespace Cyber
                 memcpy(pDestSlice + pDest->RowPitch * y, pSrcSlice + pSrc->RowPitch * y, RowSizeInBytes);
             }
         }
-    }
-
-    inline uint64_t UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
-                                        uint32_t firstSubresource, uint32_t numSubresources, uint32_t requiredSize,
-                                        const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts, const uint32_t* pNumRows, const uint64_t* pRowSizeInBytes,
-                                        const D3D12_SUBRESOURCE_DATA* pSrcData)
-    {
-        D3D12_RESOURCE_DESC IntermediateDesc = pIntermediate->GetDesc();
-        D3D12_RESOURCE_DESC DestDesc = pDestResource->GetDesc();
-        if(IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || 
-            IntermediateDesc.Width < requiredSize + pLayouts[0].Offset ||
-            requiredSize > (size_t)-1 || 
-            (DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER && (firstSubresource != 0 || numSubresources != 1)))
-        {
-            return 0;
-        }
-
-        BYTE* pData;
-        pIntermediate->Map(0, NULL, reinterpret_cast<void**>(&pData));
-        for(uint32_t i = 0; i < numSubresources; ++i)
-        {
-            if(pRowSizeInBytes[i] > (size_t)-1)
-            {
-                return 0;
-            }
-            D3D12_MEMCPY_DEST DestData = {pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, pLayouts[i].Footprint.RowPitch * pNumRows[i]};
-            MemcpySubresource(&DestData, &pSrcData[i], pRowSizeInBytes[i], pNumRows[i], pLayouts[i].Footprint.Depth);
-        }
-        pIntermediate->Unmap(0, NULL);
-
-        if(DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
-        {
-            pCmdList->CopyBufferRegion(pDestResource, 0, pIntermediate, pLayouts[0].Offset, pLayouts[0].Footprint.Width);
-        }
-        else
-        {
-            for(uint32_t i = 0; i < numSubresources; ++i)
-            {
-                D3D12_TEXTURE_COPY_LOCATION Dst = {pDestResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, firstSubresource + i};
-                D3D12_TEXTURE_COPY_LOCATION Src = {pIntermediate, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, pLayouts[i]};
-                pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
-            }
-        }
-
-        return requiredSize;
-    }
-
-    // Update Sub Resource Data
-    inline uint64_t D3D12Util_UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
-                                        uint32_t firstSubresource, uint32_t numSubresources,
-                                        const D3D12_SUBRESOURCE_DATA* pSrcData)
-    {
-        uint64_t RequiredSize = 0;
-        uint64_t MemToAlloc = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t)  + sizeof(uint64_t)) * numSubresources;
-        
-        void* pMem = cyber_malloc(MemToAlloc);
-        D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(pMem);
-        uint32_t* pNumRows = reinterpret_cast<uint32_t*>(pLayouts + numSubresources);
-        uint64_t* pRowSizeInBytes = reinterpret_cast<uint64_t*>(pNumRows + numSubresources);
-
-        D3D12_RESOURCE_DESC Desc = pDestResource->GetDesc();
-        ID3D12Device* pDevice = nullptr;
-        pDestResource->GetDevice(IID_PPV_ARGS(&pDevice));
-        pDevice->GetCopyableFootprints(&Desc, firstSubresource, numSubresources, 0, pLayouts, pNumRows, pRowSizeInBytes, &RequiredSize);
-
-        uint64_t Res = UpdateSubresource(pCmdList, pDestResource, pIntermediate, firstSubresource, numSubresources, RequiredSize, pLayouts, pNumRows, pRowSizeInBytes, pSrcData);
-        cyber_free(pMem);
-        pDevice->Release();
-
-        return Res;
     }
 
     #if !defined (XBOX) && defined (_WIN32)

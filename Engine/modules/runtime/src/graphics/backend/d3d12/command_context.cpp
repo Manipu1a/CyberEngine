@@ -6,6 +6,9 @@ CYBER_BEGIN_NAMESPACE(RenderObject)
 
 CommandContext::CommandContext(CommandListManager& command_list_manager)
 {
+    command_allocator = nullptr;
+    command_list = nullptr;
+
     command_list_manager.create_new_command_list(&command_list, &command_allocator, max_interface_version);
 }
 
@@ -65,6 +68,14 @@ void CommandContext::set_graphics_root_descriptor_table(uint32_t root_parameter_
     command_list->SetGraphicsRootDescriptorTable(root_parameter_index, base_descriptor);
 }
 
+void CommandContext::set_descriptor_heaps(uint32_t num_descriptor_heaps, ID3D12DescriptorHeap* const *ppDescriptorHeaps)
+{
+    cyber_check_msg(num_descriptor_heaps > 0, "D3D12 ERROR: Number of descriptor heaps must be greater than 0!");
+    cyber_check_msg(ppDescriptorHeaps != nullptr, "D3D12 ERROR: Descriptor heaps pointer is null!");
+
+    command_list->SetDescriptorHeaps(num_descriptor_heaps, ppDescriptorHeaps);
+}
+
 void CommandContext::set_pipeline_state(ID3D12PipelineState* pipeline_state)
 {
     command_list->SetPipelineState(pipeline_state);
@@ -99,7 +110,7 @@ void CommandContext::draw_indexed_instanced(uint32_t index_count_per_instance, u
     command_list->DrawIndexedInstanced((UINT)index_count_per_instance, (UINT)instance_count, (UINT)first_index, (INT)base_vertex, (UINT)first_instance);
 }
 
-void CommandContext::set_graphics_rrot_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues)
+void CommandContext::set_graphics_root_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues)
 {
     command_list->SetGraphicsRoot32BitConstants(root_parameter_index, num_32bit_values_to_set, p_src_data, DestOffsetIn32BitValues);
 }
@@ -251,10 +262,14 @@ void CommandContext::set_scissor_rects(uint32_t x, uint32_t y, uint32_t width, u
     command_list->RSSetScissorRects(1, &rect);
 }
 
-void CommandContext::set_viewport(float x, float y, float width, float height, float min_depth, float max_depth)
+void CommandContext::set_blend_factor(const float* blend_factor)
 {
-    D3D12_VIEWPORT viewport = { x, y, width, height, min_depth, max_depth };
-    command_list->RSSetViewports(1, &viewport);
+    command_list->OMSetBlendFactor( blend_factor);
+}
+
+void CommandContext::set_viewport(uint32_t num_viewport, const D3D12_VIEWPORT* vps)
+{
+    command_list->RSSetViewports(num_viewport, vps);
 }
 
 void CommandContext::begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags)
@@ -270,6 +285,72 @@ void CommandContext::end_render_pass()
         cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
     #endif
 }
+
+
+uint64_t UpdateSubresource(ID3D12GraphicsCommandList* pCmdList, ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate,
+                                    uint32_t firstSubresource, uint32_t numSubresources, uint32_t requiredSize,
+                                    const D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts, const uint32_t* pNumRows, const uint64_t* pRowSizeInBytes,
+                                    const D3D12_SUBRESOURCE_DATA* pSrcData)
+{
+    D3D12_RESOURCE_DESC IntermediateDesc = pIntermediate->GetDesc();
+    D3D12_RESOURCE_DESC DestDesc = pDestResource->GetDesc();
+    if(IntermediateDesc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER || 
+        IntermediateDesc.Width < requiredSize + pLayouts[0].Offset ||
+        requiredSize > (size_t)-1 || 
+        (DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER && (firstSubresource != 0 || numSubresources != 1)))
+    {
+        return 0;
+    }
+    BYTE* pData;
+    pIntermediate->Map(0, NULL, reinterpret_cast<void**>(&pData));
+    for(uint32_t i = 0; i < numSubresources; ++i)
+    {
+        if(pRowSizeInBytes[i] > (size_t)-1)
+        {
+            return 0;
+        }
+        D3D12_MEMCPY_DEST DestData = {pData + pLayouts[i].Offset, pLayouts[i].Footprint.RowPitch, pLayouts[i].Footprint.RowPitch * pNumRows[i]};
+        MemcpySubresource(&DestData, &pSrcData[i], pRowSizeInBytes[i], pNumRows[i], pLayouts[i].Footprint.Depth);
+    }
+    pIntermediate->Unmap(0, NULL);
+    if(DestDesc.Dimension == D3D12_RESOURCE_DIMENSION_BUFFER)
+    {
+        pCmdList->CopyBufferRegion(pDestResource, 0, pIntermediate, pLayouts[0].Offset, pLayouts[0].Footprint.Width);
+    }
+    else
+    {
+        for(uint32_t i = 0; i < numSubresources; ++i)
+        {
+            D3D12_TEXTURE_COPY_LOCATION Dst = {pDestResource, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX, firstSubresource + i};
+            D3D12_TEXTURE_COPY_LOCATION Src = {pIntermediate, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, pLayouts[i]};
+            pCmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+        }
+    }
+    return requiredSize;
+}
+
+uint64_t CommandContext::update_sub_resource(ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate, uint32_t firstSubresource, uint32_t numSubresources, const D3D12_SUBRESOURCE_DATA* pSrcData)
+{
+    uint64_t RequiredSize = 0;
+    uint64_t MemToAlloc = (sizeof(D3D12_PLACED_SUBRESOURCE_FOOTPRINT) + sizeof(uint32_t)  + sizeof(uint64_t)) * numSubresources;
+    
+    void* pMem = cyber_malloc(MemToAlloc);
+    D3D12_PLACED_SUBRESOURCE_FOOTPRINT* pLayouts = reinterpret_cast<D3D12_PLACED_SUBRESOURCE_FOOTPRINT*>(pMem);
+    uint32_t* pNumRows = reinterpret_cast<uint32_t*>(pLayouts + numSubresources);
+    uint64_t* pRowSizeInBytes = reinterpret_cast<uint64_t*>(pNumRows + numSubresources);
+
+    D3D12_RESOURCE_DESC Desc = pDestResource->GetDesc();
+    ID3D12Device* pDevice = nullptr;
+    pDestResource->GetDevice(IID_PPV_ARGS(&pDevice));
+    pDevice->GetCopyableFootprints(&Desc, firstSubresource, numSubresources, 0, pLayouts, pNumRows, pRowSizeInBytes, &RequiredSize);
+
+    uint64_t Res = UpdateSubresource(command_list, pDestResource, pIntermediate, firstSubresource, numSubresources, RequiredSize, pLayouts, pNumRows, pRowSizeInBytes, pSrcData);
+    cyber_free(pMem);
+    pDevice->Release();
+
+    return Res;
+}
+
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE
 

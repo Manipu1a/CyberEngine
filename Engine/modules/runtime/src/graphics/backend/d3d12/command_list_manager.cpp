@@ -52,6 +52,10 @@ void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allo
 {
     std::lock_guard<std::mutex> lock(allocator_mutex);
 
+    if(*command_allocator != nullptr)
+        return;
+
+    // todo: reuse allocators
     cyber_warn((*command_allocator) == nullptr, "Allocator is not nullptr");
     *command_allocator = nullptr;
 

@@ -18,7 +18,7 @@ public:
 
     void create_new_command_list(ID3D12GraphicsCommandList** command_list, ID3D12CommandAllocator** command_allocator, uint32_t& version);
     void request_allocator(ID3D12CommandAllocator** command_allocator);
-
+    void release_allocator();
 
     D3D12_COMMAND_LIST_TYPE get_command_list_type() const { return command_list_type; }
 

@@ -3,6 +3,7 @@
 #include "graphics/interface/render_pipeline.h"
 #include "graphics/interface/root_signature.hpp"
 #include "graphics/interface/render_device.hpp"
+#include "graphics/interface/device_object.h"
 #include "platform/memory.h"
 #include "core/Application.h"
 #include "common/basic_math.hpp"
@@ -43,7 +44,7 @@ namespace Cyber
         {
 
         }
-        void ImGuiRenderer::render_draw_data(ImDrawData* draw_data)
+        void ImGuiRenderer::render_draw_data(RenderObject::IDeviceContext* device_context, ImDrawData* draw_data)
         {
             if(draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f || draw_data->CmdListsCount == 0)
             {
@@ -125,7 +126,40 @@ namespace Cyber
                 0.0f,                            0.0f,   0.5f,   0.0f,
                 (R + L) / (L - R),  (T + B) / (B - T),   0.5f,   1.0f
                 };
+
+                void* constant_data = m_pDevice->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                float4x4 * pConstantData = (float4x4*)constant_data;
+                *pConstantData = projection;
+                m_pDevice->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
             }
+            
+            auto SetupRenderState = [&]()
+            {
+                RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
+                device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, nullptr, nullptr);
+                device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(ImDrawIdx), 0);
+                device_context->render_encoder_bind_pipeline(render_pipeline);
+
+                const float blend_factor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+                device_context->render_encoder_set_blend_factor(blend_factor);
+
+                RenderObject::Viewport vp;
+                vp.top_left_x = 0;
+                vp.top_left_y = 0;
+                vp.width = static_cast<float>(draw_data->DisplaySize.x);
+                vp.height = static_cast<float>(draw_data->DisplaySize.y);
+                vp.min_depth = 0.0f;
+                vp.max_depth = 1.0f;
+
+                device_context->render_encoder_set_viewport(1, &vp);
+            };
+
+            SetupRenderState();
+
+            // Render command lists
+            uint32_t global_index_offset = 0;
+            uint32_t global_vertex_offset = 0;
+
             
         }
         void ImGuiRenderer::invalidate_device_objects()
@@ -198,8 +232,14 @@ namespace Cyber
                 .m_staticSamplerCount = 1
             };
             
-            RenderObject::IRootSignature* root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
+            root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
 
+            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
+                .root_signature = root_signature,
+                .set_index = 0
+            };
+            descriptor_set = m_pDevice->create_descriptor_set(desc_set_create_desc);
+            
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
             RenderObject::VertexAttribute vertex_attributes[] = {
@@ -225,6 +265,7 @@ namespace Cyber
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.size = sizeof(float4x4);
+            buffer_desc.descriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
             vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
             
             create_fonts_texture();

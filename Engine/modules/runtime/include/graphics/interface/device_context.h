@@ -37,6 +37,28 @@ namespace Cyber
             RESOURCE_STATE_TRANSITION_MODE_VERIFY = 2
         };
 
+        struct Viewport
+        {
+            float top_left_x = 0.0f;
+            float top_left_y = 0.0f;
+            float width = 0.0f;
+            float height = 0.0f;
+            float min_depth = 0.0f;
+            float max_depth = 1.0f;
+
+            constexpr Viewport(float _top_left_x, float _top_left_y, 
+                float _width, float _height, 
+                float _min_depth = 0.0f, float _max_depth = 1.0f) noexcept
+                : top_left_x(_top_left_x), 
+                top_left_y(_top_left_y), 
+                width(_width), 
+                height(_height), 
+                min_depth(_min_depth), 
+                max_depth(_max_depth) {}
+
+            constexpr Viewport() noexcept {}
+        };
+
         struct BeginRenderPassAttribs
         {
             IFrameBuffer* pFramebuffer;
@@ -62,8 +84,9 @@ namespace Cyber
             virtual void cmd_next_sub_pass() = 0;
             virtual void cmd_end_render_pass() = 0;
             virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) = 0;
-            virtual void render_encoder_set_viewport(float x, float y, float width, float height, float min_depth, float max_depth) = 0;
+            virtual void render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps) = 0;
             virtual void render_encoder_set_scissor(uint32_t x, uint32_t y, uint32_t width, uint32_t height) = 0;
+            virtual void render_encoder_set_blend_factor(const float* blend_factor) = 0;
             virtual void render_encoder_bind_pipeline(IRenderPipeline* pipeline) = 0;
             virtual void render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) = 0;
             virtual void render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset) = 0;

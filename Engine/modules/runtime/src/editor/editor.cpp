@@ -58,12 +58,12 @@ namespace Cyber
                 native_heap->GetGPUDescriptorHandleForHeapStart());*/
                 
         }
-
+        /*
         void Editor::run()
         {
 
         }
-
+        */
         void Editor::new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight)
         {
             // Start the Dear ImGui frame
@@ -72,8 +72,8 @@ namespace Cyber
             m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
             ImGui::NewFrame();
         }
-
-        void Editor::update(RenderObject::ICommandBuffer* encoder, float deltaTime)
+        /*
+        void Editor::update(float deltaTime)
         {
             //ImGui_ImplWin32_NewFrame();
             //ImGui::NewFrame();
@@ -82,8 +82,9 @@ namespace Cyber
 
             // Rendering
             ImGui::Render();
+
             ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
-            RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
+            //RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
             //Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
             //ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
             m_imguiRenderer->render_draw_data(ImGui::GetDrawData());
@@ -92,9 +93,10 @@ namespace Cyber
             if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
             {
                 ImGui::UpdatePlatformWindows();
-                ImGui::RenderPlatformWindowsDefault(nullptr, Cmd->get_dx_cmd_list());
+                //ImGui::RenderPlatformWindowsDefault(nullptr, Cmd->get_dx_cmd_list());
             }
         }
+        */
 
         void Editor::finalize()
         {
@@ -106,29 +108,29 @@ namespace Cyber
 
         void Editor::end_frame()
         {
-            //m_imguiRenderer->end_frame();
+            m_imguiRenderer->end_frame();
             ImGui::EndFrame();
         }
 
-        void Editor::render(RenderObject::IRenderDevice* device)
+        void Editor::render(RenderObject::IDeviceContext* device_context, RenderObject::IRenderDevice* device)
         {
-           // ImGui::Render();
-            //m_imguiRenderer->render_draw_data(device, ImGui::GetDrawData());
+            ImGui::Render();
+            m_imguiRenderer->render_draw_data(device_context, ImGui::GetDrawData());
         }
 
         void Editor::invalidate_device_objects()
         {
-           // m_imguiRenderer->invalidate_device_objects();
+            m_imguiRenderer->invalidate_device_objects();
         }
 
         void Editor::create_device_objects()
         {
-           // m_imguiRenderer->create_device_objects();
+            m_imguiRenderer->create_device_objects();
         }
 
-        void Editor::create_fonts_texture()
+        void Editor::update_fonts_texture()
         {
-
+            m_imguiRenderer->create_fonts_texture();
         }
     }
 }

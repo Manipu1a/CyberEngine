@@ -37,8 +37,9 @@ public:
     void set_compute_root_signature(ID3D12RootSignature* root_signature);
     // Root Parameters
     void set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor);
-    void set_graphics_rrot_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues);
-
+    void set_graphics_root_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues);
+    
+    void set_descriptor_heaps(uint32_t num_descriptor_heaps, ID3D12DescriptorHeap* const *ppDescriptorHeaps);
     void set_pipeline_state(ID3D12PipelineState* pipeline_state);
 
     // Input Assembler
@@ -55,11 +56,14 @@ public:
     void transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier);
     void transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier);
     void set_scissor_rects(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
-    void set_viewport(float x, float y, float width, float height, float min_depth, float max_depth);
+    void set_blend_factor(const float* blend_factor);
+    void set_viewport(uint32_t num_viewport, const D3D12_VIEWPORT* vps);
     
     void begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags);
     void end_render_pass();
 
+    uint64_t update_sub_resource(ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate, uint32_t firstSubresource, uint32_t numSubresources, const D3D12_SUBRESOURCE_DATA* pSrcData);
+    
     void reset();
 private:
     ID3D12GraphicsCommandList* command_list;

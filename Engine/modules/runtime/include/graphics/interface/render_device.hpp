@@ -27,8 +27,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API RenderDeviceCreateDesc
         {
             bool m_disablePipelineCache;
-            eastl::vector<QueueGroupDesc> m_queueGroups;
-            uint32_t m_queueGroupCount;
+            uint32_t command_queue_count;
         };
 
         // Render device interface
@@ -47,8 +46,8 @@ namespace Cyber
             virtual Surface* surface_from_hwnd(HWND hwnd) = 0;
             virtual void free_surface(Surface* surface) = 0;
             virtual IFence* create_fence() = 0;
-            virtual void signal_fence(uint64_t value) = 0;
-            virtual void wait_fences() = 0;
+            virtual void signal_fence(SoftwareQueueIndex command_queue_id, uint64_t value) = 0;
+            virtual void wait_fences(SoftwareQueueIndex command_queue_id) = 0;
             virtual void free_fence(IFence* fence) = 0;
             virtual FENCE_STATUS query_fence_status(IFence* fence) = 0;
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
@@ -56,12 +55,7 @@ namespace Cyber
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
             virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
             
-            //virtual ICommandPool* create_command_pool(ICommandQueue* queue, const CommandPoolCreateDesc& commandPoolDesc) = 0;
-            //virtual ICommandBuffer* create_command_buffer(ICommandPool* pool, const CommandBufferCreateDesc& commandBufferDesc) = 0;
-
             // Queue APIs
-            virtual ICommandQueue* get_queue(COMMAND_QUEUE_TYPE type, uint32_t index) = 0;
-            //virtual void submit_queue(const QueueSubmitDesc& submitDesc) = 0;
             virtual void present(ISwapChain* swap_chain) = 0;
             virtual void wait_queue_idle(ICommandQueue* queue) = 0;
             virtual void free_queue(ICommandQueue* queue) = 0;
@@ -126,8 +120,6 @@ namespace Cyber
                 return m_deviceContexts[index];
             }
 
-            eastl::map<uint32_t, uint32_t>& GetCommandQueueCounts() { return m_commandQueueCounts; }
-
         protected:
             virtual void create_render_device_impl() = 0;
             
@@ -136,8 +128,7 @@ namespace Cyber
             RenderDeviceCreateDesc m_desc;
 
             eastl::vector<DeviceContextImplType*> m_deviceContexts;
-            eastl::map<uint32_t, CommandQueueImplType**> m_commandQueues;
-            eastl::map<uint32_t, uint32_t> m_commandQueueCounts;
+            eastl::vector<CommandQueueImplType*> m_commandQueues;
         public:
             friend TextureImplType;
             friend TextureViewImplType;

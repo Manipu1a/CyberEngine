@@ -45,9 +45,8 @@ namespace Cyber
             createInfo.BackBufferFmt = TEX_FORMAT_RGB32_FLOAT;
             createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
             createInfo.Hwnd = m_pWindow->get_native_window();
-
-            //m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
-            //m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
+            m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
+            m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
             m_pSampleApp->initialize();
         }
 
@@ -71,18 +70,16 @@ namespace Cyber
             m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
             m_pWindow->update(timestep);
             m_pRenderer->update(timestep);
-            //m_pEditor->update(timestep);
             m_pSampleApp->update(timestep);
             auto back_buffer_index = m_pSampleApp->get_back_buffer_index();
             auto swap_chain = m_pRenderer->get_swap_chain();
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(back_buffer_index);
-            //auto cmd = m_pRenderer->get_command_buffer();
             auto render_device = m_pRenderer->get_render_device();
-            //m_pEditor->update(cmd, deltaTime);
-            //m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
-            //m_pEditor->update(m_pRenderer->get_command_buffer(), deltaTime);
-            //m_pEditor->render(m_pRenderer->get_render_device());
-            //m_pEditor->end_frame();
+
+            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+            m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
+            m_pEditor->end_frame();
+
             m_pSampleApp->present();
         }
         
