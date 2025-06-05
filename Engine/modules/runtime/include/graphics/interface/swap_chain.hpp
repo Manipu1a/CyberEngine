@@ -37,18 +37,18 @@ namespace Cyber
             virtual void set_back_buffers(RenderObject::ITexture** srvs) = 0;
             virtual void set_back_buffer(RenderObject::ITexture* srv, uint32_t index) = 0;
 
-            virtual RenderObject::ITextureView** get_back_buffer_srv_views() const = 0;
-            virtual RenderObject::ITextureView* get_back_buffer_srv_view(uint32_t index) const = 0;
-            virtual void set_back_buffer_srv_views(RenderObject::ITextureView** srvViews) = 0;
-            virtual void set_back_buffer_srv_view(RenderObject::ITextureView* srvView, uint32_t index) = 0;
+            virtual RenderObject::ITexture_View** get_back_buffer_srv_views() const = 0;
+            virtual RenderObject::ITexture_View* get_back_buffer_srv_view(uint32_t index) const = 0;
+            virtual void set_back_buffer_srv_views(RenderObject::ITexture_View** srvViews) = 0;
+            virtual void set_back_buffer_srv_view(RenderObject::ITexture_View* srvView, uint32_t index) = 0;
 
             virtual uint32_t get_buffer_srv_count() const = 0;
             virtual void set_buffer_srv_count(uint32_t count) = 0;
 
             virtual RenderObject::ITexture* get_back_buffer_depth() const = 0;
             virtual void set_back_buffer_depth(RenderObject::ITexture* dsv) = 0;
-            virtual RenderObject::ITextureView* get_back_buffer_dsv() const = 0;
-            virtual void set_back_buffer_dsv(RenderObject::ITextureView* dsv) = 0;
+            virtual RenderObject::ITexture_View* get_back_buffer_dsv() const = 0;
+            virtual void set_back_buffer_dsv(RenderObject::ITexture_View* dsv) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -97,22 +97,22 @@ namespace Cyber
             {
                 m_ppBackBuffers[index] = srv;
             }
-            virtual RenderObject::ITextureView** get_back_buffer_srv_views() const override
+            virtual RenderObject::ITexture_View** get_back_buffer_srv_views() const override
             {
                 return m_ppBackBufferSRVs;
             }
 
-            virtual RenderObject::ITextureView* get_back_buffer_srv_view(uint32_t index) const override
+            virtual RenderObject::ITexture_View* get_back_buffer_srv_view(uint32_t index) const override
             {
                 return m_ppBackBufferSRVs[index];
             }
 
-            virtual void set_back_buffer_srv_views(RenderObject::ITextureView** srvViews) override
+            virtual void set_back_buffer_srv_views(RenderObject::ITexture_View** srvViews) override
             {
                 m_ppBackBufferSRVs = srvViews;
             }
 
-            virtual void set_back_buffer_srv_view(RenderObject::ITextureView* srvView, uint32_t index) override
+            virtual void set_back_buffer_srv_view(RenderObject::ITexture_View* srvView, uint32_t index) override
             {
                 m_ppBackBufferSRVs[index] = srvView;
             }
@@ -135,12 +135,12 @@ namespace Cyber
             {
                 m_pBackBufferDepth = dsv;
             }
-            virtual RenderObject::ITextureView* get_back_buffer_dsv() const override
+            virtual RenderObject::ITexture_View* get_back_buffer_dsv() const override
             {
                 return m_pBackBufferDSV;
             }
 
-            virtual void set_back_buffer_dsv(RenderObject::ITextureView* dsv) override
+            virtual void set_back_buffer_dsv(RenderObject::ITexture_View* dsv) override
             {
                 m_pBackBufferDSV = dsv;
             }
@@ -148,10 +148,10 @@ namespace Cyber
         protected:
             SwapChainDesc m_desc;
             RenderObject::ITexture** m_ppBackBuffers;
-            RenderObject::ITextureView** m_ppBackBufferSRVs;
+            RenderObject::ITexture_View** m_ppBackBufferSRVs;
             uint32_t m_bufferSRVCount;
             RenderObject::ITexture* m_pBackBufferDepth;
-            RenderObject::ITextureView* m_pBackBufferDSV;
+            RenderObject::ITexture_View* m_pBackBufferDSV;
         };
     }
 

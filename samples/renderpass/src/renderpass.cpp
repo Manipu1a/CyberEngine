@@ -26,7 +26,7 @@ namespace Cyber
             create_gfx_objects();
 
             // Create views
-            auto backBufferSRV = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * m_pSwapChain->get_buffer_srv_count());
+            auto backBufferSRV = (RenderObject::ITexture_View**)cyber_malloc(sizeof(RenderObject::ITexture_View*) * m_pSwapChain->get_buffer_srv_count());
             m_pSwapChain->set_back_buffer_srv_views(backBufferSRV); 
             for(uint32_t i = 0; i < m_pSwapChain->get_buffer_srv_count(); ++i)
             {
@@ -252,7 +252,7 @@ namespace Cyber
                 .m_arrayLayerCount = 1
             };
 
-            RenderObject::ITextureView* views[] = 
+            RenderObject::ITexture_View* views[] = 
             {
                 gbuffer.base_color_texture->get_default_texture_view(TVU_RTV_DSV),
                 gbuffer.depth_texture->get_default_texture_view(TVU_RTV_DSV),

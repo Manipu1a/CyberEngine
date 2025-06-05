@@ -64,7 +64,7 @@ namespace Cyber
 
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             
-            RenderObject::ITextureView* attachment_resources[1] = { back_buffer_view  };
+            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
             RenderObject::FrameBuffserDesc frame_buffer_desc = {
                 .m_pRenderPass = renderpass,
                 .m_attachmentCount = 1,
@@ -97,7 +97,14 @@ namespace Cyber
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc0);
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
-            device_context->render_encoder_set_viewport( 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height, 0.0f, 1.0f);
+            RenderObject::Viewport viewport;
+            viewport.top_left_x = 0.0f;
+            viewport.top_left_y = 0.0f;
+            viewport.width = back_buffer->get_create_desc().m_width;
+            viewport.height = back_buffer->get_create_desc().m_height;
+            viewport.min_depth = 0.0f;
+            viewport.max_depth = 1.0f;
+            device_context->render_encoder_set_viewport(1, &viewport);
             device_context->render_encoder_set_scissor( 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             device_context->render_encoder_bind_pipeline( pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );

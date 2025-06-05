@@ -5,6 +5,7 @@
 #include "texture.hpp"
 #include "texture_view.h"
 #include "buffer.h"
+#include "buffer_view.h"
 #include "frame_buffer.h"
 #include "swap_chain.hpp"
 #include "command_queue.h"
@@ -68,12 +69,14 @@ namespace Cyber
             virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) = 0;
             virtual void free_render_pipeline(IRenderPipeline* pipeline) = 0;
             // Resource APIs
-            virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
-            virtual void free_texture_view(ITextureView* view) = 0;
+            virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
+            virtual void free_texture_view(ITexture_View* view) = 0;
 
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) = 0;
             virtual void free_texture(ITexture* texture) = 0;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) = 0;
+            virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) = 0;
+            
             virtual void free_buffer(IBuffer* buffer) = 0;
             virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) = 0;
             virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) = 0;

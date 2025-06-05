@@ -265,7 +265,7 @@ namespace Cyber
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.size = sizeof(float4x4);
-            buffer_desc.descriptors = DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
             
             create_fonts_texture();
@@ -306,7 +306,7 @@ namespace Cyber
             //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
 
             auto texture = m_pDevice->create_texture(texture_desc, &texture_data);
-            font_srv = texture->get_default_texture_view(TVU_SRV);
+            font_srv = texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;
         }

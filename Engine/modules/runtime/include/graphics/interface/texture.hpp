@@ -4,6 +4,7 @@
 #include "texture_view.h"
 #include "device_object.h"
 #include "interface/graphics_types.h"
+#include "eastl/array.h"
 #include "core/debug.h"
 
 namespace Cyber
@@ -66,7 +67,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API ITexture : public IDeviceObject
         {
             virtual const TextureCreateDesc& get_create_desc() const = 0;
-            virtual ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const = 0;
+            virtual ITexture_View* get_default_texture_view(TEXTURE_VIEW_TYPE view_type) = 0;
             virtual GRAPHICS_RESOURCE_STATE get_old_state() const = 0;
             virtual void set_old_state(GRAPHICS_RESOURCE_STATE state) = 0;
             virtual GRAPHICS_RESOURCE_STATE get_new_state() const = 0;
@@ -109,12 +110,13 @@ namespace Cyber
                     reinterpret_cast<TextureViewImplType**>(&m_pDefaultTextureViews);
             }
 
-            ITextureView* get_default_texture_view(TEXTURE_VIEW_USAGE view_type) const override
+            virtual ITexture_View* get_default_texture_view(TEXTURE_VIEW_TYPE view_type) override
             {
-                const uint32_t num_default_views = 1;
-                return num_default_views > 1 ? 
-                    reinterpret_cast<TextureViewImplType**>(m_pDefaultTextureViews)[static_cast<uint32_t>(view_type)] : 
-                    reinterpret_cast<TextureViewImplType*>(m_pDefaultTextureViews);
+                auto view_index = views_indices[view_type];
+
+                auto** default_views = get_default_texture_views_array();
+
+                return reinterpret_cast<ITexture_View*>(default_views[view_index]);
             }
 
             virtual const TextureCreateDesc& get_create_desc() const override
@@ -122,25 +124,25 @@ namespace Cyber
                 return m_desc;
             }
 
-            virtual GRAPHICS_RESOURCE_STATE get_old_state() const
+            virtual GRAPHICS_RESOURCE_STATE get_old_state() const override
             {
                 return m_oldState;
             }
-            virtual void set_old_state(GRAPHICS_RESOURCE_STATE state)
+            virtual void set_old_state(GRAPHICS_RESOURCE_STATE state) override
             {
                 m_oldState = state;
             }
-            virtual GRAPHICS_RESOURCE_STATE get_new_state() const
+            virtual GRAPHICS_RESOURCE_STATE get_new_state() const override
             {
                 return m_newState;
             }
-            virtual void set_new_state(GRAPHICS_RESOURCE_STATE state)
+            virtual void set_new_state(GRAPHICS_RESOURCE_STATE state) override
             {
                 m_newState = state;
             }
             
         protected:
-            virtual TextureViewImplType* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
+            virtual ITexture_View* create_view_internal(const TextureViewCreateDesc& desc) const = 0;
 
             void create_default_views()
             {
@@ -160,37 +162,48 @@ namespace Cyber
 
                 uint32_t default_view_index = 0;
 
-                auto CreateDefaultView = [&](TEXTURE_VIEW_USAGE Usage)
+                auto CreateDefaultView = [&](TEXTURE_VIEW_TYPE view_type)
                 {
                     TextureViewCreateDesc view_desc = {};
-                    view_desc.m_pTexture = this;
-                    view_desc.m_format = m_desc.m_format;
-                    view_desc.m_usages = Usage;
-                    view_desc.m_aspects = TEXTURE_VIEW_ASPECT::TVA_COLOR;
-                    view_desc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
-                    view_desc.m_baseArrayLayer = 0;
-                    view_desc.m_arrayLayerCount = 1;
-                    view_desc.m_baseMipLevel = 0;
-                    view_desc.m_mipLevelCount = 1;
+                    view_desc.p_texture = this;
+                    view_desc.format = m_desc.m_format;
+                    view_desc.view_type = view_type;
+                    view_desc.aspects = TEXTURE_VIEW_ASPECT::TVA_COLOR;
+                    view_desc.dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
+                    view_desc.baseArrayLayer = 0;
+                    view_desc.arrayLayerCount = 1;
+                    view_desc.baseMipLevel = 0;
+                    view_desc.mipLevelCount = 1;
 
                     auto* view = create_view_internal(view_desc);
                     cyber_assert(view != nullptr, "Failed to create default texture view");
-                    default_views[default_view_index++] = view;
+                    default_views[default_view_index] = view;
+                    views_indices[view_type] = default_view_index++;
                 };
 
                 if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_RENDER_TARGET)
                 {
-                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_SRV);
+                    CreateDefaultView(TEXTURE_VIEW_TYPE::TEXTURE_VIEW_RENDER_TARGET);
                 }
                 
-                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL || m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE)
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL)
                 {
-                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_RTV_DSV);
+                    CreateDefaultView(TEXTURE_VIEW_TYPE::TEXTURE_VIEW_DEPTH_STENCIL);
+                }
+
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE)
+                {
+                    CreateDefaultView(TEXTURE_VIEW_TYPE::TEXTURE_VIEW_SHADER_RESOURCE);
                 }
 
                 if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS)
                 {
-                    CreateDefaultView(TEXTURE_VIEW_USAGE::TVU_UAV);
+                    CreateDefaultView(TEXTURE_VIEW_TYPE::TEXTURE_VIEW_UNORDERED_ACCESS);
+                }
+
+                if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_SHADING_RATE)
+                {
+                    CreateDefaultView(TEXTURE_VIEW_TYPE::TEXTURE_VIEW_SHADING_RATE);
                 }
 
                 cyber_assert(default_view_index == num_default_views, "Not all default views were created");
@@ -207,6 +220,8 @@ namespace Cyber
             GRAPHICS_RESOURCE_STATE m_newState;
             void* m_pNativeHandle;
             void* m_pDefaultTextureViews;
+
+            eastl::array<uint8_t, TEXTURE_VIEW_TYPE::TEXTURE_VIEW_NUM_VIEWS> views_indices;
 
             TextureCreateDesc m_desc;
         };

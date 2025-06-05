@@ -1,5 +1,4 @@
 #pragma once
-#include "common/flags.h"
 #include "common/cyber_graphics_config.h"
 #include "device_object.h"
 #include "interface/graphics_types.h"
@@ -11,21 +10,21 @@ namespace Cyber
         
         struct CYBER_GRAPHICS_API TextureViewCreateDesc
         {
-            const char8_t* m_name;
-            class ITexture* m_pTexture;
-            void* m_pNativeResource;
-            TEXTURE_FORMAT m_format;
-            TEXTURE_VIEW_USAGE m_usages;
-            TEXTURE_VIEW_ASPECT m_aspects;
-            TEXTURE_DIMENSION m_dimension;
-            uint32_t m_baseArrayLayer;
-            uint32_t m_arrayLayerCount;
-            uint32_t m_baseMipLevel;
-            uint32_t m_mipLevelCount;
+            const char8_t* name;
+            class ITexture* p_texture;
+            void* p_native_resource;
+            TEXTURE_FORMAT format;
+            uint32_t view_type;
+            TEXTURE_VIEW_ASPECT aspects;
+            TEXTURE_DIMENSION dimension;
+            uint32_t baseArrayLayer;
+            uint32_t arrayLayerCount;
+            uint32_t baseMipLevel;
+            uint32_t mipLevelCount;
         };
 
         //class CERenderDevice;
-        struct CYBER_GRAPHICS_API ITextureView : public IDeviceObject
+        struct CYBER_GRAPHICS_API ITexture_View : public IDeviceObject
         { 
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
         };

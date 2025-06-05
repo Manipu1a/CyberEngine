@@ -33,7 +33,7 @@ public:
 
     virtual void flush() override;
 
-    virtual void set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) override;
+    virtual void set_render_target(uint32_t numRenderTargets, ITexture_View* renderTargets[], ITexture_View* depthTarget) override;
 
     virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override;
     virtual void cmd_next_sub_pass() override;

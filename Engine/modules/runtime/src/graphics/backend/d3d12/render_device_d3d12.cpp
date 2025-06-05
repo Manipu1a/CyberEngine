@@ -37,6 +37,7 @@
 #include "graphics/backend/d3d12/shader_library_d3d12.h"
 #include "graphics/backend/d3d12/render_pipeline_d3d12.h"
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
+#include "graphics/backend/d3d12/buffer_view_d3d12.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -237,24 +238,25 @@ namespace Cyber
         if(m_pPSOCacheData) cyber_free(m_pPSOCacheData);
     }
 
-    RenderObject::ITextureView* RenderDevice_D3D12_Impl::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
+    RenderObject::ITexture_View* RenderDevice_D3D12_Impl::create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc)
     {
         RenderObject::TextureView_D3D12_Impl* tex_view = cyber_new<RenderObject::TextureView_D3D12_Impl>(this, viewDesc);
         ID3D12Resource* native_resource = nullptr;
-        if(viewDesc.m_pNativeResource)
+        if(viewDesc.p_native_resource)
         {
-            native_resource = (ID3D12Resource*)viewDesc.m_pNativeResource;
+            native_resource = (ID3D12Resource*)viewDesc.p_native_resource;
         }
-        else if(viewDesc.m_pTexture)
+        else if(viewDesc.p_texture)
         {
-            RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.m_pTexture);
+            RenderObject::Texture_D3D12_Impl* tex = static_cast<RenderObject::Texture_D3D12_Impl*>(viewDesc.p_texture);
             native_resource = tex->get_d3d12_resource();
         }
         cyber_check(native_resource);
 
         // Consume handles
-        const auto usages = viewDesc.m_usages;
-        uint32_t handleCount = ((usages & TVU_SRV) ? 1 : 0) + ((usages & TVU_UAV) ? 1 : 0);
+        const auto view_usage = viewDesc.view_type;
+        uint32_t handleCount = ((view_usage & TEXTURE_VIEW_SHADER_RESOURCE) ? 1 : 0) 
+                                + ((view_usage & TEXTURE_VIEW_UNORDERED_ACCESS) ? 1 : 0);
 
         if(handleCount > 0)
         {
@@ -263,35 +265,35 @@ namespace Cyber
             tex_view->m_srvDescriptorOffset = 0;
             uint64_t current_offset_cursor = tex_view->m_srvDescriptorOffset;
             // Create SRV
-            if(usages & TVU_SRV)
+            if(view_usage & TEXTURE_VIEW_SHADER_RESOURCE)
             {
                 D3D12_CPU_DESCRIPTOR_HANDLE srv = { tex_view->m_dxDescriptorHandles.ptr + tex_view->m_srvDescriptorOffset };
                 D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-                srvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
+                srvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
                 srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                switch (viewDesc.m_dimension)
+                switch (viewDesc.dimension)
                 {
                     case TEX_DIMENSION_1D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1D;
-                        srvDesc.Texture1D.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.Texture1D.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.Texture1D.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.Texture1D.MostDetailedMip = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_1D_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE1DARRAY;
-                        srvDesc.Texture1DArray.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.Texture1DArray.MostDetailedMip = viewDesc.m_baseMipLevel;
-                        srvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        srvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        srvDesc.Texture1DArray.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.Texture1DArray.MostDetailedMip = viewDesc.baseMipLevel;
+                        srvDesc.Texture1DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        srvDesc.Texture1DArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                        srvDesc.Texture2D.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.Texture2D.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.Texture2D.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.Texture2D.MostDetailedMip = viewDesc.baseMipLevel;
                         srvDesc.Texture2D.PlaneSlice = 0;
                         srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
                     }
@@ -299,10 +301,10 @@ namespace Cyber
                     case TEX_DIMENSION_2D_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DARRAY;
-                        srvDesc.Texture2DArray.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.Texture2DArray.MostDetailedMip = viewDesc.m_baseMipLevel;
-                        srvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        srvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        srvDesc.Texture2DArray.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.Texture2DArray.MostDetailedMip = viewDesc.baseMipLevel;
+                        srvDesc.Texture2DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        srvDesc.Texture2DArray.ArraySize = viewDesc.arrayLayerCount;
                         srvDesc.Texture2DArray.PlaneSlice = 0;
                         srvDesc.Texture2DArray.ResourceMinLODClamp = 0.0f;
                     }
@@ -315,31 +317,31 @@ namespace Cyber
                     case TEX_DIMENSION_2DMS_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2DMSARRAY;
-                        srvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        srvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        srvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        srvDesc.Texture2DMSArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_3D:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE3D;
-                        srvDesc.Texture3D.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.Texture3D.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.Texture3D.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.Texture3D.MostDetailedMip = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_CUBE:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                        srvDesc.TextureCube.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.TextureCube.MostDetailedMip = viewDesc.m_baseMipLevel;
+                        srvDesc.TextureCube.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.TextureCube.MostDetailedMip = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_CUBE_ARRAY:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBEARRAY;
-                        srvDesc.TextureCubeArray.MipLevels = viewDesc.m_mipLevelCount;
-                        srvDesc.TextureCubeArray.MostDetailedMip = viewDesc.m_baseMipLevel;
-                        srvDesc.TextureCubeArray.First2DArrayFace = viewDesc.m_baseArrayLayer;
-                        srvDesc.TextureCubeArray.NumCubes = viewDesc.m_arrayLayerCount;
+                        srvDesc.TextureCubeArray.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.TextureCubeArray.MostDetailedMip = viewDesc.baseMipLevel;
+                        srvDesc.TextureCubeArray.First2DArrayFace = viewDesc.baseArrayLayer;
+                        srvDesc.TextureCubeArray.NumCubes = viewDesc.arrayLayerCount;
                     }
                     break;
                     default:
@@ -350,52 +352,52 @@ namespace Cyber
                 current_offset_cursor += heap->get_descriptor_size() * 1;
             }
             // Create UAV
-            if(usages & TVU_UAV)
+            if(view_usage & TEXTURE_VIEW_UNORDERED_ACCESS)
             {
                 tex_view->m_uavDescriptorOffset = current_offset_cursor;
                 current_offset_cursor += heap->get_descriptor_size() * 1;
                 D3D12_CPU_DESCRIPTOR_HANDLE uav = { tex_view->m_dxDescriptorHandles.ptr + tex_view->m_uavDescriptorOffset };
                 D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-                uavDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
-                cyber_assert(viewDesc.m_mipLevelCount <= 1, "UAVs can only be created for a single mip level");
-                switch(viewDesc.m_dimension)
+                uavDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
+                cyber_assert(viewDesc.mipLevelCount <= 1, "UAVs can only be created for a single mip level");
+                switch(viewDesc.dimension)
                 {
                     case TEX_DIMENSION_1D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1D;
-                        uavDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
+                        uavDesc.Texture1D.MipSlice = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_1D_ARRAY:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE1DARRAY;
-                        uavDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        uavDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        uavDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        uavDesc.Texture1DArray.MipSlice = viewDesc.baseMipLevel;
+                        uavDesc.Texture1DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        uavDesc.Texture1DArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-                        uavDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
+                        uavDesc.Texture2D.MipSlice = viewDesc.baseMipLevel;
                         uavDesc.Texture2D.PlaneSlice = 0;
                     }
                     break;
                     case TEX_DIMENSION_2D_ARRAY:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2DARRAY;
-                        uavDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        uavDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        uavDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        uavDesc.Texture2DArray.MipSlice = viewDesc.baseMipLevel;
+                        uavDesc.Texture2DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        uavDesc.Texture2DArray.ArraySize = viewDesc.arrayLayerCount;
                         uavDesc.Texture2DArray.PlaneSlice = 0;
                     }
                     break;
                     case TEX_DIMENSION_3D:
                     {
                         uavDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE3D;
-                        uavDesc.Texture3D.MipSlice = viewDesc.m_baseMipLevel;
+                        uavDesc.Texture3D.MipSlice = viewDesc.baseMipLevel;
                         uavDesc.Texture3D.FirstWSlice = 0;
-                        uavDesc.Texture3D.WSize = viewDesc.m_arrayLayerCount;
+                        uavDesc.Texture3D.WSize = viewDesc.arrayLayerCount;
                     }
                     break;
                     default:
@@ -407,44 +409,44 @@ namespace Cyber
         }
 
         // Create RTV
-        if(usages & TVU_RTV_DSV)
+        if(view_usage & TEXTURE_VIEW_RENDER_TARGET || view_usage & TEXTURE_VIEW_DEPTH_STENCIL || view_usage & TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL)
         {
-            const bool isDSV = FormatUtil_IsDepthStencilFormat(viewDesc.m_format);
+            const bool isDSV = FormatUtil_IsDepthStencilFormat(viewDesc.format);
 
             if(isDSV)
             {
                 DescriptorHeap_D3D12* dsv_heap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_DSV];
                 tex_view->m_rtvDsvDescriptorHandle = DescriptorHeap_D3D12::consume_descriptor_handles(dsv_heap, 1).mCpu;
                 D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
-                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, false);
-                switch (viewDesc.m_dimension)
+                dsvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, false);
+                switch (viewDesc.dimension)
                 {
                     case TEX_DIMENSION_1D:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1D;
-                        dsvDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
+                        dsvDesc.Texture1D.MipSlice = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_1D_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE1DARRAY;
-                        dsvDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        dsvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        dsvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        dsvDesc.Texture1DArray.MipSlice = viewDesc.baseMipLevel;
+                        dsvDesc.Texture1DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        dsvDesc.Texture1DArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2D:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-                        dsvDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
+                        dsvDesc.Texture2D.MipSlice = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_2D_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DARRAY;
-                        dsvDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        dsvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        dsvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        dsvDesc.Texture2DArray.MipSlice = viewDesc.baseMipLevel;
+                        dsvDesc.Texture2DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        dsvDesc.Texture2DArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2DMS:
@@ -455,8 +457,8 @@ namespace Cyber
                     case TEX_DIMENSION_2DMS_ARRAY:
                     {
                         dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2DMSARRAY;
-                        dsvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        dsvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        dsvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        dsvDesc.Texture2DMSArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     default:
@@ -470,27 +472,27 @@ namespace Cyber
                 DescriptorHeap_D3D12* rtv_heap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_RTV];
                 tex_view->m_rtvDsvDescriptorHandle = DescriptorHeap_D3D12::consume_descriptor_handles(rtv_heap, 1).mCpu;
                 D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-                rtvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.m_format, true);
-                switch(viewDesc.m_dimension)
+                rtvDesc.Format = DXGIUtil_TranslatePixelFormat(viewDesc.format, true);
+                switch(viewDesc.dimension)
                 {
                     case TEX_DIMENSION_1D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1D;
-                        rtvDesc.Texture1D.MipSlice = viewDesc.m_baseMipLevel;
+                        rtvDesc.Texture1D.MipSlice = viewDesc.baseMipLevel;
                     }
                     break;
                     case TEX_DIMENSION_1D_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE1DARRAY;
-                        rtvDesc.Texture1DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        rtvDesc.Texture1DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        rtvDesc.Texture1DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        rtvDesc.Texture1DArray.MipSlice = viewDesc.baseMipLevel;
+                        rtvDesc.Texture1DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        rtvDesc.Texture1DArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_2D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
-                        rtvDesc.Texture2D.MipSlice = viewDesc.m_baseMipLevel;
+                        rtvDesc.Texture2D.MipSlice = viewDesc.baseMipLevel;
                         rtvDesc.Texture2D.PlaneSlice = 0;
                     }
                     break;
@@ -502,25 +504,25 @@ namespace Cyber
                     case TEX_DIMENSION_2D_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
-                        rtvDesc.Texture2DArray.MipSlice = viewDesc.m_baseMipLevel;
-                        rtvDesc.Texture2DArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        rtvDesc.Texture2DArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        rtvDesc.Texture2DArray.MipSlice = viewDesc.baseMipLevel;
+                        rtvDesc.Texture2DArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        rtvDesc.Texture2DArray.ArraySize = viewDesc.arrayLayerCount;
                         rtvDesc.Texture2DArray.PlaneSlice = 0;
                     }
                     break;
                     case TEX_DIMENSION_2DMS_ARRAY:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DMSARRAY;
-                        rtvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.m_baseArrayLayer;
-                        rtvDesc.Texture2DMSArray.ArraySize = viewDesc.m_arrayLayerCount;
+                        rtvDesc.Texture2DMSArray.FirstArraySlice = viewDesc.baseArrayLayer;
+                        rtvDesc.Texture2DMSArray.ArraySize = viewDesc.arrayLayerCount;
                     }
                     break;
                     case TEX_DIMENSION_3D:
                     {
                         rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE3D;
-                        rtvDesc.Texture3D.MipSlice = viewDesc.m_baseMipLevel;
-                        rtvDesc.Texture3D.FirstWSlice = viewDesc.m_baseArrayLayer;
-                        rtvDesc.Texture3D.WSize = viewDesc.m_arrayLayerCount;
+                        rtvDesc.Texture3D.MipSlice = viewDesc.baseMipLevel;
+                        rtvDesc.Texture3D.FirstWSlice = viewDesc.baseArrayLayer;
+                        rtvDesc.Texture3D.WSize = viewDesc.arrayLayerCount;
                     }
                     break;
                     default:
@@ -533,15 +535,15 @@ namespace Cyber
         return tex_view;
     }
 
-    void RenderDevice_D3D12_Impl::free_texture_view(RenderObject::ITextureView* view)
+    void RenderDevice_D3D12_Impl::free_texture_view(RenderObject::ITexture_View* view)
     {
         RenderObject::TextureView_D3D12_Impl* tex_view = static_cast<RenderObject::TextureView_D3D12_Impl*>(view);
-        const auto usages = tex_view->m_desc.m_usages;
-        const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->m_desc.m_format);
+        const auto usages = tex_view->m_desc.view_type;
+        const bool isDSV = FormatUtil_IsDepthStencilFormat(tex_view->m_desc.format);
         if(tex_view->m_dxDescriptorHandles.ptr != D3D12_GPU_VIRTUAL_ADDRESS_NULL)
         {
-            uint32_t handleCount = ((usages & TVU_SRV) ? 1 : 0) + ((usages & TVU_UAV) ? 1 : 0);
-            
+            uint32_t handleCount = ((usages & TEXTURE_VIEW_SHADER_RESOURCE) ? 1 : 0) + ((usages & TEXTURE_VIEW_UNORDERED_ACCESS) ? 1 : 0);
+
         }
     }
 
@@ -619,7 +621,7 @@ namespace Cyber
             {
                 d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
             }
-            if((Desc.m_bindFlags & (GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT)) == 0 && (Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL) != 0)
+            if((Desc.m_bindFlags & (GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT)) != 0 && (Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL) != 0)
             {
                 d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
             }
@@ -767,6 +769,12 @@ namespace Cyber
             pTexture->allocation = nullptr;
             pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
             pTexture->set_new_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+        }
+
+
+        // Create Descriptor
+        {
+            
         }
 
         return pTexture;
@@ -968,7 +976,7 @@ namespace Cyber
 
         SAFE_RELEASE(swapchain);
         // Get swapchain images
-        auto back_buffer_views = (RenderObject::ITextureView**)cyber_malloc(sizeof(RenderObject::ITextureView*) * buffer_count);
+        auto back_buffer_views = (RenderObject::ITexture_View**)cyber_malloc(sizeof(RenderObject::ITexture_View*) * buffer_count);
         dxSwapChain->set_back_buffer_srv_views(back_buffer_views);
         auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
         dxSwapChain->set_back_buffers(back_buffers);
@@ -978,14 +986,14 @@ namespace Cyber
         {
             CHECK_HRESULT(dxSwapChain->get_dx_swap_chain()->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
             TextureViewCreateDesc textureViewDesc = {};
-            textureViewDesc.m_dimension = TEX_DIMENSION_2D;
-            textureViewDesc.m_format = desc.m_format;
-            textureViewDesc.m_usages = TVU_RTV_DSV;
-            textureViewDesc.m_aspects = TVA_COLOR;
-            textureViewDesc.m_arrayLayerCount = 1;
-            textureViewDesc.m_pNativeResource = backbuffers[i];
-            textureViewDesc.m_mipLevelCount = 1;
-            textureViewDesc.m_baseMipLevel = 0;
+            textureViewDesc.dimension = TEX_DIMENSION_2D;
+            textureViewDesc.format = desc.m_format;
+            textureViewDesc.view_type = TEXTURE_VIEW_RENDER_TARGET;
+            textureViewDesc.aspects = TVA_COLOR;
+            textureViewDesc.arrayLayerCount = 1;
+            textureViewDesc.p_native_resource = backbuffers[i];
+            textureViewDesc.mipLevelCount = 1;
+            textureViewDesc.baseMipLevel = 0;
             auto back_buffer_view = create_texture_view(textureViewDesc);
             dxSwapChain->set_back_buffer_srv_view(back_buffer_view, i);
 
@@ -1025,12 +1033,12 @@ namespace Cyber
         auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->get_back_buffer_depth());
 
         TextureViewCreateDesc depthStencilViewDesc = {};
-        depthStencilViewDesc.m_pTexture = dxSwapChain->get_back_buffer_depth();
-        depthStencilViewDesc.m_dimension = TEX_DIMENSION_2D;
-        depthStencilViewDesc.m_format = TEX_FORMAT_D24_UNORM_S8_UINT;
-        depthStencilViewDesc.m_usages = TVU_RTV_DSV;
-        depthStencilViewDesc.m_aspects = TVA_DEPTH;
-        depthStencilViewDesc.m_arrayLayerCount = 1;
+        depthStencilViewDesc.p_texture = dxSwapChain->get_back_buffer_depth();
+        depthStencilViewDesc.dimension = TEX_DIMENSION_2D;
+        depthStencilViewDesc.format = TEX_FORMAT_D24_UNORM_S8_UINT;
+        depthStencilViewDesc.view_type = TEXTURE_VIEW_DEPTH_STENCIL;
+        depthStencilViewDesc.aspects = TVA_DEPTH;
+        depthStencilViewDesc.arrayLayerCount = 1;
         dxSwapChain->set_back_buffer_dsv(create_texture_view(depthStencilViewDesc));
 
         dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
@@ -1912,110 +1920,131 @@ namespace Cyber
 
                     memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
                     upload_buffer->Unmap(0, nullptr);
-
-
                 }
             }
-
-            // Create Descriptors
-            //if(!(create_desc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
-            {
-                DescriptorHeap_D3D12* pHeap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
-                uint32_t handleCount = ((create_desc.descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER) ? 1 : 0) + 
-                                        ((create_desc.descriptors & DESCRIPTOR_TYPE_BUFFER) ? 1 : 0) +
-                                        ((create_desc.descriptors & DESCRIPTOR_TYPE_RW_BUFFER) ? 1 : 0);
-                d3d12_buffer->m_dxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(pHeap, handleCount).mCpu;
-            
-                // Create CBV
-                if(create_desc.descriptors & DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-                {
-                    d3d12_buffer->m_srvDescriptorOffset = 1;
-
-                    D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-                    cbvDesc.BufferLocation = d3d12_buffer->m_dxGpuAddress;
-                    cbvDesc.SizeInBytes = (UINT)allocationSize;
-                    create_constant_buffer_view( &cbvDesc, d3d12_buffer->m_dxDescriptorHandles);
-                }
-
-                // Create SRV
-                if(create_desc.descriptors & DESCRIPTOR_TYPE_BUFFER)
-                {
-                    D3D12_CPU_DESCRIPTOR_HANDLE srv = {d3d12_buffer->m_dxDescriptorHandles.ptr + d3d12_buffer->m_srvDescriptorOffset};
-                    d3d12_buffer->m_uavDescriptorOffset = d3d12_buffer->m_srvDescriptorOffset + pHeap->get_descriptor_size() * 1;
-
-                    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-                    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
-                    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                    srvDesc.Buffer.FirstElement = create_desc.firstElement;
-                    srvDesc.Buffer.NumElements = (UINT)create_desc.elementCount;
-                    srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
-                    srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(create_desc.format);
-                    if(DESCRIPTOR_TYPE_BUFFER_RAW == (create_desc.descriptors & DESCRIPTOR_TYPE_BUFFER_RAW))
-                    {
-                        if(create_desc.format != TEX_FORMAT_UNKNOWN)
-                        {
-                            CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
-                        }
-                        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-                        srvDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
-                    }
-                    // Cannot create a typed StructuredBuffer
-                    if(srvDesc.Format != DXGI_FORMAT_UNKNOWN)
-                    {
-                        srvDesc.Buffer.StructureByteStride = 0;
-                    }
-                    create_shader_resource_view(d3d12_buffer->m_pDxResource, &srvDesc, srv);
-                }
-
-                // Create UAV
-                if(create_desc.descriptors & DESCRIPTOR_TYPE_RW_BUFFER)
-                {
-                    D3D12_CPU_DESCRIPTOR_HANDLE uav = {d3d12_buffer->m_dxDescriptorHandles.ptr + d3d12_buffer->m_uavDescriptorOffset};
-
-                    D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
-                    uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-                    uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
-                    uavDesc.Buffer.FirstElement = create_desc.firstElement;
-                    uavDesc.Buffer.NumElements = (UINT)create_desc.elementCount;
-                    uavDesc.Buffer.StructureByteStride = (UINT)create_desc.structStride;
-                    uavDesc.Buffer.CounterOffsetInBytes = 0;
-                    uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
-                    if(DESCRIPTOR_TYPE_RW_BUFFER_RAW == (create_desc.descriptors & DESCRIPTOR_TYPE_RW_BUFFER_RAW))
-                    {
-                        if(create_desc.format != TEX_FORMAT_UNKNOWN)
-                            CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
-                        uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-                        uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
-                    }
-                    else if(create_desc.format != TEX_FORMAT_UNKNOWN)
-                    {
-                        uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(create_desc.format);
-                        D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
-                        HRESULT hr = m_pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
-                        if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
-                            !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
-                        {
-                            CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)create_desc.format);
-                            uavDesc.Format = DXGI_FORMAT_UNKNOWN;
-                        }
-                    }
-                    // Cannot create a typed RWStructuredBuffer
-                    if(uavDesc.Format != DXGI_FORMAT_UNKNOWN)
-                    {
-                        uavDesc.Buffer.StructureByteStride = 0;
-                    }
-
-                    ID3D12Resource* pCounterResource = create_desc.pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(create_desc.pCounterBuffer)->m_pDxResource : nullptr;
-                    create_unordered_access_view(d3d12_buffer->m_pDxResource, pCounterResource, &uavDesc, uav);
-                }
-            }
-
-            d3d12_buffer->m_size = create_desc.size;      
-            d3d12_buffer->m_memoryUsage = create_desc.usage;
-            d3d12_buffer->m_descriptors = create_desc.descriptors;
+            d3d12_buffer->m_size = allocationSize;      
         }   
 
+        
         return d3d12_buffer;
+    }
+
+    IBuffer_View* RenderDevice_D3D12_Impl::create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc)
+    {
+        cyber_check_msg(viewDesc.buffer != nullptr, "Buffer view must have a valid buffer");
+        Buffer_View_D3D12_Impl* d3d12_view = cyber_new<Buffer_View_D3D12_Impl>(this, viewDesc);
+        Buffer_D3D12_Impl* d3d12_buffer = static_cast<Buffer_D3D12_Impl*>(viewDesc.buffer);
+        const auto create_desc = d3d12_buffer->get_create_desc();
+        
+        // Create Descriptors
+        //if(!(create_desc.m_flags & BCF_NO_DESCRIPTOR_VIEW_CREATION))
+        {
+            DescriptorHeap_D3D12* pHeap = m_cpuDescriptorHeaps[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV];
+            uint32_t handleCount = ((viewDesc.view_type & BUFFER_VIEW_UNIFORM_BUFFER) ? 1 : 0) + 
+                                    ((viewDesc.view_type & BUFFER_VIEW_SHADER_RESOURCE) ? 1 : 0) +
+                                    ((viewDesc.view_type & BUFFER_VIEW_UNORDERED_ACCESS) ? 1 : 0);
+            d3d12_buffer->m_dxDescriptorHandles = DescriptorHeap_D3D12::consume_descriptor_handles(pHeap, handleCount).mCpu;
+        
+            // Create CBV
+            if(viewDesc.view_type & BUFFER_VIEW_UNIFORM_BUFFER)
+            {
+                d3d12_buffer->m_srvDescriptorOffset = 1;
+
+                D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+                cbvDesc.BufferLocation = d3d12_buffer->m_dxGpuAddress;
+                cbvDesc.SizeInBytes = (UINT)d3d12_buffer->get_size();;
+                create_constant_buffer_view( &cbvDesc, d3d12_buffer->m_dxDescriptorHandles);
+            }
+
+            // Create SRV
+            if(viewDesc.view_type & BUFFER_VIEW_SHADER_RESOURCE)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE srv = {d3d12_buffer->m_dxDescriptorHandles.ptr + d3d12_buffer->m_srvDescriptorOffset};
+                d3d12_buffer->m_uavDescriptorOffset = d3d12_buffer->m_srvDescriptorOffset + pHeap->get_descriptor_size() * 1;
+
+                D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+                srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+                srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+                srvDesc.Buffer.FirstElement = viewDesc.first_element;
+                srvDesc.Buffer.NumElements = (UINT)viewDesc.element_count;
+                srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+                if(create_desc.mode == BUFFER_MODE_RAW)
+                {
+                    if(create_desc.format != TEX_FORMAT_UNKNOWN)
+                    {
+                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                    }
+                    srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                    srvDesc.Buffer.Flags |= D3D12_BUFFER_SRV_FLAG_RAW;
+                }
+                else if(create_desc.mode == BUFFER_MODE_STRUCTURED)
+                {
+                    cyber_check_msg(create_desc.structStride > 0, "Structured buffer must have a valid struct stride");
+                    srvDesc.Buffer.StructureByteStride = (UINT)create_desc.structStride;
+                    srvDesc.Format = DXGI_FORMAT_UNKNOWN; // Structured buffer does not have a format
+                }
+                else 
+                {
+                    cyber_check_msg(create_desc.format != TEX_FORMAT_UNKNOWN, "Buffer must have a valid format");
+                    srvDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(create_desc.format);
+                }
+                // Cannot create a typed StructuredBuffer
+                if(srvDesc.Format != DXGI_FORMAT_UNKNOWN)
+                {
+                    srvDesc.Buffer.StructureByteStride = 0;
+                }
+                create_shader_resource_view(d3d12_buffer->m_pDxResource, &srvDesc, srv);
+            }
+
+            // Create UAV
+            if(viewDesc.view_type & BUFFER_VIEW_UNORDERED_ACCESS)
+            {
+                D3D12_CPU_DESCRIPTOR_HANDLE uav = {d3d12_buffer->m_dxDescriptorHandles.ptr + d3d12_buffer->m_uavDescriptorOffset};
+
+                D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+                uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+                uavDesc.Buffer.FirstElement = create_desc.firstElement;
+                uavDesc.Buffer.NumElements = (UINT)create_desc.elementCount;
+                uavDesc.Buffer.CounterOffsetInBytes = 0;
+                uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
+                if(create_desc.mode == BUFFER_MODE_RAW)
+                {
+                    if(create_desc.format != TEX_FORMAT_UNKNOWN)
+                        CB_CORE_WARN("Raw buffer use R32 typeless format. Format will be ignored");
+                    uavDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+                    uavDesc.Buffer.Flags |= D3D12_BUFFER_UAV_FLAG_RAW;
+                }
+                else if(create_desc.mode == BUFFER_MODE_STRUCTURED)
+                {
+                    cyber_check_msg(create_desc.structStride > 0, "Structured buffer must have a valid struct stride");
+                    uavDesc.Buffer.StructureByteStride = (UINT)create_desc.structStride;
+                    uavDesc.Format = DXGI_FORMAT_UNKNOWN; // Structured buffer does not have a format
+                }
+                else if(create_desc.format != TEX_FORMAT_UNKNOWN)
+                {
+                    uavDesc.Format = (DXGI_FORMAT)DXGIUtil_TranslatePixelFormat(create_desc.format);
+                    D3D12_FEATURE_DATA_FORMAT_SUPPORT FormatSupport = {uavDesc.Format, D3D12_FORMAT_SUPPORT1_NONE, D3D12_FORMAT_SUPPORT2_NONE};
+                    HRESULT hr = m_pDxDevice->CheckFeatureSupport(D3D12_FEATURE_FORMAT_SUPPORT, &FormatSupport, sizeof(FormatSupport));
+                    if(!SUCCEEDED(hr) || !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_LOAD) || 
+                        !(FormatSupport.Support2 & D3D12_FORMAT_SUPPORT2_UAV_TYPED_STORE))
+                    {
+                        CB_CORE_WARN("Cannot use Typed UAV for buffer format [0]", (uint32_t)create_desc.format);
+                        uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+                    }
+                }
+                // Cannot create a typed RWStructuredBuffer
+                if(uavDesc.Format != DXGI_FORMAT_UNKNOWN)
+                {
+                    uavDesc.Buffer.StructureByteStride = 0;
+                }
+
+                ID3D12Resource* pCounterResource = create_desc.pCounterBuffer ? static_cast<RenderObject::Buffer_D3D12_Impl*>(create_desc.pCounterBuffer)->m_pDxResource : nullptr;
+                create_unordered_access_view(d3d12_buffer->m_pDxResource, pCounterResource, &uavDesc, uav);
+            }
+        }
+        
+        return d3d12_view;
     }
 
     void RenderDevice_D3D12_Impl::free_buffer(RenderObject::IBuffer* buffer)

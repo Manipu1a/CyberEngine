@@ -32,6 +32,8 @@ namespace Cyber
 
             virtual ~Buffer_D3D12_Impl() = default;
 
+            virtual IBuffer_View* create_view_internal(const BufferViewCreateDesc& desc) const;
+            
             D3D12_GPU_VIRTUAL_ADDRESS get_dx_gpu_address() const { return m_dxGpuAddress; }
             void set_dx_gpu_address(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress) { m_dxGpuAddress = gpuAddress; }
 
@@ -49,6 +51,21 @@ namespace Cyber
 
             D3D12MA::Allocation* get_dx_allocation() const { return m_pDxAllocation; }
             void set_dx_allocation(D3D12MA::Allocation* allocation) { m_pDxAllocation = allocation; }
+
+            D3D12_GPU_VIRTUAL_ADDRESS get_gpu_address(DeviceContextIndex context_id) const
+            {
+                if(m_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC)
+                {
+                    // For dynamic buffers, we return the GPU address of the last dynamic allocation
+                    return m_dynamicData[context_id].gpu_address;
+                }
+                else 
+                {
+                    return m_pDxResource->GetGPUVirtualAddress();
+                }
+
+                return m_dxGpuAddress;
+            }
         protected:
             /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress
             D3D12_GPU_VIRTUAL_ADDRESS m_dxGpuAddress;

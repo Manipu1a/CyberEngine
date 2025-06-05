@@ -19,7 +19,7 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
-            using TextureViewImplType = EngineD3D12ImplTraits::TextureViewImplType;
+            using TextureViewImplType = typename EngineD3D12ImplTraits::TextureViewImplType;
             using TTextureBase = Texture<EngineD3D12ImplTraits>;
             
             Texture_D3D12_Impl(RenderDeviceImplType* device, TextureCreateDesc desc) : TTextureBase(device, desc) 
@@ -40,7 +40,7 @@ namespace Cyber
 
             virtual void* get_native_texture() const override;
         protected:
-            virtual TextureView_D3D12_Impl* create_view_internal(const TextureViewCreateDesc& desc) const override;
+            virtual ITexture_View* create_view_internal(const TextureViewCreateDesc& desc) const override;
         protected:
             ID3D12Resource* native_resource;
             D3D12MA::Allocation* allocation;

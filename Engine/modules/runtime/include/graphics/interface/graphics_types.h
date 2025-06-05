@@ -15,7 +15,7 @@ namespace Cyber
     {
         class IRenderDevice;
         class ITexture;
-        class ITextureView;
+        class ITexture_View;
         class IBuffer;
         class IFrameBuffer;
         class ISwapChain;
@@ -140,53 +140,6 @@ namespace Cyber
         INDIRECT_COMMAND_BUFFER,            // metal ICB
         INDIRECT_COMMAND_BUFFER_RESET,      // metal ICB reset
         INDIRECT_COMMAND_BUFFER_OPTIMIZE    // metal ICB optimization
-    };
-    
-    CYBER_TYPED_ENUM(DESCRIPTOR_TYPE, uint32_t)
-    {
-        DESCRIPTOR_TYPE_UNDEFINED = 0,
-        DESCRIPTOR_TYPE_SAMPLER = 0x01,
-        // SRV Read only texture
-        DESCRIPTOR_TYPE_TEXTURE = (DESCRIPTOR_TYPE_SAMPLER << 1),
-        /// UAV Texture
-        DESCRIPTOR_TYPE_RW_TEXTURE = (DESCRIPTOR_TYPE_TEXTURE << 1),
-        // SRV Read only buffer
-        DESCRIPTOR_TYPE_BUFFER = (DESCRIPTOR_TYPE_RW_TEXTURE << 1),
-        DESCRIPTOR_TYPE_BUFFER_RAW = (DESCRIPTOR_TYPE_BUFFER | (DESCRIPTOR_TYPE_BUFFER << 1)),
-        /// UAV Buffer
-        DESCRIPTOR_TYPE_RW_BUFFER = (DESCRIPTOR_TYPE_BUFFER << 2),
-        DESCRIPTOR_TYPE_RW_BUFFER_RAW = (DESCRIPTOR_TYPE_RW_BUFFER | (DESCRIPTOR_TYPE_RW_BUFFER << 1)),
-        /// Uniform buffer
-        DESCRIPTOR_TYPE_UNIFORM_BUFFER = (DESCRIPTOR_TYPE_RW_BUFFER << 2),
-        /// Push constant / Root constant
-        DESCRIPTOR_TYPE_ROOT_CONSTANT = (DESCRIPTOR_TYPE_UNIFORM_BUFFER << 1),
-        /// IA
-        DESCRIPTOR_TYPE_VERTEX_BUFFER = (DESCRIPTOR_TYPE_ROOT_CONSTANT << 1),
-        DESCRIPTOR_TYPE_INDEX_BUFFER = (DESCRIPTOR_TYPE_VERTEX_BUFFER << 1),
-        DESCRIPTOR_TYPE_INDIRECT_BUFFER = (DESCRIPTOR_TYPE_INDEX_BUFFER << 1),
-        /// Cubemap SRV
-        DESCRIPTOR_TYPE_TEXTURE_CUBE = (DESCRIPTOR_TYPE_TEXTURE | (DESCRIPTOR_TYPE_INDIRECT_BUFFER << 1)),
-        /// RTV / DSV per mip slice
-        DESCRIPTOR_TYPE_RENDER_TARGET_MIP_SLICES = (DESCRIPTOR_TYPE_INDIRECT_BUFFER << 2),
-        /// RTV / DSV per array slice
-        DESCRIPTOR_TYPE_RENDER_TARGET_ARRAY_SLICES = (DESCRIPTOR_TYPE_RENDER_TARGET_MIP_SLICES << 1),
-        /// RTV / DSV per depth slice
-        DESCRIPTOR_TYPE_RENDER_TARGET_DEPTH_SLICES = (DESCRIPTOR_TYPE_RENDER_TARGET_ARRAY_SLICES << 1),
-        DESCRIPTOR_TYPE_RAY_TRACING = (DESCRIPTOR_TYPE_RENDER_TARGET_DEPTH_SLICES << 1),
-        DESCRIPTOR_TYPE_INDIRECT_COMMAND_BUFFER = (DESCRIPTOR_TYPE_RAY_TRACING << 1),
-    #if defined(VULKAN)
-        /// Subpass input (descriptor type only available in Vulkan)
-        DESCRIPTOR_TYPE_INPUT_ATTACHMENT = (DESCRIPTOR_TYPE_INDIRECT_COMMAND_BUFFER << 1),
-        DESCRIPTOR_TYPE_TEXEL_BUFFER = (DESCRIPTOR_TYPE_INPUT_ATTACHMENT << 1),
-        DESCRIPTOR_TYPE_RW_TEXEL_BUFFER = (DESCRIPTOR_TYPE_TEXEL_BUFFER << 1),
-        DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = (DESCRIPTOR_TYPE_RW_TEXEL_BUFFER << 1),
-        
-        /// Khronos extension ray tracing
-        DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE = (DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER << 1),
-        DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_BUILD_INPUT = (DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE << 1),
-        DESCRIPTOR_TYPE_SHADER_DEVICE_ADDRESS = (DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_BUILD_INPUT << 1),
-        DESCRIPTOR_TYPE_SHADER_BINDING_TABLE = (DESCRIPTOR_TYPE_SHADER_DEVICE_ADDRESS << 1),
-    #endif
     };
 
     CYBER_TYPED_ENUM(TEXTURE_CREATE_FLAG, uint32_t)
@@ -921,12 +874,25 @@ namespace Cyber
 
     DEFINE_FLAG_ENUM_OPERATORS(GRAPHICS_RESOURCE_TYPE);
     
-    CYBER_TYPED_ENUM(TEXTURE_VIEW_USAGE, uint8_t)
+    CYBER_TYPED_ENUM(TEXTURE_VIEW_TYPE, uint8_t)
     {
-        TVU_SRV = 0x01,
-        TVU_RTV_DSV = 0x02,
-        TVU_UAV = 0x04,
+        TEXTURE_VIEW_UNDEFINED = 0,
+
+        TEXTURE_VIEW_SHADER_RESOURCE = 0x00000001,
+
+        TEXTURE_VIEW_RENDER_TARGET = (TEXTURE_VIEW_SHADER_RESOURCE << 1),
+
+        TEXTURE_VIEW_DEPTH_STENCIL = (TEXTURE_VIEW_RENDER_TARGET << 1),
+
+        TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL = (TEXTURE_VIEW_DEPTH_STENCIL << 1),
+        // This view type is used for UAVs that can read and write to the texture.  
+        TEXTURE_VIEW_UNORDERED_ACCESS = (TEXTURE_VIEW_READ_ONLY_DEPTH_STENCIL << 1),
+
+        TEXTURE_VIEW_SHADING_RATE = (TEXTURE_VIEW_UNORDERED_ACCESS << 1),
+
+        TEXTURE_VIEW_NUM_VIEWS
     };
+    DEFINE_FLAG_ENUM_OPERATORS(TEXTURE_VIEW_TYPE);
 
     CYBER_TYPED_ENUM(TEXTURE_VIEW_ASPECT, uint8_t)
     {
@@ -1466,7 +1432,7 @@ namespace Cyber
         {
             const void** ptrs;
             /// Array of texture descriptors (srv and uav textures)
-            RenderObject::ITextureView** textures;
+            RenderObject::ITexture_View** textures;
             /// Array of sampler descriptors
             struct ISampler** samplers;
             /// Array of buffer descriptors (srv uav and cbv buffers)
@@ -1545,8 +1511,8 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API ColorAttachment
     {
-        RenderObject::ITextureView* view;
-        RenderObject::ITextureView* resolve_view;
+        RenderObject::ITexture_View* view;
+        RenderObject::ITexture_View* resolve_view;
         LOAD_ACTION load_action;
         STORE_ACTION store_action;
         GRAPHICS_CLEAR_VALUE clear_value;
@@ -1554,7 +1520,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API DepthStencilAttachment
     {
-        RenderObject::ITextureView* view;
+        RenderObject::ITexture_View* view;
         LOAD_ACTION depth_load_action;
         STORE_ACTION depth_store_action;
         float clear_depth;

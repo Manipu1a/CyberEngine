@@ -10,14 +10,14 @@ namespace Cyber
             const char8_t* m_name;
             class IRenderPass* m_pRenderPass;
             uint32_t m_attachmentCount;
-            class ITextureView** m_ppAttachments;
+            class ITexture_View** m_ppAttachments;
         };
         
         struct CYBER_GRAPHICS_API IFrameBuffer : public IDeviceObject
         {
             virtual const FrameBuffserDesc& get_create_desc() const = 0;
 
-            virtual ITextureView* get_attachment(uint32_t index) const = 0;
+            virtual ITexture_View* get_attachment(uint32_t index) const = 0;
             virtual IRenderPass* get_render_pass() const = 0;
         };
 
@@ -42,7 +42,7 @@ namespace Cyber
                 return m_desc;
             }
 
-            virtual ITextureView* get_attachment(uint32_t index) const override final
+            virtual ITexture_View* get_attachment(uint32_t index) const override final
             {
                 return m_ppAttachments[index];
             }
@@ -53,7 +53,7 @@ namespace Cyber
             }
         private:
             FrameBuffserDesc m_desc;
-            ITextureView** m_ppAttachments = nullptr;
+            ITexture_View** m_ppAttachments = nullptr;
             IRenderPass* m_pRenderPass = nullptr;
         };
     }

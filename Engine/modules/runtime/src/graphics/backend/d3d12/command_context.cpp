@@ -196,11 +196,10 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
 void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& transition_barrier)
 {
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
-
-    const auto& memory_usage = buffer.get_memory_usage();
-    if(memory_usage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_ONLY ||
-        memory_usage == GRAPHICS_RESOURCE_MEMORY_USAGE_GPU_TO_CPU ||
-        (memory_usage == GRAPHICS_RESOURCE_MEMORY_USAGE_CPU_TO_GPU && memory_usage & GRAPHICS_RESOURCE_TYPE_RW_BUFFER))
+    const auto& create_desc = buffer.get_create_desc();
+    if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_DEFAULT ||
+        create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING ||
+        (create_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC && create_desc.mode == BUFFER_MODE_RAW))
         {
             if(transition_barrier.src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
                 transition_barrier.dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)

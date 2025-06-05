@@ -11,7 +11,7 @@ namespace Cyber
             return native_resource;
         }
         
-        TextureView_D3D12_Impl* Texture_D3D12_Impl::create_view_internal(const TextureViewCreateDesc& desc) const
+        ITexture_View* Texture_D3D12_Impl::create_view_internal(const TextureViewCreateDesc& desc) const
         {
             auto* device = get_device();
 
@@ -23,7 +23,7 @@ namespace Cyber
                 return nullptr;
             }
 
-            return static_cast<TextureView_D3D12_Impl*>(texture_view);
+            return texture_view;
         }
     }
 }

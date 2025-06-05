@@ -78,7 +78,7 @@ namespace Cyber
 
             virtual void flush() = 0;
 
-            virtual void set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget) = 0;
+            virtual void set_render_target(uint32_t numRenderTargets, ITexture_View* renderTargets[], ITexture_View* depthTarget) = 0;
             // Render Pass
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_next_sub_pass() = 0;

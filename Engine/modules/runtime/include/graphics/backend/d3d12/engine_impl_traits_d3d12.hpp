@@ -5,8 +5,9 @@ namespace Cyber
     namespace RenderObject
     {
         class ITexture_D3D12;
-        class ITextureView_D3D12;
+        class ITexture_View_D3D12;
         class IBuffer_D3D12;
+        class IBuffer_View_D3D12;
         class IRenderDevice_D3D12;
         class ISwapChain_D3D12;
         class IFrameBuffer_D3D12;
@@ -30,8 +31,9 @@ namespace Cyber
         class IRenderPass_D3D12;
 
         class Texture_D3D12_Impl;
-        class TextureView_D3D12_Impl;
+        class Texture_View_D3D12_Impl;
         class Buffer_D3D12_Impl;
+        class Buffer_View_D3D12_Impl;
         class RenderDevice_D3D12_Impl;
         class SwapChain_D3D12_Impl;
         class FrameBuffer_D3D12_Impl;
@@ -58,8 +60,9 @@ namespace Cyber
         {
             // Interface
             using TextureInterface = ITexture_D3D12;
-            using TextureViewInterface = ITextureView_D3D12;
+            using TextureViewInterface = ITexture_View_D3D12;
             using BufferInterface = IBuffer_D3D12;
+            using BufferViewInterface = IBuffer_View_D3D12;
             using RenderDeviceInterface = IRenderDevice_D3D12;
             using SwapChainInterface = ISwapChain_D3D12;
             using FrameBufferInterface = IFrameBuffer_D3D12;
@@ -84,8 +87,9 @@ namespace Cyber
 
             // Impl
             using TextureImplType = Texture_D3D12_Impl;
-            using TextureViewImplType = TextureView_D3D12_Impl;
+            using TextureViewImplType = Texture_View_D3D12_Impl;
             using BufferImplType = Buffer_D3D12_Impl;
+            using BufferViewImplType = Buffer_View_D3D12_Impl;
             using RenderDeviceImplType = RenderDevice_D3D12_Impl;
             using SwapChainImplType = SwapChain_D3D12_Impl;
             using FrameBufferImplType = FrameBuffer_D3D12_Impl;

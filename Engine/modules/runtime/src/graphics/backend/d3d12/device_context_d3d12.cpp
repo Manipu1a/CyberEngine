@@ -54,7 +54,7 @@ void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& b
     transition_resource_state(barrierDesc);
 }
 
-void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITextureView* renderTargets[], ITextureView* depthTarget)
+void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITexture_View* renderTargets[], ITexture_View* depthTarget)
 {
     D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[8] = {};
     D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = {};
@@ -149,7 +149,7 @@ void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t 
 
 void DeviceContext_D3D12_Impl::render_encoder_set_blend_factor(const float* blend_factor)
 {
-    curr_command_context.set_blend_factor(blend_factor);
+    curr_command_context->set_blend_factor(blend_factor);
     ++state.num_command;
 }
 
@@ -272,7 +272,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            auto view = Framebuffer->get_attachment(attachmentIndex);
            TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
 
-           clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().m_format);
+           clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().format);
            clearValues[i].Color[0] = m_beginRenderPassAttribs.pClearValues[i].r;
            clearValues[i].Color[1] = m_beginRenderPassAttribs.pClearValues[i].g;
            clearValues[i].Color[2] = m_beginRenderPassAttribs.pClearValues[i].b;
@@ -282,8 +282,8 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
            if(attachmentRef.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
            {
-               Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().m_pTexture);
-               Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().m_pTexture);
+               Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
+               Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().p_texture);
                D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = D3D12_RENDER_PASS_ENDING_ACCESS_TYPE_RESOLVE;
                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };

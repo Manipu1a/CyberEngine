@@ -80,11 +80,13 @@ namespace Cyber
             virtual void free_render_pipeline(IRenderPipeline* pipeline) override;
             virtual void free_instance(IInstance* instance) override;
 
-            virtual ITextureView* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
-            virtual void free_texture_view(ITextureView* view) override;
+            virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
+            virtual void free_texture_view(ITexture_View* view) override;
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) override;
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
+            virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) override;
+
             virtual void free_buffer(IBuffer* buffer) override;
 
             virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) override;
@@ -167,7 +169,7 @@ namespace Cyber
 
             friend TextureImplType;
             friend BufferImplType;
-            friend TextureView_D3D12_Impl;
+            friend Texture_View_D3D12_Impl;
         };
     }
 }
