@@ -46,7 +46,7 @@ namespace Cyber
             createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
             createInfo.Hwnd = m_pWindow->get_native_window();
             m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
-            //m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
+            m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
             m_pSampleApp->initialize();
         }
 
@@ -76,9 +76,9 @@ namespace Cyber
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(back_buffer_index);
             auto render_device = m_pRenderer->get_render_device();
 
-            //m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
-            //m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
-            //m_pEditor->end_frame();
+            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+            m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
+            m_pEditor->end_frame();
 
             m_pSampleApp->present();
         }

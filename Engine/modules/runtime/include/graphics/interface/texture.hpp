@@ -5,6 +5,8 @@
 #include "device_object.h"
 #include "interface/graphics_types.h"
 #include "eastl/array.h"
+#include "platform/memory.h"
+#include "platform/platform_misc.h"
 #include "core/debug.h"
 
 namespace Cyber
@@ -102,6 +104,18 @@ namespace Cyber
 
             virtual void* get_native_texture() const = 0;
 
+            uint32_t get_num_default_views() const
+            {
+                constexpr auto bind_flags_with_views  = 
+                    GRAPHICS_RESOURCE_BIND_RENDER_TARGET | 
+                    GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL | 
+                    GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | 
+                    GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS | 
+                    GRAPHICS_RESOURCE_BIND_SHADING_RATE;
+                return Platform_Misc::count_one_bits(
+                    m_desc.m_bindFlags & bind_flags_with_views);
+            }
+
             TextureViewImplType** get_default_texture_views_array()
             {
                 const uint32_t num_default_views = 1;
@@ -148,7 +162,7 @@ namespace Cyber
             {
                 cyber_assert(m_pDefaultTextureViews == nullptr, "Default texture views already created");
 
-                const uint32_t num_default_views = 1;
+                const uint32_t num_default_views = get_num_default_views();
 
                 if(num_default_views == 0)
                     return;
@@ -177,7 +191,7 @@ namespace Cyber
 
                     auto* view = create_view_internal(view_desc);
                     cyber_assert(view != nullptr, "Failed to create default texture view");
-                    default_views[default_view_index] = view;
+                    default_views[default_view_index] = static_cast<TextureViewImplType*>(view);
                     views_indices[view_type] = default_view_index++;
                 };
 

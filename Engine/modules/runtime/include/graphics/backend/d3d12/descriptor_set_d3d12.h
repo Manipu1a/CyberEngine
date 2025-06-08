@@ -31,6 +31,9 @@ namespace Cyber
             uint64_t cbv_srv_uav_handle;
             /// Stride of the cbv srv uav descriptor table (number of descriptors * descriptor size)
             uint32_t cbv_srv_uav_stride;
+
+            D3D12_GPU_VIRTUAL_ADDRESS root_constant_address;
+            
             /// Start handle to sampler descriptor table
             uint64_t sampler_handle;
             /// Stride of the sampler descriptor table (number of descriptors * descriptor size)

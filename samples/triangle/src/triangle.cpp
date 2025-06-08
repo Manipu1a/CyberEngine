@@ -105,7 +105,14 @@ namespace Cyber
             viewport.min_depth = 0.0f;
             viewport.max_depth = 1.0f;
             device_context->render_encoder_set_viewport(1, &viewport);
-            device_context->render_encoder_set_scissor( 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
+            RenderObject::Rect scissor
+            {
+                0, 0, 
+                (int32_t)back_buffer->get_create_desc().m_width, 
+                (int32_t)back_buffer->get_create_desc().m_height
+            };
+
+            device_context->render_encoder_set_scissor( 1, &scissor);
             device_context->render_encoder_bind_pipeline( pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             device_context->render_encoder_draw(3, 0);

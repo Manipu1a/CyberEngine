@@ -251,14 +251,9 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const Buffer
         command_list->ResourceBarrier(1, &d3d_barrier);
 }
 
-void CommandContext::set_scissor_rects(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void CommandContext::set_scissor_rects(uint32_t num_scissor_rects, const D3D12_RECT* rects)
 {
-    D3D12_RECT rect;
-    rect.left = x;
-    rect.top = y;
-    rect.right = x + width;
-    rect.bottom = y + height;
-    command_list->RSSetScissorRects(1, &rect);
+    command_list->RSSetScissorRects(num_scissor_rects, rects);
 }
 
 void CommandContext::set_blend_factor(const float* blend_factor)

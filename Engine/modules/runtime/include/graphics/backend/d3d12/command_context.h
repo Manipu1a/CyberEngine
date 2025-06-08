@@ -55,7 +55,7 @@ public:
 
     void transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier);
     void transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier);
-    void set_scissor_rects(uint32_t x, uint32_t y, uint32_t width, uint32_t height);
+    void set_scissor_rects(uint32_t num_scissor_rects, const D3D12_RECT* rects);
     void set_blend_factor(const float* blend_factor);
     void set_viewport(uint32_t num_viewport, const D3D12_VIEWPORT* vps);
     

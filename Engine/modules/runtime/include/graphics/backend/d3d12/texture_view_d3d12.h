@@ -10,13 +10,14 @@ class RenderDevice_D3D12_Impl;
 struct ITexture_View_D3D12 : public ITexture_View
 {
 };
-class TextureView_D3D12_Impl : public Texture_View<EngineD3D12ImplTraits>
+
+class Texture_View_D3D12_Impl : public Texture_View<EngineD3D12ImplTraits>
 {
 public:
     using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
     using TTextureViewBase = Texture_View<EngineD3D12ImplTraits>;
-    TextureView_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const TextureViewCreateDesc& desc) : TTextureViewBase(device, desc) {  }
-    virtual ~TextureView_D3D12_Impl();
+    Texture_View_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const TextureViewCreateDesc& desc) : TTextureViewBase(device, desc) {  }
+    virtual ~Texture_View_D3D12_Impl();
 protected:
     D3D12_CPU_DESCRIPTOR_HANDLE m_dxDescriptorHandles;
     /// Offset from mDxDescriptors for srv descriptor handle

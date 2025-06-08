@@ -1,11 +1,15 @@
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/render_device_d3d12.h"
-#include "graphics/backend/d3d12/texture_view_d3d12.h"
 
 namespace Cyber
 {
     namespace RenderObject
     {
+        Texture_D3D12_Impl::Texture_D3D12_Impl(RenderDeviceImplType* device, TextureCreateDesc desc) 
+        : TTextureBase(device, desc), native_resource(nullptr), allocation(nullptr)
+        {
+        }
+        
         void* Texture_D3D12_Impl::get_native_texture() const
         {
             return native_resource;

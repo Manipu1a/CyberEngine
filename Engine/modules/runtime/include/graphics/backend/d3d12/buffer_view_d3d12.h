@@ -18,8 +18,24 @@ public:
     Buffer_View_D3D12_Impl(RenderDeviceImplType* device, const BufferViewCreateDesc& desc) : TBufferViewBase(device, desc) { }
 
     virtual ~Buffer_View_D3D12_Impl() = default;
-protected:
+    
+    D3D12_CPU_DESCRIPTOR_HANDLE get_dx_descriptor_handles() const { return m_dxDescriptorHandles; }
+    void set_dx_descriptor_handles(D3D12_CPU_DESCRIPTOR_HANDLE descriptorHandles) { m_dxDescriptorHandles = descriptorHandles; }
 
+    uint8_t get_srv_descriptor_offset() const { return m_srvDescriptorOffset; }
+    void set_srv_descriptor_offset(uint8_t offset) { m_srvDescriptorOffset = offset; }
+
+    uint8_t get_uav_descriptor_offset() const { return m_uavDescriptorOffset; }
+    void set_uav_descriptor_offset(uint8_t offset) { m_uavDescriptorOffset = offset; }
+
+protected:
+    /// Descriptor handle of the CBV in a CPU visible descriptor heap (applicable to BUFFER_USAGE_UNIFORM)
+    D3D12_CPU_DESCRIPTOR_HANDLE m_dxDescriptorHandles;
+    /// Offset from mDxDescriptors for srv descriptor handle
+    uint8_t m_srvDescriptorOffset;
+    /// Offset from mDxDescriptors for uav descriptor handle
+    uint8_t m_uavDescriptorOffset;
+    friend class RenderDevice_D3D12_Impl;
 };
 
 CYBER_END_NAMESPACE

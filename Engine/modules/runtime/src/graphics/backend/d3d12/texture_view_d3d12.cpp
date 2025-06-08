@@ -4,7 +4,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        TextureView_D3D12_Impl::~TextureView_D3D12_Impl()
+        Texture_View_D3D12_Impl ::~Texture_View_D3D12_Impl ()
         {
         }
     }

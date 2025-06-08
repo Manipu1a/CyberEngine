@@ -34,7 +34,8 @@ namespace Cyber
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* render_pipeline = nullptr;
-            RenderObject::ITextureView* font_srv = nullptr;
+            RenderObject::ITexture_View* font_srv = nullptr;
+            RenderObject::ITexture* font_texture = nullptr;
             RenderObject::IShaderResource* m_pSRB = nullptr;
             RenderObject::IShaderResource* texture_resource = nullptr;
 

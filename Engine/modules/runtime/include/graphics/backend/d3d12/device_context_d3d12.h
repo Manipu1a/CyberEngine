@@ -40,10 +40,10 @@ public:
     virtual void cmd_end_render_pass() override;
     virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) override;
     virtual void render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps) override;
-    virtual void render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height) override;
+    virtual void render_encoder_set_scissor(uint32_t num_rects, const Rect* rect) override;
     virtual void render_encoder_set_blend_factor(const float* blend_factor) override;
     virtual void render_encoder_bind_pipeline( IRenderPipeline* pipeline) override;
-    virtual void render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets) override;
+    virtual void render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint64_t* offsets) override;
     virtual void render_encoder_bind_index_buffer(IBuffer* buffer, uint32_t index_stride, uint64_t offset) override;
     virtual void render_encoder_push_constants(IRootSignature* rs, const char8_t* name, const void* data) override;
     virtual void render_encoder_draw(uint32_t vertex_count, uint32_t first_vertex) override;

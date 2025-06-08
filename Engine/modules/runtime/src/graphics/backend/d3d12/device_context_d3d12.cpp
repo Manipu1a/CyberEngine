@@ -61,13 +61,13 @@ void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITex
 
     for(uint32_t i = 0; i < numRenderTargets; i++)
     {
-        RenderObject::TextureView_D3D12_Impl* rtv = static_cast<RenderObject::TextureView_D3D12_Impl*>(renderTargets[i]);
+        RenderObject::Texture_View_D3D12_Impl * rtv = static_cast<RenderObject::Texture_View_D3D12_Impl *>(renderTargets[i]);
         rtvHandles[i] = rtv->m_rtvDsvDescriptorHandle;
     }
 
     if(depthTarget)
     {
-        RenderObject::TextureView_D3D12_Impl* dsv = static_cast<RenderObject::TextureView_D3D12_Impl*>(depthTarget);
+        RenderObject::Texture_View_D3D12_Impl * dsv = static_cast<RenderObject::Texture_View_D3D12_Impl *>(depthTarget);
         dsvHandle = dsv->m_rtvDsvDescriptorHandle;
     }
 
@@ -141,9 +141,18 @@ void DeviceContext_D3D12_Impl::render_encoder_set_viewport(uint32_t num_viewport
 
 }
 
-void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void DeviceContext_D3D12_Impl::render_encoder_set_scissor( uint32_t num_rects, const Rect* rect )
 {
-    curr_command_context->set_scissor_rects(x, y, width, height);
+    D3D12_RECT rects[MAX_RECTS];
+    for(uint32_t i = 0; i < num_rects; ++i)
+    {
+        const Rect& r = rect[i];
+        rects[i].left = r.left;
+        rects[i].top = r.top;
+        rects[i].right = r.right;
+        rects[i].bottom = r.bottom;
+    }
+    curr_command_context->set_scissor_rects(num_rects, rects);
     ++state.num_command;
 }
 
@@ -163,15 +172,15 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pi
     ++state.num_command;
 }
 
-void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint32_t* offsets)
+void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint64_t* offsets)
 {
     DECLARE_ZERO(D3D12_VERTEX_BUFFER_VIEW, views[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
     for(uint32_t i = 0;i < buffer_count; ++i)
     {
         const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffers[i]);
-        cyber_check(Buffer->get_dx_gpu_address() != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
+        cyber_check(Buffer->get_gpu_address(0) != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN);
 
-        views[i].BufferLocation = Buffer->get_dx_gpu_address() + (offsets ? offsets[i] : 0);
+        views[i].BufferLocation = Buffer->get_gpu_address(0) + (offsets ? offsets[i] : 0);
         views[i].SizeInBytes = (UINT)(Buffer->get_size() - (offsets ? offsets[i] : 0));
         views[i].StrideInBytes = (UINT)strides[i];  
     }
@@ -270,7 +279,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
            auto attachmentIndex = attachmentRef.m_attachmentIndex;
            auto view = Framebuffer->get_attachment(attachmentIndex);
-           TextureView_D3D12_Impl* tex_view = static_cast<TextureView_D3D12_Impl*>(view);
+           Texture_View_D3D12_Impl * tex_view = static_cast<Texture_View_D3D12_Impl *>(view);
 
            clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().format);
            clearValues[i].Color[0] = m_beginRenderPassAttribs.pClearValues[i].r;
@@ -279,7 +288,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            clearValues[i].Color[3] = m_beginRenderPassAttribs.pClearValues[i].a;
            
            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachmentRef.m_loadAction];
-           TextureView_D3D12_Impl* tex_view_resolve = static_cast<TextureView_D3D12_Impl*>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
+           Texture_View_D3D12_Impl * tex_view_resolve = static_cast<Texture_View_D3D12_Impl *>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
            if(attachmentRef.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
            {
                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
@@ -321,7 +330,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex;
            auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
            auto clearValue = m_beginRenderPassAttribs.pClearValues[depthStencilAttachIndex];
-           TextureView_D3D12_Impl* dt_view = static_cast<TextureView_D3D12_Impl*>(Framebuffer->get_attachment(depthStencilAttachIndex));
+           Texture_View_D3D12_Impl * dt_view = static_cast<Texture_View_D3D12_Impl *>(Framebuffer->get_attachment(depthStencilAttachIndex));
            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_loadAction];
            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_storeAction];
            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_stencilLoadAction];

@@ -17,6 +17,7 @@ namespace Cyber
         class ITexture;
         class ITexture_View;
         class IBuffer;
+        class IBuffer_View;
         class IFrameBuffer;
         class ISwapChain;
         class ISemaphore;
@@ -1432,11 +1433,13 @@ namespace Cyber
         {
             const void** ptrs;
             /// Array of texture descriptors (srv and uav textures)
-            RenderObject::ITexture_View** textures;
+            RenderObject::ITexture_View** texture_views;
             /// Array of sampler descriptors
             struct ISampler** samplers;
             /// Array of buffer descriptors (srv uav and cbv buffers)
-            RenderObject::IBuffer** buffers;
+            RenderObject::IBuffer_View** buffer_views;
+            /// push constant
+            RenderObject::IBuffer* push_constant; 
             /// Array of pipeline descriptors
             RenderPipeline** render_pipelines;
 

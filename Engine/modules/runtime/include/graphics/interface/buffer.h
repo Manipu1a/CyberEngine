@@ -2,6 +2,7 @@
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
 #include "graphics/interface/buffer_view.h"
+#include "core/debug.h"
 #include "device_object.h"
 #include "interface/graphics_types.h"
 
@@ -103,6 +104,8 @@ namespace Cyber
                 m_size = 0;
                 m_nodeIndex = 0;
                 m_desc = desc;
+                
+                create_default_views();
             }
 
             virtual ~BufferBase() = default;
@@ -155,8 +158,11 @@ namespace Cyber
                     view_desc.view_type = view_type;
 
                     auto* view = create_view_internal(view_desc);
-                    cyber_assert(view != nullptr, "Failed to create default texture view");
-                    return static_cast<BufferViewImplType*>(view);
+                    cyber_assert(view != nullptr, "Failed to create default buffer view");
+
+                    BufferViewImplType* buffer_view_impl = static_cast<BufferViewImplType*>(view);
+
+                    return buffer_view_impl;
                 };
 
                 if(m_desc.bind_flags & GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE && (m_desc.mode == BUFFER_MODE_STRUCTURED || m_desc.mode == BUFFER_MODE_RAW))

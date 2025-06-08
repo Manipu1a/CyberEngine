@@ -159,8 +159,105 @@ namespace Cyber
             // Render command lists
             uint32_t global_index_offset = 0;
             uint32_t global_vertex_offset = 0;
+            RenderObject::ITexture_View* last_texture_view = nullptr;
+            for(uint32_t cmd_list_id = 0; cmd_list_id < draw_data->CmdListsCount; cmd_list_id++)
+            {
+                const ImDrawList* cmd_list = draw_data->CmdLists[cmd_list_id];
+                for(uint32_t cmd_id = 0; cmd_id < cmd_list->CmdBuffer.Size; cmd_id++)
+                {
+                    const ImDrawCmd* cmd = &cmd_list->CmdBuffer[cmd_id];
+                    if(cmd->UserCallback)
+                    {
+                        // User callback, registered via ImDrawList::AddCallback()
+                        if(cmd->UserCallback == ImDrawCallback_ResetRenderState)
+                        {
+                            // Reset render state
+                            SetupRenderState();
+                        }
+                        else
+                        {
+                            // Call user callback
+                            cmd->UserCallback(cmd_list, cmd);
+                        }
+                    }
+                    else
+                    {
+                        if(cmd->ElemCount == 0)
+                        {
+                            // No elements to render
+                            continue;
+                        }
+                        
+                        float4 clip_rect = {
+                            (cmd->ClipRect.x - draw_data->DisplayPos.x) * draw_data->FramebufferScale.x,
+                            (cmd->ClipRect.y - draw_data->DisplayPos.y) * draw_data->FramebufferScale.y,
+                            (cmd->ClipRect.z - draw_data->DisplayPos.x) * draw_data->FramebufferScale.x,
+                            (cmd->ClipRect.w - draw_data->DisplayPos.y) * draw_data->FramebufferScale.y
+                        };
+                        
+                        RenderObject::Rect scissor
+                        {
+                            static_cast<int32_t>(clip_rect.x),
+                            static_cast<int32_t>(clip_rect.y),
+                            static_cast<int32_t>(clip_rect.z - clip_rect.x),
+                            static_cast<int32_t>(clip_rect.w - clip_rect.y)
+                        };
+                        scissor.left = std::max(scissor.left, 0);
+                        scissor.top = std::max(scissor.top, 0);
+                        scissor.right = std::min(scissor.right, static_cast<int32_t>(draw_data->DisplaySize.x));
+                        scissor.bottom = std::min(scissor.bottom, static_cast<int32_t>(draw_data->DisplaySize.y));
+                        if(!scissor.is_valid())
+                        {
+                            // Invalid scissor rectangle, skip rendering
+                            continue;
+                        }
 
-            
+                        device_context->render_encoder_set_scissor(1, &scissor);
+
+                        // Bind texture
+                        auto* texture_view = reinterpret_cast<RenderObject::ITexture_View*>(cmd->TextureId);
+
+                        // Render command
+                        RenderObject::ITexture_View* curr_texture_view = (RenderObject::ITexture_View*)cmd->TextureId;
+                        if(curr_texture_view != last_texture_view)
+                        {
+                            last_texture_view = curr_texture_view;
+                        }
+
+                        // Update descriptor set
+                        DescriptorData descriptor_data[2] = {};
+                        descriptor_data[0].name = CYBER_UTF8("Texture");
+                        descriptor_data[0].binding = 0;
+                        descriptor_data[0].binding_type = GRAPHICS_RESOURCE_TYPE_TEXTURE;
+                        descriptor_data[0].texture_views = &curr_texture_view;
+                        descriptor_data[1].name = CYBER_UTF8("Constants");
+                        descriptor_data[1].binding = 0;
+                        descriptor_data[1].binding_type = GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT;
+                        descriptor_data[1].push_constant = vertex_constant_buffer;
+                        m_pDevice->update_descriptor_set(descriptor_set, descriptor_data, 2);
+                        
+                        if(m_baseVertexSupported)
+                        {
+                            
+                        }
+                        else 
+                        {
+                            RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer};
+                            uint64_t offsets[] = { sizeof(ImDrawVert) * (size_t{cmd->VtxOffset} + size_t{global_vertex_offset}) };
+                            uint32_t strides[] = { sizeof(ImDrawVert) };
+                            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
+                        }
+
+                        device_context->render_encoder_bind_descriptor_set(descriptor_set);
+                        device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
+                        device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, cmd->VtxOffset + global_vertex_offset);
+                    }
+                }
+                global_index_offset += cmd_list->IdxBuffer.Size;
+                global_vertex_offset += cmd_list->VtxBuffer.Size;
+            }
+
+
         }
         void ImGuiRenderer::invalidate_device_objects()
         {
@@ -223,23 +320,27 @@ namespace Cyber
             sampler_create_desc.max_lod = 0.0f;
             auto sampler = m_pDevice->create_sampler(sampler_create_desc);
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
+            const char8_t* push_constant_names[] = { CYBER_UTF8("Constants") };
 
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .m_ppShaders = pipeline_shader_create_desc,
                 .m_shaderCount = 2,
                 .m_staticSamplers = &sampler,
                 .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1
+                .m_staticSamplerCount = 1,
+                .m_pushConstantNames = push_constant_names,
+                .m_pushConstantCount = 1,
             };
-            
+            // todo 针对特定类型constent buffer选择不同更新方式
             root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
 
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
+
             descriptor_set = m_pDevice->create_descriptor_set(desc_set_create_desc);
-            
+
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
             RenderObject::VertexAttribute vertex_attributes[] = {
@@ -266,6 +367,8 @@ namespace Cyber
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.size = sizeof(float4x4);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
             
             create_fonts_texture();
@@ -305,8 +408,8 @@ namespace Cyber
             texture_data.pDevice = m_pDevice;
             //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
 
-            auto texture = m_pDevice->create_texture(texture_desc, &texture_data);
-            font_srv = texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            font_texture = m_pDevice->create_texture(texture_desc, &texture_data);
+            font_srv = font_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;
         }
