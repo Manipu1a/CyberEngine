@@ -79,6 +79,7 @@ namespace Cyber
             /**/
             virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
+            void update(float deltaTime);
             void render(RenderObject::IDeviceContext* device_context, RenderObject::IRenderDevice* device);
 
             void invalidate_device_objects();
