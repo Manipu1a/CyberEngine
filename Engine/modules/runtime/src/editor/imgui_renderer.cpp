@@ -20,7 +20,8 @@ namespace Cyber
             , vertex_buffer_size(createInfo.InitialVBSize)
             , index_buffer_size(createInfo.InitialIBSize)
         {
-
+            // todo
+            m_baseVertexSupported = true;
         }
 
         ImGuiRenderer::~ImGuiRenderer()
@@ -136,7 +137,8 @@ namespace Cyber
             auto SetupRenderState = [&]()
             {
                 RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
-                device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, nullptr, nullptr);
+                uint32_t strides[] = { sizeof(ImDrawVert) };
+                device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
                 device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(ImDrawIdx), 0);
                 device_context->render_encoder_bind_pipeline(render_pipeline);
 
@@ -236,9 +238,10 @@ namespace Cyber
                         descriptor_data[1].push_constant = vertex_constant_buffer;
                         m_pDevice->update_descriptor_set(descriptor_set, descriptor_data, 2);
                         
+                        uint32_t vertex_offset = 0;
                         if(m_baseVertexSupported)
                         {
-                            
+                            vertex_offset = cmd->VtxOffset + global_vertex_offset;
                         }
                         else 
                         {
@@ -247,10 +250,9 @@ namespace Cyber
                             uint32_t strides[] = { sizeof(ImDrawVert) };
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
-
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
                         device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
-                        device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, cmd->VtxOffset + global_vertex_offset);
+                        device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
                     }
                 }
                 global_index_offset += cmd_list->IdxBuffer.Size;

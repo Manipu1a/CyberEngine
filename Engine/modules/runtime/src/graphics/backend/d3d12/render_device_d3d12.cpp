@@ -1150,6 +1150,8 @@ namespace Cyber
             root_constant_parameter.Constants.Num32BitValues = pushConstant->get_size() / sizeof(uint32_t);
             root_constant_parameter.Constants.ShaderRegister = pushConstant->get_binding();
             root_constant_parameter.Constants.RegisterSpace = pushConstant->get_set();
+            dxRootSignature->root_parameter_index = valid_root_tables;
+            dxRootSignature->root_constant_parameter = root_constant_parameter;
         }
         // Create static sampler parameter
         uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
@@ -1654,6 +1656,9 @@ namespace Cyber
         const uint32_t nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
         DescriptorHeap_D3D12* pCbvSrvUavHeap = m_cbvSrvUavHeaps[nodeIndex];
         DescriptorHeap_D3D12* pSamplerHeap = m_samplerHeaps[nodeIndex];
+        m_deviceContexts[0]->set_bound_heap(0, pCbvSrvUavHeap);
+        m_deviceContexts[0]->set_bound_heap(1, pSamplerHeap);
+        m_deviceContexts[0]->commit_bound_heaps();
         for(uint32_t i = 0;i < count; i++)
         {
             // Descriptor Info

@@ -61,8 +61,10 @@ public:
     Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
                 
     struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
-    void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap) { m_pBoundHeaps[index] = heap; }
+    void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap);
 
+    void commit_bound_heaps();
+    
     D3D12_GPU_DESCRIPTOR_HANDLE get_bound_heap_start_handle(uint32_t index) const { return m_boundHeapStartHandles[index]; }
     void set_bound_heap_start_handle(uint32_t index, D3D12_GPU_DESCRIPTOR_HANDLE handle) { m_boundHeapStartHandles[index] = handle; }
 

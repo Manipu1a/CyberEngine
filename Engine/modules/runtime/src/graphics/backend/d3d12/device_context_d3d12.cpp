@@ -21,6 +21,7 @@
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/render_pass_d3d12.h"
 #include "graphics/backend/d3d12/command_context.h"
+#include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "graphics/backend/d3d12/d3d12_utils.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
@@ -32,6 +33,11 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device,
 {
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
+    m_pBoundRootSignature = nullptr;
+    m_pBoundHeaps[0] = nullptr;
+    m_pBoundHeaps[1] = nullptr;
+    m_boundHeapStartHandles[0].ptr = 0;
+    m_boundHeapStartHandles[1].ptr = 0;
     request_command_context();
 }
 
@@ -384,6 +390,26 @@ Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint6
     return m_pDynamicHeap->allocate(size_in_bytes, alignment);
 }
 
+void DeviceContext_D3D12_Impl::set_bound_heap(uint32_t index, DescriptorHeap_D3D12* heap)
+{
+    cyber_check_msg(index < 2, "Invalid heap index");
+    if(m_pBoundHeaps[index] != heap)
+    {
+        m_pBoundHeaps[index] = heap;
+        m_boundHeapStartHandles[index].ptr = heap->get_heap()->GetGPUDescriptorHandleForHeapStart().ptr;
+        ++state.num_command;
+    }
+}
+
+void DeviceContext_D3D12_Impl::commit_bound_heaps()
+{
+    if(m_pBoundHeaps[0] || m_pBoundHeaps[1])
+    {
+        ID3D12DescriptorHeap* heaps[2] = { m_pBoundHeaps[0]->get_heap(), m_pBoundHeaps[1]->get_heap() };
+        curr_command_context->set_descriptor_heaps(2, heaps);
+        ++state.num_command;
+    }
+}
 
 void DeviceContext_D3D12_Impl::flush()
 {

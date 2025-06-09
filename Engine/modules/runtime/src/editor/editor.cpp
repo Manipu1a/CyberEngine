@@ -72,31 +72,15 @@ namespace Cyber
             m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
             ImGui::NewFrame();
         }
-        /*
+
         void Editor::update(float deltaTime)
         {
             //ImGui_ImplWin32_NewFrame();
             //ImGui::NewFrame();
             bool show_demo_window = true;
             ImGui::ShowDemoWindow(&show_demo_window);
-
-            // Rendering
-            ImGui::Render();
-
-            ID3D12DescriptorHeap* GuidescriptorHeaps[] = { g_imguiSrvDescHeap->get_heap() };
-            //RenderObject::CommandBuffer_D3D12_Impl* Cmd = static_cast<RenderObject::CommandBuffer_D3D12_Impl*>(encoder);
-            //Cmd->get_dx_cmd_list()->SetDescriptorHeaps(1, GuidescriptorHeaps);
-            //ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), Cmd->get_dx_cmd_list());
-            m_imguiRenderer->render_draw_data(ImGui::GetDrawData());
-            // Update and Render additional Platform Windows
-            ImGuiIO& io = ImGui::GetIO();
-            if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-            {
-                ImGui::UpdatePlatformWindows();
-                //ImGui::RenderPlatformWindowsDefault(nullptr, Cmd->get_dx_cmd_list());
-            }
         }
-        */
+        
 
         void Editor::finalize()
         {

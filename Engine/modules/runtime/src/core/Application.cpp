@@ -77,6 +77,7 @@ namespace Cyber
             auto render_device = m_pRenderer->get_render_device();
 
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+            m_pEditor->update(timestep);
             m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
             m_pEditor->end_frame();
 

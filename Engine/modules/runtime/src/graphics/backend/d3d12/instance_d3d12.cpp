@@ -73,8 +73,6 @@ namespace Cyber
                 render_device_impl->set_device_context(ctx_id, d3d12_context);
                 device_context[ctx_id] = d3d12_context;
             }
-
-            render_device_impl->bind_descriptor_heap();
         }
 
         void Instance_D3D12_Impl::initialize_environment()
