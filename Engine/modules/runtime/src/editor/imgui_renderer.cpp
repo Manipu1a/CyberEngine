@@ -7,13 +7,15 @@
 #include "platform/memory.h"
 #include "core/Application.h"
 #include "common/basic_math.hpp"
+#include "editor/editor.h"
 
 namespace Cyber
 {
     namespace Editor
     {
         ImGuiRenderer::ImGuiRenderer(const EditorCreateInfo& createInfo)
-            : m_pDevice(createInfo.pDevice)
+            : render_device(createInfo.pDevice)
+            , swap_chain(createInfo.swap_chain)
             , m_backBufferFmt(createInfo.BackBufferFmt)
             , m_depthBufferFmt(createInfo.DepthBufferFmt)
             , m_colorConversionMode(createInfo.ColorConversionMode)
@@ -29,7 +31,7 @@ namespace Cyber
 
         }
 
-        void ImGuiRenderer::initialize()
+        void ImGuiRenderer::initialize(Editor* _editor)
         {
             if(!render_pipeline)
             {
@@ -68,7 +70,7 @@ namespace Cyber
                 buffer_desc.size = vertex_buffer_size * sizeof(ImDrawVert);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                vertex_buffer = m_pDevice->create_buffer(buffer_desc);
+                vertex_buffer = render_device->create_buffer(buffer_desc);
             }
 
             if(!index_buffer || static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
@@ -87,28 +89,33 @@ namespace Cyber
                 buffer_desc.size = index_buffer_size * sizeof(ImDrawIdx);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                index_buffer = m_pDevice->create_buffer(buffer_desc);
-                
+                index_buffer = render_device->create_buffer(buffer_desc);
             }
             BufferRange range;
             range.offset = 0;
             range.size = 0;
-            void* vtx_resource = m_pDevice->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
-            void* idx_resource = m_pDevice->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
+            void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             
+            int32_t vertex_buffer_size = 0;
+            int32_t index_buffer_size = 0;
             ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource;
             ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
             for(int n = 0; n < draw_data->CmdListsCount; n++)
             {
                 const ImDrawList* cmd_list = draw_data->CmdLists[n];
                 memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
+                vertex_buffer_size += cmd_list->VtxBuffer.Size;
                 memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
+                index_buffer_size += cmd_list->IdxBuffer.Size;
                 vtx_dst += cmd_list->VtxBuffer.Size;
                 idx_dst += cmd_list->IdxBuffer.Size;
             }
-            m_pDevice->unmap_buffer(vertex_buffer, MAP_WRITE);
-            m_pDevice->unmap_buffer(index_buffer, MAP_WRITE);
+            render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
+            render_device->unmap_buffer(index_buffer, MAP_WRITE);
 
+            vertex_buffer->set_buffer_size(vertex_buffer_size);
+            index_buffer->set_buffer_size(index_buffer_size);
             // Setup orthographic projection matrix into our constant buffer
             // Our visible imgui space lies from pDrawData->DisplayPos (top left) to pDrawData->DisplayPos+data_data->DisplaySize (bottom right).
             // DisplayPos is (0,0) for single viewport setup
@@ -128,10 +135,10 @@ namespace Cyber
                 (R + L) / (L - R),  (T + B) / (B - T),   0.5f,   1.0f
                 };
 
-                void* constant_data = m_pDevice->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                void* constant_data = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
                 float4x4 * pConstantData = (float4x4*)constant_data;
                 *pConstantData = projection;
-                m_pDevice->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
+                render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
             }
             
             auto SetupRenderState = [&]()
@@ -155,6 +162,17 @@ namespace Cyber
 
                 device_context->render_encoder_set_viewport(1, &vp);
             };
+
+            auto* app = Core::Application::getApp();
+            m_backBufferIndex = app->get_renderer()->get_back_buffer_index();
+
+            swap_chain->get_back_buffer(m_backBufferIndex);
+            auto renderpass = app->get_renderer()->get_render_pass();
+            auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
+            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
+            auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
+            
+            device_context->cmd_next_sub_pass();
 
             SetupRenderState();
 
@@ -236,7 +254,7 @@ namespace Cyber
                         descriptor_data[1].binding = 0;
                         descriptor_data[1].binding_type = GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT;
                         descriptor_data[1].push_constant = vertex_constant_buffer;
-                        m_pDevice->update_descriptor_set(descriptor_set, descriptor_data, 2);
+                        render_device->update_descriptor_set(descriptor_set, descriptor_data, 2);
                         
                         uint32_t vertex_offset = 0;
                         if(m_baseVertexSupported)
@@ -253,6 +271,7 @@ namespace Cyber
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
                         device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
+                        device_context->cmd_end_render_pass();
                     }
                 }
                 global_index_offset += cmd_list->IdxBuffer.Size;
@@ -284,7 +303,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("main")
             };
-            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(m_pDevice, vs_load_desc);
+            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -293,7 +312,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("main")
             };
-            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(m_pDevice, ps_load_desc);
+            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
             pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -320,7 +339,7 @@ namespace Cyber
             sampler_create_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
             sampler_create_desc.min_lod = 0.0f;
             sampler_create_desc.max_lod = 0.0f;
-            auto sampler = m_pDevice->create_sampler(sampler_create_desc);
+            auto sampler = render_device->create_sampler(sampler_create_desc);
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
             const char8_t* push_constant_names[] = { CYBER_UTF8("Constants") };
 
@@ -334,14 +353,14 @@ namespace Cyber
                 .m_pushConstantCount = 1,
             };
             // todo 针对特定类型constent buffer选择不同更新方式
-            root_signature = m_pDevice->create_root_signature(root_signature_create_desc);
+            root_signature = render_device->create_root_signature(root_signature_create_desc);
 
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
 
-            descriptor_set = m_pDevice->create_descriptor_set(desc_set_create_desc);
+            descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
@@ -362,7 +381,7 @@ namespace Cyber
                 .depth_stencil_format = m_depthBufferFmt,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
-            render_pipeline = m_pDevice->create_render_pipeline(rp_desc);
+            render_pipeline = render_device->create_render_pipeline(rp_desc);
             vs_shader->free();
             ps_shader->free();
 
@@ -371,7 +390,7 @@ namespace Cyber
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_constant_buffer = m_pDevice->create_buffer(buffer_desc);
+            vertex_constant_buffer = render_device->create_buffer(buffer_desc);
             
             create_fonts_texture();
         }
@@ -407,10 +426,10 @@ namespace Cyber
             RenderObject::TextureData texture_data = {};
             texture_data.pSubResources = &sub_res_data;
             texture_data.numSubResources = 1;
-            texture_data.pDevice = m_pDevice;
+            texture_data.pDevice = render_device;
             //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
 
-            font_texture = m_pDevice->create_texture(texture_desc, &texture_data);
+            font_texture = render_device->create_texture(texture_desc, &texture_data);
             font_srv = font_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;

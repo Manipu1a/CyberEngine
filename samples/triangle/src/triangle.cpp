@@ -125,7 +125,7 @@ namespace Cyber
             //render_device->render_encoder_set_scissor(cmd, 0, 0, back_buffer->get_create_desc().m_width, back_buffer->get_create_desc().m_height);
             // draw ui
             
-            device_context->set_render_target( 1, &back_buffer_view, nullptr);     
+            //device_context->set_render_target( 1, &back_buffer_view, nullptr);     
         }
 
         void TrignaleApp::present()
@@ -201,7 +201,7 @@ namespace Cyber
             subpass_desc[0].m_pDepthStencilAttachment = nullptr;
             subpass_desc[0].m_renderTargetCount = 1;
             subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
-
+            
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
             subpass_desc[1].m_pDepthStencilAttachment = nullptr;
@@ -215,7 +215,6 @@ namespace Cyber
                 .m_pSubpasses = subpass_desc
             };
             
-
             auto render_pass = device_context->create_render_pass(rp_desc1);
             renderer->set_render_pass(render_pass);
         }

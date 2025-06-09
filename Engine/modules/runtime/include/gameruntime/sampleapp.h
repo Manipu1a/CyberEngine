@@ -23,7 +23,6 @@ namespace Cyber
         protected:
             uint32_t m_backBufferIndex = 0;
             Core::Application* m_pApp = nullptr;
-            
         };
 
     }

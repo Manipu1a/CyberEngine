@@ -41,7 +41,9 @@ namespace Cyber
             m_pInputSystem = cyber_new<InputSystem>();
             m_pInputSystem->initInputSystem();
             Editor::EditorCreateInfo createInfo = {};
+            createInfo.application = this;
             createInfo.pDevice = m_pRenderer->get_render_device();
+            createInfo.swap_chain = m_pRenderer->get_swap_chain();
             createInfo.BackBufferFmt = TEX_FORMAT_RGB32_FLOAT;
             createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
             createInfo.Hwnd = m_pWindow->get_native_window();

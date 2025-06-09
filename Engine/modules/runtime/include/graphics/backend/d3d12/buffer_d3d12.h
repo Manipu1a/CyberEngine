@@ -36,8 +36,8 @@ namespace Cyber
 
             virtual IBuffer_View* create_view_internal(const BufferViewCreateDesc& desc) const;
             
-            D3D12_GPU_VIRTUAL_ADDRESS get_dx_gpu_address() const { return m_dxGpuAddress; }
-            void set_dx_gpu_address(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress) { m_dxGpuAddress = gpuAddress; }
+            //D3D12_GPU_VIRTUAL_ADDRESS get_dx_gpu_address() const { return m_dxGpuAddress; }
+            //void set_dx_gpu_address(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress) { m_dxGpuAddress = gpuAddress; }
 
             ID3D12Resource* get_dx_resource() const { return m_pDxResource; }
             void set_dx_resource(ID3D12Resource* resource) { m_pDxResource = resource; }
@@ -59,7 +59,7 @@ namespace Cyber
             }
         protected:
             /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress
-            D3D12_GPU_VIRTUAL_ADDRESS m_dxGpuAddress;
+            // D3D12_GPU_VIRTUAL_ADDRESS m_dxGpuAddress;
             /// Native handle of the underlying resource
             ID3D12Resource* m_pDxResource;
             /// Contains resource allocation info such as parent heap, offset in heap

@@ -199,7 +199,7 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer,
     const RenderObject::Buffer_D3D12_Impl* Buffer = static_cast<RenderObject::Buffer_D3D12_Impl*>(buffer);
 
     DECLARE_ZERO(D3D12_INDEX_BUFFER_VIEW, view);
-    view.BufferLocation = Buffer->get_dx_gpu_address() + offset;
+    view.BufferLocation = Buffer->get_gpu_address(0) + offset;
     view.SizeInBytes = (UINT)(Buffer->get_size() - offset);
     view.Format = index_stride == sizeof(uint16_t) ? DXGI_FORMAT_R16_UINT : ((index_stride == sizeof(uint8_t) ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_R32_UINT));
     curr_command_context->set_index_buffer(&view);
@@ -269,12 +269,9 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        DECLARE_ZERO(D3D12_RENDER_PASS_DEPTH_STENCIL_DESC, renderPassDepthStencilDesc);
        uint32_t colorTargetCount = 0;
        
-       m_pRenderPass = m_beginRenderPassAttribs.pRenderPass;
-       m_pFrameBuffer = m_beginRenderPassAttribs.pFramebuffer;
-
-       auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_beginRenderPassAttribs.pRenderPass);
+       auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_pRenderPass);
        auto RenderPassDesc = RenderPass->get_create_desc();
-       auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_beginRenderPassAttribs.pFramebuffer);
+       auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_pFrameBuffer);
        auto FramebufferDesc = Framebuffer->get_create_desc();
        cyber_assert(RenderPassDesc.m_subpassCount > m_subpassIndex, "Subpass index out of range!");
        auto SubPassDesc = RenderPassDesc.m_pSubpasses[m_subpassIndex];

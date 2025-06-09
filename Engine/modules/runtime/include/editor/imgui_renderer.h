@@ -12,13 +12,15 @@ namespace Cyber
     }
     namespace Editor
     {
+        class Editor;
+
         class ImGuiRenderer
         {
         public:
             ImGuiRenderer(const EditorCreateInfo& createInfo);
             ~ImGuiRenderer();
 
-            void initialize();
+            void initialize(Editor* _editor = nullptr);
             void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();
             void render_draw_data(RenderObject::IDeviceContext* device_context, ImDrawData* drawData);
@@ -27,7 +29,8 @@ namespace Cyber
             void create_fonts_texture();
 
         protected:
-            RenderObject::IRenderDevice* m_pDevice = nullptr;
+            RenderObject::IRenderDevice* render_device = nullptr;
+            RenderObject::ISwapChain* swap_chain = nullptr;
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
@@ -48,6 +51,7 @@ namespace Cyber
             
             const EDITOR_COLOR_CONVERSION_MODE m_colorConversionMode;
             bool m_baseVertexSupported = false;
+            uint32_t m_backBufferIndex = 0;
         };
     }
 }

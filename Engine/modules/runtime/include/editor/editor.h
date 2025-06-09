@@ -2,6 +2,7 @@
 #include "graphics/backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/interface/swap_chain.hpp"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
+#include "core/application.h"
 #include "cyber_runtime.config.h"
 
 namespace Cyber
@@ -30,7 +31,10 @@ namespace Cyber
             static constexpr uint32_t DefaultInitialVBSize = 1024;
             static constexpr uint32_t DefaultInitialIBSize = 1024;
 
+            class Core::Application* application = nullptr;
             class RenderObject::IRenderDevice* pDevice = nullptr;
+            class RenderObject::ISwapChain* swap_chain = nullptr;
+
             HWND Hwnd = nullptr;
 
             TEXTURE_FORMAT BackBufferFmt = {};
@@ -42,8 +46,10 @@ namespace Cyber
             uint32_t InitialIBSize = DefaultInitialIBSize;
 
             EditorCreateInfo() noexcept {}
-            EditorCreateInfo(RenderObject::IRenderDevice* pDevice, HWND hwnd, TEXTURE_FORMAT backBufferFmt, TEXTURE_FORMAT depthBufferFmt) noexcept
-                : pDevice(pDevice)
+            EditorCreateInfo(class Core::Application* _app, RenderObject::IRenderDevice* pDevice, HWND hwnd, RenderObject::ISwapChain* _swap_chain, TEXTURE_FORMAT backBufferFmt, TEXTURE_FORMAT depthBufferFmt) noexcept
+                : application(_app)
+                , pDevice(pDevice)
+                , swap_chain(_swap_chain)
                 , Hwnd(hwnd)
                 , BackBufferFmt(backBufferFmt)
                 , DepthBufferFmt(depthBufferFmt)
@@ -86,6 +92,7 @@ namespace Cyber
             void create_device_objects();
             void update_fonts_texture();
         protected:
+            Core::Application* m_pApp = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
         };
     }

@@ -83,6 +83,7 @@ namespace Cyber
         {
             virtual void* get_mapped_data() = 0;
             virtual uint64_t get_size() const = 0;
+            virtual void set_buffer_size(uint64_t size) = 0;
             virtual uint64_t get_node_index() const = 0;
             virtual BufferCreateDesc get_create_desc() = 0;
             virtual void set_buffer_state(GRAPHICS_RESOURCE_STATE state) = 0;
@@ -120,6 +121,11 @@ namespace Cyber
                 return m_size;
             }
 
+            virtual void set_buffer_size(uint64_t size) override final
+            {
+                m_size = size;
+            }
+            
             virtual uint64_t get_node_index() const override final
             {
                 return m_nodeIndex;
