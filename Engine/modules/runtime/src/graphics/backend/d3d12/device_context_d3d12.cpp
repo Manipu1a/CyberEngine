@@ -271,8 +271,9 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        
        auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_pRenderPass);
        auto RenderPassDesc = RenderPass->get_create_desc();
+
        auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_pFrameBuffer);
-       auto FramebufferDesc = Framebuffer->get_create_desc();
+       auto& FramebufferDesc = Framebuffer->get_create_desc();
        cyber_assert(RenderPassDesc.m_subpassCount > m_subpassIndex, "Subpass index out of range!");
        auto SubPassDesc = RenderPassDesc.m_pSubpasses[m_subpassIndex];
 

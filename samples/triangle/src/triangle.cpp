@@ -65,12 +65,14 @@ namespace Cyber
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             
             RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
-            RenderObject::FrameBuffserDesc frame_buffer_desc = {
-                .m_pRenderPass = renderpass,
-                .m_attachmentCount = 1,
-                .m_ppAttachments = attachment_resources
-            };
-            auto frame_buffer = render_device->create_frame_buffer(frame_buffer_desc);
+
+            RenderObject::FrameBuffserDesc frame_buffer_desc;
+            frame_buffer_desc.m_name = u8"FrameBuffer";
+            frame_buffer_desc.m_pRenderPass = renderpass;
+            frame_buffer_desc.m_attachmentCount = 1;
+            frame_buffer_desc.m_ppAttachments = attachment_resources;
+
+            frame_buffer = render_device->create_frame_buffer(frame_buffer_desc);
 
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
@@ -97,6 +99,7 @@ namespace Cyber
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc0);
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
+            device_context->set_frame_buffer(frame_buffer);
             RenderObject::Viewport viewport;
             viewport.top_left_x = 0.0f;
             viewport.top_left_y = 0.0f;
@@ -116,7 +119,7 @@ namespace Cyber
             device_context->render_encoder_bind_pipeline( pipeline);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             device_context->render_encoder_draw(3, 0);
-            device_context->cmd_end_render_pass();
+            
             
             // ui pass
             //render_device->cmd_next_sub_pass(cmd);
@@ -136,6 +139,8 @@ namespace Cyber
             auto swap_chain = renderer->get_swap_chain();
             auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
+
+            device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
@@ -196,12 +201,14 @@ namespace Cyber
 
             //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
             //subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
+            subpass_desc[0].m_name = u8"Main Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
             subpass_desc[0].m_pDepthStencilAttachment = nullptr;
             subpass_desc[0].m_renderTargetCount = 1;
             subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
             
+            subpass_desc[1].m_name = u8"UI Subpass";
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
             subpass_desc[1].m_pDepthStencilAttachment = nullptr;
@@ -209,6 +216,7 @@ namespace Cyber
             subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[1];
             
             RenderObject::RenderPassDesc rp_desc1 = {
+                .m_name = u8"Triangle RenderPass",
                 .m_attachmentCount = 1,
                 .m_pAttachments = &attachment_desc,
                 .m_subpassCount = 2,

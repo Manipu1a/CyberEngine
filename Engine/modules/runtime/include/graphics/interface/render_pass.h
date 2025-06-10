@@ -28,6 +28,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API RenderSubpassDesc
         {
             //TEXTURE_SAMPLE_COUNT m_sampleCount;
+            const char8_t* m_name;
             uint32_t m_inputAttachmentCount;
             const AttachmentReference* m_pInputAttachments;
             const AttachmentReference* m_pDepthStencilAttachment;

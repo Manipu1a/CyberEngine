@@ -5,6 +5,7 @@
 #include "descriptor_set.h"
 #include "render_pipeline.h"
 #include "render_pass.h"
+#include "eastl/shared_ptr.h"
 
 namespace Cyber
 {
@@ -97,6 +98,9 @@ namespace Cyber
 
             virtual void flush() = 0;
 
+            virtual void set_frame_buffer(IFrameBuffer* frameBuffer) = 0;
+            virtual IFrameBuffer* get_frame_buffer() const = 0;
+
             virtual void set_render_target(uint32_t numRenderTargets, ITexture_View* renderTargets[], ITexture_View* depthTarget) = 0;
             // Render Pass
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
@@ -137,6 +141,21 @@ namespace Cyber
             virtual void cmd_next_sub_pass() override
             {
                 m_subpassIndex++;
+            }
+
+            virtual void set_frame_buffer(IFrameBuffer* frameBuffer) override
+            {
+                m_pFrameBuffer = frameBuffer;
+                if (frameBuffer)
+                {
+                    m_beginRenderPassAttribs.pFramebuffer = frameBuffer;
+                    m_beginRenderPassAttribs.pRenderPass = frameBuffer->get_render_pass();
+                }
+            }
+
+            virtual IFrameBuffer* get_frame_buffer() const override
+            {
+                return m_pFrameBuffer;
             }
 
             bool is_deferred_context() const { return desc.is_deferrd_context; }

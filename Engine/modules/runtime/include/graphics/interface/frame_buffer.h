@@ -1,12 +1,16 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
 #include "device_object.h"
+#include "platform/memory.h"
 namespace Cyber
 {
     namespace RenderObject
     {
         struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
+            FrameBuffserDesc() {}
+            ~FrameBuffserDesc() {}
+
             const char8_t* m_name;
             class IRenderPass* m_pRenderPass;
             uint32_t m_attachmentCount;
@@ -31,7 +35,11 @@ namespace Cyber
 
             FrameBufferBase(RenderDeviceImplType* device, const FrameBuffserDesc& desc) : TFrameBufferBase(device), m_desc(desc)
             {
-                m_ppAttachments = desc.m_ppAttachments;
+                m_ppAttachments = (ITexture_View**)cyber_malloc(desc.m_attachmentCount * sizeof(ITexture_View*));
+                for (uint32_t i = 0; i < desc.m_attachmentCount; ++i)
+                {
+                    m_ppAttachments[i] = desc.m_ppAttachments[i];
+                }
                 m_pRenderPass = desc.m_pRenderPass;
             }
 

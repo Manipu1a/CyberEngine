@@ -28,6 +28,11 @@ namespace Cyber
             virtual void run() override;
             virtual void update(float deltaTime) override;
             virtual void present() override;
+
+            virtual RenderObject::IFrameBuffer* get_frame_buffer() override
+            {
+                return frame_buffer;
+            }
         public:
             void raster_draw();
             void create_gfx_objects();
@@ -41,6 +46,7 @@ namespace Cyber
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
+            RenderObject::IFrameBuffer* frame_buffer = nullptr;
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
             RenderObject::AttachmentReference attachment_ref[2];

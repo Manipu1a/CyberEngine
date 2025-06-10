@@ -73,11 +73,9 @@ namespace Cyber
             m_pWindow->update(timestep);
             m_pRenderer->update(timestep);
             m_pSampleApp->update(timestep);
-            auto back_buffer_index = m_pSampleApp->get_back_buffer_index();
-            auto swap_chain = m_pRenderer->get_swap_chain();
-            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(back_buffer_index);
-            auto render_device = m_pRenderer->get_render_device();
 
+            auto framebuffer = m_pSampleApp->get_frame_buffer();
+            
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
             m_pEditor->update(timestep);
             m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());

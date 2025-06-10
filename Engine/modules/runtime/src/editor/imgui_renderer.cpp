@@ -219,8 +219,8 @@ namespace Cyber
                         {
                             static_cast<int32_t>(clip_rect.x),
                             static_cast<int32_t>(clip_rect.y),
-                            static_cast<int32_t>(clip_rect.z - clip_rect.x),
-                            static_cast<int32_t>(clip_rect.w - clip_rect.y)
+                            static_cast<int32_t>(clip_rect.z),
+                            static_cast<int32_t>(clip_rect.w)
                         };
                         scissor.left = std::max(scissor.left, 0);
                         scissor.top = std::max(scissor.top, 0);
@@ -271,7 +271,7 @@ namespace Cyber
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
                         device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
-                        device_context->cmd_end_render_pass();
+                        //device_context->cmd_end_render_pass();
                     }
                 }
                 global_index_offset += cmd_list->IdxBuffer.Size;
@@ -376,7 +376,7 @@ namespace Cyber
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
-                .color_formats = &m_backBufferFmt,
+                .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = m_depthBufferFmt,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST

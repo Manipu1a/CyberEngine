@@ -6,6 +6,7 @@ namespace Cyber
     {
         Texture_View_D3D12_Impl ::~Texture_View_D3D12_Impl ()
         {
+            int i = 0;
         }
     }
 }

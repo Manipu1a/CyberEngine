@@ -1059,7 +1059,9 @@ namespace Cyber
 
     IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
     {
-        return cyber_new<FrameBuffer_D3D12_Impl>(this, frameBufferDesc);
+        FrameBuffer_D3D12_Impl* frameBuffer = cyber_new<FrameBuffer_D3D12_Impl>(this, frameBufferDesc);
+        
+        return frameBuffer;
     }
 
     ISampler* RenderDevice_D3D12_Impl::create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc)
