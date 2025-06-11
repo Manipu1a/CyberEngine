@@ -45,6 +45,18 @@ namespace Cyber
         return resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER;
     }
 
+    bool graphics_util_shader_resource_is_direct_cbv_srv_uav(const RenderObject::IShaderResource* resource, const RenderObject::RootSignatureCreateDesc& desc)
+    {
+        for(uint32_t i = 0; i < desc.root_descriptor_count; ++i)
+        {
+            if(strcmp((char*)resource->get_name(), (char*)desc.root_descriptor_names[i]) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void graphics_util_init_root_signature_tables(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
         RenderObject::IShaderReflection* entery_reflection[32] = {0};
@@ -72,6 +84,7 @@ namespace Cyber
         // Collect all resources
         rootSignature->set_pipeline_type(PIPELINE_TYPE_NONE);
         eastl::vector<RenderObject::IShaderResource*> all_resources;
+        eastl::vector<RenderObject::IShaderResource*> all_root_descriptors;
         eastl::vector<RenderObject::IShaderResource*> all_samplers;
         eastl::vector<RenderObject::IShaderResource*> all_push_constants;
         eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
@@ -116,6 +129,10 @@ namespace Cyber
                     }
                     if(!coincided)
                         all_static_samplers.push_back(resource);
+                }
+                else if(graphics_util_shader_resource_is_direct_cbv_srv_uav(resource, desc))
+                {
+                    all_root_descriptors.push_back(resource);
                 }
                 else
                 {
@@ -191,6 +208,13 @@ namespace Cyber
             ++table_index;
         }
         rootSignature->set_parameter_tables(para_tables, (uint32_t)valid_sets.size());
+        // root descriptors
+        uint32_t root_descriptor_count = (uint32_t)all_root_descriptors.size();
+        rootSignature->set_root_descriptors((RenderObject::IShaderResource**)cyber_calloc(root_descriptor_count, sizeof(RenderObject::IShaderResource*)), root_descriptor_count);
+        for(uint32_t i = 0; i < root_descriptor_count; ++i)
+        {
+            rootSignature->set_root_descriptor(all_root_descriptors[i], i);
+        }
         // push constants
         uint32_t push_constant_count = (uint32_t)all_push_constants.size();
         rootSignature->set_push_constants((RenderObject::IShaderResource**)cyber_calloc(push_constant_count, sizeof(RenderObject::IShaderResource*)), push_constant_count);

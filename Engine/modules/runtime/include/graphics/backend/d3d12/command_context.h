@@ -38,7 +38,8 @@ public:
     // Root Parameters
     void set_graphics_root_descriptor_table(uint32_t root_parameter_index, D3D12_GPU_DESCRIPTOR_HANDLE base_descriptor);
     void set_graphics_root_constants( uint32_t root_parameter_index, uint32_t num_32bit_values_to_set, const void *p_src_data, uint32_t DestOffsetIn32BitValues);
-    
+    void set_graphics_root_constant_buffer_view(uint32_t root_parameter_index, D3D12_GPU_VIRTUAL_ADDRESS buffer_location);
+
     void set_descriptor_heaps(uint32_t num_descriptor_heaps, ID3D12DescriptorHeap* const *ppDescriptorHeaps);
     void set_pipeline_state(ID3D12PipelineState* pipeline_state);
 

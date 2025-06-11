@@ -126,6 +126,12 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet
         curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
         ++state.num_command;
     }
+
+    if(Set->root_constant_address != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+    {
+        curr_command_context->set_graphics_root_constant_buffer_view(RS->root_parameter_index, Set->root_constant_address);
+        ++state.num_command;
+    }
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps)

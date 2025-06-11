@@ -1155,6 +1155,23 @@ namespace Cyber
             dxRootSignature->root_parameter_index = valid_root_tables;
             dxRootSignature->root_constant_parameter = root_constant_parameter;
         }
+        // Create root descriptor parameter
+        auto root_desc_count = dxRootSignature->get_root_descriptor_count();
+        for(uint32_t i = 0; i < root_desc_count; ++i)
+        {
+            auto rst_slot = dxRootSignature->get_root_descriptor(i);
+            D3D12_ROOT_PARAMETER1& rootParam = rootParams[valid_root_tables];
+            rst_slot->get_type();
+            rootParam.ParameterType = D3D12Util_ResourceTypeToRootParameterType(rst_slot->get_type());
+            rootParam.Descriptor.ShaderRegister = rst_slot->get_binding();
+            rootParam.Descriptor.RegisterSpace = rst_slot->get_set();
+            rootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
+            rootParam.ShaderVisibility = D3D12Util_TranslateShaderStage(rst_slot->get_stages());
+            //todo: use another index to store root descriptor index
+            dxRootSignature->root_parameter_index = valid_root_tables;
+            valid_root_tables++;
+        }
+
         // Create static sampler parameter
         uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
         D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
@@ -1654,7 +1671,7 @@ namespace Cyber
         DescriptorSet_D3D12_Impl* dxSet = static_cast<DescriptorSet_D3D12_Impl*>(set);
         const RootSignature_D3D12_Impl* dxRootSignature = static_cast<const RootSignature_D3D12_Impl*>(set->get_root_signature());
         RootSignatureParameterTable* paramTable = dxRootSignature->m_ppParameterTables[set->get_set_index()];
-        dxRootSignature->get_push_constant(0);
+        IShaderResource** root_descriptor_resources = dxRootSignature->get_root_descriptors();
         const uint32_t nodeIndex = GRAPHICS_SINGLE_GPU_NODE_INDEX;
         DescriptorHeap_D3D12* pCbvSrvUavHeap = m_cbvSrvUavHeaps[nodeIndex];
         DescriptorHeap_D3D12* pSamplerHeap = m_samplerHeaps[nodeIndex];
@@ -1704,87 +1721,123 @@ namespace Cyber
                 }
 
                 // Update Descriptor Table
-                const uint32_t arrayCount = graphics_max(1u,pParam->count);
-                switch(resData->get_type())
+                if(resData != nullptr)
                 {
-                    case GRAPHICS_RESOURCE_TYPE_SAMPLER:
+                    const uint32_t arrayCount = graphics_max(1u,pParam->count);
+                    switch(resData->get_type())
                     {
-                        cyber_assert(pParam->samplers, "Binding Null Sampler");
-                        RenderObject::Sampler_D3D12_Impl** Samplers = (RenderObject::Sampler_D3D12_Impl**)pParam->samplers;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                        case GRAPHICS_RESOURCE_TYPE_SAMPLER:
                         {
-                            cyber_assert(pParam->samplers[arr], "Binding Null Sampler");
+                            cyber_assert(pParam->samplers, "Binding Null Sampler");
+                            RenderObject::Sampler_D3D12_Impl** Samplers = (RenderObject::Sampler_D3D12_Impl**)pParam->samplers;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->samplers[arr], "Binding Null Sampler");
 
-                            pSamplerHeap->copy_descriptor_handle({Samplers[arr]->m_dxHandle.ptr}, dxSet->sampler_handle, arr + heapOffset);
+                                pSamplerHeap->copy_descriptor_handle({Samplers[arr]->m_dxHandle.ptr}, dxSet->sampler_handle, arr + heapOffset);
+                            }
                         }
-                    }
-                    break;
-                    case GRAPHICS_RESOURCE_TYPE_TEXTURE:
-                    case GRAPHICS_RESOURCE_TYPE_TEXTURE_CUBE:
-                    {
-                        cyber_assert(pParam->texture_views, "Binding Null Texture");
-                        RenderObject::Texture_View_D3D12_Impl ** Textures = (RenderObject::Texture_View_D3D12_Impl **)pParam->texture_views;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
-                        {
-                            cyber_assert(pParam->texture_views[arr], "Binding Null Texture");
-                            pCbvSrvUavHeap->copy_descriptor_handle({Textures[arr]->m_dxDescriptorHandles.ptr + Textures[arr]->m_srvDescriptorOffset}, 
-                            dxSet->cbv_srv_uav_handle, arr + heapOffset);
-                        }
-                    }
-                    break;
-                    case GRAPHICS_RESOURCE_TYPE_BUFFER:
-                    case GRAPHICS_RESOURCE_TYPE_BUFFER_RAW:
-                    {
-                        cyber_assert(pParam->buffer_views, "Binding Null Buffer");
-                        RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
-                        {
-                            cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
-                            pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr + Buffers[arr]->m_srvDescriptorOffset},
-                            dxSet->cbv_srv_uav_handle, arr + heapOffset);
-                        }
-                    }
-                    break;
-                    case GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER:
-                    {
-                        cyber_assert(pParam->buffer_views, "Binding Null Buffer");
-                        RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
-                        {
-                            cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
-                            pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr},
-                            dxSet->cbv_srv_uav_handle, arr + heapOffset);
-                        }
-                    }
-                    break;
-                    case GRAPHICS_RESOURCE_TYPE_RW_TEXTURE:
-                    {
-                        cyber_assert(pParam->texture_views, "Binding Null Texture");
-                        RenderObject::Texture_View_D3D12_Impl ** Textures = (RenderObject::Texture_View_D3D12_Impl **)pParam->texture_views;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
-                        {
-                            cyber_assert(pParam->texture_views[arr], "Binding Null Texture");
-                            pCbvSrvUavHeap->copy_descriptor_handle({Textures[arr]->m_dxDescriptorHandles.ptr + Textures[arr]->m_uavDescriptorOffset}, dxSet->cbv_srv_uav_handle, arr + heapOffset);
-                        }
-                    }
-                    break;
-                    case GRAPHICS_RESOURCE_TYPE_RW_BUFFER:
-                    case GRAPHICS_RESOURCE_TYPE_RW_BUFFER_RAW:
-                    {
-                        cyber_assert(pParam->buffer_views, "Binding Null Buffer");
-                        RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
-                        for(uint32_t arr = 0; arr < arrayCount; ++arr)
-                        {
-                            cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
-                            pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr + Buffers[arr]->m_uavDescriptorOffset},
-                            dxSet->cbv_srv_uav_handle, arr + heapOffset);
-                        }
-                    }
-                    break;
-                    default:
-                    {
-                        cyber_assert(false, "Invalid Resource Type");
                         break;
+                        case GRAPHICS_RESOURCE_TYPE_TEXTURE:
+                        case GRAPHICS_RESOURCE_TYPE_TEXTURE_CUBE:
+                        {
+                            cyber_assert(pParam->texture_views, "Binding Null Texture");
+                            RenderObject::Texture_View_D3D12_Impl ** Textures = (RenderObject::Texture_View_D3D12_Impl **)pParam->texture_views;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->texture_views[arr], "Binding Null Texture");
+                                pCbvSrvUavHeap->copy_descriptor_handle({Textures[arr]->m_dxDescriptorHandles.ptr + Textures[arr]->m_srvDescriptorOffset}, 
+                                dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                            }
+                        }
+                        break;
+                        case GRAPHICS_RESOURCE_TYPE_BUFFER:
+                        case GRAPHICS_RESOURCE_TYPE_BUFFER_RAW:
+                        {
+                            cyber_assert(pParam->buffer_views, "Binding Null Buffer");
+                            RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
+                                pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr + Buffers[arr]->m_srvDescriptorOffset},
+                                dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                            }
+                        }
+                        break;
+                        case GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER:
+                        {
+                            cyber_assert(pParam->buffer_views, "Binding Null Buffer");
+                            RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
+                                pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr},
+                                dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                            }
+                        }
+                        break;
+                        case GRAPHICS_RESOURCE_TYPE_RW_TEXTURE:
+                        {
+                            cyber_assert(pParam->texture_views, "Binding Null Texture");
+                            RenderObject::Texture_View_D3D12_Impl ** Textures = (RenderObject::Texture_View_D3D12_Impl **)pParam->texture_views;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->texture_views[arr], "Binding Null Texture");
+                                pCbvSrvUavHeap->copy_descriptor_handle({Textures[arr]->m_dxDescriptorHandles.ptr + Textures[arr]->m_uavDescriptorOffset}, dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                            }
+                        }
+                        break;
+                        case GRAPHICS_RESOURCE_TYPE_RW_BUFFER:
+                        case GRAPHICS_RESOURCE_TYPE_RW_BUFFER_RAW:
+                        {
+                            cyber_assert(pParam->buffer_views, "Binding Null Buffer");
+                            RenderObject::Buffer_View_D3D12_Impl** Buffers = (RenderObject::Buffer_View_D3D12_Impl**)pParam->buffer_views;
+                            for(uint32_t arr = 0; arr < arrayCount; ++arr)
+                            {
+                                cyber_assert(pParam->buffer_views[arr], "Binding Null Buffer");
+                                pCbvSrvUavHeap->copy_descriptor_handle({Buffers[arr]->m_dxDescriptorHandles.ptr + Buffers[arr]->m_uavDescriptorOffset},
+                                dxSet->cbv_srv_uav_handle, arr + heapOffset);
+                            }
+                        }
+                        break;
+                        default:
+                        {
+                            cyber_assert(false, "Invalid Resource Type");
+                            break;
+                        }
+                    }
+                }
+                else // update root descriptor
+                {
+                    auto root_descriptor_count = dxRootSignature->get_root_descriptor_count();
+                    for(uint32_t i = 0;i < root_descriptor_count; i++)
+                    {
+                        auto* resource = dxRootSignature->get_root_descriptor(i);
+                        auto root_para_type = D3D12Util_ResourceTypeToRootParameterType(resource->get_type());
+                        switch(root_para_type)
+                        {
+                            case D3D12_ROOT_PARAMETER_TYPE_CBV:
+                            {
+                                Buffer_D3D12_Impl* pBuffer = static_cast<Buffer_D3D12_Impl*>(pParam->push_constant);
+                                dxSet->root_constant_address = pBuffer->get_gpu_address(0);
+                            }
+                            break;
+                            case D3D12_ROOT_PARAMETER_TYPE_SRV:
+                            {
+
+                            }
+                            break;
+                            case D3D12_ROOT_PARAMETER_TYPE_UAV:
+                            {
+
+                            }
+                            break;
+                            default:
+                            {
+                                cyber_assert(false, "Invalid Root Parameter Type");
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -2149,6 +2202,8 @@ namespace Cyber
         {
             cyber_error("Only MAP_WRITE_DISCARD and MAP_READ are currently implemented in D3D12");
         }
+
+        return pMappedData;
     }
 
     void RenderDevice_D3D12_Impl::unmap_buffer(RenderObject::IBuffer* buffer, MAP_TYPE map_type)

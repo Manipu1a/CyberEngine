@@ -6,7 +6,6 @@
 #include "graphics/interface/device_object.h"
 #include "platform/memory.h"
 #include "core/Application.h"
-#include "common/basic_math.hpp"
 #include "editor/editor.h"
 
 namespace Cyber
@@ -214,7 +213,8 @@ namespace Cyber
                             (cmd->ClipRect.z - draw_data->DisplayPos.x) * draw_data->FramebufferScale.x,
                             (cmd->ClipRect.w - draw_data->DisplayPos.y) * draw_data->FramebufferScale.y
                         };
-                        
+
+                        clip_rect = transform_clip_rect(draw_data->DisplaySize, clip_rect);
                         RenderObject::Rect scissor
                         {
                             static_cast<int32_t>(clip_rect.x),
@@ -226,6 +226,7 @@ namespace Cyber
                         scissor.top = std::max(scissor.top, 0);
                         scissor.right = std::min(scissor.right, static_cast<int32_t>(draw_data->DisplaySize.x));
                         scissor.bottom = std::min(scissor.bottom, static_cast<int32_t>(draw_data->DisplaySize.y));
+
                         if(!scissor.is_valid())
                         {
                             // Invalid scissor rectangle, skip rendering
@@ -266,7 +267,7 @@ namespace Cyber
 
                         descriptor_data[descriptor_set_idx].name = CYBER_UTF8("Constants");
                         descriptor_data[descriptor_set_idx].binding = 0;
-                        descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT;
+                        descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER;
                         descriptor_data[descriptor_set_idx].push_constant = vertex_constant_buffer;
                         descriptor_set_idx++;
                         render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
@@ -283,7 +284,7 @@ namespace Cyber
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
-                        device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
+                        //device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
                         //device_context->cmd_end_render_pass();
                     }
@@ -355,7 +356,7 @@ namespace Cyber
             sampler_create_desc.max_lod = 0.0f;
             auto sampler = render_device->create_sampler(sampler_create_desc);
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
-            const char8_t* push_constant_names[] = { CYBER_UTF8("Constants") };
+            const char8_t* root_descriptor_names[] = { CYBER_UTF8("Constants") };
 
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .m_ppShaders = pipeline_shader_create_desc,
@@ -363,8 +364,8 @@ namespace Cyber
                 .m_staticSamplers = &sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
-                .m_pushConstantNames = push_constant_names,
-                .m_pushConstantCount = 1,
+                .root_descriptor_names = root_descriptor_names,
+                .root_descriptor_count = 1,
             };
             // todo 针对特定类型constent buffer选择不同更新方式
             root_signature = render_device->create_root_signature(root_signature_create_desc);
@@ -447,6 +448,11 @@ namespace Cyber
             font_srv = font_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;
+        }
+
+        float4 ImGuiRenderer::transform_clip_rect(const ImVec2& display_size, const float4 rect) const
+        {
+            return rect;
         }
     }
 }

@@ -31,6 +31,8 @@ namespace Cyber
             uint32_t m_staticSamplerCount;
             const char8_t* const* m_pushConstantNames;
             uint32_t m_pushConstantCount;
+            const char8_t* const* root_descriptor_names;
+            uint32_t root_descriptor_count;
             RenderObject::IRootSignaturePool** m_pPool;
         };
 
@@ -41,11 +43,19 @@ namespace Cyber
             virtual uint32_t get_parameter_table_count() const = 0;
             virtual void set_parameter_tables(RootSignatureParameterTable** tables, uint32_t count) = 0;
             virtual void set_parameter_table(RootSignatureParameterTable* table, uint32_t index) = 0;
+
+            virtual class RenderObject::IShaderResource* get_root_descriptor(uint32_t index) const = 0;
+            virtual class RenderObject::IShaderResource** get_root_descriptors() const = 0;
+            virtual uint32_t get_root_descriptor_count() const = 0;
+            virtual void set_root_descriptors(class RenderObject::IShaderResource** root_descriptors, uint32_t count) = 0;
+            virtual void set_root_descriptor(class RenderObject::IShaderResource* root_descriptor, uint32_t index) = 0;
+
             virtual class RenderObject::IShaderResource** get_push_constants() const = 0;
             virtual class RenderObject::IShaderResource* get_push_constant(uint32_t index) const = 0;
             virtual uint32_t get_push_constant_count() const = 0;
             virtual void set_push_constants(class RenderObject::IShaderResource** pushConstants, uint32_t count) = 0;
             virtual void set_push_constant(class RenderObject::IShaderResource* pushConstant, uint32_t index) = 0;
+
             virtual class RenderObject::IShaderResource** get_static_samplers() const = 0;
             virtual class RenderObject::IShaderResource* get_static_sampler(uint32_t index) const = 0;
             virtual uint32_t get_static_sampler_count() const = 0;
@@ -109,6 +119,34 @@ namespace Cyber
             virtual void set_parameter_table(RootSignatureParameterTable* table, uint32_t index) override
             {
                 m_ppParameterTables[index] = table;
+            }
+
+            virtual class RenderObject::IShaderResource* get_root_descriptor(uint32_t index) const override
+            {
+                return descriptor_resources[index];
+            }
+            virtual class RenderObject::IShaderResource** get_root_descriptors() const override
+            {
+                return descriptor_resources;
+            }
+
+            virtual uint32_t get_root_descriptor_count() const
+            {
+                return descriptor_resource_count;
+            }
+
+            virtual void set_root_descriptors(class RenderObject::IShaderResource** root_descriptors, uint32_t count)
+            {
+                descriptor_resources = root_descriptors;
+                descriptor_resource_count = count;
+            }
+
+            virtual void set_root_descriptor(class RenderObject::IShaderResource* root_descriptor, uint32_t index) 
+            {
+                if(index < descriptor_resource_count)
+                {
+                    descriptor_resources[index] = root_descriptor;
+                }
             }
 
             virtual class IShaderResource** get_push_constants() const override
@@ -242,6 +280,8 @@ namespace Cyber
         protected:
             RootSignatureParameterTable** m_ppParameterTables;
             uint32_t m_parameterTableCount;
+            class IShaderResource** descriptor_resources;
+            uint32_t descriptor_resource_count;
             class IShaderResource** m_pPushConstants;
             uint32_t m_pushConstantCount;
             class IShaderResource** m_pStaticSamplers;

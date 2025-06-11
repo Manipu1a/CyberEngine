@@ -115,6 +115,11 @@ void CommandContext::set_graphics_root_constants( uint32_t root_parameter_index,
     command_list->SetGraphicsRoot32BitConstants(root_parameter_index, num_32bit_values_to_set, p_src_data, DestOffsetIn32BitValues);
 }
 
+void CommandContext::set_graphics_root_constant_buffer_view(uint32_t root_parameter_index, D3D12_GPU_VIRTUAL_ADDRESS buffer_location)
+{
+    command_list->SetGraphicsRootConstantBufferView(root_parameter_index, buffer_location);
+}
+
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, GRAPHICS_RESOURCE_STATE new_state)
 {
     transition_resource(texture, TextureBarrier{&texture, GRAPHICS_RESOURCE_STATE_UNKNOWN, new_state});

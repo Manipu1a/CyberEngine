@@ -29,6 +29,9 @@ namespace Cyber
             void create_fonts_texture();
 
         protected:
+            float4 transform_clip_rect(const ImVec2& display_size, const float4 rect) const;
+
+        protected:
             RenderObject::IRenderDevice* render_device = nullptr;
             RenderObject::ISwapChain* swap_chain = nullptr;
             RenderObject::IBuffer* vertex_buffer = nullptr;
