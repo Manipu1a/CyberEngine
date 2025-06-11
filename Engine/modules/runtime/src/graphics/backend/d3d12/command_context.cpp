@@ -130,7 +130,7 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
     if(texture.get_new_state() == transition_barrier.dst_state)
     {
-        cyber_error("D3D12 ERROR: Texture Barrier with same src and dst state!");
+        cyber_warn(false, "D3D12 WARNING: Texture Barrier with same src and dst state!");
         return;
     }
 

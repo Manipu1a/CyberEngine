@@ -27,6 +27,9 @@ namespace Cyber
         struct CYBER_GRAPHICS_API ITexture_View : public IDeviceObject
         { 
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
+
+            virtual bool operator==(const ITexture_View& other) const = 0;
+            virtual bool operator!=(const ITexture_View& other) const = 0;
         };
 
         template<typename EngineImplTraits>
@@ -35,7 +38,7 @@ namespace Cyber
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TextureViewInterface = typename EngineImplTraits::TextureViewInterface;
-            using TTexture_View = typename DeviceObjectBase<TextureViewInterface, RenderDeviceImplType>;
+            using TTexture_View =  DeviceObjectBase<TextureViewInterface, RenderDeviceImplType>;
 
             Texture_View(RenderDeviceImplType* device, const TextureViewCreateDesc& desc) : TTexture_View(device), m_desc(desc)
             {
@@ -45,6 +48,22 @@ namespace Cyber
             virtual const TextureViewCreateDesc& get_create_desc() override
             {
                 return m_desc;
+            }
+
+            bool operator==(const ITexture_View& other) const override
+            {
+                const Texture_View* other_view = static_cast<const Texture_View*>(&other);
+                return m_desc.p_texture == other_view->m_desc.p_texture &&
+                       m_desc.view_type == other_view->m_desc.view_type &&
+                       m_desc.baseArrayLayer == other_view->m_desc.baseArrayLayer &&
+                       m_desc.arrayLayerCount == other_view->m_desc.arrayLayerCount &&
+                       m_desc.baseMipLevel == other_view->m_desc.baseMipLevel &&
+                       m_desc.mipLevelCount == other_view->m_desc.mipLevelCount;
+            }
+
+            bool operator!=(const ITexture_View& other) const override
+            {
+                return !(*this == other);
             }
         protected:
             TextureViewCreateDesc m_desc;

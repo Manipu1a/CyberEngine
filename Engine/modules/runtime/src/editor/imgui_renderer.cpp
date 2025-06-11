@@ -105,9 +105,9 @@ namespace Cyber
             {
                 const ImDrawList* cmd_list = draw_data->CmdLists[n];
                 memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-                vertex_buffer_size += cmd_list->VtxBuffer.Size;
+                vertex_buffer_size += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
                 memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-                index_buffer_size += cmd_list->IdxBuffer.Size;
+                index_buffer_size += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
                 vtx_dst += cmd_list->VtxBuffer.Size;
                 idx_dst += cmd_list->IdxBuffer.Size;
             }
@@ -239,23 +239,37 @@ namespace Cyber
 
                         // Render command
                         RenderObject::ITexture_View* curr_texture_view = (RenderObject::ITexture_View*)cmd->TextureId;
-                        if(curr_texture_view != last_texture_view)
-                        {
-                            last_texture_view = curr_texture_view;
-                        }
 
                         // Update descriptor set
                         DescriptorData descriptor_data[2] = {};
-                        descriptor_data[0].name = CYBER_UTF8("Texture");
-                        descriptor_data[0].binding = 0;
-                        descriptor_data[0].binding_type = GRAPHICS_RESOURCE_TYPE_TEXTURE;
-                        descriptor_data[0].texture_views = &curr_texture_view;
-                        descriptor_data[1].name = CYBER_UTF8("Constants");
-                        descriptor_data[1].binding = 0;
-                        descriptor_data[1].binding_type = GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT;
-                        descriptor_data[1].push_constant = vertex_constant_buffer;
-                        render_device->update_descriptor_set(descriptor_set, descriptor_data, 2);
-                        
+                        uint32_t descriptor_set_idx = 0;
+
+                        if(curr_texture_view != last_texture_view)
+                        {
+                            last_texture_view = curr_texture_view;
+
+                            TextureBarrier draw_barrier = {
+                            .texture = font_texture,
+                            .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
+                            .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
+                            .subresource_barrier = 0
+                            };
+                            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                            device_context->cmd_resource_barrier(barrier_desc0);
+
+                            descriptor_data[descriptor_set_idx].name = CYBER_UTF8("Texture");
+                            descriptor_data[descriptor_set_idx].binding = 0;
+                            descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_TEXTURE;
+                            descriptor_data[descriptor_set_idx].texture_views = &curr_texture_view;
+                            descriptor_set_idx++;
+                        }
+
+                        descriptor_data[descriptor_set_idx].name = CYBER_UTF8("Constants");
+                        descriptor_data[descriptor_set_idx].binding = 0;
+                        descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_PUSH_CONTANT;
+                        descriptor_data[descriptor_set_idx].push_constant = vertex_constant_buffer;
+                        descriptor_set_idx++;
+                        render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
                         uint32_t vertex_offset = 0;
                         if(m_baseVertexSupported)
                         {
