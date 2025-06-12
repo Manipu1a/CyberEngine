@@ -1,5 +1,5 @@
-#include "core/Application.h"
-#include "platform/windows/windows_application.h"
+#include "application/application.h"
+#include "application/platform/windows/windows_application.h"
 #include "platform/memory.h"
 #include "inputsystem/InputSystem.h"
 #include "core/Timestep.h"

@@ -106,7 +106,7 @@
     ],
     
     "xmake.additionalConfigArguments": [
-        "--build_renderpass=true"
+        "--build_triangle=true"
     ],
     "cmake.sourceDirectory": "D:/Project/CyberEngine/thirdparty/DirectXMath-main"
 }

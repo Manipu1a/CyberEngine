@@ -5,7 +5,7 @@
 #include "graphics/interface/render_device.hpp"
 #include "graphics/interface/device_object.h"
 #include "platform/memory.h"
-#include "core/Application.h"
+#include "application/application.h"
 #include "editor/editor.h"
 
 namespace Cyber

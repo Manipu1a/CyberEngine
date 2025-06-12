@@ -104,9 +104,9 @@ DECODE_PNG_RESULT decode_png(IDataBlob* srcPngBits, IDataBlob* dstPixels, ImageD
     dstImageDesc.numComponents = png_get_channels(png, info);
     switch(bit_depth)
     {
-        case 8: dstImageDesc.componentType = VALUE_TYPE_UINT8; break;
-        case 16: dstImageDesc.componentType = VALUE_TYPE_UINT16; break;
-        case 32: dstImageDesc.componentType = VALUE_TYPE_UINT32; break;
+        case 8: dstImageDesc.componentType = IMAGE_VALUE_TYPE_UINT8; break;
+        case 16: dstImageDesc.componentType = IMAGE_VALUE_TYPE_UINT16; break;
+        case 32: dstImageDesc.componentType = IMAGE_VALUE_TYPE_UINT32; break;
         default:
         {
             png_destroy_read_struct(&png, &info, (png_infopp)0);

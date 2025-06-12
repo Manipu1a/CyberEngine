@@ -1,5 +1,6 @@
 #include "jpeg_codec.h"
 #include "jpeglib.h"
+#include "setjmp.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
@@ -88,7 +89,7 @@ DECODE_JPEG_RESULT decode_jpeg(IDataBlob* srcJpegBits, IDataBlob* dstPixels, Ima
     // if we asked for color quantization.
     dstImageDesc.width = cinfo.output_width;
     dstImageDesc.height = cinfo.output_height;
-    dstImageDesc.componentType = VALUE_TYPE_UINT8;
+    dstImageDesc.componentType = IMAGE_VALUE_TYPE_UINT8;
     dstImageDesc.numComponents = cinfo.output_components;
     dstImageDesc.rowStride = cinfo.output_width * cinfo.output_components;
     dstImageDesc.rowStride = (dstImageDesc.rowStride + 3u) & ~3u;

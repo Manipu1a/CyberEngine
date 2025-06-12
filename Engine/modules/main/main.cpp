@@ -1,7 +1,7 @@
 #include <iostream>
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
-#include "core/Application.h"
+#include "application/application.h"
 #include "triangle.h"
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)

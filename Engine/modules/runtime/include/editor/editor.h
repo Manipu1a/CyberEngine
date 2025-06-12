@@ -2,7 +2,7 @@
 #include "graphics/backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/interface/swap_chain.hpp"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
-#include "core/application.h"
+#include "application/application.h"
 #include "cyber_runtime.config.h"
 
 namespace Cyber

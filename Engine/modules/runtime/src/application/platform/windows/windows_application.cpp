@@ -1,11 +1,11 @@
-#include "platform/windows/windows_application.h"
+#include "application/platform/windows/windows_application.h"
 #include "CyberEvents/ApplicationEvent.h"
 #include "CyberLog/Log.h"
 #include <windef.h>
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_win32.h"
 #include "imgui/backends/imgui_impl_dx12.h"
-#include "platform/windows/windows_window.h"
+#include "application/platform/windows/windows_window.h"
 #include "platform/memory.h"
 
 // Forward declare message handler from imgui_impl_win32.cpp

@@ -1,6 +1,6 @@
 #pragma once
-#include "cyber_core.config.h"
-#include "core/application.h"
+#include "application/application.h"
+#include "cyber_runtime.config.h"
 
 namespace Cyber
 {

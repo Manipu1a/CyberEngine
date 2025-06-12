@@ -1,7 +1,6 @@
 #pragma once
 #include "cyber_game.config.h"
-#include "core/window.h"
-#include "core/application.h"
+#include "application/application.h"
 
 namespace Cyber
 {

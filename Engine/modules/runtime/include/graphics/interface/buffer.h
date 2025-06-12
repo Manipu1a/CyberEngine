@@ -2,7 +2,7 @@
 #include "common/flags.h"
 #include "common/cyber_graphics_config.h"
 #include "graphics/interface/buffer_view.h"
-#include "core/debug.h"
+#include "CyberLog/Log.h"
 #include "device_object.h"
 #include "interface/graphics_types.h"
 

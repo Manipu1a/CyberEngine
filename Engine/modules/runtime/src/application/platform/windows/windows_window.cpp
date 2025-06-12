@@ -1,5 +1,5 @@
-#include "platform/windows/windows_window.h"
-#include "platform/windows/windows_application.h"
+#include "application/platform/windows/windows_window.h"
+#include "application/platform/windows/windows_application.h"
 
 namespace Cyber
 {

@@ -2,7 +2,7 @@
 #include "core/Core.h"
 #include <windows.h>
 #include "CyberEvents/Event.h"
-#include "window.h"
+#include "core/window.h"
 #include "renderer/renderer.h"
 #include "editor/editor.h"
 #include "cyber_runtime.config.h"

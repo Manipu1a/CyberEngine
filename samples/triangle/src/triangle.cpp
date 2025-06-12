@@ -3,7 +3,7 @@
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
-#include "core/Application.h"
+#include "application/application.h"
 
 namespace Cyber
 {

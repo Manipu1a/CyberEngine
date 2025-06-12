@@ -1,5 +1,5 @@
 #pragma once
-
+#include "image.h"
 #include "core/interface/data_blob.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)

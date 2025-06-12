@@ -1,7 +1,8 @@
-#include "texture_loader_impl.hpp"
+#include "texture_loader/texture_loader_impl.hpp"
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
 #include "common/graphics_utils.hpp"
+
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
 

@@ -1,6 +1,6 @@
 #include "gameruntime/sampleapp.h"
 #include "platform/memory.h"
-#include "platform/windows/windows_application.h"
+#include "application/platform/windows/windows_application.h"
 
 namespace Cyber
 {

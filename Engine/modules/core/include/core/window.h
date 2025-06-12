@@ -15,7 +15,7 @@ namespace Cyber
         int32_t bottom;
     };
 
-    struct CYBER_RUNTIME_API WindowDesc
+    struct CYBER_CORE_API WindowDesc
     {
         eastl::wstring title;
         HWND handle;
@@ -46,7 +46,7 @@ namespace Cyber
         WindowDesc() {}
     };
 
-    struct CYBER_RUNTIME_API PlatformRect
+    struct CYBER_CORE_API PlatformRect
     {
         int32_t left;
         int32_t top;
@@ -65,7 +65,7 @@ namespace Cyber
         }
     };
 
-    struct CYBER_RUNTIME_API MonitorInfo
+    struct CYBER_CORE_API MonitorInfo
     {
         eastl::string name;
         eastl::string id;
@@ -79,7 +79,7 @@ namespace Cyber
         int32_t physical_height;
     };
 
-    struct CYBER_RUNTIME_API DisplayMetrics
+    struct CYBER_CORE_API DisplayMetrics
     {
         int32_t primary_monitor_width;
         int32_t primary_monitor_height;
@@ -88,7 +88,7 @@ namespace Cyber
         PlatformRect virtual_display_rect;
     };
 
-    class CYBER_RUNTIME_API Window
+    class CYBER_CORE_API Window
     {
     public:
         using EventCallbackFn = eastl::function<void(Event&)>;

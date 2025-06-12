@@ -7,7 +7,7 @@
 #include "eastl/array.h"
 #include "platform/memory.h"
 #include "platform/platform_misc.h"
-#include "core/debug.h"
+#include "CyberLog/Log.h"
 
 namespace Cyber
 {

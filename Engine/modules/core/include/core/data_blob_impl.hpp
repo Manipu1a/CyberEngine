@@ -2,12 +2,12 @@
 #include "platform/configure.h"
 #include "core/interface/data_blob.h"
 #include "eastl/vector.h"
-#include "cyber_runtime.config.h"
+#include "cyber_core.config.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Core)
 
-class CYBER_RUNTIME_API DataBlobImpl final : public IDataBlob
+class CYBER_CORE_API DataBlobImpl final : public IDataBlob
 {
 public:
     static DataBlobImpl* create(size_t size = 0, const void* data = nullptr);
