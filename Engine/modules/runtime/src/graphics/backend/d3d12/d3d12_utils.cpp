@@ -35,13 +35,13 @@ namespace Cyber
         D3D12_BLEND_DESC ret = {};
         ret.AlphaToCoverageEnable = (BOOL)pDesc->alpha_to_coverage;
         ret.IndependentBlendEnable = TRUE;
-        for(int i = 0; i < GRAPHICS_MAX_MRT_COUNT;++i)
+        for(int i = 0; i < pDesc->render_target_count; ++i)
         {
             BOOL blendEnable = (gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]] != D3D12_BLEND_ZERO) ||
                                 (gDx12BlendConstantTranslator[pDesc->src_alpha_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_alpha_factors[blendDescIndex]] != D3D12_BLEND_ZERO);
 
             ret.RenderTarget[i].BlendEnable = blendEnable;
-            ret.RenderTarget[i].RenderTargetWriteMask = (UINT8)pDesc->masks[blendDescIndex];
+            ret.RenderTarget[i].RenderTargetWriteMask = D3D12Util_TranslateColorMask(pDesc->masks[blendDescIndex]);
             ret.RenderTarget[i].BlendOp = gDx12BlendOpTranlator[pDesc->blend_modes[blendDescIndex]];
             ret.RenderTarget[i].SrcBlend = gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]];
             ret.RenderTarget[i].DestBlend = gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]];

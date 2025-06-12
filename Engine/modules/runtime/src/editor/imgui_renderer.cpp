@@ -385,12 +385,23 @@ namespace Cyber
                 {2, 0, 4, VALUE_TYPE_UINT8, true}
             };
             RenderObject::VertexLayoutDesc vertex_layout = {3, vertex_attributes};
+            BlendStateCreateDesc blend_state_desc = {};
+            blend_state_desc.render_target_count = 1;
+            blend_state_desc.src_factors[0] = BLEND_CONSTANT_SRC_ALPHA;
+            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
+            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.alpha_to_coverage = false;
+            blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
             RenderObject::RenderPipelineCreateDesc rp_desc = {
                 .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
+                .blend_state = &blend_state_desc,
                 .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = m_depthBufferFmt,

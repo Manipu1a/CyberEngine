@@ -542,6 +542,19 @@ namespace Cyber
         D3D12_BLEND_OP_MAX,
     };
 
+    static const D3D12_COLOR_WRITE_ENABLE D3D12Util_TranslateColorMask(COLOR_WRITE_MASK mask)
+    {
+        switch(mask)
+        {
+            case COLOR_WRITE_MASK_RED: return D3D12_COLOR_WRITE_ENABLE_RED;
+            case COLOR_WRITE_MASK_GREEN: return D3D12_COLOR_WRITE_ENABLE_GREEN;
+            case COLOR_WRITE_MASK_BLUE: return D3D12_COLOR_WRITE_ENABLE_BLUE;
+            case COLOR_WRITE_MASK_ALPHA: return D3D12_COLOR_WRITE_ENABLE_ALPHA;
+            case COLOR_WRITE_MASK_ALL: return D3D12_COLOR_WRITE_ENABLE_ALL;
+            default: cyber_assert(false, "Invalid Color Write Mask"); return D3D12_COLOR_WRITE_ENABLE_ALL;
+        }
+    }
+
     static const D3D12_BLEND gDx12BlendConstantTranslator[BLEND_CONSTANT_COUNT] = 
     {
         D3D12_BLEND_ZERO,

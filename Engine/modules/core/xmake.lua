@@ -1,0 +1,7 @@
+target("CyberCore")
+    set_kind("shared")
+    add_includedirs("include", {public=true})
+    add_files("src/core/*.cpp", {public=true})
+    add_files("src/platform/*.cpp", {public=true})
+    add_files("src/platform/windows/*.cpp", {public=true})
+    add_deps("EASTL", {public = true})

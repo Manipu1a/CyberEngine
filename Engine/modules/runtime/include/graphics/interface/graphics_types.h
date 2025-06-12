@@ -984,6 +984,17 @@ namespace Cyber
         BLEND_CONSTANT_COUNT,
     };
 
+    CYBER_TYPED_ENUM(COLOR_WRITE_MASK, uint8_t)
+    {
+        COLOR_WRITE_MASK_NONE = 0,
+        COLOR_WRITE_MASK_RED = 1U << 0,
+        COLOR_WRITE_MASK_GREEN = 1U << 1,
+        COLOR_WRITE_MASK_BLUE = 1U << 2,
+        COLOR_WRITE_MASK_ALPHA = 1U << 3,
+        COLOR_WRITE_MASK_ALL = COLOR_WRITE_MASK_RED | COLOR_WRITE_MASK_GREEN | COLOR_WRITE_MASK_BLUE | COLOR_WRITE_MASK_ALPHA,
+        COLOR_WRITE_MASK_COUNT = 5,
+    };
+
     CYBER_TYPED_ENUM(CULL_MODE, uint8_t)
     {
         CULL_MODE_NONE = 0,
@@ -1536,6 +1547,7 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API BlendStateCreateDesc
     {
+        uint32_t render_target_count;
         /// Source blend factor per render target
         BLEND_CONSTANT src_factors[GRAPHICS_MAX_MRT_COUNT];
         /// Destination blend factor per render target
@@ -1549,7 +1561,7 @@ namespace Cyber
         /// Blend alpha mode per render target
         BLEND_MODE blend_alpha_modes[GRAPHICS_MAX_MRT_COUNT];
         /// Color write mask per render target
-        int32_t masks[GRAPHICS_MAX_MRT_COUNT];
+        COLOR_WRITE_MASK masks[GRAPHICS_MAX_MRT_COUNT];
         /// Enable alpha to coverage
         bool alpha_to_coverage : 1;
         /// Set whether each render target has an unique blend function. When false the blend function in slot 0 will be used for all render targets.
