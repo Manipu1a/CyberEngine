@@ -12,12 +12,13 @@ namespace Cyber
             WindowsApplication(const WindowDesc& desc);
             virtual ~WindowsApplication();
 
+            virtual void initialize() override;
             virtual void run() override;
             virtual void update(float deltaTime)override;
             virtual void onEvent(Event& e)override;
             virtual void create_window(const Cyber::WindowDesc& desc) override;
 
-            static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+            LRESULT CALLBACK handle_win32_message(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
         };
         
         #if defined(CYBER_RUNTIME_PLATFORM_WINDOWS)

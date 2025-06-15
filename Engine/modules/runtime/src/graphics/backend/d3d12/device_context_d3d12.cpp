@@ -249,7 +249,7 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_instanced(uint32_t vertex_cou
 
 void DeviceContext_D3D12_Impl::render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex)
 {
-    curr_command_context->draw_indexed_instanced(index_count, 1, first_index, 0, 0);
+    curr_command_context->draw_indexed_instanced(index_count, 1, first_index, first_vertex, 0);
     ++state.num_command;
 }
 
@@ -419,6 +419,11 @@ void DeviceContext_D3D12_Impl::flush()
 {
     flush(true);
     //render_device->close_and_execute_command_context(COMMAND_QUEUE_TYPE_GRAPHICS, 1, &curr_command_context);
+}
+
+void DeviceContext_D3D12_Impl::finish_frame()
+{
+    m_pDynamicHeap->release_allocated_pages(0);
 }
 
 void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists)

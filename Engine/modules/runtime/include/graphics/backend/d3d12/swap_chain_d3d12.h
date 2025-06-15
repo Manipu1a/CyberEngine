@@ -20,7 +20,7 @@ namespace Cyber
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
             using TSwapChainBase = SwapChainBase<EngineD3D12ImplTraits>;
 
-            SwapChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device, SwapChainDesc desc);
+            SwapChain_D3D12_Impl(class RenderDevice_D3D12_Impl* device, SwapChainDesc desc, RenderObject::IDeviceContext* _device_context);
 
             virtual ~SwapChain_D3D12_Impl()
             {
@@ -42,7 +42,10 @@ namespace Cyber
             uint32_t get_enable_vsync() const { return m_enableVsync; }
             void set_enable_vsync(uint32_t enableVsync) { m_enableVsync = enableVsync; }
 
+            virtual void resize(uint32_t width, uint32_t height) override final;
             virtual void free() override final;
+
+            void init_buffers_and_views();
         protected:
             IDXGISwapChain3* m_pDxSwapChain;
             uint32_t m_dxSyncInterval : 3;

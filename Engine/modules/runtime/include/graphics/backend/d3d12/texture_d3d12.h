@@ -26,7 +26,7 @@ namespace Cyber
             
             virtual ~Texture_D3D12_Impl()
             {
-
+                native_resource->Release();
             }
             
             virtual ID3D12Resource* get_d3d12_resource() const override

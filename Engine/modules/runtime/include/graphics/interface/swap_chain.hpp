@@ -8,6 +8,8 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class IDeviceContext;
+
         struct CYBER_GRAPHICS_API SwapChainDesc
         {
             /// Number of backbuffers in the swapchain
@@ -49,6 +51,8 @@ namespace Cyber
             virtual void set_back_buffer_depth(RenderObject::ITexture* dsv) = 0;
             virtual RenderObject::ITexture_View* get_back_buffer_dsv() const = 0;
             virtual void set_back_buffer_dsv(RenderObject::ITexture_View* dsv) = 0;
+
+            virtual void resize(uint32_t width, uint32_t height) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -59,13 +63,15 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TSwapChainBase = DeviceObjectBase<SwapChainInterface, RenderDeviceImplType>;
 
-            SwapChainBase(RenderDeviceImplType* device, SwapChainDesc desc) : TSwapChainBase(device) , m_desc(m_desc) {  };
+            SwapChainBase(RenderDeviceImplType* device, SwapChainDesc _desc, RenderObject::IDeviceContext* _device_const)
+             : TSwapChainBase(device) , swap_chain_desc(_desc), device_context(_device_const)
+            {  };
 
             virtual ~SwapChainBase() = default;
 
             virtual const SwapChainDesc& get_create_desc() const override
             {
-                return m_desc;
+                return swap_chain_desc;
             }
 
             virtual void free () override
@@ -145,8 +151,17 @@ namespace Cyber
                 m_pBackBufferDSV = dsv;
             }
 
+            virtual void resize(uint32_t width, uint32_t height) override
+            {
+                swap_chain_desc.m_width = width;
+                swap_chain_desc.m_height = height;
+            }
+
+
         protected:
-            SwapChainDesc m_desc;
+            RenderObject::IDeviceContext* device_context;
+
+            SwapChainDesc swap_chain_desc;
             RenderObject::ITexture** m_ppBackBuffers;
             RenderObject::ITexture_View** m_ppBackBufferSRVs;
             uint32_t m_bufferSRVCount;

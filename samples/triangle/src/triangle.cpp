@@ -66,13 +66,7 @@ namespace Cyber
             
             RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
 
-            RenderObject::FrameBuffserDesc frame_buffer_desc;
-            frame_buffer_desc.m_name = u8"FrameBuffer";
-            frame_buffer_desc.m_pRenderPass = renderpass;
-            frame_buffer_desc.m_attachmentCount = 1;
-            frame_buffer_desc.m_ppAttachments = attachment_resources;
-
-            frame_buffer = render_device->create_frame_buffer(frame_buffer_desc);
+            frame_buffer->update_attachments(attachment_resources, 1);
 
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
@@ -137,7 +131,6 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
             auto swap_chain = renderer->get_swap_chain();
-            auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
 
             device_context->cmd_end_render_pass();
@@ -379,6 +372,18 @@ namespace Cyber
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
             pipeline = render_device->create_render_pipeline(rp_desc);
+
+            auto renderpass = renderer->get_render_pass();
+            auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
+            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
+
+            RenderObject::FrameBuffserDesc frame_buffer_desc;
+            frame_buffer_desc.m_name = u8"FrameBuffer";
+            frame_buffer_desc.m_pRenderPass = renderpass;
+            frame_buffer_desc.m_attachmentCount = 1;
+            frame_buffer_desc.m_ppAttachments = attachment_resources;
+            frame_buffer = render_device->create_frame_buffer(frame_buffer_desc);
+
             vs_shader->free();
             ps_shader->free();
         }

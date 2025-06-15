@@ -97,7 +97,7 @@ namespace Cyber
             virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) = 0;
 
             virtual void flush() = 0;
-
+            virtual void finish_frame() = 0;
             virtual void set_frame_buffer(IFrameBuffer* frameBuffer) = 0;
             virtual IFrameBuffer* get_frame_buffer() const = 0;
 

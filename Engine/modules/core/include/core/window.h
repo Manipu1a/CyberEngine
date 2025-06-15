@@ -94,7 +94,7 @@ namespace Cyber
         using EventCallbackFn = eastl::function<void(Event&)>;
         Window() = default;
         virtual ~Window() = default;
-        virtual void initialize_window(const Cyber::WindowDesc& desc) = 0;
+        virtual void initialize_window() = 0;
         virtual void update(float deltaTime) = 0;
         virtual void close() = 0;
         

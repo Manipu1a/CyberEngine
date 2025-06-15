@@ -80,8 +80,6 @@ namespace Cyber
             
             virtual void initialize(RenderObject::IRenderDevice* device, HWND hwnd);
             void finalize();
-
-            struct RenderObject::DescriptorHeap_D3D12* g_imguiSrvDescHeap = nullptr;
             /**/
             virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight);
             void end_frame();

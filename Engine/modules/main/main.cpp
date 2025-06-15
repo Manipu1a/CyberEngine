@@ -4,33 +4,6 @@
 #include "application/application.h"
 #include "triangle.h"
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	int wmId, wmEvent;
-	PAINTSTRUCT ps;
-	HDC hdc;
-
-	switch (message)
-	{
-	case WM_COMMAND:
-		wmId    = LOWORD(wParam);
-		wmEvent = HIWORD(wParam);
-		break;
-	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
-		// TODO: Add any drawing code here...
-		EndPaint(hWnd, &ps);
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-	return 0;
-}
-
-
 int WINAPI WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
                      PSTR    lpCmdLine,
@@ -48,7 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     Cyber::WindowDesc desc;
     desc.title = L"Cyber";
     desc.mWndW = 1280;
-    desc.mWndH = 720;
+    desc.mWndH = 800;
     desc.hInstance = hInstance;
     desc.cmdShow = nCmdShow;
     Cyber::Core::Application* app = Cyber::Core::Application::create_application(desc);

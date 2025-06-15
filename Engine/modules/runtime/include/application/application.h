@@ -37,6 +37,9 @@ namespace Cyber
             virtual void update(float deltaTime);
             virtual void onEvent(Event& e) {}
 
+            void on_window_create(HWND hwnd, uint32_t width, uint32_t height);
+            void resize_window(uint32_t width, uint32_t height);
+
             CYBER_FORCE_INLINE Window* get_window() const { return m_pWindow; }
             CYBER_FORCE_INLINE InputSystem* get_input_system() const { return m_pInputSystem; }
             CYBER_FORCE_INLINE Renderer::Renderer* get_renderer() const { return m_pRenderer; }

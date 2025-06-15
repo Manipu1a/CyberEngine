@@ -18,6 +18,8 @@ namespace Cyber
 
             virtual void initialize(RenderObject::IRenderDevice* device, HWND hwnd) override;
             virtual void new_frame(uint32_t renderSurfaceWidth, uint32_t renderSurfaceHeight) override;
+
+            LRESULT proc_msg_win32(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
         };
     }
 }

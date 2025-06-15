@@ -70,7 +70,8 @@ namespace Cyber
             virtual void present(ISwapChain* swap_chain) override;
             virtual void wait_queue_idle(ICommandQueue* queue) override;
             virtual void free_queue(ICommandQueue* queue) override;
-
+            virtual void idle_command_queue() override;
+            
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) override;
             virtual void free_root_signature(IRootSignature* rootSignature) override;
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) override;

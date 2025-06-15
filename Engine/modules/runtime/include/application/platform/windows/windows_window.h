@@ -9,9 +9,9 @@ namespace Cyber
         class WindowsWindow : public Window
         {
         public:
-            WindowsWindow();
+            WindowsWindow(const Cyber::WindowDesc& desc);
 
-            virtual void initialize_window(const Cyber::WindowDesc& desc);
+            virtual void initialize_window();
             virtual void update(float deltaTime);
             virtual void close();
             

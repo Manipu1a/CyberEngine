@@ -60,7 +60,8 @@ namespace Cyber
             virtual void present(ISwapChain* swap_chain) = 0;
             virtual void wait_queue_idle(ICommandQueue* queue) = 0;
             virtual void free_queue(ICommandQueue* queue) = 0;
-
+            virtual void idle_command_queue() = 0;
+            
             /// RootSignature
             virtual IRootSignature* create_root_signature(const RootSignatureCreateDesc& rootSigDesc) = 0;
             virtual void free_root_signature(IRootSignature* rootSignature) = 0;

@@ -23,12 +23,11 @@ namespace Cyber
         {
 
         }
-
-        LRESULT CALLBACK WindowsApplication::WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+        LRESULT CALLBACK WindowsApplication::handle_win32_message(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             PAINTSTRUCT ps;
             HDC hdc;
-
+            
             if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
                 return true;
 
@@ -49,6 +48,13 @@ namespace Cyber
             return 0;
         }
 
+        void WindowsApplication::initialize()
+        {
+            m_pWindow->initialize_window();
+
+            Application::initialize();
+        }
+
         void WindowsApplication::run()
         {
             Application::run();
@@ -64,8 +70,7 @@ namespace Cyber
 
         void WindowsApplication::create_window(const Cyber::WindowDesc& desc)
         {
-            m_pWindow = cyber_new<WindowsWindow>();
-            m_pWindow->initialize_window(desc);
+            m_pWindow = cyber_new<WindowsWindow>(desc);
         }
     }
 }

@@ -5,20 +5,52 @@ namespace Cyber
 {
     namespace Platform
     {
-        WindowsWindow::WindowsWindow()
+        WindowsWindow::WindowsWindow(const Cyber::WindowDesc& desc)
         {
-
+            mData.mWindowDesc = desc;
         }
 
-        void WindowsWindow::initialize_window(const Cyber::WindowDesc& desc)
+        LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
-            SetProcessDPIAware();
-            mData.mWindowDesc = desc;
+            PAINTSTRUCT ps;
+            HDC hdc;
+
+            if(Core::Application::getApp() != nullptr)
+            {
+                WindowsApplication* app = static_cast<WindowsApplication*>(Core::Application::getApp());
+                if (app->handle_win32_message(hwnd, msg, wParam, lParam))
+                    return true;
+            }
+
+            switch (msg)
+            {
+                case WM_DESTROY:
+                    PostQuitMessage(0);
+                    //mRunning = false;
+                    return 0;
+                    break;
+                case WM_SIZE:
+                    auto new_width = LOWORD(lParam); // width
+                    auto new_height = HIWORD(lParam); // height
+                    if (new_width != 0 && new_height != 0)
+                    {
+                        Core::Application::getApp()->resize_window(new_width, new_height);
+                    }
+                    return 0;
+                    break;
+            }
+
+            return DefWindowProcW(hwnd, msg, wParam, lParam);
+        }
+
+        void WindowsWindow::initialize_window()
+        {
+            //SetProcessDPIAware();
 
             WNDCLASSEX wcex;
             wcex.cbSize = sizeof(WNDCLASSEX);
             wcex.style			= CS_HREDRAW | CS_VREDRAW;
-            wcex.lpfnWndProc	= WindowsApplication::WndProc;
+            wcex.lpfnWndProc	= WndProc;
             wcex.cbClsExtra		= 0;
             wcex.cbWndExtra		= 0;
             wcex.hInstance		= mData.mWindowDesc.hInstance;
@@ -35,17 +67,31 @@ namespace Cyber
                 return;
             }
 
-            mData.mWindowDesc.handle = CreateWindow(
+            uint32_t window_style = WS_OVERLAPPEDWINDOW;
+            LONG window_width = mData.mWindowDesc.mWndW;
+            LONG window_height = mData.mWindowDesc.mWndH;
+            RECT rc           = {0, 0, window_width, window_height};
+            AdjustWindowRect(&rc, window_style, FALSE);
+
+            mData.mWindowDesc.handle = CreateWindowW(
                 L"MainWnd",
                 L"win32app",
-                WS_OVERLAPPEDWINDOW,
+                window_style,
                 CW_USEDEFAULT, CW_USEDEFAULT,
-                mData.mWindowDesc.mWndW, mData.mWindowDesc.mWndH,
-                0,
-                0,
+                rc.right - rc.left,
+                rc.bottom - rc.top, 
+                nullptr,
+                nullptr,
                 mData.mWindowDesc.hInstance,
                 0
                 );
+            
+            GetClientRect(mData.mWindowDesc.handle, &rc);
+
+            mData.mWindowDesc.mWndW = rc.right - rc.left;
+            mData.mWindowDesc.mWndH = rc.bottom - rc.top;
+            
+            cyber_log("Window created with size: {0}x{1}", mData.mWindowDesc.mWndW, mData.mWindowDesc.mWndH);
 
             if(!mData.mWindowDesc.handle)
             {
@@ -53,8 +99,14 @@ namespace Cyber
                 cyber_core_assert(false, "Call to CreateWindow failed!{0}", GetLastError());
             }
 
-            DisplayMetrics metrics;
-            rebuild_display_metrics(metrics);
+            SetWindowPos(mData.mWindowDesc.handle, NULL, 0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+
+            //DisplayMetrics metrics;
+            //rebuild_display_metrics(metrics);
+
+            LONG_PTR currentStyle = GetWindowLongPtr(mData.mWindowDesc.handle, GWL_STYLE);
+            Core::Application::getApp()->on_window_create(mData.mWindowDesc.handle, mData.mWindowDesc.mWndW, mData.mWindowDesc.mWndH);
 
             ShowWindow(mData.mWindowDesc.handle, mData.mWindowDesc.cmdShow);
             UpdateWindow(mData.mWindowDesc.handle);

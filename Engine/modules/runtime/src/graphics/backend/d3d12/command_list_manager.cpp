@@ -17,7 +17,7 @@ CommandListManager::~CommandListManager()
 
 void CommandListManager::create_new_command_list(ID3D12GraphicsCommandList** command_list, ID3D12CommandAllocator** command_allocator, uint32_t& version)
 {
-    request_allocator(command_allocator);
+    //request_allocator(command_allocator);
 
     auto* d3d12_device = device->GetD3D12Device();
 
@@ -66,6 +66,7 @@ void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allo
     eastl::wstring allocator_name(eastl::wstring::CtorSprintf(), L"Cmd list allocator %d", num_allocators.fetch_add(1));
     (*command_allocator)->SetName(allocator_name.c_str());
 }
+
 
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

@@ -78,6 +78,9 @@ namespace Cyber
 
         // Create Requested Queues
         m_pNullDescriptors = (RenderObject::EmptyDescriptors_D3D12*)cyber_calloc(1, sizeof(RenderObject::EmptyDescriptors_D3D12));
+                
+        // Create Fence
+        //fence = cyber_new<Fence_D3D12_Impl>(this);
 
         m_commandQueues.resize(m_desc.command_queue_count);
 
@@ -91,7 +94,9 @@ namespace Cyber
             {
                 cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
             }
-            m_commandQueues[i] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue);
+            ID3D12Fence* dxFence = nullptr;
+            CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence)));
+            m_commandQueues[i] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue, dxFence);
         }
 
         // Create D3D12MA Allocator
@@ -859,20 +864,13 @@ namespace Cyber
             #if defined(_WIN32)
             #endif
         }
+
+        m_deviceContexts[0]->finish_frame();
     }
 
     void RenderDevice_D3D12_Impl::wait_queue_idle(ICommandQueue* queue)
     {
-        CommandQueue_D3D12_Impl* Queue = static_cast<CommandQueue_D3D12_Impl*>(queue);
-        Fence_D3D12_Impl* Fence = static_cast<Fence_D3D12_Impl*>(Queue->m_pFence);
-        uint64_t fence_value = Fence->m_fenceValue;
-        Queue->signal_fence(Fence, fence_value);
-        Fence->m_fenceValue++;
-        if(Fence->m_pDxFence->GetCompletedValue() < fence_value)
-        {
-            Fence->m_pDxFence->SetEventOnCompletion(fence_value, Fence->m_dxWaitIdleFenceEvent);
-            WaitForSingleObject(Fence->m_dxWaitIdleFenceEvent, INFINITE);
-        }
+
     }
 
     void RenderDevice_D3D12_Impl::free_queue(ICommandQueue* queue)
@@ -880,6 +878,19 @@ namespace Cyber
 
     }
 
+    void RenderDevice_D3D12_Impl::idle_command_queue()
+    {
+        wait_fences(0);
+        
+        for(uint32_t i = 0; i < m_commandQueues.size(); i++)
+        {
+            ICommandQueue* queue = m_commandQueues[i];
+            if(queue)
+            {
+                queue->wait_for_idle();
+            }
+        }
+    }
     // Command Objects
     /*void allocate_transient_command_allocator(ID3D12Device* d3d12_device, CommandPool_D3D12_Impl* commandPool, ICommandQueue* queue)
     {
@@ -936,7 +947,7 @@ namespace Cyber
     {
         Instance_D3D12_Impl* dxInstance = static_cast<Instance_D3D12_Impl*>(m_pAdapter->get_instance());
         const uint32_t buffer_count = desc.m_imageCount;
-        SwapChain_D3D12_Impl* dxSwapChain = cyber_new<SwapChain_D3D12_Impl>(this, desc);
+        SwapChain_D3D12_Impl* dxSwapChain = cyber_new<SwapChain_D3D12_Impl>(this, desc, m_deviceContexts[0]);
         dxSwapChain->set_dx_sync_interval(desc.m_enableVsync ? 1 : 0);
 
         DECLARE_ZERO(DXGI_SWAP_CHAIN_DESC1, chinDesc);
@@ -949,12 +960,12 @@ namespace Cyber
         chinDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         chinDesc.BufferCount = buffer_count;
         chinDesc.Scaling = DXGI_SCALING_STRETCH;
-        chinDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+        chinDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
         chinDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-        chinDesc.Flags = 0;
+        chinDesc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         BOOL allowTearing = FALSE;
         dxInstance->get_dxgi_factory()->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &allowTearing, sizeof(allowTearing));
-        chinDesc.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+        //chinDesc.Flags |= allowTearing ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
         auto flag = dxSwapChain->get_flags() | (!desc.m_enableVsync && allowTearing) ? DXGI_PRESENT_ALLOW_TEARING : 0;
         dxSwapChain->set_flags(flag);    
         IDXGISwapChain1* swapchain;
@@ -975,73 +986,8 @@ namespace Cyber
         cyber_assert(bQueryChain3, "Failed to query IDXGISwapChain3 from created swapchain!");
 
         SAFE_RELEASE(swapchain);
-        // Get swapchain images
-        auto back_buffer_views = (RenderObject::ITexture_View**)cyber_malloc(sizeof(RenderObject::ITexture_View*) * buffer_count);
-        dxSwapChain->set_back_buffer_srv_views(back_buffer_views);
-        auto back_buffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
-        dxSwapChain->set_back_buffers(back_buffers);
-        ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
-        TextureCreateDesc textureDesc = {};
-        for(uint32_t i = 0; i < buffer_count; ++i)
-        {
-            CHECK_HRESULT(dxSwapChain->get_dx_swap_chain()->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
-            TextureViewCreateDesc textureViewDesc = {};
-            textureViewDesc.dimension = TEX_DIMENSION_2D;
-            textureViewDesc.format = desc.m_format;
-            textureViewDesc.view_type = TEXTURE_VIEW_RENDER_TARGET;
-            textureViewDesc.aspects = TVA_COLOR;
-            textureViewDesc.arrayLayerCount = 1;
-            textureViewDesc.p_native_resource = backbuffers[i];
-            textureViewDesc.mipLevelCount = 1;
-            textureViewDesc.baseMipLevel = 0;
-            auto back_buffer_view = create_texture_view(textureViewDesc);
-            dxSwapChain->set_back_buffer_srv_view(back_buffer_view, i);
-
-            textureDesc.m_width = desc.m_width;
-            textureDesc.m_height = desc.m_height;
-            textureDesc.m_depth = 1;
-            textureDesc.m_arraySize = 1;
-            textureDesc.m_format = desc.m_format;
-            textureDesc.m_mipLevels = 1;
-            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
-            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
-            textureDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            textureDesc.m_name = u8"SwapChain Back Buffer";
-            textureDesc.m_pNativeHandle = backbuffers[i];
-            auto Ts = create_texture(textureDesc);
-            dxSwapChain->set_back_buffer(Ts, i);
-        }
-        //dxSwapChain->mBackBuffers = Ts;
-        dxSwapChain->m_bufferSRVCount = buffer_count;
-
-        // Create depth stencil view
-        //dxSwapChain->mBackBufferDSV = (RHITexture*)cyber_malloc(sizeof(RHITexture));
-        TextureCreateDesc depthStencilDesc = {};
-        depthStencilDesc.m_height = desc.m_height;
-        depthStencilDesc.m_width = desc.m_width;
-        depthStencilDesc.m_depth = 1;
-        depthStencilDesc.m_arraySize = 1;
-        depthStencilDesc.m_format = TEX_FORMAT_D24_UNORM_S8_UINT;
-        depthStencilDesc.m_mipLevels = 1;
-        depthStencilDesc.m_sampleCount = SAMPLE_COUNT_1;
-        depthStencilDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
-        depthStencilDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-        depthStencilDesc.m_name = u8"Main Depth Stencil";
-        auto depth_buffer = create_texture(depthStencilDesc);
-        dxSwapChain->set_back_buffer_depth(depth_buffer);
-
-        auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(dxSwapChain->get_back_buffer_depth());
-
-        TextureViewCreateDesc depthStencilViewDesc = {};
-        depthStencilViewDesc.p_texture = dxSwapChain->get_back_buffer_depth();
-        depthStencilViewDesc.dimension = TEX_DIMENSION_2D;
-        depthStencilViewDesc.format = TEX_FORMAT_D24_UNORM_S8_UINT;
-        depthStencilViewDesc.view_type = TEXTURE_VIEW_DEPTH_STENCIL;
-        depthStencilViewDesc.aspects = TVA_DEPTH;
-        depthStencilViewDesc.arrayLayerCount = 1;
-        dxSwapChain->set_back_buffer_dsv(create_texture_view(depthStencilViewDesc));
-
-        dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
+        
+        dxSwapChain->init_buffers_and_views();
         return static_cast<ISwapChain*>(dxSwapChain);
     }
 
@@ -2452,7 +2398,7 @@ namespace Cyber
             }   
         }
 
-        CommandContext* command_context = new CommandContext(cmd_list_manager);
+        CommandContext* command_context = cyber_new<CommandContext>(cmd_list_manager);
         return PooledCommandContext{command_context};
     }
 
@@ -2471,7 +2417,7 @@ namespace Cyber
             auto& context = command_contexts[i];
             ID3D12CommandAllocator* command_allocator;
             d3d12_command_lists.emplace_back(context->close(command_allocator));
-            d3d12_command_allocators.emplace_back(command_allocator);
+            //d3d12_command_allocators.emplace_back(eastl::move(command_allocator));
         }
 
         auto& command_queue = m_commandQueues[command_queue_id];

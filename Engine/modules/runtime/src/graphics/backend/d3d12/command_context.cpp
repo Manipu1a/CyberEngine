@@ -4,12 +4,21 @@
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
 
-CommandContext::CommandContext(CommandListManager& command_list_manager)
+CommandContext::CommandContext(CommandListManager& command_list_manager, uint32_t _max_frame_inflight)
 {
+    max_frame_inflight = _max_frame_inflight;
+    current_frame_index = 0;
     command_allocator = nullptr;
     command_list = nullptr;
 
-    command_list_manager.create_new_command_list(&command_list, &command_allocator, max_interface_version);
+    frame_contexts.resize(max_frame_inflight);
+    for(auto& frame_context : frame_contexts)
+    {
+        command_list_manager.request_allocator(&frame_context.command_allocator); 
+        frame_context.fence_value = 0;
+    }
+    
+    command_list_manager.create_new_command_list(&command_list, &frame_contexts[current_frame_index].command_allocator, max_interface_version);
 }
 
 CommandContext::~CommandContext()
@@ -19,20 +28,16 @@ CommandContext::~CommandContext()
 
 ID3D12GraphicsCommandList* CommandContext::close(ID3D12CommandAllocator* out_command_allocator)
 {
-    cyber_assert(command_allocator != nullptr, "Command allocator is not initialized");
+    auto curr = current_frame_index.load();
+    FrameContext& frame_context = frame_contexts[curr % max_frame_inflight];
+    cyber_check(frame_context.command_allocator != nullptr);
+    
+    //cyber_assert(command_allocator != nullptr, "Command allocator is not initialized");
     auto hr = command_list->Close();
     cyber_assert(SUCCEEDED(hr), "Failed to close command list");
 
-    out_command_allocator = eastl::move(command_allocator);
+    //out_command_allocator = eastl::move(command_allocator);
     return command_list;
-}
-
-void CommandContext::reset()
-{
-    cyber_check(command_list != nullptr);
-    cyber_check(command_allocator != nullptr);
-    CHECK_HRESULT(command_allocator->Reset());
-    CHECK_HRESULT(command_list->Reset(command_allocator, nullptr));
 }
 
 void CommandContext::reset(CommandListManager& command_list_manager)
@@ -40,9 +45,15 @@ void CommandContext::reset(CommandListManager& command_list_manager)
     cyber_check(command_list != nullptr);
     cyber_check(command_list->GetType() == command_list_manager.get_command_list_type());
 
-    if(command_allocator != nullptr)
+
+    //if(command_allocator != nullptr)
     {
-        command_list_manager.request_allocator(&command_allocator);
+        auto curr = current_frame_index.fetch_add(1);
+        FrameContext& frame_context = frame_contexts[curr % max_frame_inflight];
+        command_allocator = frame_context.command_allocator;
+        //command_list_manager.request_allocator(&command_allocator);
+        //todo : reuse allocators
+        CHECK_HRESULT(command_allocator->Reset());
         command_list->Reset(command_allocator, nullptr);
     }
 }
@@ -135,7 +146,6 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
     if(texture.get_new_state() == transition_barrier.dst_state)
     {
-        cyber_warn(false, "D3D12 WARNING: Texture Barrier with same src and dst state!");
         return;
     }
 

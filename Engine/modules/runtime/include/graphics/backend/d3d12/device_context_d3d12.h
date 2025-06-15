@@ -32,7 +32,7 @@ public:
     virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) override;
 
     virtual void flush() override;
-
+    virtual void finish_frame() override;
     virtual void set_render_target(uint32_t numRenderTargets, ITexture_View* renderTargets[], ITexture_View* depthTarget) override;
 
     virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override;

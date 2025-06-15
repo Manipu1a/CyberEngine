@@ -2,6 +2,7 @@
 
 #include "common/cyber_graphics_config.h"
 #include "object_base.h"
+#include "platform/memory.h"
 
 namespace Cyber
 {
@@ -19,19 +20,19 @@ namespace Cyber
         public:
             using TBaseInterface = ObjectBase<BaseInterface>;
             using TRenderDeviceType = RenderDeviceType;
-            DeviceObjectBase(RenderDeviceType* device) :TBaseInterface(), m_pRenderDevice(device) { }
+            DeviceObjectBase(RenderDeviceType* device) :TBaseInterface(), render_device(device) { }
             virtual ~DeviceObjectBase() = default;
 
-            RenderDeviceType* get_device() const { return m_pRenderDevice; }
+            RenderDeviceType* get_device() const { return render_device; }
 
             virtual void free() override
             {
-                delete this;
+                cyber_delete(this);
             }
 
-        private:
+        protected:
             DeviceObjectBase() = default;
-            RenderDeviceType* m_pRenderDevice = nullptr;
+            RenderDeviceType* render_device = nullptr;
         };
     }
 }

@@ -23,6 +23,7 @@ namespace Cyber
 
             virtual ITexture_View* get_attachment(uint32_t index) const = 0;
             virtual IRenderPass* get_render_pass() const = 0;
+            virtual void update_attachments(ITexture_View** ppAttachments, uint32_t attachmentCount) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -58,6 +59,15 @@ namespace Cyber
             virtual IRenderPass* get_render_pass() const override final
             {
                 return m_pRenderPass;
+            }
+
+            virtual void update_attachments(ITexture_View** ppAttachments, uint32_t attachmentCount) override
+            {  
+                for (uint32_t i = 0; i < attachmentCount; ++i)
+                {
+                    m_ppAttachments[i] = ppAttachments[i];
+                }
+                m_desc.m_attachmentCount = attachmentCount;
             }
         private:
             FrameBuffserDesc m_desc;

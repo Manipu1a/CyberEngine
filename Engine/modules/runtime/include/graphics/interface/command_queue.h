@@ -29,6 +29,8 @@ namespace Cyber
             virtual void set_type(COMMAND_QUEUE_TYPE type) = 0;
             virtual QueueIndex get_index() const = 0;
             virtual void set_index(QueueIndex index) = 0;
+            virtual uint64_t wait_for_idle() = 0;
+            virtual uint64_t get_completed_fence_value() = 0;
         };
 
         template<typename EngineImplTraits>

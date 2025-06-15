@@ -36,6 +36,13 @@ namespace Cyber
         void Application::initialize()
         {
             CB_CORE_INFO("Application :: initialize()");
+
+        }
+
+        void Application::on_window_create(HWND hwnd, uint32_t width, uint32_t height)
+        {
+            CB_CORE_INFO("Application :: on_window_create() - width: {0}, height: {1}", width, height);
+
             m_pRenderer = cyber_new<Renderer::Renderer>();
             m_pRenderer->create_gfx_objects();
             m_pInputSystem = cyber_new<InputSystem>();
@@ -46,10 +53,23 @@ namespace Cyber
             createInfo.swap_chain = m_pRenderer->get_swap_chain();
             createInfo.BackBufferFmt = TEX_FORMAT_RGB32_FLOAT;
             createInfo.DepthBufferFmt = TEX_FORMAT_D32_FLOAT;
-            createInfo.Hwnd = m_pWindow->get_native_window();
+            createInfo.Hwnd = hwnd;
             m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
             m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
             m_pSampleApp->initialize();
+        }
+
+        void Application::resize_window(uint32_t width, uint32_t height)
+        {
+            CB_CORE_INFO("Application :: resize_window() - width: {0}, height: {1}", width, height);
+            if(m_pWindow)
+            {
+                m_pRenderer->get_swap_chain()->resize(width, height);
+            }
+            else
+            {
+                CB_CORE_ERROR("Application :: resize_window() - Window is not created!");
+            }
         }
 
         void Application::run()

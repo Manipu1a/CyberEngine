@@ -27,5 +27,18 @@ namespace Cyber
             ImGui_ImplWin32_NewFrame();
             Editor::new_frame(renderSurfaceWidth, renderSurfaceHeight);
         }
+
+        LRESULT Editor_Impl_Win32::proc_msg_win32(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+        {
+            if(ImGui::GetCurrentContext() == nullptr)
+            {
+                return 0;
+            }
+
+            //auto res = ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam);
+
+            return 0;
+        }
+
     }
 }

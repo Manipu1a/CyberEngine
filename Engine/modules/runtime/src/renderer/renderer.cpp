@@ -90,5 +90,13 @@ namespace Cyber
             chain_desc.m_enableVsync = true;
             m_pSwapChain = m_pRenderDevice->create_swap_chain(chain_desc);
         }
+
+        void Renderer::resize_swap_chain(uint32_t width, uint32_t height)
+        {
+            if(m_pSwapChain)
+            {
+                m_pSwapChain->resize(width, height);
+            }
+        }
     }
 }
