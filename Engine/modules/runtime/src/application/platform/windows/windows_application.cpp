@@ -30,21 +30,7 @@ namespace Cyber
             
             if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
                 return true;
-
-            switch (msg)
-            {
-                case WM_DESTROY:
-                    PostQuitMessage(0);
-                    //mRunning = false;
-                    break;
-                case WM_SIZE:
-
-                    break;
-                default:
-                    return DefWindowProc(hwnd, msg, wParam, lParam);
-                    break;
-            }
-
+            
             return 0;
         }
 

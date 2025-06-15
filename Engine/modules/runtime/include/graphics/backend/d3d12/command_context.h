@@ -64,6 +64,8 @@ public:
 
     void transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& barrier);
     void transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& barrier);
+    void clear_render_target(D3D12_CPU_DESCRIPTOR_HANDLE render_target_view, const FLOAT *color, UINT num_rect, const D3D12_RECT *rects);
+
     void set_scissor_rects(uint32_t num_scissor_rects, const D3D12_RECT* rects);
     void set_blend_factor(const float* blend_factor);
     void set_viewport(uint32_t num_viewport, const D3D12_VIEWPORT* vps);

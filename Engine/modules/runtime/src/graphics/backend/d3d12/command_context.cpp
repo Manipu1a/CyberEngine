@@ -266,6 +266,11 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const Buffer
         command_list->ResourceBarrier(1, &d3d_barrier);
 }
 
+void CommandContext::clear_render_target(D3D12_CPU_DESCRIPTOR_HANDLE render_target_view, const FLOAT *color, UINT num_rect, const D3D12_RECT *rects)
+{
+    command_list->ClearRenderTargetView(render_target_view, color, num_rect, rects);
+}
+
 void CommandContext::set_scissor_rects(uint32_t num_scissor_rects, const D3D12_RECT* rects)
 {
     command_list->RSSetScissorRects(num_scissor_rects, rects);

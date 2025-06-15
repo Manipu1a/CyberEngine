@@ -7,6 +7,7 @@
 #include "graphics/backend/d3d12/command_buffer_d3d12.h"
 #include "core/debug.h"
 #include "editor/imgui_renderer.h"
+#include "renderer/renderer.h"
 
 namespace Cyber
 {
@@ -69,7 +70,8 @@ namespace Cyber
             //ImGui::NewFrame();
             bool show_demo_window = true;
 
-            //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+            ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+            /*
             static bool opt_fullscreen = true;
             static bool opt_padding = false;
             static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
@@ -143,11 +145,23 @@ namespace Cyber
 
                 ImGui::EndMenuBar();
             }
-
             ImGui::End();
+            */
 
+            // show scene
+            ImGui::Begin("Scene");
+            ImGui::Text("Hello, world!");
+            auto* renderer = Core::Application::getApp()->get_renderer();
+            auto back_buffer_index = renderer->get_back_buffer_index();
+            auto& scene_target = renderer->get_scene_target(back_buffer_index);
+            auto* color_buffer = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            auto& color_buffer_desc = scene_target.color_buffer->get_create_desc();
+            ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // No tint
+            ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
+            ImGui::Image((ImTextureID)color_buffer, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
+            ImGui::End();
+            
             ImGui::ShowDemoWindow(&show_demo_window);
-
         }
         
 

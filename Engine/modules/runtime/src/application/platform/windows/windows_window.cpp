@@ -75,7 +75,7 @@ namespace Cyber
 
             mData.mWindowDesc.handle = CreateWindowW(
                 L"MainWnd",
-                L"win32app",
+                L"CyberEngine",
                 window_style,
                 CW_USEDEFAULT, CW_USEDEFAULT,
                 rc.right - rc.left,

@@ -687,7 +687,7 @@ namespace Cyber
                 alloc_desc.Flags = (D3D12MA::ALLOCATION_FLAGS)(alloc_desc.Flags | D3D12MA::ALLOCATION_FLAG_COMMITTED);
 
             // Create resource
-            auto hRes = m_pResourceAllocator->CreateResource(&alloc_desc, &d3dTexDesc, res_states, pClearValue, &pTexture->allocation, IID_ARGS(&pTexture->native_resource));
+            auto hRes = m_pResourceAllocator->CreateResource(&alloc_desc, &d3dTexDesc, res_states, pClearValue, &pTexture->allocation, IID_ARGS(&pTexture->native_resource));   
             if(hRes != S_OK)
             {
                 auto fallbackhRes = hRes;
@@ -719,7 +719,8 @@ namespace Cyber
                 CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: {0}\n\t Size: {1}x{2} \n\t Format: {3} \n\t Sample Count: {4}", 
                                 (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
                                 Desc.m_format, Desc.m_sampleCount);
-
+                
+                pTexture->m_pNativeHandle = pTexture->native_resource;
                 if(InitializeTexture)
                 {
                     uint64_t uploadBufferSize = 0;
@@ -881,7 +882,7 @@ namespace Cyber
     void RenderDevice_D3D12_Impl::idle_command_queue()
     {
         wait_fences(0);
-        
+
         for(uint32_t i = 0; i < m_commandQueues.size(); i++)
         {
             ICommandQueue* queue = m_commandQueues[i];

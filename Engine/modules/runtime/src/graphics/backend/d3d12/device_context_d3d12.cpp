@@ -91,7 +91,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
 
 void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 {
-    curr_command_context->end_render_pass();
+    //curr_command_context->end_render_pass();
     ++state.num_command;
     TDeviceContextBase::cmd_next_sub_pass();
 
@@ -292,10 +292,10 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            Texture_View_D3D12_Impl * tex_view = static_cast<Texture_View_D3D12_Impl *>(view);
 
            clearValues[i].Format = DXGIUtil_TranslatePixelFormat(tex_view->get_create_desc().format);
-           clearValues[i].Color[0] = m_beginRenderPassAttribs.pClearValues[i].r;
-           clearValues[i].Color[1] = m_beginRenderPassAttribs.pClearValues[i].g;
-           clearValues[i].Color[2] = m_beginRenderPassAttribs.pClearValues[i].b;
-           clearValues[i].Color[3] = m_beginRenderPassAttribs.pClearValues[i].a;
+           clearValues[i].Color[0] = color_clear_values[i].r;
+           clearValues[i].Color[1] = color_clear_values[i].g;
+           clearValues[i].Color[2] = color_clear_values[i].b;
+           clearValues[i].Color[3] = color_clear_values[i].a;
            
            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachmentRef.m_loadAction];
            Texture_View_D3D12_Impl * tex_view_resolve = static_cast<Texture_View_D3D12_Impl *>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
@@ -330,6 +330,8 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
            }
+            curr_command_context->clear_render_target(tex_view->m_rtvDsvDescriptorHandle, clearValues[i].Color, 0, nullptr);
+
            ++colorTargetCount;
        }
        // depth stencil
@@ -339,7 +341,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            auto attachmentRef = SubPassDesc.m_pDepthStencilAttachment;
            auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex;
            auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
-           auto clearValue = m_beginRenderPassAttribs.pClearValues[depthStencilAttachIndex];
+           auto clearValue = depth_stencil_clear_value;
            Texture_View_D3D12_Impl * dt_view = static_cast<Texture_View_D3D12_Impl *>(Framebuffer->get_attachment(depthStencilAttachIndex));
            D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_loadAction];
            D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_storeAction];
@@ -357,6 +359,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            pRenderPassDepthStencilDesc = &renderPassDepthStencilDesc;
        }
        D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
+
        curr_command_context->begin_render_pass( 
            colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
         ++state.num_command;

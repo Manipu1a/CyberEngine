@@ -84,7 +84,8 @@ namespace Cyber
             IFrameBuffer* pFramebuffer;
             IRenderPass* pRenderPass;
             uint32_t ClearValueCount;
-            GRAPHICS_CLEAR_VALUE* pClearValues;
+            GRAPHICS_CLEAR_VALUE* color_clear_values = nullptr;
+            GRAPHICS_CLEAR_VALUE depth_stencil_clear_value;
             RESOURCE_STATE_TRANSITION_MODE TransitionMode;
         };
 
@@ -135,7 +136,14 @@ namespace Cyber
                 m_subpassIndex = 0;
                 m_pRenderPass = beginRenderPassDesc.pRenderPass;
                 m_pFrameBuffer = beginRenderPassDesc.pFramebuffer;
-                m_beginRenderPassAttribs = beginRenderPassDesc;
+                ClearValueCount = beginRenderPassDesc.ClearValueCount;
+                color_clear_values = (GRAPHICS_CLEAR_VALUE*)cyber_malloc(ClearValueCount * sizeof(GRAPHICS_CLEAR_VALUE));
+                for(uint32_t i = 0; i < ClearValueCount; ++i)
+                {
+                    color_clear_values[i] = beginRenderPassDesc.color_clear_values[i];
+                }
+                depth_stencil_clear_value = beginRenderPassDesc.depth_stencil_clear_value;
+                TransitionMode = beginRenderPassDesc.TransitionMode;
             }
 
             virtual void cmd_next_sub_pass() override
@@ -146,11 +154,6 @@ namespace Cyber
             virtual void set_frame_buffer(IFrameBuffer* frameBuffer) override
             {
                 m_pFrameBuffer = frameBuffer;
-                if (frameBuffer)
-                {
-                    m_beginRenderPassAttribs.pFramebuffer = frameBuffer;
-                    m_beginRenderPassAttribs.pRenderPass = frameBuffer->get_render_pass();
-                }
             }
 
             virtual IFrameBuffer* get_frame_buffer() const override
@@ -179,9 +182,12 @@ namespace Cyber
             DeviceContextIndex immediate_context_id = 0xFF;
 
             uint32_t m_subpassIndex = 0;
-            BeginRenderPassAttribs m_beginRenderPassAttribs;
             IRenderPass* m_pRenderPass = nullptr;
             IFrameBuffer* m_pFrameBuffer = nullptr;
+            uint32_t ClearValueCount;
+            GRAPHICS_CLEAR_VALUE* color_clear_values;
+            GRAPHICS_CLEAR_VALUE depth_stencil_clear_value;
+            RESOURCE_STATE_TRANSITION_MODE TransitionMode;
         };
     }
 }

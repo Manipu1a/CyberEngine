@@ -7,6 +7,7 @@
 #include "eastl/array.h"
 #include "platform/memory.h"
 #include "platform/platform_misc.h"
+#include "EASTL/map.h"
 #include "CyberLog/Log.h"
 
 namespace Cyber
@@ -52,7 +53,7 @@ namespace Cyber
 
             TEXTURE_DIMENSION m_dimension;
             GRAPHICS_RESOURCE_USAGE m_usage;
-            GRAPHICS_RESOURCE_BIND_FLAGS m_bindFlags;
+            uint32_t m_bindFlags;
             CPU_ACCESS_FLAGS m_cpuAccessFlags;
             TEXTURE_CREATE_FLAG m_flags;
             /// Number of multisamples per pixel (currently Textures created with mUsage TEXTURE_USAGE_SAMPLED_IMAGE only support SAMPLE_COUNT_1)
@@ -63,6 +64,26 @@ namespace Cyber
             TEXTURE_FORMAT m_format;
             /// What state will the texture get created in
             GRAPHICS_RESOURCE_STATE m_initializeState;
+
+            TextureCreateDesc()
+                : m_pNativeHandle(nullptr), 
+                  m_name(nullptr), 
+                  m_width(0), 
+                  m_height(0), 
+                  m_depth(1), 
+                  m_arraySize(1), 
+                  m_mipLevels(1), 
+                  m_dimension(TEXTURE_DIMENSION::TEX_DIMENSION_2D),
+                  m_usage(GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT),
+                  m_bindFlags(GRAPHICS_RESOURCE_BIND_FLAGS::GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE),
+                  m_cpuAccessFlags(CPU_ACCESS_NONE),
+                  m_flags(TCF_NONE),
+                  m_sampleCount(TEXTURE_SAMPLE_COUNT::SAMPLE_COUNT_1),
+                  m_sampleQuality(0),
+                  m_format(TEX_FORMAT_UNKNOWN),
+                  m_initializeState(GRAPHICS_RESOURCE_STATE::GRAPHICS_RESOURCE_STATE_COMMON)
+            {
+            }
         };
 
 
@@ -126,7 +147,7 @@ namespace Cyber
 
             virtual ITexture_View* get_default_texture_view(TEXTURE_VIEW_TYPE view_type) override
             {
-                auto view_index = views_indices[view_type];
+                auto view_index = views_indices_map[view_type];
 
                 auto** default_views = get_default_texture_views_array();
 
@@ -188,11 +209,11 @@ namespace Cyber
                     view_desc.arrayLayerCount = 1;
                     view_desc.baseMipLevel = 0;
                     view_desc.mipLevelCount = 1;
-
+                    view_desc.p_native_resource = m_pNativeHandle;
                     auto* view = create_view_internal(view_desc);
                     cyber_assert(view != nullptr, "Failed to create default texture view");
                     default_views[default_view_index] = static_cast<TextureViewImplType*>(view);
-                    views_indices[view_type] = default_view_index++;
+                    views_indices_map[view_type] = default_view_index++;
                 };
 
                 if(m_desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_RENDER_TARGET)
@@ -235,7 +256,7 @@ namespace Cyber
             void* m_pNativeHandle;
             void* m_pDefaultTextureViews;
 
-            eastl::array<uint8_t, TEXTURE_VIEW_TYPE::TEXTURE_VIEW_NUM_VIEWS> views_indices;
+            eastl::map<TEXTURE_VIEW_TYPE, uint8_t> views_indices_map;
 
             TextureCreateDesc m_desc;
         };

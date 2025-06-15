@@ -163,14 +163,25 @@ namespace Cyber
             };
 
             auto* app = Core::Application::getApp();
-            m_backBufferIndex = app->get_renderer()->get_back_buffer_index();
+            auto* renderer = app->get_renderer();
+            m_backBufferIndex = renderer->get_back_buffer_index();
 
-            swap_chain->get_back_buffer(m_backBufferIndex);
-            auto renderpass = app->get_renderer()->get_render_pass();
+            auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
-            
+            auto frame_buffer = renderer->get_frame_buffer();
+
+            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
+            frame_buffer->update_attachments(attachment_resources, 1);
+            TextureBarrier draw_barrier = {
+                .texture = back_buffer,
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
+            };
+            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+            device_context->cmd_resource_barrier(barrier_desc0);
             device_context->cmd_next_sub_pass();
 
             SetupRenderState();
@@ -293,8 +304,18 @@ namespace Cyber
                 global_vertex_offset += cmd_list->VtxBuffer.Size;
             }
 
-
+            device_context->cmd_end_render_pass();
+            
+            TextureBarrier present_barrier = {
+                .texture = back_buffer,
+                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
+            };
+            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+            device_context->cmd_resource_barrier(barrier_desc2);
+            
         }
+
         void ImGuiRenderer::invalidate_device_objects()
         {
             /*

@@ -58,7 +58,7 @@ namespace Cyber
 
             //todo idle the GPU
             render_device->idle_command_queue();
-            
+
             DXGI_SWAP_CHAIN_DESC SCDes;
             memset(&SCDes, 0, sizeof(SCDes));
             m_pDxSwapChain->GetDesc(&SCDes);
@@ -107,6 +107,7 @@ namespace Cyber
                 textureDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
                 textureDesc.m_name = u8"SwapChain Back Buffer";
                 textureDesc.m_pNativeHandle = backbuffers[i];
+                textureDesc.m_clearValue = fastclear_1111;
                 auto Ts = render_device->create_texture(textureDesc);
                 m_ppBackBuffers[i] = Ts;
             }
@@ -126,6 +127,8 @@ namespace Cyber
             depthStencilDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
             depthStencilDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             depthStencilDesc.m_name = u8"Main Depth Stencil";
+            depthStencilDesc.m_clearValue.depth = 1.0f;
+            depthStencilDesc.m_clearValue.stencil = 0;
             auto depth_buffer = render_device->create_texture(depthStencilDesc);
             m_pBackBufferDepth = depth_buffer;
 

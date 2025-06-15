@@ -93,8 +93,6 @@ namespace Cyber
             m_pWindow->update(timestep);
             m_pRenderer->update(timestep);
             m_pSampleApp->update(timestep);
-
-            auto framebuffer = m_pSampleApp->get_frame_buffer();
             
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
             m_pEditor->update(timestep);

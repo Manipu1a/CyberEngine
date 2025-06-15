@@ -6,13 +6,14 @@ namespace Cyber
 {
     namespace RenderObject
     {
+        class ITexture;
+
         struct CYBER_GRAPHICS_API FrameBuffserDesc
         {
             FrameBuffserDesc() {}
             ~FrameBuffserDesc() {}
 
             const char8_t* m_name;
-            class IRenderPass* m_pRenderPass;
             uint32_t m_attachmentCount;
             class ITexture_View** m_ppAttachments;
         };
@@ -22,7 +23,6 @@ namespace Cyber
             virtual const FrameBuffserDesc& get_create_desc() const = 0;
 
             virtual ITexture_View* get_attachment(uint32_t index) const = 0;
-            virtual IRenderPass* get_render_pass() const = 0;
             virtual void update_attachments(ITexture_View** ppAttachments, uint32_t attachmentCount) = 0;
         };
 
@@ -41,7 +41,6 @@ namespace Cyber
                 {
                     m_ppAttachments[i] = desc.m_ppAttachments[i];
                 }
-                m_pRenderPass = desc.m_pRenderPass;
             }
 
             virtual ~FrameBufferBase() = default;
@@ -56,11 +55,6 @@ namespace Cyber
                 return m_ppAttachments[index];
             }
 
-            virtual IRenderPass* get_render_pass() const override final
-            {
-                return m_pRenderPass;
-            }
-
             virtual void update_attachments(ITexture_View** ppAttachments, uint32_t attachmentCount) override
             {  
                 for (uint32_t i = 0; i < attachmentCount; ++i)
@@ -71,8 +65,10 @@ namespace Cyber
             }
         private:
             FrameBuffserDesc m_desc;
+            RenderObject::ITexture* colorAttachments[1] = { nullptr };
+            RenderObject::ITexture* depthAttachment = nullptr;
+
             ITexture_View** m_ppAttachments = nullptr;
-            IRenderPass* m_pRenderPass = nullptr;
         };
     }
 

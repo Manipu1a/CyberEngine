@@ -89,6 +89,46 @@ namespace Cyber
             chain_desc.m_imageCount = 3;
             chain_desc.m_enableVsync = true;
             m_pSwapChain = m_pRenderDevice->create_swap_chain(chain_desc);
+
+            for(uint32_t i = 0;i < MAX_FRAMES_IN_FLIGHT; ++i)
+            {
+                RenderObject::TextureCreateDesc color_buffer_desc;
+                color_buffer_desc.m_name = u8"ColorBuffer";
+                color_buffer_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+                color_buffer_desc.m_width = chain_desc.m_width;
+                color_buffer_desc.m_height = chain_desc.m_height;
+                color_buffer_desc.m_depth = 1;
+                color_buffer_desc.m_arraySize = 1;
+                color_buffer_desc.m_mipLevels = 1;
+                color_buffer_desc.m_dimension = TEX_DIMENSION_2D;
+                color_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                color_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_RENDER_TARGET | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
+                color_buffer_desc.m_pNativeHandle = nullptr;
+                color_buffer_desc.m_clearValue = fastclear_1111;
+                scene_target[i].color_buffer = m_pRenderDevice->create_texture(color_buffer_desc);
+
+                RenderObject::TextureCreateDesc depth_buffer_desc;
+                depth_buffer_desc.m_name = u8"DepthBuffer";
+                depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
+                depth_buffer_desc.m_width = chain_desc.m_width;
+                depth_buffer_desc.m_height = chain_desc.m_height;
+                depth_buffer_desc.m_depth = 1;
+                depth_buffer_desc.m_arraySize = 1;
+                depth_buffer_desc.m_mipLevels = 1;
+                depth_buffer_desc.m_dimension = TEX_DIMENSION_2D;
+                depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
+                depth_buffer_desc.m_pNativeHandle = nullptr;
+                scene_target[i].depth_buffer = m_pRenderDevice->create_texture(depth_buffer_desc);
+            }
+
+            auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
+            RenderObject::FrameBuffserDesc frame_buffer_desc;
+            frame_buffer_desc.m_name = u8"FrameBuffer";
+            frame_buffer_desc.m_attachmentCount = 1;
+            frame_buffer_desc.m_ppAttachments = attachment_resources;
+            frame_buffer = m_pRenderDevice->create_frame_buffer(frame_buffer_desc);
         }
 
         void Renderer::resize_swap_chain(uint32_t width, uint32_t height)
