@@ -149,19 +149,26 @@ namespace Cyber
             */
 
             // show scene
-            ImGui::Begin("Scene");
-            ImGui::Text("Hello, world!");
-            auto* renderer = Core::Application::getApp()->get_renderer();
-            auto back_buffer_index = renderer->get_back_buffer_index();
-            auto& scene_target = renderer->get_scene_target(back_buffer_index);
-            auto* color_buffer = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-            auto& color_buffer_desc = scene_target.color_buffer->get_create_desc();
-            ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // No tint
-            ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
-            ImGui::Image((ImTextureID)color_buffer, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
-            ImGui::End();
-            
+            if(ImGui::Begin("Viewport"))
+            {
+                if(ImGui::BeginChild("ViewportChild"))
+                {
+                    auto* renderer = Core::Application::getApp()->get_renderer();
+                    auto* render_device = renderer->get_render_device();
+                    auto back_buffer_index = renderer->get_back_buffer_index();
+                    auto& scene_target = renderer->get_scene_target(back_buffer_index);
+                    auto* color_buffer = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    auto& color_buffer_desc = scene_target.color_buffer->get_create_desc();
+                    ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // No tint
+                    ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
+                    //render_device->bind_texture_view(color_buffer);
+                    ImGui::Image((ImTextureID)color_buffer, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
+                }
+                ImGui::EndChild();
+            }
+
             ImGui::ShowDemoWindow(&show_demo_window);
+            ImGui::End();
         }
         
 

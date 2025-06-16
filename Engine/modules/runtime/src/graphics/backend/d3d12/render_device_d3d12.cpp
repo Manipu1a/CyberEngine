@@ -540,6 +540,18 @@ namespace Cyber
         return tex_view;
     }
 
+    void RenderDevice_D3D12_Impl::bind_texture_view(ITexture_View* texture_view)
+    {
+        RenderObject::Texture_View_D3D12_Impl * tex_view = static_cast<RenderObject::Texture_View_D3D12_Impl *>(texture_view);
+        const uint32_t node_index = GRAPHICS_SINGLE_GPU_NODE_INDEX;
+        auto& cbv_srv_uav_heap = m_cbvSrvUavHeaps[node_index];
+
+        auto descriptor_handle = DescriptorHeap_D3D12::consume_descriptor_handles(cbv_srv_uav_heap, 1);
+        auto offset = descriptor_handle.mGpu.ptr - cbv_srv_uav_heap->get_start_handle().mGpu.ptr;
+        cbv_srv_uav_heap->copy_descriptor_handle(tex_view->m_dxDescriptorHandles, offset, 0);
+        tex_view->gpu_descriptor_handle = descriptor_handle.mGpu;
+    }
+
     void RenderDevice_D3D12_Impl::free_texture_view(RenderObject::ITexture_View* view)
     {
         RenderObject::Texture_View_D3D12_Impl * tex_view = static_cast<RenderObject::Texture_View_D3D12_Impl *>(view);
@@ -1269,8 +1281,8 @@ namespace Cyber
         }
 
         // cbv/srv/uav heap
-        descSet->cbv_srv_uav_handle = D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN;
         descSet->sampler_handle = D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN;
+        descSet->cbv_srv_uav_handle = D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN;
         if(cbv_srv_uav_count)
         {
             auto startHandle = DescriptorHeap_D3D12::consume_descriptor_handles(cbv_srv_uav_heap, cbv_srv_uav_count);

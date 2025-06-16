@@ -28,6 +28,7 @@ namespace Cyber
         { 
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
 
+            virtual void* get_gpu_native_resource() = 0;
             virtual bool operator==(const ITexture_View& other) const = 0;
             virtual bool operator!=(const ITexture_View& other) const = 0;
         };

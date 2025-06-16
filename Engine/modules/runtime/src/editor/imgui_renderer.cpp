@@ -182,6 +182,7 @@ namespace Cyber
             };
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc0);
+            //todo use native render pipeline
             device_context->cmd_next_sub_pass();
 
             SetupRenderState();
@@ -246,11 +247,9 @@ namespace Cyber
 
                         device_context->render_encoder_set_scissor(1, &scissor);
 
-                        // Bind texture
-                        auto* texture_view = reinterpret_cast<RenderObject::ITexture_View*>(cmd->TextureId);
-
                         // Render command
                         RenderObject::ITexture_View* curr_texture_view = (RenderObject::ITexture_View*)cmd->TextureId;
+                        //RenderObject::ITexture_View* curr_texture_view = font_srv;
 
                         // Update descriptor set
                         DescriptorData descriptor_data[2] = {};
@@ -295,9 +294,7 @@ namespace Cyber
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
-                        //device_context->render_encoder_push_constants(root_signature, CYBER_UTF8("Constants"), &vertex_constant_buffer);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
-                        //device_context->cmd_end_render_pass();
                     }
                 }
                 global_index_offset += cmd_list->IdxBuffer.Size;
@@ -379,6 +376,7 @@ namespace Cyber
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
             const char8_t* root_descriptor_names[] = { CYBER_UTF8("Constants") };
 
+            //todo: not use reflection
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .m_ppShaders = pipeline_shader_create_desc,
                 .m_shaderCount = 2,
@@ -390,12 +388,12 @@ namespace Cyber
             };
             // todo 针对特定类型constent buffer选择不同更新方式
             root_signature = render_device->create_root_signature(root_signature_create_desc);
-
+            
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
-
+            
             descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };

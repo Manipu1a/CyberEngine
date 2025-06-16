@@ -72,6 +72,7 @@ namespace Cyber
             // Resource APIs
             virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
             virtual void free_texture_view(ITexture_View* view) = 0;
+            virtual void bind_texture_view(ITexture_View* textureView) = 0;
 
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) = 0;
             virtual void free_texture(ITexture* texture) = 0;

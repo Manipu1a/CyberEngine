@@ -82,11 +82,13 @@ namespace Cyber
             virtual void free_instance(IInstance* instance) override;
 
             virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
+            virtual void bind_texture_view(ITexture_View* textureView) override;
             virtual void free_texture_view(ITexture_View* view) override;
             virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) override;
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
             virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) override;
+            
 
             virtual void free_buffer(IBuffer* buffer) override;
 
@@ -147,7 +149,9 @@ namespace Cyber
             uint64_t fence_value;
 
             // API specific descriptor heap and memory allocator
+            // CPU visible descriptor heaps
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cpuDescriptorHeaps;
+            // shader visibility descriptor heaps
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_samplerHeaps;
             eastl::map<uint32_t, DescriptorHeap_D3D12*> m_cbvSrvUavHeaps;
 

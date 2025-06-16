@@ -29,6 +29,7 @@ public:
     void set_uav_descriptor_offset(uint8_t offset) { m_uavDescriptorOffset = offset; }
 
 protected:
+    /// handle store order: cbv, srv, uav
     /// Descriptor handle of the CBV in a CPU visible descriptor heap (applicable to BUFFER_USAGE_UNIFORM)
     D3D12_CPU_DESCRIPTOR_HANDLE m_dxDescriptorHandles;
     /// Offset from mDxDescriptors for srv descriptor handle
