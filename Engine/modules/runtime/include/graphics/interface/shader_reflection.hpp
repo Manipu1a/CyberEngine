@@ -13,6 +13,14 @@ namespace Cyber
         class IShaderResource;
         class IVertexInput;
         
+        struct ShaderRegisterCount
+        {
+            uint32_t sampler_count = 0;
+            uint32_t constant_buffer_count = 0;
+            uint32_t shader_resource_count = 0;
+            uint32_t unordered_access_count = 0;
+        };
+
         struct CYBER_GRAPHICS_API IShaderReflection : public IDeviceObject
         {
             virtual const char8_t* get_entry_name() const = 0;
@@ -34,7 +42,8 @@ namespace Cyber
 
             virtual SHADER_STAGE get_shader_stage() const = 0;
             virtual void set_shader_stage(SHADER_STAGE stage) = 0;
-
+            virtual void set_shader_register_count(const ShaderRegisterCount& count) = 0;
+            virtual const ShaderRegisterCount& get_shader_register_count() const = 0;
             virtual uint32_t get_name_pool_size() const = 0;
             virtual uint32_t get_vertex_input_count() const = 0;
             virtual void set_vertex_input_count(uint32_t count) = 0;
@@ -120,6 +129,17 @@ namespace Cyber
                 }
             }
             */
+
+            virtual void set_shader_register_count(const ShaderRegisterCount& count) override final
+            {
+                register_count = count;
+            }
+
+            virtual const ShaderRegisterCount& get_shader_register_count() const override final
+            {
+                return register_count;
+            }
+
             virtual RenderObject::IShaderResource** get_shader_resources() const override final 
             {
                 return m_ppShaderResources;
@@ -210,6 +230,8 @@ namespace Cyber
             uint32_t m_vertexInputCount;
             uint32_t m_shaderResourceCount;
             uint32_t m_variableCount;
+
+            ShaderRegisterCount register_count;
 
             // Thread group size for compute shader
             uint32_t m_numThreadsPerGroup;

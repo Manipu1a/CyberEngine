@@ -99,5 +99,14 @@ namespace Cyber
     };
     
     
+    enum ShaderVisibility
+    {
+        SV_VERTEX,
+        SV_PIXEL,
+        SV_GEOMETRY,
+        SV_MESH,
+        SV_ALL,
+        SV_SHADERVISIBILITY_COUNT
+    };
 
 }

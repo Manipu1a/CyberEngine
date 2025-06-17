@@ -59,6 +59,7 @@ namespace Cyber
 
     void graphics_util_init_root_signature_tables(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc)
     {
+        /*
         RenderObject::IShaderReflection* entery_reflection[32] = {0};
         // Pick shader reflection data
         for(uint32_t i = 0; i < desc.m_shaderCount; ++i)
@@ -88,6 +89,7 @@ namespace Cyber
         eastl::vector<RenderObject::IShaderResource*> all_samplers;
         eastl::vector<RenderObject::IShaderResource*> all_push_constants;
         eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
+
         for(uint32_t i = 0; i < desc.m_shaderCount; ++i)
         {
             RenderObject::IShaderReflection* reflection = entery_reflection[i];
@@ -234,6 +236,7 @@ namespace Cyber
         {
             rootSignature->set_static_sampler(all_static_samplers[i], i);
         }
+            */
     }
 
     void graphics_util_free_root_signature_tables(struct RenderObject::IRootSignature* rootSignature)

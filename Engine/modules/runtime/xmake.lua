@@ -25,6 +25,7 @@ target("CyberRuntime")
     add_deps("IMGUI", {public=true})
     add_deps("stb", {public=true})
     add_deps("TextureLoader", {public=true})
+    add_deps("d3dx12", {public = true})
     set_configdir("$(projectdir)/Engine")
     add_configfiles("$(projectdir)/Engine/config.h.in")
 

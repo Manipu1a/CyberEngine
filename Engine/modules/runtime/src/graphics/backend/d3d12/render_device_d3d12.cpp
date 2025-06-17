@@ -1051,10 +1051,22 @@ namespace Cyber
 
         // Pick root parameters from desc data
         SHADER_STAGE shaderStages = SHADER_STAGE_NONE;
-        for(uint32_t i = 0; i < rootSigDesc.m_shaderCount; ++i)
+        if(rootSigDesc.vertex_shader != nullptr)
         {
-            PipelineShaderCreateDesc* shader_desc = rootSigDesc.m_ppShaders[i];
-            shaderStages |= shader_desc->m_stage;
+            shaderStages | SHADER_STAGE_VERT;
+            
+        }
+        if(rootSigDesc.pixel_shader != nullptr)
+        {
+            shaderStages |= SHADER_STAGE_FRAG;
+        }
+        if(rootSigDesc.mesh_shader != nullptr)
+        {
+            shaderStages |= SHADER_STAGE_MESH;
+        }
+        if(rootSigDesc.geometry_shader != nullptr)
+        {
+            shaderStages |= SHADER_STAGE_GEOM;
         }
 
         // Pick shader reflection data

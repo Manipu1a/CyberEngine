@@ -24,8 +24,11 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API RootSignatureCreateDesc
         {
-            RenderObject::PipelineShaderCreateDesc** m_ppShaders;
-            uint32_t m_shaderCount;
+            RenderObject::PipelineShaderCreateDesc* vertex_shader = nullptr;
+            RenderObject::PipelineShaderCreateDesc* pixel_shader = nullptr;
+            RenderObject::PipelineShaderCreateDesc* mesh_shader = nullptr;
+            RenderObject::PipelineShaderCreateDesc* geometry_shader = nullptr;
+
             RenderObject::ISampler** m_staticSamplers;
             const char8_t* const* m_staticSamplerNames;
             uint32_t m_staticSamplerCount;

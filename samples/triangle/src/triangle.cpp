@@ -322,9 +322,10 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
             pipeline_shader_create_desc[1]->m_library = ps_shader;
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+            
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-            .m_ppShaders = pipeline_shader_create_desc,
-            .m_shaderCount = 2,
+                .vertex_shader = pipeline_shader_create_desc[0],
+                .pixel_shader = pipeline_shader_create_desc[1],
             };
             root_signature = render_device->create_root_signature(root_signature_create_desc);
             // create descriptor set

@@ -637,6 +637,8 @@ namespace Cyber
     uint32_t d3d12_command_list_type_to_queue_id(D3D12_COMMAND_LIST_TYPE type);
     D3D12_COMMAND_LIST_TYPE d3d12_queue_id_to_command_list_type(uint32_t queue_id);
 
+    void d3d_util_quantize_bound_shader_state(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility);
+
     inline void MemcpySubresource(D3D12_MEMCPY_DEST* pDest, const D3D12_SUBRESOURCE_DATA* pSrc, uint64_t RowSizeInBytes, uint32_t numRows, uint32_t numSlices)
     {
         for(uint32_t z = 0; z < numSlices; ++z)

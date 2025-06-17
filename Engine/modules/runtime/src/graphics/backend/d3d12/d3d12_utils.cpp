@@ -437,6 +437,31 @@ namespace Cyber
         }
     }
     
+    void d3d_util_quantize_bound_shader_state(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility)
+    {
+        RenderObject::IShaderReflection* entery_reflection = nullptr;
+        // Find shader reflection data
+        for(uint32_t j = 0; j < shader_desc->m_library->get_entry_count(); ++j)
+        {
+            RenderObject::IShaderReflection* temp_entry_reflection = shader_desc->m_library->get_entry_reflection(j);
+            if(strcmp((char*)shader_desc->m_entry, (char*)temp_entry_reflection->get_entry_name()) == 0)
+            {
+                entery_reflection = temp_entry_reflection;
+                break;
+            }
+        }
+
+        if(entery_reflection == nullptr)
+        {
+            // If we didn't find the entry point, use the first one
+            entery_reflection = shader_desc->m_library->get_entry_reflection(0);
+        }
+        
+        rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
+        
+
+    }
+
 #if !defined (XBOX) && defined (_WIN32)
     static D3D12Util_DXCLoader DxcLoader;
 

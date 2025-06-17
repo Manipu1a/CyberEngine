@@ -6,6 +6,7 @@
 #include <d3dcompiler.h>
 #include "backend/d3d12/d3d12_utils.h"
 #include <EASTL/EAStdC/EASprintf.h>
+#include "EASTL/algorithm.h"
 
 namespace Cyber
 {
@@ -195,6 +196,7 @@ namespace Cyber
             reflection->set_entry_name(m_name);
             reflection->set_shader_resource_count(shaderDesc.BoundResources);
             auto shader_resources = (RenderObject::IShaderResource**)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::IShaderResource*));
+            RenderObject::ShaderRegisterCount register_count;
 
             // Count string sizes of the bound resources for the name pool
             for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -215,6 +217,26 @@ namespace Cyber
                 resource->set_size(bindDesc.BindCount);
                 resource->set_stages(stage);
                 resource->set_dimension(DXGIUtil_TranslateSRVDimension(bindDesc.Dimension));
+
+                if(bindDesc.Type == D3D_SIT_CBUFFER || bindDesc.Type == D3D_SIT_TBUFFER)
+                {
+                    register_count.constant_buffer_count = eastl::max(register_count.constant_buffer_count, bindDesc.BindCount + bindDesc.BindCount);
+                }
+                else if(bindDesc.Type == D3D_SIT_SAMPLER)
+                {
+                    register_count.sampler_count = eastl::max(register_count.sampler_count, bindDesc.BindCount + bindDesc.BindCount);
+                }
+                else if(bindDesc.Type == D3D_SIT_TEXTURE)
+                {
+                    register_count.shader_resource_count = eastl::max(register_count.shader_resource_count, bindDesc.BindCount + bindDesc.BindCount);
+                }
+                else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED || 
+                    bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER ||
+                    bindDesc.Type == D3D_SIT_UAV_APPEND_STRUCTURED)
+                {
+                    register_count.unordered_access_count = eastl::max(register_count.unordered_access_count, bindDesc.BindCount + bindDesc.BindCount);
+                }
+
                 if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)
                 {
                     ID3D12ShaderReflectionConstantBuffer* buffer = d3d12Reflection->GetConstantBufferByName(bindDesc.Name);
@@ -234,6 +256,7 @@ namespace Cyber
                     resource->set_type(GRAPHICS_RESOURCE_TYPE_BUFFER);
                 }
             }
+            reflection->set_shader_register_count(register_count);
             reflection->set_shader_resources( shader_resources );
             m_pEntryReflections[0] = reflection;
         }
