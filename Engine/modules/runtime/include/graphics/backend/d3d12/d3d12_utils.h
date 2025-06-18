@@ -500,7 +500,7 @@ namespace Cyber
         {
             return D3D12_SHADER_VISIBILITY_ALL;
         }
-        if(stages = SHADER_STAGE::SHADER_STAGE_RAYTRACING)
+        if(stages == SHADER_STAGE::SHADER_STAGE_RAYTRACING)
         {
             return D3D12_SHADER_VISIBILITY_ALL;
         }
@@ -637,7 +637,22 @@ namespace Cyber
     uint32_t d3d12_command_list_type_to_queue_id(D3D12_COMMAND_LIST_TYPE type);
     D3D12_COMMAND_LIST_TYPE d3d12_queue_id_to_command_list_type(uint32_t queue_id);
 
-    void d3d_util_quantize_bound_shader_state(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility);
+    inline D3D12_SHADER_VISIBILITY d3d12_util_get_shader_visibility(ShaderVisibility visibility)
+    {
+        switch(visibility)
+        {
+            case ShaderVisibility::SV_VERTEX: return D3D12_SHADER_VISIBILITY_VERTEX;
+            case ShaderVisibility::SV_GEOMETRY: return D3D12_SHADER_VISIBILITY_GEOMETRY;
+            case ShaderVisibility::SV_PIXEL: return D3D12_SHADER_VISIBILITY_PIXEL;
+            case ShaderVisibility::SV_MESH: return D3D12_SHADER_VISIBILITY_MESH;
+            case ShaderVisibility::SV_ALL: return D3D12_SHADER_VISIBILITY_ALL;
+            default:
+                cyber_assert(false, "Invalid Shader Visibility");
+                return D3D12_SHADER_VISIBILITY_ALL;
+        }
+    }
+
+    void d3d12_util_quantize_bound_shader_state(struct RenderObject::RootSignature_D3D12_Impl* rootSignature, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility);
 
     inline void MemcpySubresource(D3D12_MEMCPY_DEST* pDest, const D3D12_SUBRESOURCE_DATA* pSrc, uint64_t RowSizeInBytes, uint32_t numRows, uint32_t numSlices)
     {

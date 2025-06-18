@@ -4,7 +4,10 @@
 #include "interface/root_signature.hpp"
 #include "interface/shader_reflection.hpp"
 #include "eastl/map.h"
+#include "eastl/array.h"
 #include "d3dx12_root_signature.h"
+#include "graphics_types_d3d12.h"
+
 
 namespace Cyber
 {
@@ -29,10 +32,39 @@ namespace Cyber
 
             RootSignature_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const RootSignatureCreateDesc& desc) : TRootSignatureBase(device, desc) {}
 
+            virtual ~RootSignature_D3D12_Impl();
+
+            const RenderObject::ShaderRegisterCount& get_register_counts(ShaderVisibility visibility) const
+            {
+                return register_counts_array[visibility];
+            }
+
+            void set_register_counts(ShaderVisibility visibility, const RenderObject::ShaderRegisterCount& counts)
+            {
+                register_counts_array[visibility] = counts;
+            }
+
+            void set_root_parameter(CD3DX12_ROOT_PARAMETER1* root_parameters, uint32_t count)
+            {
+                for (uint32_t i = 0; i < count && i < MAX_ROOT_PARAMETERS; ++i)
+                {
+                    root_parameters[i] = root_parameters[i];
+                }
+            }
+
+            void set_root_descriptor_range(CD3DX12_DESCRIPTOR_RANGE1* root_descriptor_ranges, uint32_t count)
+            {
+                for (uint32_t i = 0; i < count && i < MAX_ROOT_PARAMETERS; ++i)
+                {
+                    this->root_descriptor_ranges[i] = root_descriptor_ranges[i];
+                }
+            }
+
         protected:
             static constexpr uint32_t MAX_ROOT_PARAMETERS = 32;
 
-            eastl::map<SHADER_STAGE, RenderObject::ShaderRegisterCount> register_counts;
+            eastl::array<RenderObject::ShaderRegisterCount, ShaderVisibility::SV_SHADERVISIBILITY_COUNT> register_counts_array;
+
             ID3D12RootSignature* dxRootSignature;
 
             CD3DX12_ROOT_PARAMETER1 root_parameters[MAX_ROOT_PARAMETERS];

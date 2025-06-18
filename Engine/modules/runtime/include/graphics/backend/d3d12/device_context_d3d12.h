@@ -3,6 +3,7 @@
 #include "command_context.h"
 #include "dynamic_heap_d3d12.hpp"
 #include "engine_impl_traits_d3d12.hpp"
+#include "state_cache_d3d12.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
@@ -53,6 +54,10 @@ public:
 
     virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
     
+    virtual void set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView) override;
+    virtual void set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) override;
+    virtual void set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) override;
+
     void commit_subpass_rendertargets();
 
     void request_command_context();
@@ -60,17 +65,12 @@ public:
     //todo: move to device context
     Dynamic_Allocation_D3D12 allocate_dynamic_memory(uint64_t size_in_bytes, uint64_t alignment);
                 
-    struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
+    //struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
+    StateCache_D3D12& get_state_cache() { return state_cache; }
+    
     void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap);
 
     void commit_bound_heaps();
-    
-    D3D12_GPU_DESCRIPTOR_HANDLE get_bound_heap_start_handle(uint32_t index) const { return m_boundHeapStartHandles[index]; }
-    void set_bound_heap_start_handle(uint32_t index, D3D12_GPU_DESCRIPTOR_HANDLE handle) { m_boundHeapStartHandles[index] = handle; }
-
-    const ID3D12RootSignature* get_bound_root_signature() const { return m_pBoundRootSignature; }
-    void set_bound_root_signature(const ID3D12RootSignature* rootSignature) { m_pBoundRootSignature = rootSignature; }
-
 private:
     struct State
     {
@@ -88,12 +88,9 @@ private:
     Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;
     Dynamic_Heap_D3D12* m_pDynamicHeap;
 
-    
-    // Cached in beginCmd to avoid fetching them during rendering
-    struct DescriptorHeap_D3D12* m_pBoundHeaps[2];
-    D3D12_GPU_DESCRIPTOR_HANDLE m_boundHeapStartHandles[2];
-    // Command buffer state
-    const ID3D12RootSignature* m_pBoundRootSignature;
+    // Cached state and shader parameters
+    StateCache_D3D12 state_cache;
+
     uint32_t m_nodeIndex;
     D3D12_RENDER_PASS_ENDING_ACCESS_RESOLVE_SUBRESOURCE_PARAMETERS m_subResolveResource[GRAPHICS_MAX_MRT_COUNT];
 };

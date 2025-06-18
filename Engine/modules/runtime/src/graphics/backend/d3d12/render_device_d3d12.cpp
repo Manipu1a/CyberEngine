@@ -1054,25 +1054,70 @@ namespace Cyber
         if(rootSigDesc.vertex_shader != nullptr)
         {
             shaderStages | SHADER_STAGE_VERT;
-            
+            d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.vertex_shader, SV_VERTEX);
         }
         if(rootSigDesc.pixel_shader != nullptr)
         {
             shaderStages |= SHADER_STAGE_FRAG;
+
+            d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.pixel_shader, SV_PIXEL);
         }
         if(rootSigDesc.mesh_shader != nullptr)
         {
             shaderStages |= SHADER_STAGE_MESH;
+
+            d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.mesh_shader, SV_MESH);
         }
         if(rootSigDesc.geometry_shader != nullptr)
         {
             shaderStages |= SHADER_STAGE_GEOM;
+
+            d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.geometry_shader, SV_GEOMETRY);
         }
 
         // Pick shader reflection data
-        graphics_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
+        //graphics_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
         // rs pool allocation
-        
+        static const uint32_t root_constant_cost = 1;
+        static const uint32_t root_descriptor_table_cost = 1;
+        static const uint32_t root_descriptor_cost = 2;
+
+        CD3DX12_ROOT_PARAMETER1 root_parameters[32];
+        CD3DX12_DESCRIPTOR_RANGE1 desc_ranges[32];
+
+        uint32_t root_parameter_size = 0;
+        uint32_t root_parameter_count = 0;
+
+        for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
+        {
+            ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
+            const auto& shader_register_count = dxRootSignature->get_register_counts(shaderVisibility);
+
+            if(shader_register_count.shader_resource_count > 0)
+            {
+                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, shader_register_count.shader_resource_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                root_parameter_count++;
+                root_parameter_size += root_descriptor_table_cost;
+            }
+
+            if(shader_register_count.constant_buffer_count > 0)
+            {
+                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, shader_register_count.constant_buffer_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                root_parameter_count++;
+                root_parameter_size += root_descriptor_table_cost;
+            }
+
+            if(shader_register_count.unordered_access_count > 0)
+            {
+                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, shader_register_count.unordered_access_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                root_parameter_count++;
+                root_parameter_size += root_descriptor_table_cost;
+            }
+        }
+
         // Fill resource slots
         const uint32_t tableCount = dxRootSignature->get_parameter_table_count();
         uint32_t descRangeCount = 0;
@@ -1080,6 +1125,7 @@ namespace Cyber
         {
             descRangeCount += dxRootSignature->get_parameter_table(i)->m_resourceCount;
         }
+
         D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_push_constant_count(), sizeof(D3D12_ROOT_PARAMETER1));
         D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
         // Create descriptor table parameter

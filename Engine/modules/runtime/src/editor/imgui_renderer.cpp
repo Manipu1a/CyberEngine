@@ -378,8 +378,8 @@ namespace Cyber
 
             //todo: not use reflection
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                //.m_ppShaders = pipeline_shader_create_desc,
-                //.m_shaderCount = 2,
+                .vertex_shader = pipeline_shader_create_desc[0],
+                .pixel_shader = pipeline_shader_create_desc[1],
                 .m_staticSamplers = &sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,

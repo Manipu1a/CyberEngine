@@ -91,6 +91,8 @@ namespace Cyber
                 m_pushConstantCount = 0;
                 m_pStaticSamplers = nullptr;
                 m_staticSamplerCount = 0;
+                descriptor_resource_count = 0;
+                descriptor_resources = nullptr;
                 m_pPool = desc.m_pPool;
                 m_pipelineType = PIPELINE_TYPE_GRAPHICS;
                 m_pPoolNext = nullptr;

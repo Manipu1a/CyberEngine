@@ -220,21 +220,21 @@ namespace Cyber
 
                 if(bindDesc.Type == D3D_SIT_CBUFFER || bindDesc.Type == D3D_SIT_TBUFFER)
                 {
-                    register_count.constant_buffer_count = eastl::max(register_count.constant_buffer_count, bindDesc.BindCount + bindDesc.BindCount);
+                    register_count.constant_buffer_count = eastl::max(register_count.constant_buffer_count, bindDesc.BindPoint + bindDesc.BindCount);
                 }
                 else if(bindDesc.Type == D3D_SIT_SAMPLER)
                 {
-                    register_count.sampler_count = eastl::max(register_count.sampler_count, bindDesc.BindCount + bindDesc.BindCount);
+                    register_count.sampler_count = eastl::max(register_count.sampler_count, bindDesc.BindPoint + bindDesc.BindCount);
                 }
                 else if(bindDesc.Type == D3D_SIT_TEXTURE)
                 {
-                    register_count.shader_resource_count = eastl::max(register_count.shader_resource_count, bindDesc.BindCount + bindDesc.BindCount);
+                    register_count.shader_resource_count = eastl::max(register_count.shader_resource_count, bindDesc.BindPoint + bindDesc.BindCount);
                 }
                 else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED || 
                     bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER ||
                     bindDesc.Type == D3D_SIT_UAV_APPEND_STRUCTURED)
                 {
-                    register_count.unordered_access_count = eastl::max(register_count.unordered_access_count, bindDesc.BindCount + bindDesc.BindCount);
+                    register_count.unordered_access_count = eastl::max(register_count.unordered_access_count, bindDesc.BindPoint + bindDesc.BindCount);
                 }
 
                 if(shaderDesc.ConstantBuffers && bindDesc.Type == D3D_SIT_CBUFFER)

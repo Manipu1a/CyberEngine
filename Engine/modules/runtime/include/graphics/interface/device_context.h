@@ -5,7 +5,6 @@
 #include "descriptor_set.h"
 #include "render_pipeline.h"
 #include "render_pass.h"
-#include "eastl/shared_ptr.h"
 
 namespace Cyber
 {
@@ -120,6 +119,9 @@ namespace Cyber
             virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) = 0;
             virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) = 0;
 
+            virtual void set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView) = 0;
+            virtual void set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
+            virtual void set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
         };

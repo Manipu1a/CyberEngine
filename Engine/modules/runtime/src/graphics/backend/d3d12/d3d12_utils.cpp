@@ -14,6 +14,7 @@
 #include "graphics/backend/d3d12/instance_d3d12.h"
 #include "graphics/backend/d3d12/shader_reflection_d3d12.h"
 #include "graphics/backend/d3d12/shader_resource_d3d12.h"
+#include "graphics/backend/d3d12/root_signature_d3d12.h"
 #include "graphics/interface/vertex_input.h"
 
 namespace Cyber
@@ -437,9 +438,10 @@ namespace Cyber
         }
     }
     
-    void d3d_util_quantize_bound_shader_state(struct RenderObject::IRootSignature* rootSignature, const struct RenderObject::RootSignatureCreateDesc& desc, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility)
+    void d3d12_util_quantize_bound_shader_state(struct RenderObject::RootSignature_D3D12_Impl* rootSignature, const RenderObject::PipelineShaderCreateDesc* shader_desc, ShaderVisibility visibility)
     {
         RenderObject::IShaderReflection* entery_reflection = nullptr;
+
         // Find shader reflection data
         for(uint32_t j = 0; j < shader_desc->m_library->get_entry_count(); ++j)
         {
@@ -457,9 +459,10 @@ namespace Cyber
             entery_reflection = shader_desc->m_library->get_entry_reflection(0);
         }
         
-        rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
+        //rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
         
-
+        RenderObject::ShaderRegisterCount register_count = entery_reflection->get_shader_register_count();
+        rootSignature->set_register_counts(visibility, register_count);
     }
 
 #if !defined (XBOX) && defined (_WIN32)

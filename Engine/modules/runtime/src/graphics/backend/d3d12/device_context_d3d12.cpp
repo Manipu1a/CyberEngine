@@ -33,11 +33,6 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device,
 {
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
-    m_pBoundRootSignature = nullptr;
-    m_pBoundHeaps[0] = nullptr;
-    m_pBoundHeaps[1] = nullptr;
-    m_boundHeapStartHandles[0].ptr = 0;
-    m_boundHeapStartHandles[1].ptr = 0;
     request_command_context();
 }
 
@@ -52,7 +47,10 @@ void DeviceContext_D3D12_Impl::cmd_end()
     //curr_command_context->close(command_allocator);
 
     //todo release command allocator
-    m_pBoundRootSignature = nullptr;
+    //m_pBoundRootSignature = nullptr;
+
+    // reset state cache
+    state_cache.bound_root_signature = nullptr;
 }
 
 void DeviceContext_D3D12_Impl::cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc)
@@ -116,14 +114,15 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet
     cyber_check(RS);
     reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
 
+    
     if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->cbv_srv_uav_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {state_cache.bound_heap_start_handles[0].ptr + Set->cbv_srv_uav_handle});
         ++state.num_command;
     }
     else if(Set->sampler_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
-        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {m_boundHeapStartHandles[0].ptr + Set->sampler_handle});
+        curr_command_context->set_graphics_root_descriptor_table(Set->get_set_index(), {state_cache.bound_heap_start_handles[0].ptr + Set->sampler_handle});
         ++state.num_command;
     }
 
@@ -214,9 +213,9 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer,
 
 void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
 {
-    if(get_bound_root_signature() != rootSignature)
+    if(state_cache.bound_root_signature != rootSignature)
     {
-        set_bound_root_signature(rootSignature);
+        state_cache.bound_root_signature = rootSignature;
 
         if(type == PIPELINE_TYPE_GRAPHICS)
             curr_command_context->set_graphics_root_signature(rootSignature);
@@ -259,11 +258,27 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t in
     ++state.num_command;
 }
 
+void DeviceContext_D3D12_Impl::set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView)
+{
+
+}
+
+void DeviceContext_D3D12_Impl::set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
+{
+
+}
+
+void DeviceContext_D3D12_Impl::set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
+{
+
+}
+
 IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
 {
     RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(render_device, renderPassDesc);
     return dxRenderPass;
 }
+
 
 void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
 {
@@ -400,19 +415,16 @@ Dynamic_Allocation_D3D12 DeviceContext_D3D12_Impl::allocate_dynamic_memory(uint6
 void DeviceContext_D3D12_Impl::set_bound_heap(uint32_t index, DescriptorHeap_D3D12* heap)
 {
     cyber_check_msg(index < 2, "Invalid heap index");
-    if(m_pBoundHeaps[index] != heap)
-    {
-        m_pBoundHeaps[index] = heap;
-        m_boundHeapStartHandles[index].ptr = heap->get_heap()->GetGPUDescriptorHandleForHeapStart().ptr;
-        ++state.num_command;
-    }
+
+    state_cache.bound_heaps[index] = heap;
+    state_cache.bound_heap_start_handles[index].ptr = heap->get_heap()->GetGPUDescriptorHandleForHeapStart().ptr;
 }
 
 void DeviceContext_D3D12_Impl::commit_bound_heaps()
 {
-    if(m_pBoundHeaps[0] || m_pBoundHeaps[1])
+    if(state_cache.bound_heaps[0] || state_cache.bound_heaps[1])
     {
-        ID3D12DescriptorHeap* heaps[2] = { m_pBoundHeaps[0]->get_heap(), m_pBoundHeaps[1]->get_heap() };
+        ID3D12DescriptorHeap* heaps[2] = { state_cache.bound_heaps[0]->get_heap(), state_cache.bound_heaps[1]->get_heap() };
         curr_command_context->set_descriptor_heaps(2, heaps);
         ++state.num_command;
     }
