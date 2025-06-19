@@ -254,8 +254,8 @@ namespace Cyber
             case SHADER_STAGE_FRAG: shader_profile = "ps"; break;
             case SHADER_STAGE_GEOM: shader_profile = "gs"; break;
             case SHADER_STAGE_COMPUTE: shader_profile = "cs"; break;
-            case SHADER_STAGE_TESC: shader_profile = "hs"; break;
-            case SHADER_STAGE_DOMAIN: shader_profile = "ds"; break;
+            //case SHADER_STAGE_TESC: shader_profile = "hs"; break;
+            //case SHADER_STAGE_DOMAIN: shader_profile = "ds"; break;
             case SHADER_STAGE_MESH: shader_profile = "ms"; break;
             case SHADER_STAGE_RAYTRACING: shader_profile = "lib"; break;
             default:

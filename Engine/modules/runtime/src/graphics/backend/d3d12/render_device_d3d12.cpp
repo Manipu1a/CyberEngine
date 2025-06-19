@@ -1050,28 +1050,25 @@ namespace Cyber
         RootSignature_D3D12_Impl* dxRootSignature = cyber_new<RootSignature_D3D12_Impl>(this, rootSigDesc);
 
         // Pick root parameters from desc data
-        SHADER_STAGE shaderStages = SHADER_STAGE_NONE;
+        uint32_t shader_stage_mask[SHADER_STAGE_COUNT] = {0};
         if(rootSigDesc.vertex_shader != nullptr)
         {
-            shaderStages | SHADER_STAGE_VERT;
+            shader_stage_mask[SV_VERTEX] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.vertex_shader, SV_VERTEX);
         }
         if(rootSigDesc.pixel_shader != nullptr)
         {
-            shaderStages |= SHADER_STAGE_FRAG;
-
+            shader_stage_mask[SV_PIXEL] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.pixel_shader, SV_PIXEL);
         }
         if(rootSigDesc.mesh_shader != nullptr)
         {
-            shaderStages |= SHADER_STAGE_MESH;
-
+            shader_stage_mask[SV_MESH] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.mesh_shader, SV_MESH);
         }
         if(rootSigDesc.geometry_shader != nullptr)
         {
-            shaderStages |= SHADER_STAGE_GEOM;
-
+            shader_stage_mask[SV_GEOMETRY] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.geometry_shader, SV_GEOMETRY);
         }
 
@@ -1223,17 +1220,20 @@ namespace Cyber
                 }
             }
         }
-        bool useInputLayout = shaderStages & SHADER_STAGE_VERT; // VertexStage uses input layout
+        bool useInputLayout = shader_stage_mask[SHADER_STAGE_VERT]; // VertexStage uses input layout
+
         // Fill RS flags
         D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
         if(useInputLayout)
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
-        if(!(shaderStages & SHADER_STAGE_VERT))
+
+        if(!shader_stage_mask[SHADER_STAGE_VERT])
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
         }
+        /*
         if(!(shaderStages & SHADER_STAGE_HULL))
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
@@ -1242,11 +1242,12 @@ namespace Cyber
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & SHADER_STAGE_GEOM))
+        */
+        if(!shader_stage_mask[SHADER_STAGE_MESH])
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
         }
-        if(!(shaderStages & SHADER_STAGE_FRAG))
+        if(!shader_stage_mask[SHADER_STAGE_FRAG])
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
         }
@@ -1493,12 +1494,13 @@ namespace Cyber
         // Shader stages
         DECLARE_ZERO(D3D12_SHADER_BYTECODE, vertex_shader);
         DECLARE_ZERO(D3D12_SHADER_BYTECODE, pixel_shader);
-        DECLARE_ZERO(D3D12_SHADER_BYTECODE, domain_shader);
-        DECLARE_ZERO(D3D12_SHADER_BYTECODE, hull_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, mesh_shader);
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, amplification_shader);
         DECLARE_ZERO(D3D12_SHADER_BYTECODE, geometry_shader);
-        for(uint32_t i = 0; i < 5;++i)
+        DECLARE_ZERO(D3D12_SHADER_BYTECODE, compute_shader);
+        for(uint32_t i = 0; i < SHADER_STAGE_COUNT;++i)
         {
-            SHADER_STAGE stage_mask = (SHADER_STAGE)(1 << i);
+            SHADER_STAGE stage_mask = (SHADER_STAGE)(i);
             switch (stage_mask)
             {
                 case SHADER_STAGE_VERT:
@@ -1508,6 +1510,26 @@ namespace Cyber
                         ShaderLibrary_D3D12_Impl* vert_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.vertex_shader->m_library;
                         vertex_shader.pShaderBytecode = vert_lib->m_pShaderBlob->GetBufferPointer();
                         vertex_shader.BytecodeLength = vert_lib->m_pShaderBlob->GetBufferSize();
+                    }
+                    break;
+                }
+                case SHADER_STAGE_MESH:
+                {
+                    if(pipelineDesc.mesh_shader)
+                    {
+                        ShaderLibrary_D3D12_Impl* mesh_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.mesh_shader->m_library;
+                        mesh_shader.pShaderBytecode = mesh_lib->get_shader_blob()->GetBufferPointer();
+                        mesh_shader.BytecodeLength = mesh_lib->get_shader_blob()->GetBufferSize();
+                    }
+                    break;
+                }
+                case SHADER_STAGE_AMPLIFICATION:
+                {
+                    if(pipelineDesc.amplification_shader)
+                    {
+                        ShaderLibrary_D3D12_Impl* amp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.amplification_shader->m_library;
+                        amplification_shader.pShaderBytecode = amp_lib->get_shader_blob()->GetBufferPointer();
+                        amplification_shader.BytecodeLength = amp_lib->get_shader_blob()->GetBufferSize();
                     }
                     break;
                 }
@@ -1521,26 +1543,6 @@ namespace Cyber
                     }
                     break;
                 }
-                case SHADER_STAGE_TESC:
-                {
-                    if(pipelineDesc.tesc_shader)
-                    {
-                        ShaderLibrary_D3D12_Impl* domain_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.tesc_shader->m_library;
-                        hull_shader.pShaderBytecode = domain_lib->get_shader_blob()->GetBufferPointer();
-                        hull_shader.BytecodeLength = domain_lib->get_shader_blob()->GetBufferSize();
-                    }
-                    break;
-                }
-                case SHADER_STAGE_TESE:
-                {
-                    if(pipelineDesc.tese_shader)
-                    {
-                        ShaderLibrary_D3D12_Impl* hull_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.tese_shader->m_library;
-                        domain_shader.pShaderBytecode = hull_lib->get_shader_blob()->GetBufferPointer();
-                        domain_shader.BytecodeLength = hull_lib->get_shader_blob()->GetBufferSize();
-                    }
-                    break;
-                }
                 case SHADER_STAGE_GEOM:
                 {
                     if(pipelineDesc.geometry_shader)
@@ -1548,6 +1550,16 @@ namespace Cyber
                         ShaderLibrary_D3D12_Impl* geom_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.geometry_shader->m_library;
                         geometry_shader.pShaderBytecode = geom_lib->get_shader_blob()->GetBufferPointer();
                         geometry_shader.BytecodeLength = geom_lib->get_shader_blob()->GetBufferSize();
+                    }
+                    break;
+                }
+                case SHADER_STAGE_COMPUTE:
+                {
+                    if(pipelineDesc.compute_shader)
+                    {
+                        ShaderLibrary_D3D12_Impl* comp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.compute_shader->m_library;
+                        compute_shader.pShaderBytecode = comp_lib->get_shader_blob()->GetBufferPointer();
+                        compute_shader.BytecodeLength = comp_lib->get_shader_blob()->GetBufferSize();
                     }
                     break;
                 }
@@ -1577,8 +1589,6 @@ namespace Cyber
         pso_desc.NodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
         pso_desc.VS = vertex_shader;
         pso_desc.PS = pixel_shader;
-        pso_desc.DS = domain_shader;
-        pso_desc.HS = hull_shader;
         pso_desc.GS = geometry_shader;
         pso_desc.StreamOutput = stream_output_desc;
         pso_desc.BlendState = pipelineDesc.blend_state ? D3D12Util_TranslateBlendState(pipelineDesc.blend_state) : gDefaultBlendDesc;
@@ -1609,12 +1619,12 @@ namespace Cyber
             // Calculate graphics pso shader hash
             if(vertex_shader.BytecodeLength)
                 psoShaderHash = cyber_hash(vertex_shader.pShaderBytecode, vertex_shader.BytecodeLength, psoShaderHash);
+            if(mesh_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(mesh_shader.pShaderBytecode, mesh_shader.BytecodeLength, psoShaderHash);
+            if(amplification_shader.BytecodeLength)
+                psoShaderHash = cyber_hash(amplification_shader.pShaderBytecode, amplification_shader.BytecodeLength, psoShaderHash);
             if(pixel_shader.BytecodeLength)
                 psoShaderHash = cyber_hash(pixel_shader.pShaderBytecode, pixel_shader.BytecodeLength, psoShaderHash);
-            if(domain_shader.BytecodeLength)
-                psoShaderHash = cyber_hash(domain_shader.pShaderBytecode, domain_shader.BytecodeLength, psoShaderHash);
-            if(hull_shader.BytecodeLength)
-                psoShaderHash = cyber_hash(hull_shader.pShaderBytecode, hull_shader.BytecodeLength, psoShaderHash);
             if(geometry_shader.BytecodeLength)
                 psoShaderHash = cyber_hash(geometry_shader.pShaderBytecode, geometry_shader.BytecodeLength, psoShaderHash);
             // Calculate graphics pso render state hash

@@ -504,27 +504,17 @@ namespace Cyber
         {
             return D3D12_SHADER_VISIBILITY_ALL;
         }
-        if(stages & SHADER_STAGE::SHADER_STAGE_VERT)
+        if(stages == SHADER_STAGE::SHADER_STAGE_VERT)
         {
             res = D3D12_SHADER_VISIBILITY_VERTEX;
             stageCount++;
         }
-        if(stages & SHADER_STAGE::SHADER_STAGE_GEOM)
+        if(stages == SHADER_STAGE::SHADER_STAGE_GEOM)
         {
             res = D3D12_SHADER_VISIBILITY_GEOMETRY;
             stageCount++;
         }
-        if(stages & SHADER_STAGE::SHADER_STAGE_HULL)
-        {
-            res = D3D12_SHADER_VISIBILITY_HULL;
-            stageCount++;
-        }
-        if(stages & SHADER_STAGE::SHADER_STAGE_DOMAIN)
-        {
-            res = D3D12_SHADER_VISIBILITY_DOMAIN;
-            stageCount++;
-        }
-        if(stages & SHADER_STAGE::SHADER_STAGE_FRAG)
+        if(stages == SHADER_STAGE::SHADER_STAGE_FRAG)
         {
             res = D3D12_SHADER_VISIBILITY_PIXEL;
             stageCount++;

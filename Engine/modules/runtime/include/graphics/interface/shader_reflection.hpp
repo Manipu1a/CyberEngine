@@ -61,7 +61,7 @@ namespace Cyber
         public:
             using ShaderReflectionInterface = typename EngineImplTraits::ShaderReflectionInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TShaderReflectionBase = typename DeviceObjectBase<ShaderReflectionInterface, RenderDeviceImplType>;
+            using TShaderReflectionBase = DeviceObjectBase<ShaderReflectionInterface, RenderDeviceImplType>;
 
             ShaderReflectionBase(RenderDeviceImplType* device) : TShaderReflectionBase(device) 
             { 
@@ -69,7 +69,7 @@ namespace Cyber
                 m_namePool = nullptr;
                // m_pVertexInputs = nullptr;
                 m_ppShaderResources = nullptr;
-                m_shaderStage = SHADER_STAGE::SHADER_STAGE_NONE;
+                m_shaderStage = SHADER_STAGE::SHADER_STAGE_COUNT;
                 m_namePoolSize = 0;
                 m_vertexInputCount = 0;
                 m_shaderResourceCount = 0;

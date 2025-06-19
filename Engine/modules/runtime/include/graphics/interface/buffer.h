@@ -88,6 +88,7 @@ namespace Cyber
             virtual BufferCreateDesc get_create_desc() = 0;
             virtual void set_buffer_state(GRAPHICS_RESOURCE_STATE state) = 0;
             virtual GRAPHICS_RESOURCE_STATE get_buffer_state() const = 0;
+            
         };
 
         template<typename EngineImplTraits>

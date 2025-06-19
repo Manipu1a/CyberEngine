@@ -23,6 +23,7 @@
 #include "graphics/backend/d3d12/command_context.h"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "graphics/backend/d3d12/d3d12_utils.h"
+#include "common/template.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
@@ -181,6 +182,17 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pi
     ++state.num_command;
     curr_command_context->set_pipeline_state(Pipeline->pDxPipelineState);
     ++state.num_command;
+
+    // record shader data
+    if(Pipeline->graphics_pipeline_data.desc.vertex_shader)
+    {
+        state_cache.set_new_shader_data(SHADER_STAGE::SHADER_STAGE_VERT, Pipeline->graphics_pipeline_data.desc.vertex_shader->m_library->get_entry_reflection(0)->get_shader_register_count());
+    }
+    
+    if(Pipeline->graphics_pipeline_data.desc.fragment_shader)
+    {
+        state_cache.set_new_shader_data(SHADER_STAGE::SHADER_STAGE_FRAG, Pipeline->graphics_pipeline_data.desc.fragment_shader->m_library->get_entry_reflection(0)->get_shader_register_count());
+    }
 }
 
 void DeviceContext_D3D12_Impl::render_encoder_bind_vertex_buffer(uint32_t buffer_count, IBuffer** buffers,const uint32_t* strides, const uint64_t* offsets)
@@ -258,9 +270,44 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t in
     ++state.num_command;
 }
 
+void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signature)
+{
+    RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(root_signature);
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    state_cache.bound_root_signature = RS->dxRootSignature;
+
+    uint64_t current_shader_dirty_srv_slot_mask[SHADER_STAGE_COUNT] = {0};
+    uint64_t current_shader_dirty_uav_slot_mask[SHADER_STAGE_COUNT] = {0};
+    uint32_t num_srvs[SHADER_STAGE_COUNT] = {};
+    uint32_t num_views = 0;
+    // consume descriptor handles
+    for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+    {
+        const auto current_shader_register_mask = Bitmask<uint64_t>(state_cache.current_shader_srv_count[stage]);
+        current_shader_dirty_srv_slot_mask[stage] = current_shader_register_mask & state_cache.shader_resource_view_cache.bind_slot_mask[stage];
+        num_srvs[stage] = state_cache.current_shader_srv_count[stage];
+        num_views += num_srvs[stage];
+    }
+
+    
+}
+
 void DeviceContext_D3D12_Impl::set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView)
 {
-
+    auto& cache = state_cache.shader_resource_view_cache;
+    auto& current_srv_cache = cache.views[stage];
+    if(current_srv_cache[binding] != textureView)
+    {
+        if(textureView != nullptr)
+        {
+            cache.bind_slot_mask[stage] |= ((uint64_t)1 << binding);
+        }
+        else
+        {
+            cache.bind_slot_mask[stage] &= ~((uint64_t)1 << binding);
+        }
+        current_srv_cache[binding] = static_cast<Texture_View_D3D12_Impl*>(textureView);
+    }
 }
 
 void DeviceContext_D3D12_Impl::set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
@@ -270,7 +317,7 @@ void DeviceContext_D3D12_Impl::set_constant_buffer_view(SHADER_STAGE stage, uint
 
 void DeviceContext_D3D12_Impl::set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
 {
-
+    state_cache.unordered_access_view_cache.bind_slot_mask[stage] |= ((uint64_t)1 << binding);
 }
 
 IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)

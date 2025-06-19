@@ -122,6 +122,9 @@ namespace Cyber
             virtual void set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView) = 0;
             virtual void set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
             virtual void set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
+
+            virtual void prepare_for_rendering(IRootSignature* root_signature) = 0;
+            
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
         };

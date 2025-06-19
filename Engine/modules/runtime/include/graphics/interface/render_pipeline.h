@@ -21,10 +21,11 @@ namespace Cyber
         {
             class IRootSignature* root_signature;
             PipelineShaderCreateDesc* vertex_shader;
-            PipelineShaderCreateDesc* tesc_shader;
-            PipelineShaderCreateDesc* tese_shader;
+            PipelineShaderCreateDesc* mesh_shader;
+            PipelineShaderCreateDesc* amplification_shader;
             PipelineShaderCreateDesc* geometry_shader;
             PipelineShaderCreateDesc* fragment_shader;
+            PipelineShaderCreateDesc* compute_shader;
             VertexLayoutDesc* vertex_layout;
             BlendStateCreateDesc* blend_state;
             DepthStateCreateDesc* depth_stencil_state;

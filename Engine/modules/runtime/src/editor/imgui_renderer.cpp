@@ -280,7 +280,12 @@ namespace Cyber
                         descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER;
                         descriptor_data[descriptor_set_idx].push_constant = vertex_constant_buffer;
                         descriptor_set_idx++;
-                        render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
+                        
+                        // shader variable binding
+                        device_context->set_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, curr_texture_view);
+                        
+                        //render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
                         uint32_t vertex_offset = 0;
                         if(m_baseVertexSupported)
                         {
@@ -294,6 +299,7 @@ namespace Cyber
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
                         device_context->render_encoder_bind_descriptor_set(descriptor_set);
+                        device_context->prepare_for_rendering(root_signature);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
                     }
                 }
@@ -389,12 +395,13 @@ namespace Cyber
             // todo 针对特定类型constent buffer选择不同更新方式
             root_signature = render_device->create_root_signature(root_signature_create_desc);
             
+            /*
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
             };
-            
-            descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
+            */
+            //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 

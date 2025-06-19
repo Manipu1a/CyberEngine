@@ -52,6 +52,8 @@ public:
     virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
     virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
 
+    virtual void prepare_for_rendering(IRootSignature* root_signature) override;
+    
     virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
     
     virtual void set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView) override;
@@ -67,7 +69,7 @@ public:
                 
     //struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
     StateCache_D3D12& get_state_cache() { return state_cache; }
-    
+
     void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap);
 
     void commit_bound_heaps();

@@ -39,7 +39,7 @@ namespace Cyber
         public:
             using ShaderLibraryInterface = typename EngineImplTraits::ShaderLibraryInterface;
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
-            using TShaderLibraryBase = typename DeviceObjectBase<ShaderLibraryInterface, RenderDeviceImplType>;
+            using TShaderLibraryBase = DeviceObjectBase<ShaderLibraryInterface, RenderDeviceImplType>;
 
             ShaderLibraryBase(RenderDeviceImplType* device, const ShaderLibraryCreateDesc& desc) : TShaderLibraryBase(device), m_desc(desc)
             {
