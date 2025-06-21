@@ -224,6 +224,7 @@ namespace Cyber
         {
             rootSignature->set_push_constant(all_push_constants[i], i);
         }
+           
         // static samplers
         eastl::stable_sort(all_static_samplers.begin(), all_static_samplers.end(), [](const RenderObject::IShaderResource* lhs, const RenderObject::IShaderResource* rhs){
             if(lhs->get_set() == rhs->get_set())

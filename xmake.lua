@@ -8,7 +8,7 @@ defs_list = {}
 links_list = {}
 generator_list = {}
 
-set_toolchains("msvc", {vs = "2019"})
+set_toolchains("msvc", {vs = "2022"})
 add_cxxflags("/EHsc", {force = true})
 set_languages("cxx20")
 add_defines("UNICODE", "_UNICODE")

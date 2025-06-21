@@ -35,7 +35,7 @@ namespace Cyber
         int blendDescIndex = 0;
         D3D12_BLEND_DESC ret = {};
         ret.AlphaToCoverageEnable = (BOOL)pDesc->alpha_to_coverage;
-        ret.IndependentBlendEnable = TRUE;
+        ret.IndependentBlendEnable = (BOOL)pDesc->independent_blend;
         for(int i = 0; i < pDesc->render_target_count; ++i)
         {
             BOOL blendEnable = (gDx12BlendConstantTranslator[pDesc->src_factors[blendDescIndex]] != D3D12_BLEND_ONE) || (gDx12BlendConstantTranslator[pDesc->dst_factors[blendDescIndex]] != D3D12_BLEND_ZERO) ||
@@ -459,10 +459,29 @@ namespace Cyber
             entery_reflection = shader_desc->m_library->get_entry_reflection(0);
         }
         
+
         //rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
         
         RenderObject::ShaderRegisterCount register_count = entery_reflection->get_shader_register_count();
         rootSignature->set_register_counts(visibility, register_count);
+
+        // sampler registers
+        eastl::vector<RenderObject::IShaderResource*> all_static_samplers;
+        for(uint32_t i = 0; i < entery_reflection->get_shader_resource_count(); ++i)
+        {
+            RenderObject::IShaderResource* resource = entery_reflection->get_shader_resource(i);
+            if(resource->get_type() == GRAPHICS_RESOURCE_TYPE_SAMPLER)
+            {
+                all_static_samplers.push_back(resource);
+            }
+        }
+        uint32_t static_sampler_count = (uint32_t)all_static_samplers.size();
+        rootSignature->set_static_samplers((RenderObject::IShaderResource**)cyber_calloc(static_sampler_count, sizeof(RenderObject::IShaderResource*)), static_sampler_count);
+        for(uint32_t i = 0; i < static_sampler_count; ++i)
+        {
+            rootSignature->set_static_sampler(all_static_samplers[i], i);
+        }
+
     }
 
 #if !defined (XBOX) && defined (_WIN32)

@@ -39,6 +39,7 @@
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "graphics/backend/d3d12/buffer_view_d3d12.h"
 #include "platform/configure.h"
+#include "graphics/backend/d3d12/windows_pipeline_state_d3d12.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -1053,38 +1054,40 @@ namespace Cyber
         uint32_t shader_stage_mask[SHADER_STAGE_COUNT] = {0};
         if(rootSigDesc.vertex_shader != nullptr)
         {
-            shader_stage_mask[SV_VERTEX] = 1;
+            shader_stage_mask[SHADER_STAGE_VERT] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.vertex_shader, SV_VERTEX);
         }
         if(rootSigDesc.pixel_shader != nullptr)
         {
-            shader_stage_mask[SV_PIXEL] = 1;
+            shader_stage_mask[SHADER_STAGE_FRAG] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.pixel_shader, SV_PIXEL);
         }
         if(rootSigDesc.mesh_shader != nullptr)
         {
-            shader_stage_mask[SV_MESH] = 1;
+            shader_stage_mask[SHADER_STAGE_MESH] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.mesh_shader, SV_MESH);
         }
         if(rootSigDesc.geometry_shader != nullptr)
         {
-            shader_stage_mask[SV_GEOMETRY] = 1;
+            shader_stage_mask[SHADER_STAGE_GEOM] = 1;
             d3d12_util_quantize_bound_shader_state(dxRootSignature, rootSigDesc.geometry_shader, SV_GEOMETRY);
         }
 
         // Pick shader reflection data
         //graphics_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
         // rs pool allocation
+
         static const uint32_t root_constant_cost = 1;
         static const uint32_t root_descriptor_table_cost = 1;
         static const uint32_t root_descriptor_cost = 2;
 
         CD3DX12_ROOT_PARAMETER1 root_parameters[32];
         CD3DX12_DESCRIPTOR_RANGE1 desc_ranges[32];
-
+        D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
+        uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
+        
         uint32_t root_parameter_size = 0;
         uint32_t root_parameter_count = 0;
-
         for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
         {
             ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
@@ -1113,6 +1116,38 @@ namespace Cyber
                 root_parameter_count++;
                 root_parameter_size += root_descriptor_table_cost;
             }
+            // todo: fill sampler into global
+            if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
+            {
+                staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
+                for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
+                {
+                    auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
+                    for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
+                    {
+                        auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
+                        if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[i]) == 0)
+                        {
+                            D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
+                            staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
+                            staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
+                            staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
+                            staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
+                            staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
+                            staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
+                            staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
+                            staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
+                            staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
+                            staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+
+                            IShaderResource* samplerResource = rst_slot;
+                            staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
+                            staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
+                            staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
+                        }
+                    }
+                }
+            }
         }
 
         // Fill resource slots
@@ -1123,10 +1158,13 @@ namespace Cyber
             descRangeCount += dxRootSignature->get_parameter_table(i)->m_resourceCount;
         }
 
+        uint32_t valid_root_tables = 0;
+        
         D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_push_constant_count(), sizeof(D3D12_ROOT_PARAMETER1));
         D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
+        
+        /*
         // Create descriptor table parameter
-        uint32_t valid_root_tables = 0;
         for(uint32_t i_set = 0; i_set < tableCount; ++i_set)
         {
             RootSignatureParameterTable* paramTable = dxRootSignature->get_parameter_table(i_set);
@@ -1155,6 +1193,7 @@ namespace Cyber
                 valid_root_tables++;
             }
         }
+            */
         // Create push constant parameter
         cyber_assert(dxRootSignature->get_push_constant_count() <= 1, "Only support one push constant range");
         if(dxRootSignature->get_push_constant_count() > 0)
@@ -1185,10 +1224,11 @@ namespace Cyber
             dxRootSignature->root_parameter_index = valid_root_tables;
             valid_root_tables++;
         }
-
+        /*
         // Create static sampler parameter
         uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
-        D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
+        //D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
+
         if(staticSamplerCount > 0)
         {
             staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(staticSamplerCount, sizeof(D3D12_STATIC_SAMPLER_DESC));
@@ -1220,6 +1260,8 @@ namespace Cyber
                 }
             }
         }
+
+        */
         bool useInputLayout = shader_stage_mask[SHADER_STAGE_VERT]; // VertexStage uses input layout
 
         // Fill RS flags
@@ -1228,21 +1270,10 @@ namespace Cyber
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
         }
-
         if(!shader_stage_mask[SHADER_STAGE_VERT])
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_VERTEX_SHADER_ROOT_ACCESS;
         }
-        /*
-        if(!(shaderStages & SHADER_STAGE_HULL))
-        {
-            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS;
-        }
-        if(!(shaderStages & SHADER_STAGE_DOMAIN))
-        {
-            rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS;
-        }
-        */
         if(!shader_stage_mask[SHADER_STAGE_MESH])
         {
             rootSignatureFlags |= D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
@@ -1253,8 +1284,8 @@ namespace Cyber
         }
         
         D3D12_ROOT_SIGNATURE_DESC1 rootSignatureDesc = {};
-        rootSignatureDesc.NumParameters = valid_root_tables + dxRootSignature->get_push_constant_count();
-        rootSignatureDesc.pParameters = rootParams;
+        rootSignatureDesc.NumParameters = root_parameter_count;
+        rootSignatureDesc.pParameters = root_parameters;
         rootSignatureDesc.NumStaticSamplers = staticSamplerCount;
         rootSignatureDesc.pStaticSamplers = staticSamplerDescs;
         rootSignatureDesc.Flags = rootSignatureFlags;
@@ -1614,6 +1645,7 @@ namespace Cyber
         // Cached PSO
         size_t psoShaderHash = 0;
         size_t psoRenderHash = 0;
+    
         if(m_pPipelineLibrary)
         {
             // Calculate graphics pso shader hash
