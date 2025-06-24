@@ -84,7 +84,7 @@ namespace Cyber
             virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) = 0;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) = 0;
             // Shader
-            virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
+            virtual eastl::shared_ptr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;
         };
 

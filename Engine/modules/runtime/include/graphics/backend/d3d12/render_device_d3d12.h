@@ -95,7 +95,7 @@ namespace Cyber
             virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) override;
             virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) override;
 
-            virtual IShaderLibrary* create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
+            virtual eastl::shared_ptr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
             
             // create view

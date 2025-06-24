@@ -301,7 +301,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -310,7 +310,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             // create root signature
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
@@ -334,7 +334,7 @@ namespace Cyber
                 .root_signature = root_signature,
                 .set_index = 0
             };
-            descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
+            //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
            RenderObject::VertexLayoutDesc vertex_layout_desc = {
            };

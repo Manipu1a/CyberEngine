@@ -274,13 +274,24 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
 {
     RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(root_signature);
     reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-    state_cache.bound_root_signature = RS->dxRootSignature;
-
+    
+    // Apply Resources
+    uint64_t current_shader_dirty_cbv_slot_mask[SHADER_STAGE_COUNT] = {0};
     uint64_t current_shader_dirty_srv_slot_mask[SHADER_STAGE_COUNT] = {0};
     uint64_t current_shader_dirty_uav_slot_mask[SHADER_STAGE_COUNT] = {0};
+    uint32_t num_cbvs[SHADER_STAGE_COUNT] = {};
     uint32_t num_srvs[SHADER_STAGE_COUNT] = {};
+    uint32_t num_uavs[SHADER_STAGE_COUNT] = {};
     uint32_t num_views = 0;
     // consume descriptor handles
+    for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+    {
+        const auto current_shader_register_mask = Bitmask<uint64_t>(state_cache.current_shader_cbv_count[stage]);
+        current_shader_dirty_cbv_slot_mask[stage] = current_shader_register_mask & state_cache.constant_buffer_cache.bind_slot_mask[stage];
+        num_cbvs[stage] = state_cache.current_shader_cbv_count[stage];
+        num_views += num_cbvs[stage];
+    }
+
     for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
     {
         const auto current_shader_register_mask = Bitmask<uint64_t>(state_cache.current_shader_srv_count[stage]);
@@ -289,7 +300,19 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
         num_views += num_srvs[stage];
     }
 
-    
+    for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+    {
+        const auto current_shader_register_mask = Bitmask<uint64_t>(state_cache.current_shader_uav_count[stage]);
+        current_shader_dirty_uav_slot_mask[stage] = current_shader_register_mask & state_cache.unordered_access_view_cache.bind_slot_mask[stage];
+        num_uavs[stage] = state_cache.current_shader_uav_count[stage];
+        num_views += num_uavs[stage];
+    }
+
+    if(num_views > 0)
+    {
+
+    }
+
 }
 
 void DeviceContext_D3D12_Impl::set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView)

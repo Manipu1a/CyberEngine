@@ -6,9 +6,7 @@
 #include <vcruntime.h>
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
-#include "filesystem"
 #include "interface/render_device.hpp"
-#include "interface/device_context.h"
 #include "interface/shader_library.h"
 
 namespace Cyber
@@ -35,8 +33,6 @@ namespace Cyber
             const char8_t* rendererApi = u8"../../../../shaders/DX12";
             eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
             
-            auto path = std::filesystem::current_path();
-
             WCHAR assetsPath[512];
             DWORD size = GetModuleFileName(nullptr, assetsPath, sizeof(assetsPath));
             CB_CORE_INFO("Compiling shader in runtime: {0} -> '{1}' macroCount={2}", "DX12", (char*)loadDesc.entry_point_name, macroCount);
@@ -67,7 +63,7 @@ namespace Cyber
             return true;
         }
 
-        RenderObject::IShaderLibrary* add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
+        CYBER_RUNTIME_API eastl::shared_ptr<RenderObject::IShaderLibrary> add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
         {
             RenderObject::ShaderLibraryCreateDesc libraryDesc;
             
@@ -90,8 +86,7 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    RenderObject::IShaderLibrary* shaderLibrary = device->create_shader_library(libraryDesc);
-                    //RHIShaderLibrary* shaderLibrary = rhi_create_shader_library(device, libraryDesc);
+                    eastl::shared_ptr<RenderObject::IShaderLibrary> shaderLibrary = device->create_shader_library(libraryDesc);
                     if(shaderLibrary)
                     {
                         return shaderLibrary;

@@ -3,7 +3,7 @@
 #include "graphics/interface/render_pipeline.h"
 #include "graphics/interface/root_signature.hpp"
 #include "graphics/interface/render_device.hpp"
-#include "graphics/interface/device_object.h"
+#include "graphics/resource/resource_loader.h"
 #include "platform/memory.h"
 #include "application/application.h"
 #include "editor/editor.h"
@@ -284,7 +284,6 @@ namespace Cyber
                         // shader variable binding
                         device_context->set_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
                         device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, curr_texture_view);
-                        
                         //render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
                         uint32_t vertex_offset = 0;
                         if(m_baseVertexSupported)
@@ -298,7 +297,7 @@ namespace Cyber
                             uint32_t strides[] = { sizeof(ImDrawVert) };
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
-                        device_context->render_encoder_bind_descriptor_set(descriptor_set);
+                        //device_context->render_encoder_bind_descriptor_set(descriptor_set);
                         device_context->prepare_for_rendering(root_signature);
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
                     }
@@ -342,7 +341,9 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("main")
             };
-            RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+
+            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            //RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -351,7 +352,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("main")
             };
-            RenderObject::IShaderLibrary* ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
             pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -394,7 +395,6 @@ namespace Cyber
             };
             // todo 针对特定类型constent buffer选择不同更新方式
             root_signature = render_device->create_root_signature(root_signature_create_desc);
-            
             /*
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,

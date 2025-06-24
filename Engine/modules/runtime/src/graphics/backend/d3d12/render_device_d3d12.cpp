@@ -39,7 +39,6 @@
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "graphics/backend/d3d12/buffer_view_d3d12.h"
 #include "platform/configure.h"
-#include "graphics/backend/d3d12/windows_pipeline_state_d3d12.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -1150,6 +1149,9 @@ namespace Cyber
             }
         }
 
+        dxRootSignature->set_root_parameter(root_parameters, root_parameter_count);
+        dxRootSignature->set_root_descriptor_range(desc_ranges, root_parameter_count);
+
         // Fill resource slots
         const uint32_t tableCount = dxRootSignature->get_parameter_table_count();
         uint32_t descRangeCount = 0;
@@ -1160,8 +1162,8 @@ namespace Cyber
 
         uint32_t valid_root_tables = 0;
         
-        D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_push_constant_count(), sizeof(D3D12_ROOT_PARAMETER1));
-        D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
+        //D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_push_constant_count(), sizeof(D3D12_ROOT_PARAMETER1));
+        //D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
         
         /*
         // Create descriptor table parameter
@@ -1193,8 +1195,9 @@ namespace Cyber
                 valid_root_tables++;
             }
         }
-            */
+        */
         // Create push constant parameter
+        /*
         cyber_assert(dxRootSignature->get_push_constant_count() <= 1, "Only support one push constant range");
         if(dxRootSignature->get_push_constant_count() > 0)
         {
@@ -1208,7 +1211,9 @@ namespace Cyber
             dxRootSignature->root_parameter_index = valid_root_tables;
             dxRootSignature->root_constant_parameter = root_constant_parameter;
         }
+        */
         // Create root descriptor parameter
+        /*
         auto root_desc_count = dxRootSignature->get_root_descriptor_count();
         for(uint32_t i = 0; i < root_desc_count; ++i)
         {
@@ -1224,6 +1229,7 @@ namespace Cyber
             dxRootSignature->root_parameter_index = valid_root_tables;
             valid_root_tables++;
         }
+            */
         /*
         // Create static sampler parameter
         uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
@@ -1290,9 +1296,8 @@ namespace Cyber
         rootSignatureDesc.pStaticSamplers = staticSamplerDescs;
         rootSignatureDesc.Flags = rootSignatureFlags;
         
-        D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc = {};
-        versionedRootSignatureDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-        versionedRootSignatureDesc.Desc_1_1 = rootSignatureDesc;
+        CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC versionedRootSignatureDesc(rootSignatureDesc);
+        dxRootSignature->set_versioned_root_signature_desc(versionedRootSignatureDesc);
         ID3DBlob* signature = nullptr;
         ID3DBlob* error = nullptr;
         HRESULT hr = D3D12SerializeVersionedRootSignature(&versionedRootSignatureDesc, &signature, &error);
@@ -1309,6 +1314,7 @@ namespace Cyber
             CB_CORE_ERROR("Failed to create root signature: {0}", (char*)error->GetBufferPointer());
         }
 
+        dxRootSignature->analyze_signature();
         return dxRootSignature;
     }
 
@@ -1538,7 +1544,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.vertex_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* vert_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.vertex_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* vert_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.vertex_shader->m_library.get();
                         vertex_shader.pShaderBytecode = vert_lib->m_pShaderBlob->GetBufferPointer();
                         vertex_shader.BytecodeLength = vert_lib->m_pShaderBlob->GetBufferSize();
                     }
@@ -1548,7 +1554,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.mesh_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* mesh_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.mesh_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* mesh_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.mesh_shader->m_library.get();
                         mesh_shader.pShaderBytecode = mesh_lib->get_shader_blob()->GetBufferPointer();
                         mesh_shader.BytecodeLength = mesh_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -1558,7 +1564,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.amplification_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* amp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.amplification_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* amp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.amplification_shader->m_library.get();
                         amplification_shader.pShaderBytecode = amp_lib->get_shader_blob()->GetBufferPointer();
                         amplification_shader.BytecodeLength = amp_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -1568,7 +1574,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.fragment_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* frag_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.fragment_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* frag_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.fragment_shader->m_library.get();
                         pixel_shader.pShaderBytecode = frag_lib->get_shader_blob()->GetBufferPointer();
                         pixel_shader.BytecodeLength = frag_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -1578,7 +1584,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.geometry_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* geom_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.geometry_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* geom_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.geometry_shader->m_library.get();
                         geometry_shader.pShaderBytecode = geom_lib->get_shader_blob()->GetBufferPointer();
                         geometry_shader.BytecodeLength = geom_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -1588,7 +1594,7 @@ namespace Cyber
                 {
                     if(pipelineDesc.compute_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* comp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.compute_shader->m_library;
+                        ShaderLibrary_D3D12_Impl* comp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.compute_shader->m_library.get();
                         compute_shader.pShaderBytecode = comp_lib->get_shader_blob()->GetBufferPointer();
                         compute_shader.BytecodeLength = comp_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -2294,9 +2300,9 @@ namespace Cyber
         }
     }
     
-    IShaderLibrary* RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
+    eastl::shared_ptr<RenderObject::IShaderLibrary> RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {
-        ShaderLibrary_D3D12_Impl* pLibrary = cyber_new<ShaderLibrary_D3D12_Impl>(this, desc);
+        eastl::shared_ptr<ShaderLibrary_D3D12_Impl> pLibrary = eastl::make_shared<ShaderLibrary_D3D12_Impl>(this, desc);
 
         bool bUseDXC = false;
         switch(desc.shader_compiler)
@@ -2460,7 +2466,6 @@ namespace Cyber
 
         // Reflect shader
         pLibrary->Initialize_shader_reflection(desc);
-
         return pLibrary;
     }
 

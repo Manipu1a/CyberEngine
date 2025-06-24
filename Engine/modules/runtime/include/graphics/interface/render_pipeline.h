@@ -3,6 +3,7 @@
 #include "graphics/interface/vertex_input.h"
 #include "interface/graphics_types.h"
 #include "eastl/array.h"
+#include "eastl/shared_ptr.h"
 #include "device_object.h"
 
 
@@ -12,7 +13,7 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API PipelineShaderCreateDesc
         {
-            class IShaderLibrary* m_library;
+            eastl::shared_ptr<RenderObject::IShaderLibrary> m_library;
             const char8_t* m_entry;
             SHADER_STAGE m_stage;
         };
@@ -68,6 +69,31 @@ namespace Cyber
                 auto& graphics_pipeline = graphics_pipeline_data.desc;
                 graphics_pipeline = create_desc;
 
+                if(create_desc.vertex_shader)
+                {
+                    graphics_pipeline.vertex_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.vertex_shader = *create_desc.vertex_shader;
+                }
+                if(create_desc.mesh_shader)
+                {
+                    graphics_pipeline.mesh_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.mesh_shader = *create_desc.mesh_shader;
+                }
+                if(create_desc.amplification_shader)
+                {
+                    graphics_pipeline.amplification_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.amplification_shader = *create_desc.amplification_shader;
+                }
+                if(create_desc.geometry_shader)
+                {
+                    graphics_pipeline.geometry_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.geometry_shader = *create_desc.geometry_shader;
+                }
+                if(create_desc.fragment_shader)
+                {
+                    graphics_pipeline.fragment_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.fragment_shader = *create_desc.fragment_shader;
+                }
                 VertexLayoutDesc* input_layout = cyber_new<VertexLayoutDesc>();
                 input_layout->attribute_count = graphics_pipeline.vertex_layout->attribute_count;
                 VertexAttribute* attributes = cyber_new_n<VertexAttribute>(input_layout->attribute_count);
