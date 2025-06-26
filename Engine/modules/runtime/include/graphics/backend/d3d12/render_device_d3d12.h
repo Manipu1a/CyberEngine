@@ -3,6 +3,7 @@
 #include "interface/render_device.hpp"
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/backend/d3d12/command_list_manager.h"
+#include "state_cache_d3d12.h"
 #include "engine_impl_traits_d3d12.hpp"
 
 namespace Cyber
@@ -88,7 +89,6 @@ namespace Cyber
             virtual void free_texture(ITexture* texture) override;
             virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
             virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) override;
-            
 
             virtual void free_buffer(IBuffer* buffer) override;
 
@@ -104,13 +104,17 @@ namespace Cyber
             void create_depth_stencil_view(ID3D12Resource* resource, const D3D12_DEPTH_STENCIL_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
             void create_unordered_access_view(ID3D12Resource* resource, ID3D12Resource* counterResource, const D3D12_UNORDERED_ACCESS_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
             void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
+            
+            D3D12_GPU_DESCRIPTOR_HANDLE build_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ShaderResourceViewCache shader_resource_view_cache, uint32_t slots_need, uint32_t& heap_slot);
+            D3D12_GPU_DESCRIPTOR_HANDLE build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferCache constant_buffer_cache, uint32_t slots_need, uint32_t& heap_slot);
 
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
             class DescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_cpuDescriptorHeaps[heap_type]; }
 
-            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetSamplerHeaps() { return m_samplerHeaps; }
-            eastl::map<uint32_t, DescriptorHeap_D3D12*>& GetCbvSrvUavHeaps() { return m_cbvSrvUavHeaps; }
+            DescriptorHeap_D3D12* GetSamplerHeaps(uint32_t node_index = 0) { return m_samplerHeaps[node_index]; }
+            DescriptorHeap_D3D12* GetCbvSrvUavHeaps(uint32_t node_index = 0) { return m_cbvSrvUavHeaps[node_index]; }
+
             struct EmptyDescriptors_D3D12* GetNullDescriptors() { return m_pNullDescriptors; }
             IDXGIFactory6* GetDXGIFactory() { return m_pDXGIFactory; }
             IDXGIAdapter4* GetDXActiveGPU() { return m_pDxActiveGPU; }

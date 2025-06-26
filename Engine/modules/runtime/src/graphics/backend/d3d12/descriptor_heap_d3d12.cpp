@@ -14,6 +14,22 @@ namespace Cyber
             return dst->consume_descriptor_handles(descriptorCount);
         }
 
+        uint32_t DescriptorHeap_D3D12::reserve_slots(uint32_t num_requested_slots)
+        {
+            uint32_t first_requested_slot = m_usedDescriptors;
+            uint32_t slot_after_request = m_usedDescriptors + num_requested_slots;
+
+            if(slot_after_request > m_heapDesc.NumDescriptors)
+            {
+                first_requested_slot = 0;
+                slot_after_request = num_requested_slots;
+            }   
+
+            m_usedDescriptors = slot_after_request;
+
+            return first_requested_slot;
+        }
+
         DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(uint32_t descriptorCount)
         {
             if(m_usedDescriptors + descriptorCount > m_heapDesc.NumDescriptors)
@@ -94,6 +110,15 @@ namespace Cyber
                 {m_startHandle.mGpu.ptr + usedDescriptors * m_descriptorSize},
             };
             return ret;
+        }
+
+        DescriptorHandle DescriptorHeap_D3D12::get_slot_handle(uint32_t slot_index)
+        {
+            DescriptorHandle handle = {
+                {m_startHandle.mCpu.ptr + slot_index * m_descriptorSize},
+                {m_startHandle.mGpu.ptr + slot_index * m_descriptorSize}
+            };
+            return handle;
         }
 
         void DescriptorHeap_D3D12::free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount)

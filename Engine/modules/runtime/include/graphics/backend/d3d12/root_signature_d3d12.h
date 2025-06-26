@@ -74,6 +74,10 @@ namespace Cyber
 
             virtual ~RootSignature_D3D12_Impl();
 
+            bool has_srvs() const { return bhas_srvs; }
+            bool has_uavs() const { return bhas_uavs; }
+            bool has_samplers() const { return bhas_samplers; }
+            bool has_cbvs() const { return bhas_cbvs; }
             const RenderObject::ShaderRegisterCount& get_register_counts(ShaderVisibility visibility) const
             {
                 return register_counts_array[visibility];
@@ -108,6 +112,80 @@ namespace Cyber
             // 统计根签名的参数
             void analyze_signature();
 
+            CYBER_FORCE_INLINE uint32_t srv_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage) const
+            {
+                switch (shader_stage)
+                {
+                    case SHADER_STAGE::SHADER_STAGE_VERT:
+                        return bind_slots[VS_SRVs];
+                    case SHADER_STAGE::SHADER_STAGE_FRAG:
+                        return bind_slots[PS_SRVs];
+                    case SHADER_STAGE::SHADER_STAGE_GEOM:
+                        return bind_slots[GS_SRVs];
+                    case SHADER_STAGE::SHADER_STAGE_MESH:
+                        return bind_slots[MS_SRVs];
+                    case SHADER_STAGE::SHADER_STAGE_AMPLIFICATION:
+                        return bind_slots[AS_SRVs];
+                    case SHADER_STAGE::SHADER_STAGE_COMPUTE:
+                    case SHADER_STAGE::SHADER_STAGE_COUNT:
+                        return bind_slots[ALL_SRVs];
+                    default:
+                        cyber_check(false);
+                        return 0xFF; // Invalid slot
+                }
+            }
+
+            CYBER_FORCE_INLINE uint32_t sampler_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage) const
+            {
+                switch (shader_stage)
+                {
+                    case SHADER_STAGE::SHADER_STAGE_VERT:
+                        return bind_slots[VS_Samplers];
+                    case SHADER_STAGE::SHADER_STAGE_FRAG:
+                        return bind_slots[PS_Samplers];
+                    case SHADER_STAGE::SHADER_STAGE_GEOM:
+                        return bind_slots[GS_Samplers];
+                    case SHADER_STAGE::SHADER_STAGE_MESH:
+                        return bind_slots[MS_Samplers];
+                    case SHADER_STAGE::SHADER_STAGE_AMPLIFICATION:
+                        return bind_slots[AS_Samplers];
+                    case SHADER_STAGE::SHADER_STAGE_COMPUTE:
+                    case SHADER_STAGE::SHADER_STAGE_COUNT:
+                        return bind_slots[ALL_Samplers];
+                    default:
+                        cyber_check(false);
+                        return 0xFF; // Invalid slot
+                }
+            }
+
+            CYBER_FORCE_INLINE uint32_t cbv_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage) const
+            {
+                switch (shader_stage)
+                {
+                    case SHADER_STAGE::SHADER_STAGE_VERT:
+                        return bind_slots[VS_CBVs];
+                    case SHADER_STAGE::SHADER_STAGE_FRAG:
+                        return bind_slots[PS_CBVs];
+                    case SHADER_STAGE::SHADER_STAGE_GEOM:
+                        return bind_slots[GS_CBVs];
+                    case SHADER_STAGE::SHADER_STAGE_MESH:
+                        return bind_slots[MS_CBVs];
+                    case SHADER_STAGE::SHADER_STAGE_AMPLIFICATION:
+                        return bind_slots[AS_CBVs];
+                    case SHADER_STAGE::SHADER_STAGE_COMPUTE:
+                    case SHADER_STAGE::SHADER_STAGE_COUNT:
+                        return bind_slots[ALL_CBVs];
+                    default:
+                        cyber_check(false);
+                        return 0xFF; // Invalid slot
+                }
+            }
+
+            CYBER_FORCE_INLINE uint32_t uav_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage) const
+            {
+                return bind_slots[shader_stage == SHADER_STAGE_VERT ? VS_UAVs : ALL_UAVs];
+            }
+            
             void set_srv_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage, uint8_t root_parameter_index)
             {
                 uint8_t* bind_slot = nullptr;
@@ -139,7 +217,7 @@ namespace Cyber
 
                 *bind_slot = root_parameter_index;
 
-                has_srvs = true;
+                bhas_srvs = true;
             }
 
             void set_sampler_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage, uint8_t root_parameter_index)
@@ -173,7 +251,7 @@ namespace Cyber
 
                 *bind_slot = root_parameter_index;
 
-                has_samplers = true;
+                bhas_samplers = true;
             }
 
             void set_cbv_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage, uint8_t root_parameter_index)
@@ -207,7 +285,7 @@ namespace Cyber
 
                 *bind_slot = root_parameter_index;
 
-                has_cbvs = true;
+                bhas_cbvs = true;
             }
 
             void set_uav_root_descriptor_table_bind_slot(SHADER_STAGE shader_stage, uint8_t root_parameter_index)
@@ -217,9 +295,69 @@ namespace Cyber
 
                 *bind_slot = root_parameter_index;
 
-                has_uavs = true;
+                bhas_uavs = true;
             }
-            
+
+            void set_max_src_count(SHADER_STAGE stage, uint32_t count)
+            {
+                if(stage == SHADER_STAGE_COUNT)
+                {
+                    for(uint32_t i = SHADER_STAGE_VERT; i <= SHADER_STAGE_COMPUTE; ++i)
+                    {
+                        bind_shader_resource[i].max_srv_count = count;
+                    }
+                }
+                else
+                {
+                    bind_shader_resource[stage].max_srv_count = count;
+                }
+            }
+
+            void set_max_cbv_count(SHADER_STAGE stage, uint32_t count)
+            {
+                if(stage == SHADER_STAGE_COUNT)
+                {
+                    for(uint32_t i = SHADER_STAGE_VERT; i <= SHADER_STAGE_COMPUTE; ++i)
+                    {
+                        bind_shader_resource[i].max_cbv_count = count;
+                    }
+                }
+                else
+                {
+                    bind_shader_resource[stage].max_cbv_count = count;
+                }
+            }
+
+            void set_max_uav_count(SHADER_STAGE stage, uint32_t count)
+            {
+                if(stage == SHADER_STAGE_COUNT)
+                {
+                    for(uint32_t i = SHADER_STAGE_VERT; i <= SHADER_STAGE_COMPUTE; ++i)
+                    {
+                        bind_shader_resource[i].max_uav_count = count;
+                    }
+                }
+                else
+                {
+                    bind_shader_resource[stage].max_uav_count = count;
+                }
+            }
+
+            void set_max_sampler_count(SHADER_STAGE stage, uint32_t count)
+            {
+                if(stage == SHADER_STAGE_COUNT)
+                {
+                    for(uint32_t i = SHADER_STAGE_VERT; i <= SHADER_STAGE_COMPUTE; ++i)
+                    {
+                        bind_shader_resource[i].max_sampler_count = count;
+                    }
+                }
+                else
+                {
+                    bind_shader_resource[stage].max_sampler_count = count;
+                }
+            }
+
         protected:
             static constexpr uint32_t MAX_ROOT_PARAMETERS = 32;
 
@@ -234,12 +372,13 @@ namespace Cyber
             D3D12_ROOT_PARAMETER1 root_constant_parameter;
             uint32_t root_parameter_index;
             uint8_t bind_slots[RPK_RootParameterKeyCount];
+            BindShaderResource bind_shader_resource[SHADER_STAGE_COUNT];
 
-            uint8_t has_uavs : 1;
-            uint8_t has_srvs : 1;
-            uint8_t has_cbvs: 1;
-            uint8_t has_samplers : 1;
-            uint8_t has_root_cbs : 1;
+            uint8_t bhas_uavs : 1;
+            uint8_t bhas_srvs : 1;
+            uint8_t bhas_cbvs: 1;
+            uint8_t bhas_samplers : 1;
+            uint8_t bhas_root_cbs : 1;
 
             friend class DeviceContext_D3D12_Impl;
             friend class RenderDevice_D3D12_Impl;

@@ -60,6 +60,10 @@ public:
     virtual void set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) override;
     virtual void set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) override;
 
+    void set_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ShaderResourceViewCache& srv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor);
+    void set_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ConstantBufferCache& cbv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor);
+    void set_uav_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, UnorderedAccessViewCache& uav_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor);
+    
     void commit_subpass_rendertargets();
 
     void request_command_context();

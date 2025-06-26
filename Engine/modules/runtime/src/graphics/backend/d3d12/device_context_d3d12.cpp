@@ -274,7 +274,11 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
 {
     RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(root_signature);
     reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-    
+    bool has_srvs = RS->has_srvs();
+    bool has_cbvs = RS->has_cbvs();
+    bool has_uavs = RS->has_uavs();
+    bool has_samplers = RS->has_samplers();
+    commit_bound_heaps();
     // Apply Resources
     uint64_t current_shader_dirty_cbv_slot_mask[SHADER_STAGE_COUNT] = {0};
     uint64_t current_shader_dirty_srv_slot_mask[SHADER_STAGE_COUNT] = {0};
@@ -308,9 +312,35 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
         num_views += num_uavs[stage];
     }
 
+    auto first_slot = render_device->GetCbvSrvUavHeaps(0)->reserve_slots(num_views);
+
     if(num_views > 0)
     {
+        if(has_srvs)
+        {
+            auto& srv_cache = state_cache.shader_resource_view_cache;
+            for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+            {
+                if(num_srvs[stage] > 0)
+                {
+                    const D3D12_GPU_DESCRIPTOR_HANDLE bind_handle = render_device->build_srv_table((SHADER_STAGE)stage, RS, srv_cache, num_srvs[stage], first_slot);
+                    set_srv_table((SHADER_STAGE)stage, RS, srv_cache, num_srvs[stage], bind_handle);
+                }
+            }
+        }
 
+        if(has_cbvs)
+        {
+            auto& cbv_cache = state_cache.constant_buffer_cache;
+            for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+            {
+                if(num_cbvs[stage] > 0)
+                {
+                    const D3D12_GPU_DESCRIPTOR_HANDLE bind_handle = render_device->build_cbv_table((SHADER_STAGE)stage, RS, cbv_cache, num_cbvs[stage], first_slot);
+                    set_cbv_table((SHADER_STAGE)stage, RS, cbv_cache, num_cbvs[stage], bind_handle);
+                }
+            }
+        }
     }
 
 }
@@ -343,12 +373,35 @@ void DeviceContext_D3D12_Impl::set_unordered_access_view(SHADER_STAGE stage, uin
     state_cache.unordered_access_view_cache.bind_slot_mask[stage] |= ((uint64_t)1 << binding);
 }
 
+void DeviceContext_D3D12_Impl::set_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ShaderResourceViewCache& srv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
+{
+    auto table_bind_slot = rs->srv_root_descriptor_table_bind_slot(stage);
+
+    curr_command_context->set_graphics_root_descriptor_table(table_bind_slot, bind_descriptor);
+    ++state.num_command;
+}
+
+void DeviceContext_D3D12_Impl::set_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ConstantBufferCache& cbv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
+{
+    auto table_bind_slot = rs->cbv_root_descriptor_table_bind_slot(stage);
+
+    curr_command_context->set_graphics_root_descriptor_table(table_bind_slot, bind_descriptor);
+    ++state.num_command;
+}
+
+void DeviceContext_D3D12_Impl::set_uav_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, UnorderedAccessViewCache& uav_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
+{
+    auto table_bind_slot = rs->uav_root_descriptor_table_bind_slot(stage);
+
+    curr_command_context->set_graphics_root_descriptor_table(table_bind_slot, bind_descriptor);
+    ++state.num_command;
+}
+
 IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
 {
     RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(render_device, renderPassDesc);
     return dxRenderPass;
 }
-
 
 void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
 {
@@ -492,6 +545,8 @@ void DeviceContext_D3D12_Impl::set_bound_heap(uint32_t index, DescriptorHeap_D3D
 
 void DeviceContext_D3D12_Impl::commit_bound_heaps()
 {
+    state_cache.bound_heaps[0] = render_device->GetCbvSrvUavHeaps();
+    state_cache.bound_heaps[1] = render_device->GetSamplerHeaps();
     if(state_cache.bound_heaps[0] || state_cache.bound_heaps[1])
     {
         ID3D12DescriptorHeap* heaps[2] = { state_cache.bound_heaps[0]->get_heap(), state_cache.bound_heaps[1]->get_heap() };

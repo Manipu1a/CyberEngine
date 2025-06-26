@@ -19,7 +19,11 @@ namespace Cyber
         public:
             static DescriptorHandle consume_descriptor_handles(DescriptorHeap_D3D12* dst, uint32_t descriptorCount);
 
+            uint32_t reserve_slots(uint32_t num_requested_slots);
+
             DescriptorHandle consume_descriptor_handles(uint32_t descriptorCount);
+
+            DescriptorHandle get_slot_handle(uint32_t slot_index);
             
             void free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount);
 

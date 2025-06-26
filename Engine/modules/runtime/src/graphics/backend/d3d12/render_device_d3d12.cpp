@@ -2625,5 +2625,52 @@ namespace Cyber
         GetD3D12Device()->CreateRenderTargetView(resource, desc, destHandle);
     }
 
+    D3D12_GPU_DESCRIPTOR_HANDLE RenderDevice_D3D12_Impl::build_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ShaderResourceViewCache shader_resource_view_cache, uint32_t slots_need, uint32_t& heap_slot)
+    {
+        auto& views = shader_resource_view_cache.views[stage];
+
+        uint32_t first_slot = heap_slot;
+        heap_slot += slots_need;
+        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_SRVS];
+
+        for (uint32_t i = 0; i < slots_need; ++i)
+        {
+            if(Texture_View_D3D12_Impl* texture_view = views[i])
+            {
+                cpu_handle[i] = D3D12_CPU_DESCRIPTOR_HANDLE{texture_view->m_dxDescriptorHandles.ptr + texture_view->m_srvDescriptorOffset };
+            }
+            else
+            {
+                cpu_handle[i] = m_pNullDescriptors->TextureSRV[TEXTURE_DIMENSION::TEX_DIMENSION_2D];
+            }
+        }
+        //m_pDxDevice->CopyDescriptorsSimple(slots_need, dest_handle.mCpu, cpu_handle[0], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_pDxDevice->CopyDescriptors(1, &dest_handle.mCpu, &slots_need, 1, cpu_handle, &slots_need, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        return dest_handle.mGpu;
+    }
+
+    D3D12_GPU_DESCRIPTOR_HANDLE RenderDevice_D3D12_Impl::build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferCache constant_buffer_cache, uint32_t slots_need, uint32_t& heap_slot)
+    {
+        auto& cbv_cache = constant_buffer_cache.views[stage];
+
+        uint32_t first_slot = heap_slot;
+        heap_slot += slots_need;
+        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
+        D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_CBS];
+        for (uint32_t i = 0; i < slots_need; ++i)
+        {
+            if (cbv_cache[i])
+            {
+                cpu_handle[i] = D3D12_CPU_DESCRIPTOR_HANDLE{ cbv_cache[i]->m_dxDescriptorHandles.ptr};
+            }
+            else
+            {
+                cpu_handle[i] = m_pNullDescriptors->BufferCBV;
+            }
+        }
+        m_pDxDevice->CopyDescriptors(1, &dest_handle.mCpu, &slots_need, 1, cpu_handle, &slots_need, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        return dest_handle.mGpu;
+    }
     }
 }

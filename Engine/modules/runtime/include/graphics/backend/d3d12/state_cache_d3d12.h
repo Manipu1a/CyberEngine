@@ -4,7 +4,6 @@
 #include "interface/graphics_types.h"
 #include "backend/d3d12/texture_d3d12.h"
 #include "graphics_types_d3d12.h"
-#include "backend/d3d12/buffer_d3d12.h"
 #include "interface/shader_reflection.hpp"
 
 CYBER_BEGIN_NAMESPACE(Cyber)

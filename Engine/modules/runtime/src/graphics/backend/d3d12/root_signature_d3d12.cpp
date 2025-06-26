@@ -14,11 +14,11 @@ RootSignature_D3D12_Impl::~RootSignature_D3D12_Impl()
 void RootSignature_D3D12_Impl::analyze_signature()
 {
     memset(bind_slots, 0, sizeof(bind_slots));
-    has_uavs = false;
-    has_srvs = false;
-    has_cbvs = false;
-    has_samplers = false;
-    has_root_cbs = false;
+    bhas_uavs = false;
+    bhas_srvs = false;
+    bhas_cbvs = false;
+    bhas_samplers = false;
+    bhas_root_cbs = false;
 
     for(uint32_t i = 0; i < root_signature_desc.Desc_1_1.NumParameters; ++i)
     {
@@ -100,16 +100,19 @@ void RootSignature_D3D12_Impl::analyze_signature()
                 {
                 case D3D12_DESCRIPTOR_RANGE_TYPE_SRV:
                 {
+                    set_max_src_count(shader_stage, current_range.NumDescriptors);
                     set_srv_root_descriptor_table_bind_slot(shader_stage, i);
                 }
                 break;
                 case D3D12_DESCRIPTOR_RANGE_TYPE_UAV:
                 {
+                    set_max_uav_count(shader_stage, current_range.NumDescriptors);
                     set_uav_root_descriptor_table_bind_slot(shader_stage, i);
                 }
                 break;
                 case D3D12_DESCRIPTOR_RANGE_TYPE_CBV:
                 {
+                    set_max_cbv_count(shader_stage, current_range.NumDescriptors);
                     set_cbv_root_descriptor_table_bind_slot(shader_stage, i);
                 }
                 break;
