@@ -31,7 +31,7 @@ struct ShaderResourceViewCache
     uint64_t bind_slot_mask[SHADER_STAGE_COUNT];
 };
 
-struct ConstantBufferCache
+struct ConstantBufferViewCache
 {
     void clear()
     {
@@ -39,15 +39,16 @@ struct ConstantBufferCache
 
         for (int i = 0; i < SHADER_STAGE_COUNT; ++i)
         {
-            for (int j = 0; j < MAX_CBS; ++j)
+            for (int j = 0; j < MAX_CBVS; ++j)
             {
                 resources[i][j] = nullptr;
                 views[i][j] = nullptr;
             }
         }
     }
-    Buffer_D3D12_Impl* resources[SHADER_STAGE_COUNT][MAX_CBS];
-    Buffer_View_D3D12_Impl* views[SHADER_STAGE_COUNT][MAX_CBS];
+
+    Buffer_D3D12_Impl* resources[SHADER_STAGE_COUNT][MAX_CBVS];
+    Buffer_View_D3D12_Impl* views[SHADER_STAGE_COUNT][MAX_CBVS];
 
     uint64_t bind_slot_mask[SHADER_STAGE_COUNT];
 };
@@ -71,6 +72,26 @@ struct UnorderedAccessViewCache
     Buffer_D3D12_Impl* resources[SHADER_STAGE_COUNT][MAX_UAVS];
     Buffer_View_D3D12_Impl* views[SHADER_STAGE_COUNT][MAX_UAVS];
     uint64_t bind_slot_mask[SHADER_STAGE_COUNT];
+};
+
+struct ConstantBufferCache
+{
+    void clear()
+    {
+        memset(bind_slot_mask, 0, sizeof(bind_slot_mask));
+
+        for (int i = 0; i < SHADER_STAGE_COUNT; ++i)
+        {
+            for (int j = 0; j < MAX_CBS; ++j)
+            {
+                resources[i][j] = nullptr;
+            }
+        }
+    }
+    Buffer_D3D12_Impl* resources[SHADER_STAGE_COUNT][MAX_CBS];
+    D3D12_GPU_VIRTUAL_ADDRESS current_gpu_virtual_address[SHADER_STAGE_COUNT][MAX_CBS];
+
+    uint16_t bind_slot_mask[SHADER_STAGE_COUNT];
 };
 
 class StateCache_D3D12
@@ -107,8 +128,10 @@ public:
     const ID3D12RootSignature* bound_root_signature;
     // shader parameters
     ShaderResourceViewCache shader_resource_view_cache;
-    ConstantBufferCache constant_buffer_cache;
+    ConstantBufferViewCache constant_buffer_view_cache;
     UnorderedAccessViewCache unordered_access_view_cache;
+
+    ConstantBufferCache constant_buffer_cache;
 
     uint32_t current_shader_srv_count[SHADER_STAGE_COUNT] = {0};
     uint32_t current_shader_cbv_count[SHADER_STAGE_COUNT] = {0};

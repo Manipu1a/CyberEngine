@@ -1087,67 +1087,98 @@ namespace Cyber
         
         uint32_t root_parameter_size = 0;
         uint32_t root_parameter_count = 0;
-        for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
+
+        const D3D12_ROOT_PARAMETER_TYPE root_parameter_type_priority_order[2] = { D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER_TYPE_CBV };
+
+        for(uint32_t root_parameter_type_index = 0; root_parameter_type_index < GRAPHICS_ARRAY_LEN(root_parameter_type_priority_order); ++root_parameter_type_index)
         {
-            ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
-            const auto& shader_register_count = dxRootSignature->get_register_counts(shaderVisibility);
+            const D3D12_ROOT_PARAMETER_TYPE root_parameter_type = root_parameter_type_priority_order[root_parameter_type_index];
 
-            if(shader_register_count.shader_resource_count > 0)
+            for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
             {
-                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, shader_register_count.shader_resource_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
-                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
-                root_parameter_count++;
-                root_parameter_size += root_descriptor_table_cost;
-            }
-
-            if(shader_register_count.constant_buffer_count > 0)
-            {
-                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, shader_register_count.constant_buffer_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
-                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
-                root_parameter_count++;
-                root_parameter_size += root_descriptor_table_cost;
-            }
-
-            if(shader_register_count.unordered_access_count > 0)
-            {
-                desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, shader_register_count.unordered_access_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
-                root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
-                root_parameter_count++;
-                root_parameter_size += root_descriptor_table_cost;
-            }
-            // todo: fill sampler into global
-            if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
-            {
-                staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
-                for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
+                ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
+                const auto& shader_register_count = dxRootSignature->get_register_counts(shaderVisibility);
+                
+                switch(root_parameter_type)
                 {
-                    auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
-                    for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
+                    case D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE:
                     {
-                        auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
-                        if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[i]) == 0)
+                        if(shader_register_count.shader_resource_count > 0)
                         {
-                            D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
-                            staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
-                            staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
-                            staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
-                            staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
-                            staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
-                            staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
-                            staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
-                            staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
-                            staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
-                            staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+                            desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, shader_register_count.shader_resource_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                            root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                            root_parameter_count++;
+                            root_parameter_size += root_descriptor_table_cost;
+                        }
+                        
+                        if(shader_register_count.constant_buffer_count > MAX_CBS)
+                        {
+                            root_parameters[root_parameter_count].InitAsConstants(shader_register_count.constant_buffer_count * 4, 0, d3d12_util_get_shader_visibility(shaderVisibility));
+                            //desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, shader_register_count.constant_buffer_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                            //root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                            root_parameter_count++;
+                            root_parameter_size += root_constant_cost;
+                        }
+                        
+                        if(shader_register_count.unordered_access_count > 0)
+                        {
+                            desc_ranges[root_parameter_count].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, shader_register_count.unordered_access_count, 0, D3D12_DESCRIPTOR_RANGE_FLAG_NONE);
+                            root_parameters[root_parameter_count].InitAsDescriptorTable(1, &desc_ranges[root_parameter_count], d3d12_util_get_shader_visibility(shaderVisibility));
+                            root_parameter_count++;
+                            root_parameter_size += root_descriptor_table_cost;
+                        }
+                    }
+                    break;
+                    case D3D12_ROOT_PARAMETER_TYPE_CBV:
+                    {
+                        for(uint32_t shader_register = 0; (shader_register < shader_register_count.constant_buffer_count) && (shader_register < MAX_CBS); ++shader_register)
+                        {
+                            root_parameters[root_parameter_count].InitAsConstantBufferView(shader_register, 0, D3D12_ROOT_DESCRIPTOR_FLAG_DATA_STATIC, d3d12_util_get_shader_visibility(shaderVisibility));
+                            root_parameter_count++;
+                            root_parameter_size += root_descriptor_cost;
+                        }
+                    }
+                    break;
+                    default:
+                        cyber_assert(false, "Unknown root parameter type!");
+                        break;
+                }
 
-                            IShaderResource* samplerResource = rst_slot;
-                            staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
-                            staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
-                            staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
+                // todo: fill sampler into global
+                if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
+                {
+                    staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
+                    for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
+                    {
+                        auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
+                        for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
+                        {
+                            auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
+                            if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[i]) == 0)
+                            {
+                                D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
+                                staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
+                                staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
+                                staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
+                                staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
+                                staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
+                                staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
+                                staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
+                                staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
+                                staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
+                                staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+
+                                IShaderResource* samplerResource = rst_slot;
+                                staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
+                                staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
+                                staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
+                            }
                         }
                     }
                 }
             }
         }
+
 
         dxRootSignature->set_root_parameter(root_parameters, root_parameter_count);
         dxRootSignature->set_root_descriptor_range(desc_ranges, root_parameter_count);
@@ -2628,7 +2659,6 @@ namespace Cyber
     D3D12_GPU_DESCRIPTOR_HANDLE RenderDevice_D3D12_Impl::build_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ShaderResourceViewCache shader_resource_view_cache, uint32_t slots_need, uint32_t& heap_slot)
     {
         auto& views = shader_resource_view_cache.views[stage];
-
         uint32_t first_slot = heap_slot;
         heap_slot += slots_need;
         DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
@@ -2650,10 +2680,9 @@ namespace Cyber
         return dest_handle.mGpu;
     }
 
-    D3D12_GPU_DESCRIPTOR_HANDLE RenderDevice_D3D12_Impl::build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferCache constant_buffer_cache, uint32_t slots_need, uint32_t& heap_slot)
+    D3D12_GPU_DESCRIPTOR_HANDLE RenderDevice_D3D12_Impl::build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferViewCache constant_buffer_view_cache, uint32_t slots_need, uint32_t& heap_slot)
     {
-        auto& cbv_cache = constant_buffer_cache.views[stage];
-
+        auto& cbv_cache = constant_buffer_view_cache.views[stage];
         uint32_t first_slot = heap_slot;
         heap_slot += slots_need;
         DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);

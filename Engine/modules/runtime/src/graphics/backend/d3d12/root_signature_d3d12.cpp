@@ -124,7 +124,13 @@ void RootSignature_D3D12_Impl::analyze_signature()
             break;
             case D3D12_ROOT_PARAMETER_TYPE_CBV:
             {
+                increment_max_src_count(shader_stage, 1);
+                if(curr_parameter.Descriptor.ShaderRegister == 0)
+                {
+                    set_cbv_root_descriptor_bind_slot(shader_stage, i);
+                }
 
+                update_cbv_register_mask_with_descriptor(shader_stage, curr_parameter.Descriptor);
             }
             break;
             default:

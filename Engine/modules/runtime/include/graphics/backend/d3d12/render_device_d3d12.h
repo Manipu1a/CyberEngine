@@ -106,8 +106,9 @@ namespace Cyber
             void create_render_target_view(ID3D12Resource* resource, const D3D12_RENDER_TARGET_VIEW_DESC* desc, D3D12_CPU_DESCRIPTOR_HANDLE& destHandle);
             
             D3D12_GPU_DESCRIPTOR_HANDLE build_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ShaderResourceViewCache shader_resource_view_cache, uint32_t slots_need, uint32_t& heap_slot);
-            D3D12_GPU_DESCRIPTOR_HANDLE build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferCache constant_buffer_cache, uint32_t slots_need, uint32_t& heap_slot);
+            D3D12_GPU_DESCRIPTOR_HANDLE build_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* root_signature, ConstantBufferViewCache constant_buffer_cache, uint32_t slots_need, uint32_t& heap_slot);
 
+            
             ID3D12Device* GetD3D12Device() { return m_pDxDevice; }
             class D3D12MA::Allocator* GetD3D12ResourceAllocator() { return m_pResourceAllocator; }
             class DescriptorHeap_D3D12* GetCPUDescriptorHeaps(uint32_t heap_type) { return m_cpuDescriptorHeaps[heap_type]; }

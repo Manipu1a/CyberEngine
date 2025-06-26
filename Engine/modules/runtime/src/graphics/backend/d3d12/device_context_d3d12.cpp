@@ -278,11 +278,15 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
     bool has_cbvs = RS->has_cbvs();
     bool has_uavs = RS->has_uavs();
     bool has_samplers = RS->has_samplers();
+    bool has_root_cbvs = RS->has_root_cbvs();
+
     commit_bound_heaps();
     // Apply Resources
     uint64_t current_shader_dirty_cbv_slot_mask[SHADER_STAGE_COUNT] = {0};
     uint64_t current_shader_dirty_srv_slot_mask[SHADER_STAGE_COUNT] = {0};
     uint64_t current_shader_dirty_uav_slot_mask[SHADER_STAGE_COUNT] = {0};
+    uint16_t current_shader_dirty_root_cbv_slot_mask[SHADER_STAGE_COUNT] = {0};
+    
     uint32_t num_cbvs[SHADER_STAGE_COUNT] = {};
     uint32_t num_srvs[SHADER_STAGE_COUNT] = {};
     uint32_t num_uavs[SHADER_STAGE_COUNT] = {};
@@ -291,7 +295,7 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
     for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
     {
         const auto current_shader_register_mask = Bitmask<uint64_t>(state_cache.current_shader_cbv_count[stage]);
-        current_shader_dirty_cbv_slot_mask[stage] = current_shader_register_mask & state_cache.constant_buffer_cache.bind_slot_mask[stage];
+        current_shader_dirty_cbv_slot_mask[stage] = current_shader_register_mask & state_cache.constant_buffer_view_cache.bind_slot_mask[stage];
         num_cbvs[stage] = state_cache.current_shader_cbv_count[stage];
         num_views += num_cbvs[stage];
     }
@@ -310,6 +314,12 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
         current_shader_dirty_uav_slot_mask[stage] = current_shader_register_mask & state_cache.unordered_access_view_cache.bind_slot_mask[stage];
         num_uavs[stage] = state_cache.current_shader_uav_count[stage];
         num_views += num_uavs[stage];
+    }
+
+    for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+    {
+        const uint16_t current_shader_cbv_register_mask = Bitmask<uint16_t>(state_cache.current_shader_cbv_count[stage]);
+        current_shader_dirty_root_cbv_slot_mask[stage] = current_shader_cbv_register_mask & state_cache.constant_buffer_cache.bind_slot_mask[stage];
     }
 
     auto first_slot = render_device->GetCbvSrvUavHeaps(0)->reserve_slots(num_views);
@@ -331,13 +341,25 @@ void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signat
 
         if(has_cbvs)
         {
-            auto& cbv_cache = state_cache.constant_buffer_cache;
+            auto& cbv_cache = state_cache.constant_buffer_view_cache;
             for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
             {
                 if(num_cbvs[stage] > 0)
                 {
                     const D3D12_GPU_DESCRIPTOR_HANDLE bind_handle = render_device->build_cbv_table((SHADER_STAGE)stage, RS, cbv_cache, num_cbvs[stage], first_slot);
                     set_cbv_table((SHADER_STAGE)stage, RS, cbv_cache, num_cbvs[stage], bind_handle);
+                }
+            }
+        }
+
+        if(has_root_cbvs)
+        {
+            auto& root_cbv_cache = state_cache.constant_buffer_cache;
+            for(uint32_t stage = 0; stage < SHADER_STAGE_COUNT; ++stage)
+            {
+                if(current_shader_dirty_root_cbv_slot_mask[stage])
+                {
+                    set_root_cbv((SHADER_STAGE)stage, RS, root_cbv_cache, current_shader_dirty_root_cbv_slot_mask[stage]);
                 }
             }
         }
@@ -365,12 +387,31 @@ void DeviceContext_D3D12_Impl::set_shader_resource_view(SHADER_STAGE stage, uint
 
 void DeviceContext_D3D12_Impl::set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
 {
+    auto& cache = state_cache.constant_buffer_view_cache;
+    auto& current_cbv_cache = cache.views[stage];
 
 }
 
 void DeviceContext_D3D12_Impl::set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
 {
     state_cache.unordered_access_view_cache.bind_slot_mask[stage] |= ((uint64_t)1 << binding);
+}
+
+void DeviceContext_D3D12_Impl::set_root_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer)
+{
+    auto& cache = state_cache.constant_buffer_cache;
+    auto& current_cbv_cache = cache.current_gpu_virtual_address[stage];
+    Buffer_D3D12_Impl* cbv_buffer = static_cast<Buffer_D3D12_Impl*>(buffer);
+    
+    if(cbv_buffer && cbv_buffer->get_gpu_address(0) != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
+    {
+        state_cache.constant_buffer_cache.bind_slot_mask[stage] |= ((uint64_t)1 << binding);
+        current_cbv_cache[binding] = cbv_buffer->get_gpu_address(0);
+    }
+    else
+    {
+        state_cache.constant_buffer_cache.bind_slot_mask[stage] &= ~((uint64_t)1 << binding);
+    }
 }
 
 void DeviceContext_D3D12_Impl::set_srv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ShaderResourceViewCache& srv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
@@ -381,7 +422,7 @@ void DeviceContext_D3D12_Impl::set_srv_table(SHADER_STAGE stage, RootSignature_D
     ++state.num_command;
 }
 
-void DeviceContext_D3D12_Impl::set_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ConstantBufferCache& cbv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
+void DeviceContext_D3D12_Impl::set_cbv_table(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ConstantBufferViewCache& cbv_cache, uint32_t slots_need, const D3D12_GPU_DESCRIPTOR_HANDLE& bind_descriptor)
 {
     auto table_bind_slot = rs->cbv_root_descriptor_table_bind_slot(stage);
 
@@ -395,6 +436,22 @@ void DeviceContext_D3D12_Impl::set_uav_table(SHADER_STAGE stage, RootSignature_D
 
     curr_command_context->set_graphics_root_descriptor_table(table_bind_slot, bind_descriptor);
     ++state.num_command;
+}
+
+void DeviceContext_D3D12_Impl::set_root_cbv(SHADER_STAGE stage, RootSignature_D3D12_Impl* rs, ConstantBufferCache& cbv_cache, uint16_t slots_need)
+{
+    const uint16_t root_cbv_slots_needs_mask = slots_need;
+    uint16_t& current_dirty_slot_mask = cbv_cache.bind_slot_mask[stage];
+    auto base_index = rs->cbv_root_descriptor_bind_slot(stage);
+    const uint32_t root_cbv_needed = log2(root_cbv_slots_needs_mask) + 1;
+    for(uint32_t i = 0;i < root_cbv_needed; ++i)
+    {
+        if((root_cbv_slots_needs_mask & (1 << i)) != 0)
+        {
+            const D3D12_GPU_VIRTUAL_ADDRESS cbv_address = cbv_cache.current_gpu_virtual_address[stage][i];
+            curr_command_context->set_graphics_root_constant_buffer_view(base_index + i, cbv_address);
+        }
+    }
 }
 
 IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)

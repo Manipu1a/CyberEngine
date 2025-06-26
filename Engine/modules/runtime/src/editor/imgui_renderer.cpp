@@ -282,7 +282,8 @@ namespace Cyber
                         descriptor_set_idx++;
                         
                         // shader variable binding
-                        device_context->set_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+                        //device_context->set_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
                         device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, curr_texture_view);
                         //render_device->update_descriptor_set(descriptor_set, descriptor_data, descriptor_set_idx);
                         uint32_t vertex_offset = 0;

@@ -16,6 +16,7 @@ namespace Cyber
     #define MAX_SRVS 64
     #define MAX_SAMPLERS 32
     #define MAX_UAVS 16
+    #define MAX_CBVS 16
     #define MAX_CBS 16
 
     struct CD3DX12_DEFAULT {};
