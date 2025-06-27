@@ -1,6 +1,7 @@
 #pragma once
 
 #include "graphics/interface/texture.hpp"
+#include "image.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
@@ -62,7 +63,7 @@ class ITextureLoader
 };
 
 void create_texture_loader_from_image();
-void create_texture_loader_from_file();
+void create_texture_loader_from_file(const char8_t* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader);
 void create_texture_loader_from_memory();
 
 CYBER_END_NAMESPACE

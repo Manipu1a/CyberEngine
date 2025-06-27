@@ -1,4 +1,4 @@
-#include "texture_loader/texture_loader_impl.hpp"
+#include "texture_loader_impl.hpp"
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
 #include "common/graphics_utils.hpp"
@@ -125,5 +125,43 @@ void TextureLoaderImpl::load_from_dds(const TextureLoadInfo& texLoadInfo, const 
 {
 
 }
+
+void create_texture_loader_from_image()
+{
+
+}
+void create_texture_loader_from_file(const char8_t* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader)
+{
+    const char8_t* sample_path = u8"../../../../samples/triangle";
+    eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", sample_path, file_path);
+    
+    //const char* file_path_str = reinterpret_cast<const char*>(file_path);
+
+    FILE* file = fopen(fileNameAPI.c_str(), "rb");
+    uint8_t* bytes = nullptr;
+
+    if(file)
+    {
+        fseek(file, 0, SEEK_END);
+        size_t file_size = ftell(file);
+        rewind(file);
+
+        bytes = (uint8_t*)cyber_malloc(file_size);
+        fread(bytes, file_size, 1, file);
+        fclose(file);
+
+        if(bytes != nullptr)
+        {
+            TextureLoaderImpl* impl = new TextureLoaderImpl(tex_load_info, bytes, file_size, nullptr);
+            *texture_loader = impl;
+        }
+    }
+
+}
+void create_texture_loader_from_memory()
+{
+
+}
+
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

@@ -273,7 +273,7 @@ namespace Cyber
         return shader_profile;
     }
 
-    uint32_t compute_mip_levels_count(uint32_t width)
+    CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width)
     {
         if(width == 0)
             return 0;
@@ -286,11 +286,11 @@ namespace Cyber
         cyber_assert(width >= (1u << (levels - 1)) && width < (1u << levels), "Invalid mip levels count");
         return levels;
     }
-    uint32_t compute_mip_levels_count(uint32_t width, uint32_t height)
+    CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width, uint32_t height)
     {
         return compute_mip_levels_count(std::max(width, height));
     }
-    uint32_t compute_mip_levels_count(uint32_t width, uint32_t height, uint32_t depth)
+    CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width, uint32_t height, uint32_t depth)
     {
         return compute_mip_levels_count(std::max(std::max(width, height), depth));
     }

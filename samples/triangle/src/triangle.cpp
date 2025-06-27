@@ -4,6 +4,7 @@
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
 #include "application/application.h"
+#include "texture_utils.h"
 
 namespace Cyber
 {
@@ -31,6 +32,7 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
 
             create_render_pipeline();
+            create_resource();
         }
 
         void TrignaleApp::run()
@@ -200,7 +202,26 @@ namespace Cyber
 
         void TrignaleApp::create_resource()
         {
+            RenderObject::ITexture* texture = nullptr;
+            TextureLoader::TextureLoadInfo texture_load_info{
+                CYBER_UTF8("TEST"),
+                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
+                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
+                0,
+                CPU_ACCESS_NONE,
+                true,
+                false,
+                TEXTURE_FORMAT::TEX_FORMAT_RGBA32_FLOAT,
+                false,
+                FILTER_TYPE::FILTER_TYPE_LINEAR
+            };
 
+            TextureLoader::create_texture_from_file(
+                CYBER_UTF8("assets/1.png"),
+                texture_load_info,
+                &texture, m_pApp->get_renderer()->get_render_device()
+            );
+            
         }
 
         void TrignaleApp::create_ui()

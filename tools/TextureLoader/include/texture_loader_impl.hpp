@@ -1,3 +1,5 @@
+#pragma once
+
 #include "texture_loader.h"
 #include "core/data_blob_impl.hpp"
 

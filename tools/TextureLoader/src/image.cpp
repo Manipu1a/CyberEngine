@@ -15,6 +15,7 @@ void Image::create_from_data_blob(const ImageLoadInfo& imageLoadInfo, IDataBlob*
 void Image::create_from_memory(const ImageDesc& imageDesc, IDataBlob* dataBlob, Image** image)
 {
     *image = cyber_new<Image>(imageDesc, dataBlob);
+    
 }
 
 void Image::encode(const EncodeInfo& encodeInfo, IDataBlob** dataBlob)
