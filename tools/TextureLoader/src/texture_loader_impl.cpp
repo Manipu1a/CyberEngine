@@ -2,6 +2,7 @@
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
 #include "common/graphics_utils.hpp"
+#include "core/file_helper.hpp"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
@@ -38,11 +39,9 @@ TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, const u
         {
             m_dataBlob = Core::DataBlobImpl::create(dataSize, data);
         }
-        Image::create_from_data_blob(imgLoadInfo, dataBlob, &m_image);
-
+        Image::create_from_data_blob(imgLoadInfo, m_dataBlob, &m_image);
+        load_from_image(texLoadInfo);
     }
-
-
 }
 
 TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, class Image* image)
@@ -50,10 +49,10 @@ TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, class I
     
 }
 
-void TextureLoaderImpl::create_texture(RenderObject::IRenderDevice* device, RenderObject::ITexture* texture)
+void TextureLoaderImpl::create_texture(RenderObject::IRenderDevice* device, RenderObject::ITexture** texture)
 {
     RenderObject::TextureData InitData = get_texture_data();
-    texture = device->create_texture(m_textureCreateDesc, &InitData);
+    *texture = device->create_texture(m_textureCreateDesc, &InitData);
 }
 
 const RenderObject::TextureCreateDesc& TextureLoaderImpl::get_texture_desc()
@@ -76,7 +75,11 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     m_textureCreateDesc.m_dimension = TEX_DIMENSION_2D;
     m_textureCreateDesc.m_width = imgDesc.width;
     m_textureCreateDesc.m_height = imgDesc.height;
-    m_textureCreateDesc.m_mipLevels = compute_mip_levels_count(imgDesc.width, imgDesc.height);
+    
+    if(texLoadInfo.isGenerateMips)
+    {
+        m_textureCreateDesc.m_mipLevels = compute_mip_levels_count(imgDesc.width, imgDesc.height);
+    }
     if(texLoadInfo.mipLevels > 0)
     {
         m_textureCreateDesc.m_mipLevels = std::min(m_textureCreateDesc.m_mipLevels, texLoadInfo.mipLevels);
@@ -113,9 +116,32 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     }
     else
     {
-        
+        const auto& tex_fmt_desc = get_texture_format_attribs(m_textureCreateDesc.m_format);
+
+        num_components = tex_fmt_desc.num_components;
+
+        if(tex_fmt_desc.component_size != channelDepth / 8)
+        {
+            cyber_assert(false, "Image channel depth ({0}) does not match texture format ({1})", channelDepth, tex_fmt_desc.component_size);
+        }
     }
 
+    m_textureSubResData.resize(m_textureCreateDesc.m_mipLevels);
+    m_mips.resize(m_textureCreateDesc.m_mipLevels);
+
+    if(imgDesc.numComponents != num_components)
+    {
+
+    }
+    else
+    {
+        m_textureSubResData[0].pData = m_image->get_data_blob()->get_data_ptr();
+        m_textureSubResData[0].stride = imgDesc.rowStride;
+    }
+
+    for(uint32_t m = 1; m < m_textureCreateDesc.m_mipLevels; ++m)
+    {
+    }
 }
 void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
 {
@@ -130,31 +156,22 @@ void create_texture_loader_from_image()
 {
 
 }
-void create_texture_loader_from_file(const char8_t* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader)
+void create_texture_loader_from_file(const char* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader)
 {
-    const char8_t* sample_path = u8"../../../../samples/triangle";
-    eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", sample_path, file_path);
+    Core::FileHelper texture_file(file_path, Core::FILE_ACCESS_MODE::FILE_ACCESS_READ);
+    IDataBlob* data_blob = nullptr;
+    texture_file->read(&data_blob);
+
+    //const char8_t* sample_path = u8"../../../../samples/triangle";
+    //eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", sample_path, file_path);
     
     //const char* file_path_str = reinterpret_cast<const char*>(file_path);
 
-    FILE* file = fopen(fileNameAPI.c_str(), "rb");
-    uint8_t* bytes = nullptr;
-
-    if(file)
+    //FILE* file = fopen(fileNameAPI.c_str(), "rb");
+    if(data_blob)
     {
-        fseek(file, 0, SEEK_END);
-        size_t file_size = ftell(file);
-        rewind(file);
-
-        bytes = (uint8_t*)cyber_malloc(file_size);
-        fread(bytes, file_size, 1, file);
-        fclose(file);
-
-        if(bytes != nullptr)
-        {
-            TextureLoaderImpl* impl = new TextureLoaderImpl(tex_load_info, bytes, file_size, nullptr);
-            *texture_loader = impl;
-        }
+        TextureLoaderImpl* impl = new TextureLoaderImpl(tex_load_info, (uint8_t*)data_blob->get_data_ptr(), data_blob->get_size(), data_blob);
+        *texture_loader = impl;
     }
 
 }

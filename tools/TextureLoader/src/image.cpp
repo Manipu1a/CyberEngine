@@ -3,6 +3,8 @@
 #include "core/data_blob_impl.hpp"
 #include "CyberLog/Log.h"
 #include "eastl/string.h"
+#include "png_codec.h"
+#include "jpeg_codec.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
@@ -130,7 +132,13 @@ Image::Image(const ImageLoadInfo& loadInfo, IDataBlob* dataBlob) : m_dataBlob(Co
     }
     else if(loadInfo.format == IMAGE_FILE_FORMAT_PNG)
     {
-
+        auto res = decode_png(dataBlob, m_dataBlob, m_desc);
+        if(res != DECODE_PNG_RESULT_OK)
+        {
+             CB_ERROR("Failed to decode PNG image: {0}", res);
+             m_dataBlob = nullptr;
+             return;
+        }
     }
     else if(loadInfo.format == IMAGE_FILE_FORMAT_JPEG)
     {

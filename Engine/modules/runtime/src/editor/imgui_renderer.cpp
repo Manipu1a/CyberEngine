@@ -250,11 +250,6 @@ namespace Cyber
                         // Render command
                         RenderObject::ITexture_View* curr_texture_view = (RenderObject::ITexture_View*)cmd->TextureId;
                         //RenderObject::ITexture_View* curr_texture_view = font_srv;
-
-                        // Update descriptor set
-                        DescriptorData descriptor_data[2] = {};
-                        uint32_t descriptor_set_idx = 0;
-
                         if(curr_texture_view != last_texture_view)
                         {
                             last_texture_view = curr_texture_view;
@@ -267,20 +262,7 @@ namespace Cyber
                             };
                             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
                             device_context->cmd_resource_barrier(barrier_desc0);
-
-                            descriptor_data[descriptor_set_idx].name = CYBER_UTF8("Texture");
-                            descriptor_data[descriptor_set_idx].binding = 0;
-                            descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_TEXTURE;
-                            descriptor_data[descriptor_set_idx].texture_views = &curr_texture_view;
-                            descriptor_set_idx++;
-                        }
-
-                        descriptor_data[descriptor_set_idx].name = CYBER_UTF8("Constants");
-                        descriptor_data[descriptor_set_idx].binding = 0;
-                        descriptor_data[descriptor_set_idx].binding_type = GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER;
-                        descriptor_data[descriptor_set_idx].push_constant = vertex_constant_buffer;
-                        descriptor_set_idx++;
-                        
+                        }                   
                         // shader variable binding
                         device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
                         //device_context->set_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);

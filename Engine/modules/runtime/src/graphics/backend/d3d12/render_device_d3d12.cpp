@@ -779,6 +779,14 @@ namespace Cyber
 
                     cyber_assert(uploadedSize == uploadBufferSize, "Upload Buffer Size Mismatch!");
 
+                    TextureBarrier draw_barrier = {
+                    .texture = pTexture,
+                    .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
+                    .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
+                    .subresource_barrier = 0
+                    };
+                    ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc0);
                 }
             }
         }

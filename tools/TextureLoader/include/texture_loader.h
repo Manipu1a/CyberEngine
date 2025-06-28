@@ -56,14 +56,15 @@ struct TextureLoadInfo
 
 class ITextureLoader
 {
-    virtual void create_texture(class RenderObject::IRenderDevice* device, class RenderObject::ITexture* texture) = 0;
+    public:
+    virtual void create_texture(class RenderObject::IRenderDevice* device, class RenderObject::ITexture** texture) = 0;
     virtual const RenderObject::TextureCreateDesc& get_texture_desc() = 0;
     virtual const RenderObject::TextureSubResData& get_texture_sub_res_data(uint32_t mipLevel, uint32_t arraySlice) = 0;
     virtual RenderObject::TextureData get_texture_data() = 0;
 };
 
 void create_texture_loader_from_image();
-void create_texture_loader_from_file(const char8_t* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader);
+void create_texture_loader_from_file(const char* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader);
 void create_texture_loader_from_memory();
 
 CYBER_END_NAMESPACE

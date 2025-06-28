@@ -45,6 +45,8 @@ namespace Cyber
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
             RenderObject::AttachmentReference attachment_ref[2];
+
+            RenderObject::ITexture_View* test_texture_view = nullptr;
         };
     }
 

@@ -26,7 +26,7 @@ DECODE_PNG_RESULT decode_png(IDataBlob* srcPngBits, IDataBlob* dstPixels, ImageD
         return DECODE_PNG_RESULT_INVALID_ARGUMENTS;
     }
 
-    const size_t pngSigSize = 0;
+    const size_t pngSigSize = 8;
     png_const_bytep pngsig = (png_const_bytep)srcPngBits->get_data_ptr();
     // Let LibPNG check the signature. If this function returns 0, everything is fine.
     if(png_sig_cmp(pngsig, 0, pngSigSize) != 0)

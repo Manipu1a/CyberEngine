@@ -12,7 +12,7 @@ public:
     TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize, IDataBlob* dataBlob);
     TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, class Image* image);
 
-    virtual void create_texture(RenderObject::IRenderDevice* device, RenderObject::ITexture* texture) override;
+    virtual void create_texture(RenderObject::IRenderDevice* device, RenderObject::ITexture** texture) override;
     virtual const RenderObject::TextureCreateDesc& get_texture_desc() override;
     virtual const RenderObject::TextureSubResData& get_texture_sub_res_data(uint32_t mipLevel, uint32_t arraySlice) override;
     virtual RenderObject::TextureData get_texture_data() override final

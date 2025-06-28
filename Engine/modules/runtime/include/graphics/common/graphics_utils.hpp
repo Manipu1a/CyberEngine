@@ -96,6 +96,8 @@ namespace Cyber
     CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width);
     CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width, uint32_t height);
     CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width, uint32_t height, uint32_t depth);
+
+    CYBER_GRAPHICS_API const TextureFormatAttribs& get_texture_format_attribs(TEXTURE_FORMAT format);
 }
 
 

@@ -117,6 +117,19 @@ namespace Cyber
 
             device_context->render_encoder_set_scissor( 1, &scissor);
             device_context->render_encoder_bind_pipeline( pipeline);
+
+            /*TextureBarrier draw_barrier = {
+            .texture = font_texture,
+            .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
+            .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
+            .subresource_barrier = 0
+            };
+            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+            */
+            device_context->cmd_resource_barrier(barrier_desc0);
+
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+            device_context->prepare_for_rendering(root_signature);
             //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
             device_context->render_encoder_draw(3, 0);
             
@@ -202,7 +215,7 @@ namespace Cyber
 
         void TrignaleApp::create_resource()
         {
-            RenderObject::ITexture* texture = nullptr;
+            RenderObject::ITexture* test_texture = nullptr;
             TextureLoader::TextureLoadInfo texture_load_info{
                 CYBER_UTF8("TEST"),
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
@@ -211,16 +224,19 @@ namespace Cyber
                 CPU_ACCESS_NONE,
                 true,
                 false,
-                TEXTURE_FORMAT::TEX_FORMAT_RGBA32_FLOAT,
+                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
                 false,
                 FILTER_TYPE::FILTER_TYPE_LINEAR
             };
 
             TextureLoader::create_texture_from_file(
-                CYBER_UTF8("assets/1.png"),
+                ("samples/triangle/assets/1.png"),
                 texture_load_info,
-                &texture, m_pApp->get_renderer()->get_render_device()
+                &test_texture, m_pApp->get_renderer()->get_render_device()
             );
+
+            test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
             
         }
 
@@ -333,6 +349,24 @@ namespace Cyber
             };
             eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
+            RenderObject::SamplerCreateDesc sampler_create_desc = {};
+            sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.mag_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.mip_filter = FILTER_TYPE_LINEAR;
+            sampler_create_desc.address_u = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.address_v = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.address_w = ADDRESS_MODE_CLAMP;
+            sampler_create_desc.flags = SAMPLER_FLAG_NONE;
+            sampler_create_desc.unnormalized_coordinates = false;
+            sampler_create_desc.mip_lod_bias = 0.0f;
+            sampler_create_desc.max_anisotropy = 0;
+            sampler_create_desc.compare_mode = CMP_NEVER;
+            sampler_create_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+            sampler_create_desc.min_lod = 0.0f;
+            sampler_create_desc.max_lod = 0.0f;
+            auto sampler = render_device->create_sampler(sampler_create_desc);
+            const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
+
             // create root signature
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
             pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -347,6 +381,9 @@ namespace Cyber
             RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .pixel_shader = pipeline_shader_create_desc[1],
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
             };
             root_signature = render_device->create_root_signature(root_signature_create_desc);
             // create descriptor set

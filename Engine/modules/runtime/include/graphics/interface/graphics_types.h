@@ -1595,6 +1595,25 @@ namespace Cyber
         bool enable_depth_clip : 1;
     };
 
+    struct CYBER_GRAPHICS_API TextureFormatAttribs
+    {
+        const char* name = "TEX_FORMAT_UNKNOWN";
+
+        TEXTURE_FORMAT format = TEX_FORMAT_UNKNOWN;
+
+        uint8_t component_size = 0;
+
+        uint8_t num_components = 0;
+
+        COMPONENT_TYPE component_type = COMPONENT_TYPE_UNDEFINED;
+
+        bool is_typeless = false;
+
+        uint8_t block_width = 0;
+
+        uint8_t block_height = 0;
+    };
+
     struct CYBER_GRAPHICS_API EngineCreateDesc
     {
         // device
