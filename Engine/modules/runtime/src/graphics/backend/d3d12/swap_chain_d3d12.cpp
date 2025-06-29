@@ -22,9 +22,12 @@ namespace Cyber
                 CB_CORE_ERROR("SwapChain_D3D12_Impl::resize - Swap chain is not initialized!");
                 return;
             }
-
+            if(swap_chain_desc.m_width == width && swap_chain_desc.m_height == height)
+            {
+                // No need to resize
+                return;
+            }
             //device_context->flush();
-
             TSwapChainBase::resize(width, height);
             // Clear old buffers
             if(m_ppBackBufferSRVs)

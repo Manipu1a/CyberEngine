@@ -70,8 +70,8 @@ namespace Cyber
             //ImGui::NewFrame();
             bool show_demo_window = true;
 
-            ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
-            /*
+            //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
+            
             static bool opt_fullscreen = true;
             static bool opt_padding = false;
             static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
@@ -121,7 +121,7 @@ namespace Cyber
                 ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
                 ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
             }
-
+            
             if (ImGui::BeginMenuBar())
             {
                 if (ImGui::BeginMenu("Options"))
@@ -146,8 +146,7 @@ namespace Cyber
                 ImGui::EndMenuBar();
             }
             ImGui::End();
-            */
-
+            
             // show scene
             if(ImGui::Begin("Viewport"))
             {
@@ -161,17 +160,23 @@ namespace Cyber
                     auto& color_buffer_desc = scene_target.color_buffer->get_create_desc();
                     ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f); // No tint
                     ImVec4 border_col = ImGui::GetStyleColorVec4(ImGuiCol_Border);
+                    ImVec2 viewport_size = ImGui::GetContentRegionAvail();
+                    renderer->resize_viewport(viewport_size.x, viewport_size.y);
+                    //renderer->resize_swap_chain(viewport_size.x, viewport_size.y);
                     //render_device->bind_texture_view(color_buffer);
-                    ImGui::Image((ImTextureID)color_buffer, ImVec2(500, 500), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
+                    ImGui::Image((ImTextureID)color_buffer, ImVec2(viewport_size.x, viewport_size.y), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
                 }
                 ImGui::EndChild();
             }
 
+            if(ImGui::Begin("Window"))
+            {
+                ImGui::End();
+            }
             ImGui::ShowDemoWindow(&show_demo_window);
             ImGui::End();
         }
         
-
         void Editor::finalize()
         {
             // Cleanup

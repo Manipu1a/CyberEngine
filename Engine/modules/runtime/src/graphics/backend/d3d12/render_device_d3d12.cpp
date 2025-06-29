@@ -881,7 +881,9 @@ namespace Cyber
 
         if(FAILED(hr))
         {
-            CB_ERROR("Present failed!");
+            hr = m_pDxDevice->GetDeviceRemovedReason();
+
+            CB_ERROR("Present failed with HRESULT {0}!", hr);
             #if defined(_WIN32)
             #endif
         }

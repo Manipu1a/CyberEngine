@@ -138,5 +138,36 @@ namespace Cyber
                 m_pSwapChain->resize(width, height);
             }
         }
+
+        void Renderer::resize_viewport(uint32_t width, uint32_t height)
+        {
+            RenderObject::TextureCreateDesc color_buffer_desc = scene_target[0].color_buffer->get_create_desc();
+            RenderObject::TextureCreateDesc depth_buffer_desc = scene_target[0].depth_buffer->get_create_desc();
+
+            if(color_buffer_desc.m_width != width || color_buffer_desc.m_height != height)
+            {
+                color_buffer_desc.m_width = width;
+                color_buffer_desc.m_height = height;
+
+                depth_buffer_desc.m_width = width;
+                depth_buffer_desc.m_height = height;
+                // Resize color and depth buffers
+                for(uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
+                {
+                    scene_target[i].color_buffer->free();
+                    scene_target[i].color_buffer = nullptr;
+                    scene_target[i].depth_buffer->free();
+                    scene_target[i].depth_buffer = nullptr;
+
+                    scene_target[i].color_buffer = m_pRenderDevice->create_texture(color_buffer_desc);
+                    scene_target[i].depth_buffer = m_pRenderDevice->create_texture(depth_buffer_desc);
+                }
+
+                // Update frame buffer
+                auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+                RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view };
+                frame_buffer->update_attachments(attachment_resources, 1);
+            }
+        }
     }
 }

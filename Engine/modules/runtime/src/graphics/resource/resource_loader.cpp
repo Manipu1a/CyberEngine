@@ -8,6 +8,7 @@
 #include "platform/memory.h"
 #include "interface/render_device.hpp"
 #include "interface/shader_library.h"
+#include "core/file_helper.hpp"
 
 namespace Cyber
 {
@@ -15,13 +16,20 @@ namespace Cyber
     {
         CYBER_FORCE_INLINE bool load_shader_source_file(const char* fileName, char8_t** bytes, uint32_t* length)
         {
-            FILE* f = fopen(fileName, "rb");
+            Core::FileHelper shader_file(fileName, Core::FILE_ACCESS_MODE::FILE_ACCESS_READ);
+            IDataBlob* data_blob = nullptr;
+            shader_file->read(&data_blob);
+            *bytes = (char8_t*)data_blob->get_data_ptr();
+            *length = data_blob->get_size();
+
+            /*FILE* f = fopen(fileName, "rb");
             fseek(f, 0, SEEK_END);
             *length = ftell(f);
             fseek(f, 0, SEEK_SET);
             *bytes = (char8_t*)cyber_malloc(*length);
             fread(*bytes, *length, 1, f);
-            fclose(f);
+            fclose(f);*/
+
             return true;
         }
 
@@ -31,12 +39,10 @@ namespace Cyber
             uint32_t length = 0;
 
             const char8_t* rendererApi = u8"../../../../shaders/DX12";
-            eastl::string fileNameAPI(eastl::string::CtorSprintf(), "%s/%s", rendererApi, loadDesc.file_name);
-            
             WCHAR assetsPath[512];
             DWORD size = GetModuleFileName(nullptr, assetsPath, sizeof(assetsPath));
             CB_CORE_INFO("Compiling shader in runtime: {0} -> '{1}' macroCount={2}", "DX12", (char*)loadDesc.entry_point_name, macroCount);
-            load_shader_source_file(fileNameAPI.c_str(), &bytes, &length);
+            load_shader_source_file((char*)loadDesc.file_name, &bytes, &length);
             libraryDesc->code = bytes;
             libraryDesc->code_size = length;
             libraryDesc->stage = loadDesc.stage;

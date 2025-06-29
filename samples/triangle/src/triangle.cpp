@@ -236,8 +236,6 @@ namespace Cyber
             );
 
             test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-
-            
         }
 
         void TrignaleApp::create_ui()
@@ -334,7 +332,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
             vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("vertex_shader.hlsl"),
+                .file_name = CYBER_UTF8("shaders/DX12/vertex_shader.hlsl"),
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
@@ -343,7 +341,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("pixel_shader.hlsl"),
+                .file_name = CYBER_UTF8("shaders/DX12/pixel_shader.hlsl"),
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };

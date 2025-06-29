@@ -320,7 +320,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
             vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("imgui_vs.hlsl"),
+                .file_name = CYBER_UTF8("shaders/DX12/imgui_vs.hlsl"),
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("main")
             };
@@ -331,7 +331,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("imgui_ps.hlsl"),
+                .file_name = CYBER_UTF8("shaders/DX12/imgui_ps.hlsl"),
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("main")
             };
