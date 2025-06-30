@@ -29,11 +29,11 @@ namespace Cyber
         {
             //TEXTURE_SAMPLE_COUNT m_sampleCount;
             const char8_t* m_name;
-            uint32_t m_inputAttachmentCount;
-            const AttachmentReference* m_pInputAttachments;
-            const AttachmentReference* m_pDepthStencilAttachment;
-            uint32_t m_renderTargetCount;
-            const AttachmentReference* m_pRenderTargetAttachments;
+            uint32_t m_inputAttachmentCount = 0;
+            AttachmentReference* m_pInputAttachments = nullptr;
+            AttachmentReference* m_pDepthStencilAttachment = nullptr;
+            uint32_t m_renderTargetCount = 0;
+            AttachmentReference* m_pRenderTargetAttachments = nullptr;
         };
 
         struct CYBER_GRAPHICS_API SubpassDependencyDesc
@@ -50,7 +50,7 @@ namespace Cyber
         {
             const char8_t* m_name;
             uint32_t m_attachmentCount;
-            const RenderPassAttachmentDesc* m_pAttachments;
+            RenderPassAttachmentDesc* m_pAttachments;
             uint32_t m_subpassCount;
             const char8_t* const* m_subpassNames;
             RenderSubpassDesc* m_pSubpasses;
@@ -71,9 +71,40 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
         using TRenderPassBase = typename DeviceObjectBase<RenderPassInterface, RenderDeviceImplType>;
 
-            RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device), m_desc(desc)
+            RenderPassBase(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device)
             {
                 m_subpassIndex = 0;
+                m_desc.m_name = desc.m_name;
+                m_desc.m_attachmentCount = desc.m_attachmentCount;
+                m_desc.m_pAttachments = (RenderPassAttachmentDesc*)cyber_malloc(desc.m_attachmentCount * sizeof(RenderPassAttachmentDesc));
+                for (uint32_t i = 0; i < desc.m_attachmentCount; ++i)
+                {
+                    m_desc.m_pAttachments[i].m_format = desc.m_pAttachments[i].m_format;
+                }
+                m_desc.m_subpassCount = desc.m_subpassCount;
+                m_desc.m_pSubpasses = (RenderSubpassDesc*)cyber_malloc(desc.m_subpassCount * sizeof(RenderSubpassDesc));
+                for (uint32_t i = 0; i < desc.m_subpassCount; ++i)
+                {
+                    m_desc.m_pSubpasses[i].m_name = desc.m_pSubpasses[i].m_name;
+                    m_desc.m_pSubpasses[i].m_inputAttachmentCount = desc.m_pSubpasses[i].m_inputAttachmentCount;
+                    m_desc.m_pSubpasses[i].m_pInputAttachments = (AttachmentReference*)cyber_malloc(desc.m_pSubpasses[i].m_inputAttachmentCount * sizeof(AttachmentReference));
+                    for (uint32_t j = 0; j < desc.m_pSubpasses[i].m_inputAttachmentCount; ++j)
+                    {
+                        m_desc.m_pSubpasses[i].m_pInputAttachments[j] = desc.m_pSubpasses[i].m_pInputAttachments[j];
+                    }
+                    m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = nullptr;
+                    if(desc.m_pSubpasses[i].m_pDepthStencilAttachment)
+                    {
+                        m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = cyber_new<AttachmentReference>();
+                        *m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = *desc.m_pSubpasses[i].m_pDepthStencilAttachment;
+                    }
+                    m_desc.m_pSubpasses[i].m_renderTargetCount = desc.m_pSubpasses[i].m_renderTargetCount;
+                    m_desc.m_pSubpasses[i].m_pRenderTargetAttachments = (AttachmentReference*)cyber_malloc(desc.m_pSubpasses[i].m_renderTargetCount * sizeof(AttachmentReference));
+                    for (uint32_t j = 0; j < desc.m_pSubpasses[i].m_renderTargetCount; ++j)
+                    {
+                        m_desc.m_pSubpasses[i].m_pRenderTargetAttachments[j] = desc.m_pSubpasses[i].m_pRenderTargetAttachments[j];
+                    }
+                }
             }
 
             virtual const RenderPassDesc& get_create_desc() const override { return m_desc; }

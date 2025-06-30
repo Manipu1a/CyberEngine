@@ -1,7 +1,7 @@
-struct PSInput 
-{ 
-    float4 Pos   : SV_POSITION;
-    float3 Color : COLOR;
+struct PSInput
+{
+    float4 Pos : SV_POSITION;
+    float4 Color : COLOR;
     float2 UV : TEXCOORD;
 };
 
@@ -16,7 +16,6 @@ SamplerState Texture_sampler;
 void PSMain(in  PSInput  PSIn,
           out PSOutput PSOut)
 {
-
     float4 col = Texture.Sample(Texture_sampler, PSIn.UV) * float4(PSIn.Color.rgb, 1.0);
     PSOut.Color = col;
 }

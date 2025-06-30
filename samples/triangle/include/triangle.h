@@ -45,8 +45,11 @@ namespace Cyber
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
             RenderObject::AttachmentReference attachment_ref[2];
-
+            RenderObject::IRenderPass* render_pass = nullptr;
+            
             RenderObject::ITexture_View* test_texture_view = nullptr;
+            RenderObject::IBuffer* vertex_buffer = nullptr;
+            RenderObject::IBuffer* index_buffer = nullptr;
         };
     }
 

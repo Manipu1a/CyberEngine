@@ -168,13 +168,13 @@ namespace Cyber
                 }
                 ImGui::EndChild();
             }
+            ImGui::End();
 
-            if(ImGui::Begin("Window"))
+            /*if(ImGui::Begin("Window"))
             {
                 ImGui::End();
-            }
+            }*/
             ImGui::ShowDemoWindow(&show_demo_window);
-            ImGui::End();
         }
         
         void Editor::finalize()

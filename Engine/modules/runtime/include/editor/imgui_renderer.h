@@ -40,10 +40,15 @@ namespace Cyber
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* render_pipeline = nullptr;
+            RenderObject::IRenderPass* render_pass = nullptr;
             RenderObject::ITexture_View* font_srv = nullptr;
             RenderObject::ITexture* font_texture = nullptr;
             RenderObject::IShaderResource* m_pSRB = nullptr;
             RenderObject::IShaderResource* texture_resource = nullptr;
+
+            RenderObject::RenderPassAttachmentDesc attachment_desc;
+            RenderObject::AttachmentReference attachment_ref[1];
+            RenderObject::RenderSubpassDesc subpass_desc[1] = {};
 
             const TEXTURE_FORMAT m_backBufferFmt = {};
             const TEXTURE_FORMAT m_depthBufferFmt = {};

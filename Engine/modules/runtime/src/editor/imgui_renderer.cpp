@@ -95,26 +95,25 @@ namespace Cyber
             range.size = 0;
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            
-            int32_t vertex_buffer_size = 0;
-            int32_t index_buffer_size = 0;
+            //int32_t vertex_buffer_size = 0;
+            //int32_t index_buffer_size = 0;
             ImDrawVert* vtx_dst = (ImDrawVert*)vtx_resource;
             ImDrawIdx* idx_dst = (ImDrawIdx*)idx_resource;
             for(int n = 0; n < draw_data->CmdListsCount; n++)
             {
                 const ImDrawList* cmd_list = draw_data->CmdLists[n];
                 memcpy(vtx_dst, cmd_list->VtxBuffer.Data, cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
-                vertex_buffer_size += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
+                //vertex_buffer_size += cmd_list->VtxBuffer.Size * sizeof(ImDrawVert);
                 memcpy(idx_dst, cmd_list->IdxBuffer.Data, cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx));
-                index_buffer_size += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
+                //index_buffer_size += cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx);
                 vtx_dst += cmd_list->VtxBuffer.Size;
                 idx_dst += cmd_list->IdxBuffer.Size;
             }
             render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
             render_device->unmap_buffer(index_buffer, MAP_WRITE);
 
-            vertex_buffer->set_buffer_size(vertex_buffer_size);
-            index_buffer->set_buffer_size(index_buffer_size);
+            vertex_buffer->set_buffer_size(vertex_buffer_size * sizeof(ImDrawVert));
+            index_buffer->set_buffer_size(index_buffer_size * sizeof(ImDrawIdx));
             // Setup orthographic projection matrix into our constant buffer
             // Our visible imgui space lies from pDrawData->DisplayPos (top left) to pDrawData->DisplayPos+data_data->DisplaySize (bottom right).
             // DisplayPos is (0,0) for single viewport setup
@@ -166,14 +165,11 @@ namespace Cyber
             auto* renderer = app->get_renderer();
             m_backBufferIndex = renderer->get_back_buffer_index();
 
-            auto renderpass = renderer->get_render_pass();
             auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
             auto frame_buffer = renderer->get_frame_buffer();
 
-            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
-            frame_buffer->update_attachments(attachment_resources, 1);
             TextureBarrier draw_barrier = {
                 .texture = back_buffer,
                 .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
@@ -182,8 +178,25 @@ namespace Cyber
             };
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc0);
+
+            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
+            frame_buffer->update_attachments(attachment_resources, 1);
+            auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
+            GRAPHICS_CLEAR_VALUE* clear_values = { &clear_value };
+            RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
+            {
+                .pFramebuffer = frame_buffer,
+                .pRenderPass = render_pass,
+                .ClearValueCount = 1,
+                .color_clear_values = &clear_value,
+                .depth_stencil_clear_value = { 1.0f, 0 },
+                .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
+            };
+
+            device_context->cmd_begin_render_pass(RenderPassBeginInfo);
+
             //todo use native render pipeline
-            device_context->cmd_next_sub_pass();
+            //device_context->cmd_next_sub_pass();
 
             SetupRenderState();
 
@@ -246,7 +259,6 @@ namespace Cyber
                         }
 
                         device_context->render_encoder_set_scissor(1, &scissor);
-
                         // Render command
                         RenderObject::ITexture_View* curr_texture_view = (RenderObject::ITexture_View*)cmd->TextureId;
                         //RenderObject::ITexture_View* curr_texture_view = font_srv;
@@ -386,6 +398,33 @@ namespace Cyber
             */
             //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
 
+            attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+            attachment_ref[0].m_attachmentIndex = 0;
+            attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[0].m_loadAction = LOAD_ACTION_LOAD;
+            attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
+            
+            subpass_desc[0].m_name = u8"UI Subpass";
+            subpass_desc[0].m_inputAttachmentCount = 0;
+            subpass_desc[0].m_pInputAttachments = nullptr;
+            subpass_desc[0].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[0].m_renderTargetCount = 1;
+            subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
+            
+            RenderObject::RenderPassDesc rp_desc1 = {
+                .m_name = u8"UI RenderPass",
+                .m_attachmentCount = 1,
+                .m_pAttachments = &attachment_desc,
+                .m_subpassCount = 1,
+                .m_pSubpasses = subpass_desc
+            };
+
+            Renderer::Renderer* renderer = Core::Application::getApp()->get_renderer();
+            auto device_context = renderer->get_device_context();
+            render_pass = device_context->create_render_pass(rp_desc1);
+
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
             RenderObject::VertexAttribute vertex_attributes[] = {
@@ -413,7 +452,7 @@ namespace Cyber
                 .blend_state = &blend_state_desc,
                 .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
                 .render_target_count = 1,
-                .depth_stencil_format = m_depthBufferFmt,
+                //.depth_stencil_format = m_depthBufferFmt,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
             render_pipeline = render_device->create_render_pipeline(rp_desc);

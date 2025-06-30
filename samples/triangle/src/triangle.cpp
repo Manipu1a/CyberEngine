@@ -5,11 +5,21 @@
 #include "resource/resource_loader.h"
 #include "application/application.h"
 #include "texture_utils.h"
+#include "resource/vertex.h"
 
 namespace Cyber
 {
     namespace Samples
     {
+        const static Vertex vertices[] = {
+                { { -0.5f, -0.5f, 0.0f }, {0.5f, 0.0f}, { 1.0f, 0.0f, 0.0f, 1.0f} }, // Vertex 1: Position (-0.5, -0.5), Color Red
+                { {  0.5f, -0.5f, 0.0f }, {1.f, 0.0f},{ 0.0f, 1.0f, 0.0f, 1.0f } }, // Vertex 2: Position (0.5, -0.5), Color Green
+                { {  0.0f,  0.5f, 0.0f }, {1.f, 1.f},{ 0.0f, 0.0f, 1.0f, 1.0f } }  // Vertex 3: Position (0.0, 0.5), Color Blue
+            };
+
+        const static uint32_t indices[] = {
+                2, 1, 0 // Triangle made of the three vertices
+            };
 
         TrignaleApp::TrignaleApp()
         {
@@ -53,7 +63,6 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
             auto swap_chain = renderer->get_swap_chain();
-            auto renderpass = renderer->get_render_pass();
             auto frame_buffer = renderer->get_frame_buffer();
 
             AcquireNextDesc acquire_desc = {};
@@ -65,18 +74,32 @@ namespace Cyber
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
 
+            
+            // map vertex buffer
+            void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
+            Vertex* vertices_ptr = (Vertex*)vtx_resource;
+            memcpy(vertices_ptr, vertices, sizeof(vertices));
+            render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
+            vertex_buffer->set_buffer_size(3 * sizeof(Vertex));
+
+            // map index buffer
+            void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            uint32_t* indices_ptr = (uint32_t*)idx_resource;
+            memcpy(indices_ptr, indices, sizeof(indices));
+            render_device->unmap_buffer(index_buffer, MAP_WRITE);
+            index_buffer->set_buffer_size(3 * sizeof(uint32_t));
+
             // record
             device_context->cmd_begin();
 
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             GRAPHICS_CLEAR_VALUE* clear_values = { &clear_value };
-            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
-            frame_buffer->update_attachments(attachment_resources, 1);
-
+            RenderObject::ITexture_View* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view};
+            frame_buffer->update_attachments(attachment_resources, 2);
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
                 .pFramebuffer = frame_buffer,
-                .pRenderPass = renderpass,
+                .pRenderPass = render_pass,
                 .ClearValueCount = 1,
                 .color_clear_values = &clear_value,
                 .depth_stencil_clear_value = { 1.0f, 0 },
@@ -95,9 +118,12 @@ namespace Cyber
                 .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
                 .subresource_barrier = 0
             };
-
+            
             ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc0);
+            ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
+            device_context->cmd_resource_barrier(barrier_desc1);
+
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
             device_context->set_frame_buffer(frame_buffer);
             RenderObject::Viewport viewport;
@@ -116,23 +142,16 @@ namespace Cyber
             };
 
             device_context->render_encoder_set_scissor( 1, &scissor);
+            RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
+            uint32_t strides[] = { sizeof(Vertex) };
+            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
+            device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
             device_context->render_encoder_bind_pipeline( pipeline);
-
-            /*TextureBarrier draw_barrier = {
-            .texture = font_texture,
-            .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
-            .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
-            .subresource_barrier = 0
-            };
-            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            */
-            device_context->cmd_resource_barrier(barrier_desc0);
-
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+
             device_context->prepare_for_rendering(root_signature);
-            //rhi_render_encoder_bind_vertex_buffer(rp_encoder, 1, );
-            device_context->render_encoder_draw(3, 0);
-            
+            device_context->render_encoder_draw_indexed(3, 0, 0);
+            //device_context->render_encoder_draw(3, 0);
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -177,20 +196,27 @@ namespace Cyber
             attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
             attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-
+            
+            attachment_ref[1].m_attachmentIndex = 1;
+            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[1].m_loadAction = LOAD_ACTION_CLEAR;
+            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            /*
             attachment_ref[1].m_attachmentIndex = 0;
             attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
             attachment_ref[1].m_loadAction = LOAD_ACTION_LOAD;
             attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
             attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
-
+            */
             //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
             //subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
             subpass_desc[0].m_name = u8"Main Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
-            subpass_desc[0].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[0].m_pDepthStencilAttachment = &attachment_ref[1];
             subpass_desc[0].m_renderTargetCount = 1;
             subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
             
@@ -205,16 +231,32 @@ namespace Cyber
                 .m_name = u8"Triangle RenderPass",
                 .m_attachmentCount = 1,
                 .m_pAttachments = &attachment_desc,
-                .m_subpassCount = 2,
+                .m_subpassCount = 1,
                 .m_pSubpasses = subpass_desc
             };
             
-            auto render_pass = device_context->create_render_pass(rp_desc1);
-            renderer->set_render_pass(render_pass);
+            render_pass = device_context->create_render_pass(rp_desc1);
+            //renderer->set_render_pass(render_pass);
         }
 
         void TrignaleApp::create_resource()
         {
+            auto render_device = m_pApp->get_renderer()->get_render_device();
+
+            RenderObject::BufferCreateDesc buffer_desc = {};
+            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
+            buffer_desc.size = 3 * sizeof(Vertex);
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+            vertex_buffer = render_device->create_buffer(buffer_desc);
+            
+            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
+            buffer_desc.size = 3 * sizeof(uint32_t);
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+            index_buffer = render_device->create_buffer(buffer_desc);
+
+            // create texture
             RenderObject::ITexture* test_texture = nullptr;
             TextureLoader::TextureLoadInfo texture_load_info{
                 CYBER_UTF8("TEST"),
@@ -232,7 +274,7 @@ namespace Cyber
             TextureLoader::create_texture_from_file(
                 ("samples/triangle/assets/1.png"),
                 texture_load_info,
-                &test_texture, m_pApp->get_renderer()->get_render_device()
+                &test_texture, render_device
             );
 
             test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
@@ -246,14 +288,12 @@ namespace Cyber
         void TrignaleApp::draw_ui()
         {
 
-
         }
 
         void TrignaleApp::create_render_pipeline()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            auto swap_chain = renderer->get_swap_chain();
             //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
             /*
             namespace render_graph = Cyber::render_graph;
@@ -391,9 +431,25 @@ namespace Cyber
                 .set_index = 0
             };
             //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
+            RenderObject::VertexAttribute vertex_attributes[] = {
+                {0, 0, 3, VALUE_TYPE_FLOAT32},
+                {1, 0, 2, VALUE_TYPE_FLOAT32},
+                {2, 0, 4, VALUE_TYPE_UINT8, true}
+            };
+            RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
+            
+            BlendStateCreateDesc blend_state_desc = {};
+            blend_state_desc.render_target_count = 1;
+            blend_state_desc.src_factors[0] = BLEND_CONSTANT_SRC_ALPHA;
+            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
+            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.alpha_to_coverage = false;
+            blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
-           RenderObject::VertexLayoutDesc vertex_layout_desc = {
-           };
+            auto& scene_target = renderer->get_scene_target(0);
             
             RenderObject::RenderPipelineCreateDesc rp_desc = 
             {
@@ -401,9 +457,10 @@ namespace Cyber
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout_desc,
-                //.rasterizer_state = {},
-                .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
+                .blend_state = &blend_state_desc,
+                .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                 .render_target_count = 1,
+                .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
             pipeline = render_device->create_render_pipeline(rp_desc);

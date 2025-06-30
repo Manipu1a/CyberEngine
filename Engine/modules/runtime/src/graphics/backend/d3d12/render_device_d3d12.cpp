@@ -1475,7 +1475,26 @@ namespace Cyber
         return descSet;
     }
 
-    D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {};
+    D3D12_DEPTH_STENCIL_DESC gDefaultDepthStencilDesc = {
+        TRUE, // DepthEnable
+        D3D12_DEPTH_WRITE_MASK_ALL, // DepthWriteMask
+        D3D12_COMPARISON_FUNC_ALWAYS, // DepthFunc
+        FALSE, // StencilEnable
+        0, // StencilReadMask
+        0, // StencilWriteMask
+        { // FrontFace
+            D3D12_STENCIL_OP_KEEP, // StencilFailOp
+            D3D12_STENCIL_OP_KEEP, // StencilDepthFailOp
+            D3D12_STENCIL_OP_KEEP, // StencilPassOp
+            D3D12_COMPARISON_FUNC_ALWAYS // StencilFunc
+        },
+        { // BackFace
+            D3D12_STENCIL_OP_KEEP, // StencilFailOp
+            D3D12_STENCIL_OP_KEEP, // StencilDepthFailOp
+            D3D12_STENCIL_OP_KEEP, // StencilPassOp
+            D3D12_COMPARISON_FUNC_ALWAYS // StencilFunc
+        }
+    };
     const D3D12_RENDER_TARGET_BLEND_DESC defaultRenderTargetBlendDesc =
         {
             FALSE,FALSE,
