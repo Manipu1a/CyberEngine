@@ -19,7 +19,7 @@ namespace Cyber
             uint32_t first_requested_slot = m_usedDescriptors;
             uint32_t slot_after_request = m_usedDescriptors + num_requested_slots;
 
-            if(slot_after_request > m_heapDesc.NumDescriptors)
+            if(slot_after_request >= m_heapDesc.NumDescriptors)
             {
                 first_requested_slot = 0;
                 slot_after_request = num_requested_slots;

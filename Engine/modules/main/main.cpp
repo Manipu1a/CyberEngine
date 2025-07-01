@@ -9,10 +9,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
                      PSTR    lpCmdLine,
                      int       nCmdShow)
 {
-    AllocConsole();
-    FILE* stream;
-    freopen_s(&stream, "CON", "r", stdin);
-    freopen_s(&stream, "CON", "w", stdout);
+    //AllocConsole();
     SetConsoleTitle(L"Console");
     //std::cout << "test log" << std::endl;
     Cyber::Log::initLog();

@@ -6,7 +6,7 @@ namespace Cyber
 {
     namespace Platform
     {
-        class WindowsApplication : public Core::Application
+        class CYBER_RUNTIME_API WindowsApplication : public Core::Application
         {
         public:
             WindowsApplication(const WindowDesc& desc);

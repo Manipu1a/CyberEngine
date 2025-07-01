@@ -74,21 +74,6 @@ namespace Cyber
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
 
-            
-            // map vertex buffer
-            void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
-            Vertex* vertices_ptr = (Vertex*)vtx_resource;
-            memcpy(vertices_ptr, vertices, sizeof(vertices));
-            render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
-            vertex_buffer->set_buffer_size(3 * sizeof(Vertex));
-
-            // map index buffer
-            void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            uint32_t* indices_ptr = (uint32_t*)idx_resource;
-            memcpy(indices_ptr, indices, sizeof(indices));
-            render_device->unmap_buffer(index_buffer, MAP_WRITE);
-            index_buffer->set_buffer_size(3 * sizeof(uint32_t));
-
             // record
             device_context->cmd_begin();
 
@@ -246,15 +231,29 @@ namespace Cyber
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
             buffer_desc.size = 3 * sizeof(Vertex);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_buffer = render_device->create_buffer(buffer_desc);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = 3 * sizeof(uint32_t);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             index_buffer = render_device->create_buffer(buffer_desc);
+
+            // map vertex buffer
+            void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
+            Vertex* vertices_ptr = (Vertex*)vtx_resource;
+            memcpy(vertices_ptr, vertices, sizeof(vertices));
+            render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
+            vertex_buffer->set_buffer_size(3 * sizeof(Vertex));
+
+            // map index buffer
+            void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            uint32_t* indices_ptr = (uint32_t*)idx_resource;
+            memcpy(indices_ptr, indices, sizeof(indices));
+            render_device->unmap_buffer(index_buffer, MAP_WRITE);
+            index_buffer->set_buffer_size(3 * sizeof(uint32_t));
 
             // create texture
             RenderObject::ITexture* test_texture = nullptr;

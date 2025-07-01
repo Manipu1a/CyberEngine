@@ -705,7 +705,7 @@ namespace Cyber
                 auto fallbackhRes = hRes;
                 CB_CORE_ERROR("[D3D12] Create Texture Resource Failed With HRESULT {0}! \n\t With Name: {1} \n\t Size: {2}{3} \n\t Format: {4} \n\t Sample Count: {5}", 
                                 hRes, (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
-                                Desc.m_format, Desc.m_sampleCount);
+                                (uint32_t)Desc.m_format, (uint8_t)Desc.m_sampleCount);
                 const bool use_fallback_commited = true;
                 if(use_fallback_commited)
                 {
@@ -730,7 +730,7 @@ namespace Cyber
             {
                 CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: {0}\n\t Size: {1}x{2} \n\t Format: {3} \n\t Sample Count: {4}", 
                                 (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
-                                Desc.m_format, Desc.m_sampleCount);
+                                (uint32_t)Desc.m_format, (uint8_t)Desc.m_sampleCount);
                 
                 pTexture->m_pNativeHandle = pTexture->native_resource;
                 if(InitializeTexture)
@@ -2039,6 +2039,8 @@ namespace Cyber
             }
             else
             {
+                d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
+
                 D3D12_HEAP_PROPERTIES heap_properties = {};
                 if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING)
                     heap_properties.Type = create_desc.cpu_access_flags == CPU_ACCESS_READ ? D3D12_HEAP_TYPE_READBACK : D3D12_HEAP_TYPE_UPLOAD;
@@ -2690,6 +2692,7 @@ namespace Cyber
         auto& views = shader_resource_view_cache.views[stage];
         uint32_t first_slot = heap_slot;
         heap_slot += slots_need;
+        //todo 堆内存爆了
         DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
         D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_SRVS];
 

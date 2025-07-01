@@ -2,6 +2,8 @@
 #include <vector>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/callback_sink.h>
+
 namespace Cyber
 {
     eastl::shared_ptr<spdlog::logger> Log::sCoreLogger = nullptr;
@@ -21,10 +23,16 @@ namespace Cyber
     {
         std::vector<spdlog::sink_ptr> logSinks;
 		logSinks.emplace_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("Cyber.log", true));
+		logSinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>("Cyber.log", true)); // log file
 
 		logSinks[0]->set_pattern("%^[%T] %n: %v%$");
 		logSinks[1]->set_pattern("[%T] [%l] %n: %v");
+
+		auto callback_sink = std::make_shared<spdlog::sinks::callback_sink_mt>([]( const spdlog::details::log_msg& msg) {
+
+		});
+		callback_sink->set_level(spdlog::level::trace);
+		logSinks.emplace_back(callback_sink);
 
 		sCoreLogger = eastl::make_shared<spdlog::logger>("CYBER", begin(logSinks), end(logSinks));
 		spdlog::register_logger(std::make_shared<spdlog::logger>(*sCoreLogger.get()));

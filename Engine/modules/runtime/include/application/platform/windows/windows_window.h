@@ -6,7 +6,7 @@ namespace Cyber
 {
     namespace Platform
     {
-        class WindowsWindow : public Window
+        class CYBER_RUNTIME_API WindowsWindow : public Window
         {
         public:
             WindowsWindow(const Cyber::WindowDesc& desc);

@@ -135,7 +135,7 @@ Image::Image(const ImageLoadInfo& loadInfo, IDataBlob* dataBlob) : m_dataBlob(Co
         auto res = decode_png(dataBlob, m_dataBlob, m_desc);
         if(res != DECODE_PNG_RESULT_OK)
         {
-             CB_ERROR("Failed to decode PNG image: {0}", res);
+             CB_ERROR("Failed to decode PNG image: {0}", (uint32_t)res);
              m_dataBlob = nullptr;
              return;
         }
