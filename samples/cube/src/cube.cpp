@@ -1,11 +1,10 @@
-#include "triangle.h"
+#include "cube.h"
 #include "platform/memory.h"
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
 #include "application/application.h"
 #include "texture_utils.h"
-#include "math/matrix.h"
 #include "resource/vertex.h"
 
 namespace Cyber
@@ -16,17 +15,26 @@ namespace Cyber
         {
             return Cyber::cyber_new<Cyber::Samples::TrignaleApp>();
         }
+        const static Vertex cube_verts[8] = {
+            { {-1, -1, -1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
+            { {-1, 1, -1}, {0.0f, 1.0f}, {1, 0, 0, 1}},
+            { {1, 1, -1}, {1.0f, 1.0f}, {1, 0, 0, 1}},
+            { {1, -1, -1}, {1.0f, 0.0f}, {1, 0, 0, 1}},
 
-        const static Vertex vertices[] = {
-                { { -0.5f, -0.5f, 0.0f }, {0.5f, 0.0f}, { 1.0f, 0.0f, 0.0f, 1.0f} }, // Vertex 1: Position (-0.5, -0.5), Color Red
-                { {  0.5f, -0.5f, 0.0f }, {1.f, 0.0f},{ 0.0f, 1.0f, 0.0f, 1.0f } }, // Vertex 2: Position (0.5, -0.5), Color Green
-                { {  0.0f,  0.5f, 0.0f }, {1.f, 1.f},{ 0.0f, 0.0f, 1.0f, 1.0f } }  // Vertex 3: Position (0.0, 0.5), Color Blue
-            };
+            { {-1, -1, 1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
+            { {-1, 1, 1}, {0.0f, 1.0f}, {1, 0, 0, 1}},
+            { {1, 1, 1}, {1.0f, 1.0f}, {1, 0, 0, 1}},
+            { {1, -1, 1}, {1.0f, 0.0f}, {1, 0, 0, 1}},
+        };
+        const static uint32_t cube_indices[36] = {
+        2,0,1, 2,3,0,
+        4,6,5, 4,7,6,
+        0,7,4, 0,3,7,
+        1,0,4, 1,4,5,
+        1,5,2, 5,6,2,
+        3,6,7, 3,2,6
+        };
 
-        const static uint32_t indices[] = {
-                2, 1, 0 // Triangle made of the three vertices
-            };
-        
         TrignaleApp::TrignaleApp()
         {
 
@@ -79,6 +87,17 @@ namespace Cyber
             auto back_depth_buffer = scene_target.depth_buffer;
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
+
+            float4x4 model_matrix = float4x4::scale(0.1f);
+            float4x4 view_matrix = float4x4::translation(0.0f, 0.0f, 10.0f);
+            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
+            float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
+            // map vertex constant buffer
+            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            float4x4* const_ptr = (float4x4*)const_resource;
+            *const_ptr = world_view_proj_matrix;
+            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
+            vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
 
             // record
             device_context->cmd_begin();
@@ -142,8 +161,7 @@ namespace Cyber
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
 
             device_context->prepare_for_rendering(root_signature);
-            device_context->render_encoder_draw_indexed(3, 0, 0);
-            //device_context->render_encoder_draw(3, 0);
+            device_context->render_encoder_draw_indexed(36, 0, 0);
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -153,7 +171,6 @@ namespace Cyber
             };
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
             device_context->cmd_resource_barrier(barrier_desc2);
-            //device_context->set_render_target( 1, &back_buffer_view, nullptr);     
         }
 
         void TrignaleApp::present()
@@ -234,48 +251,40 @@ namespace Cyber
         void TrignaleApp::create_resource()
         {
             auto render_device = m_pApp->get_renderer()->get_render_device();
+            auto renderer = m_pApp->get_renderer();
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
-            buffer_desc.size = 3 * sizeof(Vertex);
+            buffer_desc.size = 8 * sizeof(Vertex);
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_buffer = render_device->create_buffer(buffer_desc);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
-            buffer_desc.size = 3 * sizeof(uint32_t);
+            buffer_desc.size = 36 * sizeof(uint32_t);
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             index_buffer = render_device->create_buffer(buffer_desc);
 
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.size = sizeof(float4x4);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = render_device->create_buffer(buffer_desc);
 
             // map vertex buffer
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             Vertex* vertices_ptr = (Vertex*)vtx_resource;
-            memcpy(vertices_ptr, vertices, sizeof(vertices));
+            memcpy(vertices_ptr, cube_verts, sizeof(cube_verts));
             render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
-            vertex_buffer->set_buffer_size(3 * sizeof(Vertex));
+            vertex_buffer->set_buffer_size(8 * sizeof(Vertex));
 
             // map index buffer
             void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             uint32_t* indices_ptr = (uint32_t*)idx_resource;
-            memcpy(indices_ptr, indices, sizeof(indices));
+            memcpy(indices_ptr, cube_indices, sizeof(cube_indices));
             render_device->unmap_buffer(index_buffer, MAP_WRITE);
-            index_buffer->set_buffer_size(3 * sizeof(uint32_t));
-
-            Math::matrix3 model_matrix = Math::matrix3::make_z_rotation(30);
-            Math::matrix4 view_matrix = Math::matrix4::make_identity();
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            Math::matrix4* const_ptr = (Math::matrix4*)const_resource;
-            *const_ptr = view_matrix;
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(Math::matrix4));
+            index_buffer->set_buffer_size(36 * sizeof(uint32_t));
 
             // create texture
             RenderObject::ITexture* test_texture = nullptr;
@@ -315,79 +324,6 @@ namespace Cyber
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
-            /*
-            namespace render_graph = Cyber::render_graph;
-            render_graph::RenderGraph* graph = render_graph::RenderGraph::create([=](render_graph::RenderGraphBuilder& builder)
-            {
-                builder.with_device(device)
-                .backend_api(ERHIBackend::RHI_BACKEND_D3D12);
-            });
-            
-            auto builder = graph->get_builder();
-            auto tex = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"tex");
-
-            auto backbuffer = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"color");
-
-            auto depth = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"depth");
-
-            builder->add_render_pass(
-                u8"ShadowPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.set_pipeline(nullptr)
-                    .add_render_target(0, depth);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            builder->add_render_pass(
-                u8"ColorPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.add_input(u8"Tex", tex)
-                    .add_input(u8"Depth", depth)
-                    .set_pipeline(nullptr)
-                    .add_render_target(0, backbuffer);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            builder->add_render_pass(
-                u8"PostPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.add_input(u8"Color", backbuffer)
-                    .set_pipeline(nullptr)
-                    .add_render_target(0, backbuffer);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            
-            //graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
-            //graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
-
-            graph->execute();
-            */
 
             // create shader
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
@@ -461,14 +397,20 @@ namespace Cyber
             
             BlendStateCreateDesc blend_state_desc = {};
             blend_state_desc.render_target_count = 1;
-            blend_state_desc.src_factors[0] = BLEND_CONSTANT_SRC_ALPHA;
-            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.src_factors[0] = BLEND_CONSTANT_ONE;
+            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ZERO;
             blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
             blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
-            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
+            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ZERO;
             blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
             blend_state_desc.alpha_to_coverage = false;
             blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
+
+            DepthStateCreateDesc depth_stencil_state_desc = {};
+            depth_stencil_state_desc.depth_test = true;
+            depth_stencil_state_desc.depth_write = true;
+            depth_stencil_state_desc.depth_func = CMP_LESS_EQUAL;
+            depth_stencil_state_desc.stencil_test = false;
 
             auto& scene_target = renderer->get_scene_target(0);
             
@@ -479,6 +421,7 @@ namespace Cyber
                 .fragment_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout_desc,
                 .blend_state = &blend_state_desc,
+                .depth_stencil_state = &depth_stencil_state_desc,
                 .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,

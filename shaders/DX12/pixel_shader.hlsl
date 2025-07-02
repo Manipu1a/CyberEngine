@@ -16,6 +16,6 @@ SamplerState Texture_sampler;
 void PSMain(in  PSInput  PSIn,
           out PSOutput PSOut)
 {
-    float4 col = Texture.Sample(Texture_sampler, PSIn.UV) * float4(PSIn.Color.rgb, 1.0);
-    PSOut.Color = col;
+    float4 col = Texture.Sample(Texture_sampler, PSIn.UV) * 0.1f;
+    PSOut.Color = float4(PSIn.Color.rgb, 1.0) + col;
 }

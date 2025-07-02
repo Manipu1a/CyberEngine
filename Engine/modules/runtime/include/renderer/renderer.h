@@ -2,6 +2,7 @@
 
 #include "graphics/interface/graphics_types.h"
 #include "graphics/interface/render_device.hpp"
+#include "math/basic_math.hpp"
 #include "cyber_runtime.config.h"
 
 namespace Cyber
@@ -40,6 +41,8 @@ namespace Cyber
             void resize_swap_chain(uint32_t width, uint32_t height);
             void resize_viewport(uint32_t width, uint32_t height);
             
+            float4x4 get_adjusted_projection_matrix(float fov, float near_plane, float far_plane);
+
             CYBER_FORCE_INLINE RenderObject::IRenderDevice* get_render_device() const { return m_pRenderDevice; }
             CYBER_FORCE_INLINE RenderObject::IDeviceContext* get_device_context(size_t id = 0) const { return device_contexts[id]; }
             CYBER_FORCE_INLINE RenderObject::IInstance* get_instance() const { return m_pInstance; }

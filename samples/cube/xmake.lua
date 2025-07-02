@@ -1,0 +1,6 @@
+target("cube")
+    set_kind("shared")
+    add_includedirs("include", {public = true})
+    add_files("src/cube.cpp")
+    add_deps("TextureLoader", {public=true})
+    add_defines("CYBER_API_EXPORT")

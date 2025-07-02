@@ -12,10 +12,15 @@ struct PSInput
     float2 UV : TEXCOORD;
 };
 
-void VSMain(in VSInput VSIn,
-          out PSInput PSIn) 
+cbuffer Constants
 {
-    PSIn.Pos = float4(VSIn.pos, 1.0f);
+    float4x4 ProjectionMatrix;
+}
+
+void VSMain(in VSInput VSIn,
+          out PSInput PSIn)
+{
+    PSIn.Pos = mul(ProjectionMatrix, float4(VSIn.pos, 1.0));
     PSIn.Color = VSIn.col;
     PSIn.UV = VSIn.uv;
 }

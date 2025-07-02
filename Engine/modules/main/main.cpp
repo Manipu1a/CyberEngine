@@ -1,8 +1,7 @@
 #include <iostream>
 #include "CyberLog/Log.h"
 #include "platform/memory.h"
-#include "application/application.h"
-#include "triangle.h"
+#include "gameruntime/sampleapp.h"
 
 int WINAPI WinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -22,7 +21,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     desc.hInstance = hInstance;
     desc.cmdShow = nCmdShow;
     Cyber::Core::Application* app = Cyber::Core::Application::create_application(desc);
-    app->set_sample_app(Cyber::create_sample_app());
+    app->set_sample_app(Cyber::Samples::SampleApp::create_sample_app());
     app->initialize();
     app->run();
 

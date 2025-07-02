@@ -169,5 +169,23 @@ namespace Cyber
                 frame_buffer->update_attachments(attachment_resources, 1);
             }
         }
+
+        float4x4 Renderer::get_adjusted_projection_matrix(float fov, float near_plane, float far_plane)
+        {
+            RenderObject::TextureCreateDesc color_buffer_desc = scene_target[0].color_buffer->get_create_desc();
+
+            float aspect_ratio = static_cast<float>(900) / static_cast<float>(500);
+            float YScale = 1.0f / std::tan(fov * 0.5f);
+            float XScale = YScale / aspect_ratio;
+
+            float4x4 projection_matrix = {
+                XScale, 0.0f, 0.0f, 0.0f,
+                0.0f, YScale, 0.0f, 0.0f,
+                0.0f, 0.0f, far_plane / (far_plane - near_plane), 1.0f,
+                0.0f, 0.0f, -near_plane * far_plane / (far_plane - near_plane), 0.0f
+            };
+            return projection_matrix;
+        }
+
     }
 }

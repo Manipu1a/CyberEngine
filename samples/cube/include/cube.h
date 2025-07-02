@@ -53,4 +53,5 @@ namespace Cyber
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
         };
     }
+
 }

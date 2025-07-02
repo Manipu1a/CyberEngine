@@ -2,6 +2,7 @@
 
 #include <float.h>
 #include <type_traits>
+#include <DirectXMath.h>
 
 namespace Cyber
 {
@@ -31,4 +32,6 @@ namespace Cyber
         using T = typename std::conditional<sizeof(T1) >= (sizeof(T2)), T1, T2>::type;
         return (static_cast<T>(value) + static_cast<T>(alignment) - 1) & ~(static_cast<T>(alignment) - 1);
      }
+
+
 }

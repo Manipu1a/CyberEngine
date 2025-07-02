@@ -2,7 +2,7 @@
 #include <EASTL/string.h>
 #include <EASTL/shared_ptr.h>
 #include <EASTL/unique_ptr.h>
-#include "common/basic_math.hpp"
+#include "math/basic_math.hpp"
 #include "debug.h"
 #include <functional>
 #include "../../../config.h"
