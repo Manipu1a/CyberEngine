@@ -138,7 +138,6 @@ namespace Cyber
             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
             device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
             device_context->render_encoder_bind_pipeline( pipeline);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
 
             device_context->prepare_for_rendering(root_signature);
@@ -248,12 +247,6 @@ namespace Cyber
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             index_buffer = render_device->create_buffer(buffer_desc);
 
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
-            buffer_desc.size = sizeof(float4x4);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_constant_buffer = render_device->create_buffer(buffer_desc);
-
             // map vertex buffer
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             Vertex* vertices_ptr = (Vertex*)vtx_resource;
@@ -267,15 +260,6 @@ namespace Cyber
             memcpy(indices_ptr, indices, sizeof(indices));
             render_device->unmap_buffer(index_buffer, MAP_WRITE);
             index_buffer->set_buffer_size(3 * sizeof(uint32_t));
-
-            Math::matrix3 model_matrix = Math::matrix3::make_z_rotation(30);
-            Math::matrix4 view_matrix = Math::matrix4::make_identity();
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            Math::matrix4* const_ptr = (Math::matrix4*)const_resource;
-            *const_ptr = view_matrix;
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(Math::matrix4));
 
             // create texture
             RenderObject::ITexture* test_texture = nullptr;
@@ -393,7 +377,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
             vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("shaders/DX12/vertex_shader.hlsl"),
+                .file_name = CYBER_UTF8("samples/triangle/assets/vertex_shader.hlsl"),
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
@@ -402,7 +386,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("shaders/DX12/pixel_shader.hlsl"),
+                .file_name = CYBER_UTF8("samples/triangle/assets/pixel_shader.hlsl"),
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };

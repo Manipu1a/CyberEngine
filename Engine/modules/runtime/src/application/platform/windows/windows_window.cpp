@@ -20,24 +20,25 @@ namespace Cyber
                 WindowsApplication* app = static_cast<WindowsApplication*>(Core::Application::getApp());
                 if (app->handle_win32_message(hwnd, msg, wParam, lParam))
                     return true;
-            }
 
-            switch (msg)
-            {
-                case WM_DESTROY:
-                    PostQuitMessage(0);
-                    //mRunning = false;
-                    return 0;
-                    break;
-                case WM_SIZE:
-                    auto new_width = LOWORD(lParam); // width
-                    auto new_height = HIWORD(lParam); // height
-                    if (new_width != 0 && new_height != 0)
-                    {
-                        Core::Application::getApp()->resize_window(new_width, new_height);
-                    }
-                    return 0;
-                    break;
+                switch (msg)
+                {
+                    case WM_DESTROY:
+                        PostQuitMessage(0);
+                        //mRunning = false;
+                        app->quit_application();
+                        return 0;
+                        break;
+                    case WM_SIZE:
+                        auto new_width = LOWORD(lParam); // width
+                        auto new_height = HIWORD(lParam); // height
+                        if (new_width != 0 && new_height != 0)
+                        {
+                            Core::Application::getApp()->resize_window(new_width, new_height);
+                        }
+                        return 0;
+                        break;
+                }
             }
 
             return DefWindowProcW(hwnd, msg, wParam, lParam);

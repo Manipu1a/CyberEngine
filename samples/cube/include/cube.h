@@ -18,11 +18,11 @@ namespace Cyber
 
     namespace Samples
     {
-        class CYBER_GAME_API TrignaleApp : public SampleApp
+        class CYBER_GAME_API CubeApp : public SampleApp
         {
         public:
-            TrignaleApp();
-            ~TrignaleApp();
+            CubeApp();
+            ~CubeApp();
 
             virtual void initialize() override;
             virtual void run() override;

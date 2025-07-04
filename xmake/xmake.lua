@@ -1,4 +1,6 @@
 includes("tools/texture_loader.lua")
+includes("tools/model_loader.lua")
+
 includes("thirdparty/EASTL.lua")
 includes("thirdparty/spdlog.lua")
 includes("thirdparty/mimalloc.lua")
@@ -14,3 +16,4 @@ includes("thirdparty/libpng.lua")
 includes("thirdparty/zlib.lua")
 includes("thirdparty/D3DX12.lua")
 includes("thirdparty/DirectX.lua")
+includes("thirdparty/GLTF.lua")

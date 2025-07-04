@@ -1,23 +1,22 @@
 #pragma once
-
-#include "cyber_runtime.config.h"
+#include <chrono>
+#include "cyber_core.config.h"
 
 namespace Cyber
 {
-    class CYBER_RUNTIME_API Timestep
+    class CYBER_CORE_API Timestep
     {
     public:
-        Timestep(float time = 0.f)
-            : mTime(time)
+        Timestep()
         {
-
+            restart();
         }
 
-        operator float() const {return mTime;}
+        void restart();
+        double get_seconds() const;
+        double get_milliseconds() const;
 
-        float GetSeconds() const {return mTime;}
-        float GetMilliseconds() const { return mTime * 1000.0f; }
     private:
-        float mTime;
+        std::chrono::high_resolution_clock::time_point start_time;
     };
 }

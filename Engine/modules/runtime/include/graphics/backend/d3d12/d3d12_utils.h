@@ -344,6 +344,19 @@ namespace Cyber
                 }
             }
 
+            case VALUE_TYPE_UINT32:
+            {
+                cyber_assert(!is_normalized, "32-bit UNORM formats are not supported, Use R32_FLOAT instead");
+                switch(num_components)
+                {
+                    case 1: return DXGI_FORMAT_R32_UINT;
+                    case 2: return DXGI_FORMAT_R32G32_UINT;
+                    case 3: return DXGI_FORMAT_R32G32B32_UINT;
+                    case 4: return DXGI_FORMAT_R32G32B32A32_UINT;
+                    default: cyber_assert(false, "Unsupported number of components"); return DXGI_FORMAT_UNKNOWN;
+                }
+            }
+            
             case VALUE_TYPE_UINT16:
             {
                 if(is_normalized)

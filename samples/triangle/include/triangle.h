@@ -50,7 +50,6 @@ namespace Cyber
             RenderObject::ITexture_View* test_texture_view = nullptr;
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
-            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
         };
     }
 }

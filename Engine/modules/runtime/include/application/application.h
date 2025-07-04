@@ -50,6 +50,7 @@ namespace Cyber
             CYBER_FORCE_INLINE bool is_running() const { return m_running; }
             CYBER_FORCE_INLINE bool is_minimized() const { return m_minimized; }
             CYBER_FORCE_INLINE float get_last_frame_time() const { return m_last_frame_time; }
+            CYBER_FORCE_INLINE void quit_application() { m_running = false; }
         protected:
             Window* m_pWindow;
             InputSystem* m_pInputSystem;

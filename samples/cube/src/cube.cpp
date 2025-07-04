@@ -3,6 +3,7 @@
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
+#include "model_loader.h"
 #include "application/application.h"
 #include "texture_utils.h"
 #include "resource/vertex.h"
@@ -13,19 +14,20 @@ namespace Cyber
     {
         Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
         {
-            return Cyber::cyber_new<Cyber::Samples::TrignaleApp>();
+            return Cyber::cyber_new<Cyber::Samples::CubeApp>();
         }
         const static Vertex cube_verts[8] = {
             { {-1, -1, -1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
-            { {-1, 1, -1}, {0.0f, 1.0f}, {1, 0, 0, 1}},
-            { {1, 1, -1}, {1.0f, 1.0f}, {1, 0, 0, 1}},
-            { {1, -1, -1}, {1.0f, 0.0f}, {1, 0, 0, 1}},
+            { {-1, 1, -1}, {0.0f, 1.0f}, {0,1,0,1}},
+            { {1, 1, -1}, {1.0f, 1.0f}, {0,0,1,1}},
+            { {1, -1, -1}, {1.0f, 0.0f}, {1,1,1,1}},
 
-            { {-1, -1, 1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
-            { {-1, 1, 1}, {0.0f, 1.0f}, {1, 0, 0, 1}},
-            { {1, 1, 1}, {1.0f, 1.0f}, {1, 0, 0, 1}},
-            { {1, -1, 1}, {1.0f, 0.0f}, {1, 0, 0, 1}},
+            { {-1, -1, 1}, {0.0f, 0.0f}, {1,1,0,1}},
+            { {-1, 1, 1}, {0.0f, 1.0f}, {0,1,1,1}},
+            { {1, 1, 1}, {1.0f, 1.0f}, {1,0,1,1}},
+            { {1, -1, 1}, {1.0f, 0.0f}, {0.2f,0.2f,0.2f,1}},
         };
+
         const static uint32_t cube_indices[36] = {
         2,0,1, 2,3,0,
         4,6,5, 4,7,6,
@@ -35,17 +37,17 @@ namespace Cyber
         3,6,7, 3,2,6
         };
 
-        TrignaleApp::TrignaleApp()
+        CubeApp::CubeApp()
         {
 
         }
 
-        TrignaleApp::~TrignaleApp()
+        CubeApp::~CubeApp()
         {
             
         }
 
-        void TrignaleApp::initialize()
+        void CubeApp::initialize()
         {
             SampleApp::initialize();
             m_pApp = Cyber::Core::Application::getApp();
@@ -59,19 +61,33 @@ namespace Cyber
             create_resource();
         }
 
-        void TrignaleApp::run()
+        void CubeApp::run()
         {
             //m_pApp->run();
         }
 
-        void TrignaleApp::update(float deltaTime)
+        void CubeApp::update(float deltaTime)
         {
-           // m_pApp->update(deltaTime);
-            
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+
+            static float time = 0.0f;
+            time += deltaTime;
+            float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
+            float4x4 view_matrix = float4x4::translation(0.0f, 0.0f, 5.0f);
+            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
+            float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
+            // map vertex constant buffer
+            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            float4x4* const_ptr = (float4x4*)const_resource;
+            *const_ptr = world_view_proj_matrix;
+            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
+            vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
+
             raster_draw();
         }
 
-        void TrignaleApp::raster_draw()
+        void CubeApp::raster_draw()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -88,16 +104,6 @@ namespace Cyber
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
 
-            float4x4 model_matrix = float4x4::scale(0.1f);
-            float4x4 view_matrix = float4x4::translation(0.0f, 0.0f, 10.0f);
-            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
-            float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* const_ptr = (float4x4*)const_resource;
-            *const_ptr = world_view_proj_matrix;
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
 
             // record
             device_context->cmd_begin();
@@ -173,7 +179,7 @@ namespace Cyber
             device_context->cmd_resource_barrier(barrier_desc2);
         }
 
-        void TrignaleApp::present()
+        void CubeApp::present()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -191,7 +197,7 @@ namespace Cyber
             render_device->present(swap_chain);
         }
 
-        void TrignaleApp::create_gfx_objects()
+        void CubeApp::create_gfx_objects()
         {
             //m_pApp->get_renderer()->create_gfx_objects();
             auto renderer = m_pApp->get_renderer();
@@ -212,16 +218,7 @@ namespace Cyber
             attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            /*
-            attachment_ref[1].m_attachmentIndex = 0;
-            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[1].m_loadAction = LOAD_ACTION_LOAD;
-            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
-            */
-            //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
-            //subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
+
             subpass_desc[0].m_name = u8"Main Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
@@ -248,10 +245,11 @@ namespace Cyber
             //renderer->set_render_pass(render_pass);
         }
 
-        void TrignaleApp::create_resource()
+        void CubeApp::create_resource()
         {
             auto render_device = m_pApp->get_renderer()->get_render_device();
             auto renderer = m_pApp->get_renderer();
+            auto device_context = renderer->get_device_context();
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
@@ -308,19 +306,31 @@ namespace Cyber
             );
 
             test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
+
+            // load model
+            ModelLoader::ModelCreateInfo create_info;
+            create_info.file_path = "../../../../samples/cube/assets/Cube/Cube.gltf";
+            ModelLoader::ModelLoader model_loader(render_device, device_context, create_info);
+            if (!model_loader.is_valid())
+            {
+                cyber_error(false, "Failed to load model: {0}", create_info.file_path);
+            }
+
+            
         }
 
-        void TrignaleApp::create_ui()
+        void CubeApp::create_ui()
         {
 
         }
 
-        void TrignaleApp::draw_ui()
+        void CubeApp::draw_ui()
         {
 
         }
 
-        void TrignaleApp::create_render_pipeline()
+        void CubeApp::create_render_pipeline()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -391,7 +401,7 @@ namespace Cyber
             RenderObject::VertexAttribute vertex_attributes[] = {
                 {0, 0, 3, VALUE_TYPE_FLOAT32},
                 {1, 0, 2, VALUE_TYPE_FLOAT32},
-                {2, 0, 4, VALUE_TYPE_UINT8, true}
+                {2, 0, 4, VALUE_TYPE_FLOAT32}
             };
             RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
             
@@ -433,7 +443,7 @@ namespace Cyber
             ps_shader->free();
         }
 
-        void TrignaleApp::finalize()
+        void CubeApp::finalize()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();

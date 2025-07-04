@@ -75,9 +75,14 @@ namespace Cyber
         void Application::run()
         {
             CB_CORE_INFO("Application :: run()");
+            Timestep timestep;
+            m_last_frame_time = timestep.get_seconds();
             while(m_running)
             {
-                update(0.0f);
+                auto now = timestep.get_seconds();
+                auto elapsed = now - m_last_frame_time;
+                m_last_frame_time = now;
+                update(elapsed);
             }
 
             CB_CORE_INFO("Application :: run() - finished");
@@ -86,16 +91,13 @@ namespace Cyber
         void Application::update(float deltaTime)
         {
             float time = 0.0f;
-            Timestep timestep = time - m_last_frame_time;
-            m_last_frame_time = time;
-            //spdlog::info("Time: {0}", timestep);
             m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
-            m_pWindow->update(timestep);
-            m_pRenderer->update(timestep);
-            m_pSampleApp->update(timestep);
+            m_pWindow->update(deltaTime);
+            m_pRenderer->update(deltaTime);
+            m_pSampleApp->update(deltaTime);
             
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
-            m_pEditor->update(timestep);
+            m_pEditor->update(deltaTime);
             m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
             m_pEditor->end_frame();
 

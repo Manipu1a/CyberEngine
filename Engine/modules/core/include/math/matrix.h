@@ -86,6 +86,11 @@ struct Matrix4x4
         return m[row];
     }
 
+    const T* operator[](size_t row) const
+    {
+        return m[row];
+    }
+    
     T* Data() { return (*this)[0]; }
     const T* Data() const { return (*this)[0]; }
 
@@ -161,7 +166,7 @@ struct Matrix4x4
         return Matrix4x4(
             1, 0, 0, 0,
             0, c, s, 0,
-            0, -s,-c, 0,
+            0, -s,c, 0,
             0, 0, 0, 1
         );
     }
