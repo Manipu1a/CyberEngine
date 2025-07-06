@@ -1,16 +1,14 @@
 struct VSInput
 {
     float3 pos : ATTRIB0;
-    float3 normal : ATTRIB1;
+    float3 normal : ATTRIB1; // Using normal as color for demonstration
     float2 uv : ATTRIB2;
-    float4 col : ATTRIB3;
 };
 
 struct PSInput
 {
     float4 Pos : SV_POSITION;
-    float4 Normal : NORMAL;
-    float4 Color : COLOR;
+    float3 Normal : NORMAL;
     float2 UV : TEXCOORD;
 };
 
@@ -23,6 +21,6 @@ void VSMain(in VSInput VSIn,
           out PSInput PSIn)
 {
     PSIn.Pos = mul(ProjectionMatrix, float4(VSIn.pos, 1.0));
-    PSIn.Color = VSIn.col;
+    PSIn.Normal = VSIn.normal;
     PSIn.UV = VSIn.uv;
 }

@@ -18,18 +18,26 @@ namespace Cyber
 
     namespace Samples
     {
-        class CYBER_GAME_API CubeApp : public SampleApp
+        class CYBER_GAME_API PBRApp : public SampleApp
         {
             struct CubeVertex
             {
                 float3 position;
                 float3 normal;
+                float3 tangent;
                 float2 uv;
             };
 
+            struct ConstantMatrix
+            {
+                float4x4 ModelMatrix;
+                float4x4 ViewMatrix;
+                float4x4 ProjectionMatrix;
+            };
+
         public:
-            CubeApp();
-            ~CubeApp();
+            PBRApp();
+            ~PBRApp();
 
             virtual void initialize() override;
             virtual void run() override;
@@ -54,14 +62,16 @@ namespace Cyber
             RenderObject::AttachmentReference attachment_ref[2];
             RenderObject::IRenderPass* render_pass = nullptr;
             
-            RenderObject::ITexture_View* test_texture_view = nullptr;
+            RenderObject::ITexture_View* normal_texture_view = nullptr;
+            RenderObject::ITexture_View* base_color_texture_view = nullptr;
+
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
+            RenderObject::IBuffer* light_constant_buffer = nullptr;
 
-            float3 LightDirection = { 0.577f, -0.577f, 0.577f };
+            float3 LightDirection = { 0.0f, 0.0f, -10.0f};
             float3 LightColor = { 1.0f, 1.0f, 1.0f };
-            
         };
     }
 

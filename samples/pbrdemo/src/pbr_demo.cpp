@@ -1,4 +1,4 @@
-#include "cube.h"
+#include "pbr_demo.h"
 #include "platform/memory.h"
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
@@ -7,6 +7,8 @@
 #include "application/application.h"
 #include "texture_utils.h"
 #include "resource/vertex.h"
+#include "component/light_component.h"
+#include "component/camera_component.h"
 
 namespace Cyber
 {
@@ -14,42 +16,20 @@ namespace Cyber
     {
         Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
         {
-            return Cyber::cyber_new<Cyber::Samples::CubeApp>();
+            return Cyber::cyber_new<Cyber::Samples::PBRApp>();
         }
-        /*
-        const static Vertex cube_verts[8] = {
-            { {-1, -1, -1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
-            { {-1, 1, -1}, {0.0f, 1.0f}, {0,1,0,1}},
-            { {1, 1, -1}, {1.0f, 1.0f}, {0,0,1,1}},
-            { {1, -1, -1}, {1.0f, 0.0f}, {1,1,1,1}},
 
-            { {-1, -1, 1}, {0.0f, 0.0f}, {1,1,0,1}},
-            { {-1, 1, 1}, {0.0f, 1.0f}, {0,1,1,1}},
-            { {1, 1, 1}, {1.0f, 1.0f}, {1,0,1,1}},
-            { {1, -1, 1}, {1.0f, 0.0f}, {0.2f,0.2f,0.2f,1}},
-        };
-
-        const static uint32_t cube_indices[36] = {
-        2,0,1, 2,3,0,
-        4,6,5, 4,7,6,
-        0,7,4, 0,3,7,
-        1,0,4, 1,4,5,
-        1,5,2, 5,6,2,
-        3,6,7, 3,2,6
-        };
-        */
-
-        CubeApp::CubeApp()
+        PBRApp::PBRApp()
         {
 
         }
 
-        CubeApp::~CubeApp()
+        PBRApp::~PBRApp()
         {
             
         }
 
-        void CubeApp::initialize()
+        void PBRApp::initialize()
         {
             SampleApp::initialize();
             m_pApp = Cyber::Core::Application::getApp();
@@ -63,12 +43,12 @@ namespace Cyber
             create_resource();
         }
 
-        void CubeApp::run()
+        void PBRApp::run()
         {
             //m_pApp->run();
         }
 
-        void CubeApp::update(float deltaTime)
+        void PBRApp::update(float deltaTime)
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -81,15 +61,26 @@ namespace Cyber
             float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
             // map vertex constant buffer
             void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* const_ptr = (float4x4*)const_resource;
-            *const_ptr = world_view_proj_matrix;
+            ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
+            const_ptr->ModelMatrix = model_matrix;
+            const_ptr->ViewMatrix = view_matrix;
+            const_ptr->ProjectionMatrix = projection_matrix;
             render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
+            vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
+
+            Component::LightAttribs light_attribs;
+            light_attribs.light_direction = LightDirection;
+            light_attribs.light_intensity = LightColor;
+
+            void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            Component::LightAttribs* light_ptr = (Component::LightAttribs*)light_resource;
+            *light_ptr = light_attribs;
+            render_device->unmap_buffer(light_constant_buffer, MAP_WRITE);
 
             raster_draw();
         }
 
-        void CubeApp::raster_draw()
+        void PBRApp::raster_draw()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -105,7 +96,6 @@ namespace Cyber
             auto back_depth_buffer = scene_target.depth_buffer;
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
-
 
             // record
             device_context->cmd_begin();
@@ -166,8 +156,9 @@ namespace Cyber
             device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
             device_context->render_encoder_bind_pipeline( pipeline);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
-
+            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_texture_view);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, normal_texture_view);
             device_context->prepare_for_rendering(root_signature);
             device_context->render_encoder_draw_indexed(36, 0, 0);
             device_context->cmd_end_render_pass();
@@ -181,7 +172,7 @@ namespace Cyber
             device_context->cmd_resource_barrier(barrier_desc2);
         }
 
-        void CubeApp::present()
+        void PBRApp::present()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -199,7 +190,7 @@ namespace Cyber
             render_device->present(swap_chain);
         }
 
-        void CubeApp::create_gfx_objects()
+        void PBRApp::create_gfx_objects()
         {
             //m_pApp->get_renderer()->create_gfx_objects();
             auto renderer = m_pApp->get_renderer();
@@ -247,7 +238,7 @@ namespace Cyber
             //renderer->set_render_pass(render_pass);
         }
 
-        void CubeApp::create_resource()
+        void PBRApp::create_resource()
         {
             auto render_device = m_pApp->get_renderer()->get_render_device();
             auto renderer = m_pApp->get_renderer();
@@ -255,7 +246,7 @@ namespace Cyber
             
             // load model
             ModelLoader::ModelCreateInfo create_info;
-            create_info.file_path = "../../../../samples/cube/assets/Cube/Cube.gltf";
+            create_info.file_path = "../../../../samples/pbrdemo/assets/Cube/Cube.gltf";
             ModelLoader::ModelLoader model_loader(render_device, device_context, create_info);
             if (!model_loader.is_valid())
             {
@@ -276,7 +267,8 @@ namespace Cyber
             for(size_t i = 0; i < vertex_count; ++i)
             {
                 cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
-                cube_verts[i].normal = float3(0.0f, 0.0f, 0.0f); // Default normal, can be adjusted based on model data
+                cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data.
+                cube_verts[i].tangent = model_verts[i].tangent;
                 cube_verts[i].uv = model_verts[i].uv0;
             }
 
@@ -299,12 +291,18 @@ namespace Cyber
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             index_buffer = render_device->create_buffer(buffer_desc);
 
-            buffer_desc.size = sizeof(float4x4);
+            buffer_desc.size = sizeof(ConstantMatrix);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = render_device->create_buffer(buffer_desc);
             
+            buffer_desc.size = sizeof(Component::LightAttribs);
+            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+            light_constant_buffer = render_device->create_buffer(buffer_desc);
+
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             // map vertex buffer
             CubeVertex* vertices_ptr = (CubeVertex*)vtx_resource;
@@ -324,10 +322,10 @@ namespace Cyber
             {
                 RenderObject::ITexture* test_texture = nullptr;
 
-                eastl::string texture_path(eastl::string::CtorSprintf(), "samples/cube/assets/Cube/%s", meshes[0].image_paths[0].c_str());
+                eastl::string texture_path(eastl::string::CtorSprintf(), "samples/pbrdemo/assets/Cube/%s", meshes[0].image_paths[0].c_str());
 
                 TextureLoader::TextureLoadInfo texture_load_info{
-                CYBER_UTF8("TEST"),
+                CYBER_UTF8("BaseColor"),
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
                 GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
                 0,
@@ -345,22 +343,44 @@ namespace Cyber
                     &test_texture, render_device
                 );
 
-                test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                base_color_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             }
 
+            TextureLoader::TextureLoadInfo texture_load_info{
+                CYBER_UTF8("Normal"),
+                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
+                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
+                0,
+                CPU_ACCESS_NONE,
+                true,
+                false,
+                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
+                false,
+                FILTER_TYPE::FILTER_TYPE_ANISOTROPIC
+                };
+
+            RenderObject::ITexture* normal_texture = nullptr;
+
+            TextureLoader::create_texture_from_file(
+                "samples/pbrdemo/assets/Cube/normal_mapping_normal_map.png",
+                texture_load_info,
+                &normal_texture, render_device
+            );
+
+            normal_texture_view = normal_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
         }
 
-        void CubeApp::create_ui()
+        void PBRApp::create_ui()
         {
 
         }
 
-        void CubeApp::draw_ui()
+        void PBRApp::draw_ui()
         {
 
         }
 
-        void CubeApp::create_render_pipeline()
+        void PBRApp::create_render_pipeline()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
@@ -369,7 +389,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
             vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/cube/assets/shaders/cube_vs.hlsl"),
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_vs.hlsl"),
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
@@ -378,7 +398,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/cube/assets/shaders/cube_ps.hlsl"),
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_ps.hlsl"),
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
@@ -400,6 +420,9 @@ namespace Cyber
             sampler_create_desc.min_lod = 0.0f;
             sampler_create_desc.max_lod = 0.0f;
             auto sampler = render_device->create_sampler(sampler_create_desc);
+
+            RenderObject::ISampler* samplers[] = { sampler, sampler };
+
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
 
             // create root signature
@@ -421,21 +444,15 @@ namespace Cyber
                 .m_staticSamplerCount = 1,
             };
             root_signature = render_device->create_root_signature(root_signature_create_desc);
-            // create descriptor set
 
-            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
-                .root_signature = root_signature,
-                .set_index = 0
-            };
-
-            //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
             RenderObject::VertexAttribute vertex_attributes[] = {
                 {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
                 {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+                {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
+                {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
             };
 
-            RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
+            RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
             
             BlendStateCreateDesc blend_state_desc = {};
             blend_state_desc.render_target_count = 1;
@@ -475,7 +492,7 @@ namespace Cyber
             ps_shader->free();
         }
 
-        void CubeApp::finalize()
+        void PBRApp::finalize()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();

@@ -131,6 +131,10 @@ struct Vector4
     constexpr Vector4() noexcept : Vector4{0} {}
 
     constexpr Vector4(T x, T y, T z, T w) noexcept : x(x), y(y), z(z), w(w) {}
+
+    constexpr Vector4(const Vector3<T>& vec, T w_value = 1) noexcept
+        : x(vec.x), y(vec.y), z(vec.z), w(w_value) {}
+        
 };
 
 template <class T>

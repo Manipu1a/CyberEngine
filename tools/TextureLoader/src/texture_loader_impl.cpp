@@ -2,6 +2,8 @@
 #include "image.h"
 #include "graphics/interface/render_device.hpp"
 #include "common/graphics_utils.hpp"
+#include "texture_utils.h"
+#include "math/common.h"
 #include "core/file_helper.hpp"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
@@ -94,9 +96,9 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
             switch(num_components)
             {
                 case 1 : m_textureCreateDesc.m_format = TEX_FORMAT_R8_UNORM; break; 
-                case 2 : m_textureCreateDesc.m_format = TEX_FORMAT_RG8_UNORM; break; 
+                case 2 : m_textureCreateDesc.m_format = TEX_FORMAT_RG8_UNORM; break;
                 case 4 : m_textureCreateDesc.m_format = texLoadInfo.isSRGB ? TEX_FORMAT_RGBA8_UNORM_SRGB : TEX_FORMAT_RGBA8_UNORM; break; 
-                default: cyber_assert(false, "Unsupported number of components ({0})", num_components);
+                cyber_warn(false, "Unsupported number of components ({0})", num_components);
             }
         }
         else if(channelDepth == 16)
@@ -131,7 +133,22 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
 
     if(imgDesc.numComponents != num_components)
     {
-
+        auto dst_stride = imgDesc.width * num_components * (channelDepth / 8);
+        dst_stride = align_up(dst_stride, (uint32_t)4);
+        m_mips[0].resize(size_t(dst_stride) * size_t(imgDesc.height));
+        m_textureSubResData[0].pData = m_mips[0].data();
+        m_textureSubResData[0].stride = dst_stride;
+        CopyPixelsAttribs copyAttribs;
+        copyAttribs.width = imgDesc.width;
+        copyAttribs.height = imgDesc.height;
+        copyAttribs.component_size = channelDepth / 8;
+        copyAttribs.src_pixels = m_image->get_data_blob()->get_data_ptr();
+        copyAttribs.src_stride = imgDesc.rowStride;
+        copyAttribs.src_comp_count = imgDesc.numComponents;
+        copyAttribs.dst_pixels = m_mips[0].data();
+        copyAttribs.dst_stride = dst_stride;
+        copyAttribs.dst_comp_count = num_components;
+        copy_pixels(copyAttribs);
     }
     else
     {
@@ -139,10 +156,13 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
         m_textureSubResData[0].stride = imgDesc.rowStride;
     }
 
+    // 处理mipmaps
     for(uint32_t m = 1; m < m_textureCreateDesc.m_mipLevels; ++m)
     {
+
     }
 }
+
 void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
 {
 
@@ -156,6 +176,7 @@ void create_texture_loader_from_image()
 {
 
 }
+
 void create_texture_loader_from_file(const char* file_path, IMAGE_FILE_FORMAT image_format, const TextureLoadInfo& tex_load_info, ITextureLoader** texture_loader)
 {
     Core::FileHelper texture_file(file_path, Core::FILE_ACCESS_MODE::FILE_ACCESS_READ);
@@ -173,8 +194,8 @@ void create_texture_loader_from_file(const char* file_path, IMAGE_FILE_FORMAT im
         TextureLoaderImpl* impl = new TextureLoaderImpl(tex_load_info, (uint8_t*)data_blob->get_data_ptr(), data_blob->get_size(), data_blob);
         *texture_loader = impl;
     }
-
 }
+
 void create_texture_loader_from_memory()
 {
 

@@ -33,7 +33,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
     /// to GLSL and used in OpenGL backend as well as compiled to SPIRV and used
     /// in Vulkan backend.
     /// Any value other than default will only work in Direct3D11 and Direct3D12 backends.
-    const char8_t* hlsl_semantic = CYBER_UTF8("ATTRIB");
+    const char* hlsl_semantic = "ATTRIB";
 
     /// Input index of the element that is specified in the vertex shader.
     /// In Direct3D11 and Direct3D12 backends this is the semantic index.
@@ -95,7 +95,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
         instance_data_step_rate(_instance_data_step_rate)
     {}
 
-    constexpr VertexAttribute(const char8_t* _hlsl_semantic,
+    constexpr VertexAttribute(const char* _hlsl_semantic,
                               uint32_t _input_index,
                               uint32_t _buffer_slot,
                               uint32_t _num_components,
@@ -137,7 +137,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
                               
     bool operator == (const VertexAttribute& rhs) const
     {   
-        return safe_u8string_equal( rhs.hlsl_semantic, hlsl_semantic) &&
+        return strcmp( rhs.hlsl_semantic, hlsl_semantic) &&
                input_index == rhs.input_index &&
                buffer_slot == rhs.buffer_slot &&
                num_components == rhs.num_components &&

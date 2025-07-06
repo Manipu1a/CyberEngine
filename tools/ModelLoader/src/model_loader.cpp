@@ -77,14 +77,18 @@ void ModelLoader::load_from_file(RenderObject::IRenderDevice* render_device, Ren
     for(size_t i = 0; i < model.meshes.size(); ++i)
     {
         const tinygltf::Mesh& mesh = model.meshes[i];
+        auto& new_mesh = meshes.emplace_back();
         for(size_t primitive_idx = 0; primitive_idx < mesh.primitives.size(); ++primitive_idx)
         {
             const tinygltf::Primitive& primitive = mesh.primitives[primitive_idx];
-            auto position_attribs = primitive.attributes.find("POSITION"); // Accessing the POSITION attribute
+            // Accessing the POSITION attribute
+            auto position_attribs = primitive.attributes.find("POSITION"); 
             if (position_attribs != primitive.attributes.end())
             {
                 const tinygltf::Accessor& accessor = model.accessors[position_attribs->second];
                 auto vertex_count = accessor.count;
+                new_mesh.model_data.resize(vertex_count);
+
                 if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
                 {
                     continue; // Invalid buffer view index
@@ -101,11 +105,119 @@ void ModelLoader::load_from_file(RenderObject::IRenderDevice* render_device, Ren
                 auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
                 const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
                 const float* vertex_data = static_cast<const float*>(data);
+                auto component_count = stride / sizeof(float);
                 for (size_t j = 0; j < vertex_count; ++j)
                 {
-                    float x = vertex_data[j];
-                    CB_INFO("Vertex {0}: x = {1}", j, x);
-                    // Process vertex_data...
+                    size_t offset = j * component_count;
+                    Mesh::VertexBasicAttribs& vertex = new_mesh.model_data[j];
+                    vertex.pos = { vertex_data[offset], vertex_data[offset + 1], vertex_data[offset + 2] };
+                }
+            }
+            auto normal_attribs = primitive.attributes.find("NORMAL");
+            if (normal_attribs != primitive.attributes.end())
+            {
+                const tinygltf::Accessor& accessor = model.accessors[normal_attribs->second];
+                auto vertex_count = accessor.count;
+
+                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
+                {
+                    continue; // Invalid buffer view index
+                }
+
+                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+                auto stride = accessor.ByteStride(buffer_view);
+                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
+                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+                const float* normal_data = static_cast<const float*>(data);
+                auto component_count = stride / sizeof(float);
+                for (size_t j = 0; j < vertex_count; ++j)
+                {
+                    size_t offset = j * component_count;
+                    new_mesh.model_data[j].normal = { normal_data[offset], normal_data[offset + 1], normal_data[offset + 2] };
+                }
+            }
+            auto tangent_attribs = primitive.attributes.find("TANGENT");
+            if (tangent_attribs != primitive.attributes.end())
+            {
+                const tinygltf::Accessor& accessor = model.accessors[tangent_attribs->second];
+                auto vertex_count = accessor.count;
+
+                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
+                {
+                    continue; // Invalid buffer view index
+                }
+
+                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+                auto stride = accessor.ByteStride(buffer_view);
+                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
+                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+                const float* tangent_data = static_cast<const float*>(data);
+                auto component_count = stride / sizeof(float);
+                for (size_t j = 0; j < vertex_count; ++j)
+                {
+                    size_t offset = j * component_count;
+                    new_mesh.model_data[j].tangent = { tangent_data[offset], tangent_data[offset + 1], tangent_data[offset + 2] };
+                }
+            }
+            
+            auto uv_attribs = primitive.attributes.find("TEXCOORD_0");
+            if( uv_attribs != primitive.attributes.end())
+            {
+                const tinygltf::Accessor& accessor = model.accessors[uv_attribs->second];
+                auto vertex_count = accessor.count;
+
+                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
+                {
+                    continue; // Invalid buffer view index
+                }
+
+                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+                auto stride = accessor.ByteStride(buffer_view);
+                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
+                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+                const float* uv_data = static_cast<const float*>(data);
+                auto component_count = stride / sizeof(float);
+                for (size_t j = 0; j < vertex_count; ++j)
+                {
+                    size_t offset = j * component_count;
+                    new_mesh.model_data[j].uv0 = { uv_data[offset], uv_data[offset + 1] };
+                }
+            }
+
+            // Indices
+            if(primitive.indices >= 0)
+            {
+                const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
+                auto index_count = accessor.count;
+                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
+                {
+                    continue; // Invalid buffer view index
+                }
+
+                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
+                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
+                auto stride = accessor.ByteStride(buffer_view);
+                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
+                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
+                const uint16_t* index_data = static_cast<const uint16_t*>(data);
+                for (size_t j = 0; j < index_count; ++j)
+                {
+                    new_mesh.indices_data.push_back(index_data[j]);
+                }
+            }
+            
+            if(model.textures.size() > 0 && primitive.material >= 0)
+            {
+                const tinygltf::Material& material = model.materials[primitive.material];
+                const tinygltf::Texture& texture = model.textures[material.pbrMetallicRoughness.baseColorTexture.index];
+                if(texture.source > -1)
+                {
+                    const tinygltf::Image& image = model.images[texture.source];
+                    auto image_uri = image.uri;
+                    new_mesh.image_paths.push_back(image_uri);
                 }
             }
         }

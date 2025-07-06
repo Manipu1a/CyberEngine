@@ -146,7 +146,17 @@ struct Model
 
 struct Mesh
 {
-    std::vector<unsigned char> model_data;
+    struct VertexBasicAttribs
+    {
+        float3 pos;
+        float3 normal;
+        float2 uv0;
+        float3 tangent;
+    };
+
+    std::vector<VertexBasicAttribs> model_data;
+    std::vector<uint16_t> indices_data; // Indices for indexed drawing
+    std::vector<std::string> image_paths; // Paths to textures used by the mesh
 };
 
 struct ModelCreateInfo
@@ -174,6 +184,11 @@ public:
     bool is_valid() const
     {
         return !model.meshes.empty();
+    }
+
+    const std::vector<Mesh>& get_meshes() const
+    {
+        return meshes;
     }
 
 private:

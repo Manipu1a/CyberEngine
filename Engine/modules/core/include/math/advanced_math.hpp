@@ -7,7 +7,7 @@ struct BoundBox
 {
     float3 Min;
     float3 Max;
-
+    /*
     BoundBox Transform( const float4x4& m) const
     {
         BoundBox NewBB;
@@ -40,6 +40,7 @@ struct BoundBox
 
         return NewBB;
     };
+    */
 };
 
 CYBER_END_NAMESPACE

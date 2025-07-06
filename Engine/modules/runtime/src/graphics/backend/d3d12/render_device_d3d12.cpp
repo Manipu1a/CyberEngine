@@ -1550,6 +1550,11 @@ namespace Cyber
         DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, d3d_input_layout_desc);
         d3d_input_layout_desc.pInputElementDescs = input_elements.data();
         d3d_input_layout_desc.NumElements = input_element_count;
+        for(uint32_t i = 0; i < input_element_count; ++i)
+        {
+            auto& input_element = input_elements[i];
+            CB_INFO( "TEST");
+        }
         /*
         if(pipelineDesc.vertex_layout)
         {
@@ -1752,6 +1757,7 @@ namespace Cyber
                 CHECK_HRESULT(m_pPipelineLibrary->StorePipeline(pipelineName, pPipeline->pDxPipelineState));
             }
         }
+
         D3D_PRIMITIVE_TOPOLOGY topology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
         switch(pipelineDesc.prim_topology)
         {

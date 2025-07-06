@@ -1,10 +1,10 @@
 #pragma once
-#include <DirectXMath.h>
+#include "math/basic_math.hpp"
 
 struct Vertex
 {
-    DirectX::XMFLOAT3 position;
-    DirectX::XMFLOAT2 uv;
-    DirectX::XMFLOAT4 color;
+    float3 position;
+    float2 uv;
+    float4 color;
 };
 
