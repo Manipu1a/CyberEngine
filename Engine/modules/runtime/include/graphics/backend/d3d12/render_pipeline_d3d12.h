@@ -25,9 +25,12 @@ namespace Cyber
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
             RenderPipeline_D3D12_Impl(class RenderDevice_D3D12_Impl* device, const RenderPipelineCreateDesc& desc) : TRenderPipelineBase(device, desc) {}
+
         protected:
             ID3D12PipelineState* pDxPipelineState;
-            ID3D12RootSignature* pDxRootSignature;
+            //ID3D12RootSignature* pDxRootSignature;
+            RootSignature_D3D12_Impl* root_signature;
+
             D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
 
             friend class DeviceContext_D3D12_Impl;

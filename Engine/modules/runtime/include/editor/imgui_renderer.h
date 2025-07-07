@@ -37,7 +37,6 @@ namespace Cyber
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
-            RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* render_pipeline = nullptr;
             RenderObject::IRenderPass* render_pass = nullptr;

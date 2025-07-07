@@ -85,24 +85,25 @@ namespace Cyber
                 m_desc.m_pSubpasses = (RenderSubpassDesc*)cyber_malloc(desc.m_subpassCount * sizeof(RenderSubpassDesc));
                 for (uint32_t i = 0; i < desc.m_subpassCount; ++i)
                 {
-                    m_desc.m_pSubpasses[i].m_name = desc.m_pSubpasses[i].m_name;
-                    m_desc.m_pSubpasses[i].m_inputAttachmentCount = desc.m_pSubpasses[i].m_inputAttachmentCount;
-                    m_desc.m_pSubpasses[i].m_pInputAttachments = (AttachmentReference*)cyber_malloc(desc.m_pSubpasses[i].m_inputAttachmentCount * sizeof(AttachmentReference));
-                    for (uint32_t j = 0; j < desc.m_pSubpasses[i].m_inputAttachmentCount; ++j)
+                    const RenderSubpassDesc& subpassDesc = desc.m_pSubpasses[i];
+                    m_desc.m_pSubpasses[i].m_name = subpassDesc.m_name;
+                    m_desc.m_pSubpasses[i].m_inputAttachmentCount = subpassDesc.m_inputAttachmentCount;
+                    m_desc.m_pSubpasses[i].m_pInputAttachments = (AttachmentReference*)cyber_malloc(subpassDesc.m_inputAttachmentCount * sizeof(AttachmentReference));
+                    for (uint32_t j = 0; j < subpassDesc.m_inputAttachmentCount; ++j)
                     {
-                        m_desc.m_pSubpasses[i].m_pInputAttachments[j] = desc.m_pSubpasses[i].m_pInputAttachments[j];
+                        m_desc.m_pSubpasses[i].m_pInputAttachments[j] = subpassDesc.m_pInputAttachments[j];
                     }
                     m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = nullptr;
-                    if(desc.m_pSubpasses[i].m_pDepthStencilAttachment)
+                    if(subpassDesc.m_pDepthStencilAttachment)
                     {
                         m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = cyber_new<AttachmentReference>();
-                        *m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = *desc.m_pSubpasses[i].m_pDepthStencilAttachment;
+                        *m_desc.m_pSubpasses[i].m_pDepthStencilAttachment = *subpassDesc.m_pDepthStencilAttachment;
                     }
-                    m_desc.m_pSubpasses[i].m_renderTargetCount = desc.m_pSubpasses[i].m_renderTargetCount;
-                    m_desc.m_pSubpasses[i].m_pRenderTargetAttachments = (AttachmentReference*)cyber_malloc(desc.m_pSubpasses[i].m_renderTargetCount * sizeof(AttachmentReference));
-                    for (uint32_t j = 0; j < desc.m_pSubpasses[i].m_renderTargetCount; ++j)
+                    m_desc.m_pSubpasses[i].m_renderTargetCount = subpassDesc.m_renderTargetCount;
+                    m_desc.m_pSubpasses[i].m_pRenderTargetAttachments = (AttachmentReference*)cyber_malloc(subpassDesc.m_renderTargetCount * sizeof(AttachmentReference));
+                    for (uint32_t j = 0; j < subpassDesc.m_renderTargetCount; ++j)
                     {
-                        m_desc.m_pSubpasses[i].m_pRenderTargetAttachments[j] = desc.m_pSubpasses[i].m_pRenderTargetAttachments[j];
+                        m_desc.m_pSubpasses[i].m_pRenderTargetAttachments[j] = subpassDesc.m_pRenderTargetAttachments[j];
                     }
                 }
             }

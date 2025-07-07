@@ -90,7 +90,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
 
 void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 {
-    //curr_command_context->end_render_pass();
+    curr_command_context->end_render_pass();
     ++state.num_command;
     TDeviceContextBase::cmd_next_sub_pass();
 
@@ -107,14 +107,14 @@ void DeviceContext_D3D12_Impl::cmd_end_render_pass()
     ++state.num_command;
 }
 
+//todo: update descriptor set
 void DeviceContext_D3D12_Impl::render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet)
 {
     const RenderObject::DescriptorSet_D3D12_Impl* Set = static_cast<const RenderObject::DescriptorSet_D3D12_Impl*>(descriptorSet);
     RenderObject::RootSignature_D3D12_Impl* RS = static_cast<RenderObject::RootSignature_D3D12_Impl*>(Set->get_root_signature());
 
     cyber_check(RS);
-    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
-
+    //reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
     
     if(Set->cbv_srv_uav_handle != D3D12_GPU_VIRTUAL_ADDRESS_UNKONWN)
     {
@@ -177,7 +177,9 @@ void DeviceContext_D3D12_Impl::render_encoder_set_blend_factor(const float* blen
 void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pipeline)
 {
     RenderObject::RenderPipeline_D3D12_Impl* Pipeline = static_cast<RenderObject::RenderPipeline_D3D12_Impl*>(pipeline);
-    reset_root_signature(PIPELINE_TYPE_GRAPHICS, Pipeline->pDxRootSignature);
+    render_pipeline = Pipeline;
+    
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, Pipeline->root_signature);
     curr_command_context->set_primitive_topology(Pipeline->mPrimitiveTopologyType);
     ++state.num_command;
     curr_command_context->set_pipeline_state(Pipeline->pDxPipelineState);
@@ -188,10 +190,10 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_pipeline( IRenderPipeline* pi
     {
         state_cache.set_new_shader_data(SHADER_STAGE::SHADER_STAGE_VERT, Pipeline->graphics_pipeline_data.desc.vertex_shader->m_library->get_entry_reflection(0)->get_shader_register_count());
     }
-    
-    if(Pipeline->graphics_pipeline_data.desc.fragment_shader)
+
+    if(Pipeline->graphics_pipeline_data.desc.pixel_shader)
     {
-        state_cache.set_new_shader_data(SHADER_STAGE::SHADER_STAGE_FRAG, Pipeline->graphics_pipeline_data.desc.fragment_shader->m_library->get_entry_reflection(0)->get_shader_register_count());
+        state_cache.set_new_shader_data(SHADER_STAGE::SHADER_STAGE_FRAG, Pipeline->graphics_pipeline_data.desc.pixel_shader->m_library->get_entry_reflection(0)->get_shader_register_count());
     }
 }
 
@@ -223,16 +225,16 @@ void DeviceContext_D3D12_Impl::render_encoder_bind_index_buffer(IBuffer* buffer,
     ++state.num_command;
 }
 
-void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature)
+void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, RootSignature_D3D12_Impl* rootSignature)
 {
-    if(state_cache.bound_root_signature != rootSignature)
+    if(state_cache.bound_root_signature != rootSignature->dxRootSignature)
     {
-        state_cache.bound_root_signature = rootSignature;
+        state_cache.bound_root_signature = rootSignature->dxRootSignature;
 
         if(type == PIPELINE_TYPE_GRAPHICS)
-            curr_command_context->set_graphics_root_signature(rootSignature);
+            curr_command_context->set_graphics_root_signature(rootSignature->dxRootSignature);
         else
-            curr_command_context->set_compute_root_signature(rootSignature);
+            curr_command_context->set_compute_root_signature(rootSignature->dxRootSignature);
         
         ++state.num_command;
     }
@@ -241,7 +243,7 @@ void DeviceContext_D3D12_Impl::reset_root_signature(PIPELINE_TYPE type, ID3D12Ro
 void DeviceContext_D3D12_Impl::render_encoder_push_constants(IRootSignature* rs, const char8_t* name, const void* data)
 {
     RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(rs);
-    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    //reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
     curr_command_context->set_graphics_root_constants(RS->root_parameter_index, RS->root_constant_parameter.Constants.Num32BitValues, data, 0);
     ++state.num_command;
 }
@@ -270,10 +272,10 @@ void DeviceContext_D3D12_Impl::render_encoder_draw_indexed_instanced(uint32_t in
     ++state.num_command;
 }
 
-void DeviceContext_D3D12_Impl::prepare_for_rendering(IRootSignature* root_signature)
+void DeviceContext_D3D12_Impl::prepare_for_rendering()
 {
-    RootSignature_D3D12_Impl* RS = static_cast<RootSignature_D3D12_Impl*>(root_signature);
-    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS->dxRootSignature);
+    RootSignature_D3D12_Impl* RS = render_pipeline->root_signature;
+    reset_root_signature(PIPELINE_TYPE_GRAPHICS, RS);
     bool has_srvs = RS->has_srvs();
     bool has_cbvs = RS->has_cbvs();
     bool has_uavs = RS->has_uavs();
@@ -525,7 +527,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
            }
-            curr_command_context->clear_render_target(tex_view->m_rtvDsvDescriptorHandle, clearValues[i].Color, 0, nullptr);
+            //curr_command_context->clear_render_target(tex_view->m_rtvDsvDescriptorHandle, clearValues[i].Color, 0, nullptr);
 
            ++colorTargetCount;
        }

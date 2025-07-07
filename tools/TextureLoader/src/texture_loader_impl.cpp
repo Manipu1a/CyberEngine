@@ -3,6 +3,7 @@
 #include "graphics/interface/render_device.hpp"
 #include "common/graphics_utils.hpp"
 #include "texture_utils.h"
+#include <algorithm>
 #include "math/common.h"
 #include "core/file_helper.hpp"
 
@@ -163,10 +164,6 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     }
 }
 
-void TextureLoaderImpl::load_from_ktx(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
-{
-
-}
 void TextureLoaderImpl::load_from_dds(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
 {
 

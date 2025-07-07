@@ -148,7 +148,6 @@ namespace Cyber
                 (int32_t)back_buffer->get_create_desc().m_width, 
                 (int32_t)back_buffer->get_create_desc().m_height
             };
-
             device_context->render_encoder_set_scissor( 1, &scissor);
             RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
             uint32_t strides[] = { sizeof(CubeVertex) };
@@ -159,8 +158,15 @@ namespace Cyber
             device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_texture_view);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, normal_texture_view);
-            device_context->prepare_for_rendering(root_signature);
+            device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(36, 0, 0);
+            device_context->cmd_next_sub_pass();
+            // draw environment map
+            device_context->render_encoder_set_viewport(1, &viewport);
+            device_context->render_encoder_set_scissor( 1, &scissor);
+            device_context->render_encoder_bind_pipeline( environment_pipeline);
+            device_context->prepare_for_rendering();
+            device_context->render_encoder_draw(3, 0);
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -198,6 +204,7 @@ namespace Cyber
             auto device_context = renderer->get_device_context();
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
             attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+            RenderObject::AttachmentReference attachment_ref[4];
             attachment_ref[0].m_attachmentIndex = 0;
             attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
             attachment_ref[0].m_loadAction = LOAD_ACTION_CLEAR;
@@ -212,6 +219,20 @@ namespace Cyber
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
 
+            // for environment map
+            attachment_ref[2].m_attachmentIndex = 0;
+            attachment_ref[2].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[2].m_loadAction = LOAD_ACTION_LOAD;
+            attachment_ref[2].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[2].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[2].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[3].m_attachmentIndex = 1;
+            attachment_ref[3].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[3].m_loadAction = LOAD_ACTION_LOAD;
+            attachment_ref[3].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[3].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[3].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+
             subpass_desc[0].m_name = u8"Main Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
@@ -219,23 +240,23 @@ namespace Cyber
             subpass_desc[0].m_renderTargetCount = 1;
             subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
             
-            subpass_desc[1].m_name = u8"UI Subpass";
+            subpass_desc[1].m_name = u8"Environment Map Subpass";
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
             subpass_desc[1].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[1].m_pDepthStencilAttachment = &attachment_ref[3];
             subpass_desc[1].m_renderTargetCount = 1;
-            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[1];
+            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[2];
             
-            RenderObject::RenderPassDesc rp_desc1 = {
-                .m_name = u8"Triangle RenderPass",
+            RenderObject::RenderPassDesc rp_desc = {
+                .m_name = u8"PBR RenderPass",
                 .m_attachmentCount = 1,
                 .m_pAttachments = &attachment_desc,
-                .m_subpassCount = 1,
+                .m_subpassCount = 2,
                 .m_pSubpasses = subpass_desc
-            };
-            
-            render_pass = device_context->create_render_pass(rp_desc1);
-            //renderer->set_render_pass(render_pass);
+            };  
+
+            render_pass = device_context->create_render_pass(rp_desc);
         }
 
         void PBRApp::create_resource()
@@ -435,15 +456,6 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
             pipeline_shader_create_desc[1]->m_library = ps_shader;
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-            
-            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-            };
-            root_signature = render_device->create_root_signature(root_signature_create_desc);
 
             RenderObject::VertexAttribute vertex_attributes[] = {
                 {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
@@ -451,7 +463,6 @@ namespace Cyber
                 {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
                 {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
             };
-
             RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
             
             BlendStateCreateDesc blend_state_desc = {};
@@ -472,15 +483,17 @@ namespace Cyber
             depth_stencil_state_desc.stencil_test = false;
 
             auto& scene_target = renderer->get_scene_target(0);
-            
+
             RenderObject::RenderPipelineCreateDesc rp_desc = 
             {
-                .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
-                .fragment_shader = pipeline_shader_create_desc[1],
+                .pixel_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout_desc,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &depth_stencil_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
                 .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
@@ -488,8 +501,54 @@ namespace Cyber
             };
             pipeline = render_device->create_render_pipeline(rp_desc);
 
+            ResourceLoader::ShaderLoadDesc env_vs_load_desc = {};
+            env_vs_load_desc.target = SHADER_TARGET_6_0;
+            env_vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/environment_map_vs.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> env_vs_shader = ResourceLoader::add_shader(render_device, env_vs_load_desc);
+
+            ResourceLoader::ShaderLoadDesc env_ps_load_desc = {};
+            env_ps_load_desc.target = SHADER_TARGET_6_0;
+            env_ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/environment_map_ps.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> env_ps_shader = ResourceLoader::add_shader(render_device, env_ps_load_desc);
+
+            RenderObject::PipelineShaderCreateDesc* env_pipeline_shader_create_desc[2];
+            env_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
+            env_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
+            env_pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            env_pipeline_shader_create_desc[0]->m_library = env_vs_shader;
+            env_pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            env_pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            env_pipeline_shader_create_desc[1]->m_library = env_ps_shader;
+            env_pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+            RenderObject::RenderPipelineCreateDesc env_rp_desc = 
+            {
+                .vertex_shader = env_pipeline_shader_create_desc[0],
+                .pixel_shader = env_pipeline_shader_create_desc[1],
+                .vertex_layout = &vertex_layout_desc,
+                .blend_state = &blend_state_desc,
+                .depth_stencil_state = &depth_stencil_state_desc,
+                .m_staticSamplerCount = 0,
+                .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
+                .render_target_count = 1,
+                .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
+                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+            };
+
+            environment_pipeline = render_device->create_render_pipeline(env_rp_desc);
+
             vs_shader->free();
             ps_shader->free();
+            env_vs_shader->free();
+            env_ps_shader->free();
         }
 
         void PBRApp::finalize()
@@ -507,7 +566,6 @@ namespace Cyber
             render_device->free_swap_chain(swap_chain);
             render_device->free_surface(surface);
             render_device->free_render_pipeline(pipeline);
-            render_device->free_root_signature(root_signature);
             render_device->free_device();
             render_device->free_instance(instance);
         }

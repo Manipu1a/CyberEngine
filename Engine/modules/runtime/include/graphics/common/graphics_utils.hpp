@@ -4,6 +4,7 @@
 #include "interface/root_signature_pool.h"
 #include "EASTL/string.h"
 #include "CyberLog/Log.h"
+#include "interface/texture.hpp"
 
 namespace Cyber
 {
@@ -98,6 +99,23 @@ namespace Cyber
     CYBER_GRAPHICS_API uint32_t compute_mip_levels_count(uint32_t width, uint32_t height, uint32_t depth);
 
     CYBER_GRAPHICS_API const TextureFormatAttribs& get_texture_format_attribs(TEXTURE_FORMAT format);
+
+    struct MipLevelProperties
+    {
+        uint32_t logical_width = 0;
+        uint32_t logical_height = 0;
+
+        uint32_t storage_width = 0;
+        uint32_t storage_height = 0;
+
+        uint32_t depth = 1;
+        uint64_t row_size = 0;
+        uint64_t depth_slice_size = 0;
+        uint64_t mip_size = 0;
+    };
+
+    CYBER_GRAPHICS_API MipLevelProperties compute_mip_level_properties(const RenderObject::TextureCreateDesc& load_info, uint32_t mip_level);
+
 }
 
 

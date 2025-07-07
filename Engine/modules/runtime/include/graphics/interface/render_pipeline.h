@@ -20,17 +20,25 @@ namespace Cyber
 
         struct CYBER_GRAPHICS_API RenderPipelineCreateDesc
         {
-            class IRootSignature* root_signature;
+            //class IRootSignature* root_signature;
             PipelineShaderCreateDesc* vertex_shader;
             PipelineShaderCreateDesc* mesh_shader;
             PipelineShaderCreateDesc* amplification_shader;
             PipelineShaderCreateDesc* geometry_shader;
-            PipelineShaderCreateDesc* fragment_shader;
+            PipelineShaderCreateDesc* pixel_shader;
             PipelineShaderCreateDesc* compute_shader;
             VertexLayoutDesc* vertex_layout;
             BlendStateCreateDesc* blend_state;
             DepthStateCreateDesc* depth_stencil_state;
             RasterizerStateCreateDesc* rasterizer_state;
+
+            ISampler** m_staticSamplers;
+            const char8_t* const* m_staticSamplerNames;
+            uint32_t m_staticSamplerCount;
+            const char8_t* const* m_pushConstantNames;
+            uint32_t m_pushConstantCount;
+            const char8_t* const* root_descriptor_names;
+            uint32_t root_descriptor_count;
 
             const TEXTURE_FORMAT* color_formats;
             uint32_t render_target_count;
@@ -89,10 +97,10 @@ namespace Cyber
                     graphics_pipeline.geometry_shader = cyber_new<PipelineShaderCreateDesc>();
                     *graphics_pipeline.geometry_shader = *create_desc.geometry_shader;
                 }
-                if(create_desc.fragment_shader)
+                if(create_desc.pixel_shader)
                 {
-                    graphics_pipeline.fragment_shader = cyber_new<PipelineShaderCreateDesc>();
-                    *graphics_pipeline.fragment_shader = *create_desc.fragment_shader;
+                    graphics_pipeline.pixel_shader = cyber_new<PipelineShaderCreateDesc>();
+                    *graphics_pipeline.pixel_shader = *create_desc.pixel_shader;
                 }
                 VertexLayoutDesc* input_layout = cyber_new<VertexLayoutDesc>();
                 input_layout->attribute_count = graphics_pipeline.vertex_layout->attribute_count;

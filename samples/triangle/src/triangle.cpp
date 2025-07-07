@@ -140,7 +140,7 @@ namespace Cyber
             device_context->render_encoder_bind_pipeline( pipeline);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
 
-            device_context->prepare_for_rendering(root_signature);
+            device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(3, 0, 0);
             //device_context->render_encoder_draw(3, 0);
             device_context->cmd_end_render_pass();
@@ -421,16 +421,7 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_library = ps_shader;
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
             
-            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-            };
-            root_signature = render_device->create_root_signature(root_signature_create_desc);
             // create descriptor set
-
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
                 .set_index = 0
@@ -458,11 +449,13 @@ namespace Cyber
             
             RenderObject::RenderPipelineCreateDesc rp_desc = 
             {
-                .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
-                .fragment_shader = pipeline_shader_create_desc[1],
+                .pixel_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout_desc,
                 .blend_state = &blend_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
                 .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,

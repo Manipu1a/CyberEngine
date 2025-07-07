@@ -26,8 +26,9 @@ namespace Cyber
 
             RenderPass_D3D12_Impl(RenderDeviceImplType* device, const RenderPassDesc& desc) : TRenderPassBase(device, desc) {}
         protected:
-            ID3D12PipelineState* pDxPipelineState;
-            ID3D12RootSignature* pDxRootSignature;
+            //ID3D12PipelineState* pDxPipelineState;
+            //ID3D12RootSignature* pDxRootSignature;
+            
             D3D_PRIMITIVE_TOPOLOGY mPrimitiveTopologyType;
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };

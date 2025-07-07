@@ -52,7 +52,7 @@ public:
     virtual void render_encoder_draw_indexed(uint32_t index_count, uint32_t first_index, uint32_t first_vertex) override;
     virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
 
-    virtual void prepare_for_rendering(IRootSignature* root_signature) override;
+    virtual void prepare_for_rendering() override;
     
     virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) override;
     
@@ -90,7 +90,7 @@ private:
     void flush(bool request_new_command_context, uint32_t num_command_lists = 0, ICommandBuffer** command_lists = nullptr);
     void update_buffer_region(Buffer_D3D12_Impl* buffer, Dynamic_Allocation_D3D12& allocation, uint64_t dst_offset, uint64_t num_bytes, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode);
     void transition_or_verify_buffer_state(CommandContext& cmd_ctx, Buffer_D3D12_Impl& buffer, GRAPHICS_RESOUCE_STATE_TRANSTION_MODE transition_mode, GRAPHICS_RESOURCE_STATE required_state);
-    void reset_root_signature(PIPELINE_TYPE type, ID3D12RootSignature* rootSignature);
+    void reset_root_signature(PIPELINE_TYPE type, RootSignature_D3D12_Impl* rootSignature);
     
     eastl::unique_ptr<CommandContext> curr_command_context = nullptr;
 

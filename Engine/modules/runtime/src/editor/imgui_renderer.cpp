@@ -293,7 +293,7 @@ namespace Cyber
                             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, offsets);
                         }
                         //device_context->render_encoder_bind_descriptor_set(descriptor_set);
-                        device_context->prepare_for_rendering(root_signature);
+                        device_context->prepare_for_rendering();
                         device_context->render_encoder_draw_indexed(cmd->ElemCount, cmd->IdxOffset + global_index_offset, vertex_offset);
                     }
                 }
@@ -378,26 +378,6 @@ namespace Cyber
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
             const char8_t* root_descriptor_names[] = { CYBER_UTF8("Constants") };
 
-            //todo: not use reflection
-            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-                .root_descriptor_names = root_descriptor_names,
-                .root_descriptor_count = 1,
-            };
-            // todo 针对特定类型constent buffer选择不同更新方式
-            root_signature = render_device->create_root_signature(root_signature_create_desc);
-            /*
-            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
-                .root_signature = root_signature,
-                .set_index = 0
-            };
-            */
-            //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
-
             attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             attachment_ref[0].m_attachmentIndex = 0;
             attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
@@ -445,14 +425,17 @@ namespace Cyber
             blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
             RenderObject::RenderPipelineCreateDesc rp_desc = {
-                .root_signature = root_signature,
                 .vertex_shader = pipeline_shader_create_desc[0],
-                .fragment_shader = pipeline_shader_create_desc[1],
+                .pixel_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
                 .blend_state = &blend_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
+                .root_descriptor_names = root_descriptor_names,
+                .root_descriptor_count = 1,
                 .color_formats = &swap_chain->get_back_buffer(0)->get_create_desc().m_format,
                 .render_target_count = 1,
-                //.depth_stencil_format = m_depthBufferFmt,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
             render_pipeline = render_device->create_render_pipeline(rp_desc);

@@ -124,7 +124,7 @@ namespace Cyber
             virtual void set_unordered_access_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
             virtual void set_root_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
             
-            virtual void prepare_for_rendering(IRootSignature* root_signature) = 0;
+            virtual void prepare_for_rendering() = 0;
             
             // Render Pass
             virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
@@ -135,6 +135,7 @@ namespace Cyber
         {
         public:
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
+            using RenderPipelineImplType = typename EngineImplTraits::RenderPipelineImplType;
             DeviceContextBase(RenderDeviceImplType* device, const DeviceContextDesc& desc) : render_device(device), desc(desc) {}
 
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override
@@ -190,6 +191,7 @@ namespace Cyber
             uint32_t m_subpassIndex = 0;
             IRenderPass* m_pRenderPass = nullptr;
             IFrameBuffer* m_pFrameBuffer = nullptr;
+            RenderPipelineImplType* render_pipeline = nullptr;
             uint32_t ClearValueCount;
             GRAPHICS_CLEAR_VALUE* color_clear_values;
             GRAPHICS_CLEAR_VALUE depth_stencil_clear_value;

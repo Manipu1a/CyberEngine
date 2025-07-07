@@ -168,7 +168,7 @@ namespace Cyber
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
 
-            device_context->prepare_for_rendering(root_signature);
+            device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(36, 0, 0);
             device_context->cmd_end_render_pass();
 

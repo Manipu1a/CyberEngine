@@ -1510,9 +1510,17 @@ namespace Cyber
 
     IRenderPipeline* RenderDevice_D3D12_Impl::create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc)
     {
-        RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(pipelineDesc.root_signature);
+        RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
+                .vertex_shader = pipelineDesc.vertex_shader,
+                .pixel_shader = pipelineDesc.pixel_shader,
+                .m_staticSamplers = pipelineDesc.m_staticSamplers,
+                .m_staticSamplerNames = pipelineDesc.m_staticSamplerNames,
+                .m_staticSamplerCount = pipelineDesc.m_staticSamplerCount,
+            };
+        auto root_signature = create_root_signature(root_signature_create_desc);
+        RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(root_signature);
         RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>(this, pipelineDesc);
-        
+        pPipeline->root_signature = DxRootSignature;
 
        // DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
@@ -1637,9 +1645,9 @@ namespace Cyber
                 }
                 case SHADER_STAGE_FRAG:
                 {
-                    if(pipelineDesc.fragment_shader)
+                    if(pipelineDesc.pixel_shader)
                     {
-                        ShaderLibrary_D3D12_Impl* frag_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.fragment_shader->m_library.get();
+                        ShaderLibrary_D3D12_Impl* frag_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.pixel_shader->m_library.get();
                         pixel_shader.pShaderBytecode = frag_lib->get_shader_blob()->GetBufferPointer();
                         pixel_shader.BytecodeLength = frag_lib->get_shader_blob()->GetBufferSize();
                     }
@@ -1786,7 +1794,6 @@ namespace Cyber
                 break;
         }
         pPipeline->mPrimitiveTopologyType = topology;
-        pPipeline->pDxRootSignature = DxRootSignature->dxRootSignature;
         return pPipeline;
     }
 

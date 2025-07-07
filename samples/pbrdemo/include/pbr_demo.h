@@ -54,16 +54,18 @@ namespace Cyber
             void finalize();
 
         protected:
-            RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
+            RenderObject::IRenderPipeline* environment_pipeline = nullptr;
+
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
-            RenderObject::AttachmentReference attachment_ref[2];
+
             RenderObject::IRenderPass* render_pass = nullptr;
             
             RenderObject::ITexture_View* normal_texture_view = nullptr;
             RenderObject::ITexture_View* base_color_texture_view = nullptr;
+            RenderObject::ITexture_View* environment_map_texture_view = nullptr;
 
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
