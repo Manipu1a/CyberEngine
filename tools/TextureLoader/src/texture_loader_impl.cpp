@@ -28,7 +28,7 @@ TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, const u
     const auto imgFileFormat = Image::get_file_format(data, dataSize);
     if(imgFileFormat == IMAGE_FILE_FORMAT_UNKNOWN)
     {
-        cyber_assert(false, "Unable to derive image format.");
+        //cyber_assert(false, "Unable to derive image format.");
     }
 
     if(imgFileFormat == IMAGE_FILE_FORMAT_PNG || 
@@ -45,6 +45,20 @@ TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, const u
         Image::create_from_data_blob(imgLoadInfo, m_dataBlob, &m_image);
         load_from_image(texLoadInfo);
     }
+    else if(imgFileFormat == IMAGE_FILE_FORMAT_KTX)
+    {
+        load_from_ktx(texLoadInfo, data, dataSize);
+    }
+    else if(imgFileFormat == IMAGE_FILE_FORMAT_DDS)
+    {
+        load_from_dds(texLoadInfo, data, dataSize);
+    }
+    else
+    {
+        load_from_hdr(texLoadInfo, data, dataSize);
+    }
+
+
 }
 
 TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, class Image* image)
@@ -162,11 +176,6 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
     {
 
     }
-}
-
-void TextureLoaderImpl::load_from_dds(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize)
-{
-
 }
 
 void create_texture_loader_from_image()

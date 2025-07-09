@@ -65,7 +65,7 @@ namespace Cyber
             
             RenderObject::ITexture_View* normal_texture_view = nullptr;
             RenderObject::ITexture_View* base_color_texture_view = nullptr;
-            RenderObject::ITexture_View* environment_map_texture_view = nullptr;
+            RenderObject::ITexture_View* environment_texture_view = nullptr;
 
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;

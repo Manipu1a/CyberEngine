@@ -158,6 +158,7 @@ namespace Cyber
             device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_texture_view);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, normal_texture_view);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, environment_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(36, 0, 0);
             device_context->cmd_next_sub_pass();
@@ -389,6 +390,16 @@ namespace Cyber
             );
 
             normal_texture_view = normal_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
+            texture_load_info.name = CYBER_UTF8("EnvironmentMap");
+            RenderObject::ITexture* environment_texture = nullptr;
+            TextureLoader::create_texture_from_file(
+                "samples/pbrdemo/assets/minedump_flats_4k.hdr",
+                texture_load_info,
+                &environment_texture, render_device
+            );
+
+            environment_texture_view = environment_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
         }
 
         void PBRApp::create_ui()
