@@ -164,7 +164,7 @@ namespace Cyber
                     renderer->resize_viewport(viewport_size.x, viewport_size.y);
                     //renderer->resize_swap_chain(viewport_size.x, viewport_size.y);
                     //render_device->bind_texture_view(color_buffer);
-                    ImGui::Image((ImTextureID)color_buffer, ImVec2(viewport_size.x, viewport_size.y), ImVec2(0, 1), ImVec2(1, 0), tint_col, border_col);
+                    ImGui::Image((ImTextureID)color_buffer, ImVec2(viewport_size.x, viewport_size.y), ImVec2(0, 0), ImVec2(1, 1), tint_col, border_col);
                 }
                 ImGui::EndChild();
             }

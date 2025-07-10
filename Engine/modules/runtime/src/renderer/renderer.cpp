@@ -174,7 +174,7 @@ namespace Cyber
         {
             RenderObject::TextureCreateDesc color_buffer_desc = scene_target[0].color_buffer->get_create_desc();
 
-            float aspect_ratio = static_cast<float>(900) / static_cast<float>(500);
+            float aspect_ratio = static_cast<float>(color_buffer_desc.m_width) / static_cast<float>(color_buffer_desc.m_height);
             float YScale = 1.0f / std::tan(fov * 0.5f);
             float XScale = YScale / aspect_ratio;
 

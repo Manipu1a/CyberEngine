@@ -12,7 +12,7 @@ target("ModelLoader")
     add_deps("mozjpeg", {public=true})
     add_deps("libpng", {public=true})
     add_deps("GLTF", {public=true})
-    add_deps("stb", {public=true})
+    add_deps("TextureLoader", {public=true})
     add_defines("CYBER_API_EXPORT")
-    add_defines("TINYGLTF_IMPLEMENTATION", "STB_IMAGE_IMPLEMENTATION", "STB_IMAGE_WRITE_IMPLEMENTATION", "TINYGLTF_NOEXCEPTION", "JSON_NOEXCEPTION",
-                 "TINYGLTF_NO_STB_IMAGE_WRITE")
+    add_defines( "TINYGLTF_NOEXCEPTION", "JSON_NOEXCEPTION",
+                 "TINYGLTF_NO_STB_IMAGE_WRITE", "TINYGLTF_IMPLEMENTATION")

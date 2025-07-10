@@ -106,8 +106,6 @@ struct Vector3
     {
         return Vector3 {static_cast<T>(value[0]), static_cast<T>(value[1]), static_cast<T>(value[2])};
     }
-
-
 };
 
 template <class T>

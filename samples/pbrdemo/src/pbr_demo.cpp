@@ -58,6 +58,7 @@ namespace Cyber
             float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
             float4x4 view_matrix = float4x4::translation(0.0f, 0.0f, 5.0f);
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
+            float4x4 view_projection_matrix = view_matrix * projection_matrix;
             float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
             // map vertex constant buffer
             void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
@@ -76,6 +77,15 @@ namespace Cyber
             Component::LightAttribs* light_ptr = (Component::LightAttribs*)light_resource;
             *light_ptr = light_attribs;
             render_device->unmap_buffer(light_constant_buffer, MAP_WRITE);
+
+            void* camera_resource = render_device->map_buffer(camera_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            Component::CameraAttribs* camera_ptr = (Component::CameraAttribs*)camera_resource;
+            camera_ptr->camera_position = float4(0.0f, 0.0f, -10.0f, 1.0f);
+            //camera_ptr->view_matrix = view_matrix;
+            //camera_ptr->projection_matrix = projection_matrix;
+            //camera_ptr->view_projection_matrix = view_matrix * projection_matrix;
+            camera_ptr->inverse_view_projection_matrix = view_projection_matrix.inverse();
+            render_device->unmap_buffer(camera_constant_buffer, MAP_WRITE);
 
             raster_draw();
         }
@@ -166,6 +176,8 @@ namespace Cyber
             device_context->render_encoder_set_viewport(1, &viewport);
             device_context->render_encoder_set_scissor( 1, &scissor);
             device_context->render_encoder_bind_pipeline( environment_pipeline);
+            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, camera_constant_buffer);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw(3, 0);
             device_context->cmd_end_render_pass();
@@ -324,6 +336,9 @@ namespace Cyber
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             light_constant_buffer = render_device->create_buffer(buffer_desc);
+
+            buffer_desc.size = sizeof(Component::CameraAttribs);
+            camera_constant_buffer = render_device->create_buffer(buffer_desc);
 
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             // map vertex buffer
@@ -547,7 +562,9 @@ namespace Cyber
                 .vertex_layout = &vertex_layout_desc,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &depth_stencil_state_desc,
-                .m_staticSamplerCount = 0,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
                 .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                 .render_target_count = 1,
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,

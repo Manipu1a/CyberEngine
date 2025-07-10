@@ -71,7 +71,8 @@ namespace Cyber
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
-
+            RenderObject::IBuffer* camera_constant_buffer = nullptr;
+            
             float3 LightDirection = { 0.0f, 0.0f, -10.0f};
             float3 LightColor = { 1.0f, 1.0f, 1.0f };
         };

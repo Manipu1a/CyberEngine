@@ -10,6 +10,173 @@ CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Math)
 
 template<class T>
+struct Matrix3x3
+{
+    union
+    {
+        T m[3][3];
+        struct
+        {
+            T m00, m01, m02;
+            T m10, m11, m12;
+            T m20, m21, m22;
+        };
+    };
+
+    constexpr explicit Matrix3x3(T value) noexcept :
+        m00(value), m01(value), m02(value),
+        m10(value), m11(value), m12(value),
+        m20(value), m21(value), m22(value)
+    {
+
+    }
+
+    constexpr Matrix3x3() noexcept : 
+        Matrix3x3{0} {}
+
+    constexpr Matrix3x3(T m00, T m01, T m02,
+                        T m10, T m11, T m12,
+                        T m20, T m21, T m22) noexcept :
+        m00(m00), m01(m01), m02(m02),
+        m10(m10), m11(m11), m12(m12),
+        m20(m20), m21(m21), m22(m22)
+        {   }
+
+    constexpr Matrix3x3(const Vector3<T>& col0,
+                        const Vector3<T>& col1,
+                        const Vector3<T>& col2) noexcept :
+        m00(col0.x), m01(col1.x), m02(col2.x),
+        m10(col0.y), m11(col1.y), m12(col2.y),
+        m20(col0.z), m21(col1.z), m22(col2.z)
+    {
+
+    }
+
+    constexpr bool operator==(const Matrix3x3& r) const
+    {
+        for (size_t i = 0; i < 3; ++i)
+        {
+            for (size_t j = 0; j < 3; ++j)
+            {
+                if (m[i][j] != r.m[i][j])
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    constexpr bool operator!=(const Matrix3x3& r) const
+    {
+        return !(*this == r);
+    }
+
+    T* operator[](size_t row)
+    {
+        return m[row];
+    }
+
+    const T* operator[](size_t row) const
+    {
+        return m[row];
+    }
+
+    T* Data() { return (*this)[0]; }
+    const T* Data() const { return (*this)[0]; }
+
+    Matrix3x3& operator*=(T s)
+    {
+        for(int i = 0; i < 9; ++i)
+        {
+            (reinterpret_cast<T*>(this))[i] *= s;
+        }
+        return *this;
+    }
+
+    Matrix3x3& operator*=(const Matrix3x3& right)
+    {
+        *this = mul(*this, right);
+        return *this;
+    }
+
+    // 转置
+    constexpr Matrix3x3 transpose() const
+    {
+        return Matrix3x3(
+            m00, m10, m20,
+            m01, m11, m21,
+            m02, m12, m22
+        );
+    }
+
+    constexpr static Matrix3x3 translation(T x, T y)
+    {
+        return Matrix3x3(
+            1, 0, 0,
+            0, 1, 0,
+            x, y, 1
+        );
+    }
+
+    constexpr static Matrix3x3 scale(T x, T y)
+    {
+        return Matrix3x3(
+            x, 0, 0,
+            0, y, 0,
+            0, 0, 1
+        );
+    }
+
+    constexpr static Matrix3x3 scale(T s)
+    {
+        return Matrix3x3(
+            s, 0, 0,
+            0, s, 0,
+            0, 0, 1
+        );
+    }
+
+    constexpr static Matrix3x3 scale(const Vector2<T>& v)
+    {
+        return scale(v.x, v.y);
+    }
+
+    constexpr static Matrix3x3 mul(const Matrix3x3& m1, const Matrix3x3& m2)
+    {
+        Matrix3x3 out;
+        for(int i = 0; i < 3; i++)
+        {
+            for(int j = 0; j < 3; j++)
+            {
+                for(int k = 0; k < 3; k++)
+                {
+                    out.m[i][j] += m1.m[i][k] * m2.m[k][j];
+                }
+            }
+        }
+        return out;
+    }
+
+    constexpr T determinant() const
+    {
+        T det = 0;
+        det += m00 * (m11 * m22 - m12 * m21);
+        det -= m01 * (m10 * m22 - m12 * m20);
+        det += m02 * (m10 * m21 - m11 * m20);
+        return det;
+    }
+
+    constexpr Matrix3x3 inverse() const
+    {
+        Matrix3x3 inv;
+
+
+        return inv;
+    }
+
+};
+template<class T>
 struct Matrix4x4
 {
     union
@@ -109,7 +276,7 @@ struct Matrix4x4
         return *this;
     }
 
-    
+    // 转置
     // Returns the transpose of the matrix
     constexpr Matrix4x4 transpose() const
     {
@@ -228,6 +395,103 @@ struct Matrix4x4
         return result;
     }
 
+    constexpr T determinant() const
+    {
+        T det = 0.f;
+
+        det += m00 * Matrix3x3<T>(m11, m12, m13,
+                                m21, m22, m23,
+                                m31, m32, m33).determinant();
+
+        det -= m01 * Matrix3x3<T>(m10, m12, m13,
+                                m20, m22, m23,
+                                m30, m32, m33).determinant();
+
+        det += m02 * Matrix3x3<T>(m10, m11, m13,
+                                m20, m21, m23,
+                                m30, m31, m33).determinant();
+        
+        det += m03 * Matrix3x3<T>(m10, m11, m12,
+                                m20, m21, m22,
+                                m30, m31, m32).determinant();
+        return det;
+    }
+
+    constexpr Matrix4x4 inverse() const
+    {
+        Matrix4x4 inv;
+
+        // row 1
+        inv.m00 = Matrix3x3<T>(m11, m12, m13,
+                               m21, m22, m23,
+                               m31, m32, m33).determinant();
+        
+        inv.m01 = -Matrix3x3<T>(m10, m12, m13,
+                                m20, m22, m23,
+                                m30, m32, m33).determinant();
+        
+        inv.m02 = Matrix3x3<T>(m10, m11, m13,
+                               m20, m21, m23,
+                                 m30, m31, m33).determinant();
+        inv.m03 = -Matrix3x3<T>(m10, m11, m12,
+                                m20, m21, m22,
+                                m30, m31, m32).determinant();
+        
+        // row 2
+        inv.m10 = -Matrix3x3<T>(m01, m02, m03,
+                                m21, m22, m23,
+                                m31, m32, m33).determinant();
+
+        inv.m11 = Matrix3x3<T>(m00, m02, m03,
+                                 m20, m22, m23,
+                                 m30, m32, m33).determinant();
+
+        inv.m12 = -Matrix3x3<T>(m00, m01, m03,
+                                 m20, m21, m23,
+                                 m30, m31, m33).determinant();
+        inv.m13 = Matrix3x3<T>(m00, m01, m02,
+                                m20, m21, m22,
+                                m30, m31, m32).determinant();
+
+        // row 3
+        inv.m20 = Matrix3x3<T>(m01, m02, m03,
+                                m11, m12, m13,
+                                m31, m32, m33).determinant();
+
+        inv.m21 = -Matrix3x3<T>(m00, m02, m03,
+                                 m10, m12, m13,
+                                 m30, m32, m33).determinant();
+        inv.m22 = Matrix3x3<T>(m00, m01, m03,
+                                 m10, m11, m13,
+                                 m30, m31, m33).determinant();
+
+        inv.m23 = -Matrix3x3<T>(m00, m01, m02,
+                                 m10, m11, m12,
+                                 m30, m31, m32).determinant();
+        // row 4
+        inv.m30 = -Matrix3x3<T>(m01, m02, m03,
+                                 m11, m12, m13,
+                                 m21, m22, m23).determinant();
+
+        inv.m31 = Matrix3x3<T>(m00, m02, m03,
+                                    m10, m12, m13,
+                                    m20, m22, m23).determinant();
+
+        inv.m32 = -Matrix3x3<T>(m00, m01, m03,
+                                    m10, m11, m13, 
+                                    m20, m21, m23).determinant();
+
+        inv.m33 = Matrix3x3<T>(m00, m01, m02,
+                                    m10, m11, m12,
+                                    m20, m21, m22).determinant();
+
+        auto det = m00 * inv.m00 + m01 * inv.m01 + m02 * inv.m02 + m03 * inv.m03;
+
+        inv = inv.transpose();
+        inv *= 1.0f / det;
+
+        return inv;
+    }
 };
 
 template<class T>

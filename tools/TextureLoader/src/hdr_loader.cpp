@@ -8,6 +8,12 @@
 #include "core/file_helper.hpp"
 #include "dds_loader.h"
 
+#ifndef STB_IMAGE_IMPLEMENTATION_INCLUDED
+#define STB_IMAGE_IMPLEMENTATION_INCLUDED
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+#endif
+
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(TextureLoader)
 
@@ -104,86 +110,29 @@ void decompressScanline(uint8_t* out, const uint8_t*& in, uint32_t width)
 
 void TextureLoaderImpl::load_from_hdr(const TextureLoadInfo& loadInfo, const uint8_t* data, size_t dataSize)
 {
-    if(dataSize < 11)
-    {
-        cyber_assert(false, "HDR data size is too small.");
-        return;
-    }
+    int x, y, channels_in_file;
+    //auto* hdr_data = stbi_load_from_memory(data, static_cast<int>(dataSize), &x, &y, &channels_in_file, 0);
+    float* hdr_data = stbi_loadf("../../../../samples/pbrdemo/assets/minedump_flats_4k.hdr", &x, &y, &channels_in_file, 0);
 
-    const uint8_t* hdrData = data;
-
-    char Line[256];
-
-    get_header_line(hdrData, Line);
-
-    if(strcmp(Line, "#?RADIANCE"))
+    if(hdr_data == nullptr)
     {
         return;
     }
+    m_textureCreateDesc.m_dimension = TEX_DIMENSION_2D;
+    m_textureCreateDesc.m_width = x;
+    m_textureCreateDesc.m_height = y;
+    m_textureCreateDesc.m_depth = 1;
+    m_textureCreateDesc.m_arraySize = 1;
+    m_textureCreateDesc.m_mipLevels = 1;
+    m_textureCreateDesc.m_format = channels_in_file == 3 ? TEX_FORMAT_RGB32_FLOAT : TEX_FORMAT_RGBA32_FLOAT;
+    m_textureCreateDesc.m_sampleCount = SAMPLE_COUNT_1;
 
-    const uint8_t* rgb_data_start = nullptr;
+    m_textureSubResData.resize(1);
 
-    for(;;)
-    {
-        get_header_line(hdrData, Line);
-        char* height_str = std::strstr(Line, "-Y");
-        char* width_str = std::strstr(Line, "+X");
-        
-        if(height_str != nullptr && width_str != nullptr)
-        {
-            *(width_str - 1) = 0;
-
-            m_textureCreateDesc.m_height = atoi(height_str + 3);
-            m_textureCreateDesc.m_width = atoi(width_str + 3);
-
-            rgb_data_start = hdrData;
-            break;
-        }
-    }    
-
-    if(rgb_data_start != nullptr)
-    {
-        std::vector<uint8_t> dds_rgb_data;
-
-        dds_rgb_data.resize(4 + sizeof(DDS_HEADER) +
-                            m_textureCreateDesc.m_width * m_textureCreateDesc.m_height * 4);
-
-        uint32_t* dds_magic_number = reinterpret_cast<uint32_t*>(dds_rgb_data.data());
-        *dds_magic_number = DDS_MAGIC;
-
-        DDS_HEADER* dds_header = reinterpret_cast<DDS_HEADER*>(dds_rgb_data.data() + 4);
-
-        dds_header->size = sizeof(DDS_HEADER);
-        dds_header->flags = DDSF_Caps | DDSF_HEIGHT | DDSF_WIDTH | DDSF_PIXELFORMAT;
-        dds_header->width = m_textureCreateDesc.m_width;
-        dds_header->height = m_textureCreateDesc.m_height;
-        dds_header->caps2 = 0;
-        dds_header->mipMapCount = 1;
-        dds_header->ddspf.size = sizeof(DDS_PIXELFORMAT);
-        dds_header->ddspf.flags = DDS_RGB;
-        dds_header->ddspf.RGBBitCount = 32;
-        dds_header->ddspf.RBitMask = 0x00FF0000;
-        dds_header->ddspf.GBitMask = 0x0000FF00;
-        dds_header->ddspf.BBitMask = 0x000000FF;
-
-        uint32_t* dds_rgb_data_ptr = reinterpret_cast<uint32_t*>(dds_rgb_data.data() + 4 + sizeof(DDS_HEADER));
-
-        const uint8_t* file_data_ptr = rgb_data_start;
-
-        for(uint32_t y = 0;y < m_textureCreateDesc.m_height; ++y)
-        {
-            uint8_t* line = (uint8_t*)&dds_rgb_data_ptr[m_textureCreateDesc.m_width * y];
-
-            decompressScanline(line, file_data_ptr, m_textureCreateDesc.m_width);
-
-            for(uint32_t x = 0; x < m_textureCreateDesc.m_width; ++x)
-            {
-                std::swap(line[x * 4 + 0], line[x * 4 + 2]);
-            }
-        }
-
-        load_from_dds(loadInfo, dds_rgb_data.data(), dds_rgb_data.size());
-    }
+    m_textureSubResData[0].pData = hdr_data;
+    m_textureSubResData[0].stride = static_cast<size_t>(x * sizeof(float) * channels_in_file);
+    m_textureSubResData[0].depthStride = static_cast<size_t>(x * y * sizeof(float) * channels_in_file);
+    m_textureSubResData[0].srcOffset = 0;
 }
 
 CYBER_END_NAMESPACE
