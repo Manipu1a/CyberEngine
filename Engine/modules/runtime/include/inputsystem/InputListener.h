@@ -1,6 +1,6 @@
 #pragma once
 #include <gainput/gainput.h>
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 
 namespace Cyber
 {

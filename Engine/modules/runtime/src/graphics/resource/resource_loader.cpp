@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <vcruntime.h>
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "platform/memory.h"
 #include "interface/render_device.hpp"
 #include "interface/shader_library.h"

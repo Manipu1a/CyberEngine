@@ -492,6 +492,34 @@ struct Matrix4x4
 
         return inv;
     }
+
+    static Matrix4x4 look_at(const Vector3<T>& eye, const Vector3<T>& target, const Vector3<T>& up)
+    {
+        // forward
+        Vector3<T> forward = normalize(target - eye);
+
+        // right
+        Vector3<T> right = normalize(cross(up, forward));
+
+        // up
+        Vector3<T> up_vector = cross(forward, right);
+
+        // 将世界坐标基向量转换到相机坐标系
+        Matrix4x4 result;
+
+        result.m00 = right.x; result.m10 = right.y; result.m20 = right.z; result.m30 = 0;
+        result.m01 = up_vector.x; result.m11 = up_vector.y; result.m21 = up_vector.z; result.m31 = 0;
+        result.m02 = forward.x; result.m12 = forward.y; result.m22 = forward.z; result.m32 = 0;
+        result.m03 = 0; result.m13 = 0; result.m23 = 0; result.m33 = 1;
+
+        // 平移
+        result.m30 = -dot(right, eye);
+        result.m31 = -dot(up_vector, eye);
+        result.m32 = -dot(forward, eye);
+        result.m33 = 1;
+
+        return result;
+    }
 };
 
 template<class T>

@@ -8,7 +8,9 @@
 #include "platform/memory.h"
 #include "platform/platform_misc.h"
 #include "EASTL/map.h"
-#include "CyberLog/Log.h"
+#include "graphics/common/graphics_utils.hpp"
+#include "math/common.h"
+#include "log/Log.h"
 
 namespace Cyber
 {
@@ -92,7 +94,7 @@ namespace Cyber
             }
         };
 
-
+        CYBER_GRAPHICS_API MipLevelProperties compute_mip_level_properties(const RenderObject::TextureCreateDesc& load_info, uint32_t mip_level);
         struct CYBER_GRAPHICS_API ITexture : public IDeviceObject
         {
             virtual const TextureCreateDesc& get_create_desc() const = 0;
@@ -115,13 +117,30 @@ namespace Cyber
 
             Texture(RenderDeviceImplType* device, TextureCreateDesc desc) : TTextureBase(device), m_desc(desc) 
             { 
-                m_aspectMask = 0;
-                m_nodeIndex = 0;
-                m_isCube = 0;
-                m_isDedicated = 0;
-                m_ownsImage = 1;
                 m_pNativeHandle = nullptr;
                 m_pDefaultTextureViews = nullptr;
+
+                if(m_desc.m_mipLevels == 0)
+                {
+                    if(m_desc.m_dimension == TEX_DIMENSION_1D || m_desc.m_dimension == TEX_DIMENSION_1D_ARRAY)
+                    {
+                        m_desc.m_mipLevels = compute_mip_levels_count(m_desc.m_width);
+                    }
+                    else if(m_desc.m_dimension == TEX_DIMENSION_2D || m_desc.m_dimension == TEX_DIMENSION_2D_ARRAY
+                            || m_desc.m_dimension == TEX_DIMENSION_CUBE || m_desc.m_dimension == TEX_DIMENSION_CUBE_ARRAY)
+                    {
+                        m_desc.m_mipLevels = compute_mip_levels_count(m_desc.m_width, m_desc.m_height);
+                    }
+                    else if(m_desc.m_dimension == TEX_DIMENSION_3D)
+                    {
+                        m_desc.m_mipLevels = compute_mip_levels_count(m_desc.m_width, m_desc.m_height, m_desc.m_depth);
+                    }
+                    else
+                    {
+                        cyber_assert(false, "Unsupported texture dimension for mip level calculation");
+                    }
+                }
+
             }
             
             virtual ~Texture() = default;

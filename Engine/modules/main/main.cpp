@@ -1,5 +1,5 @@
 #include <iostream>
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "platform/memory.h"
 #include "gameruntime/sampleapp.h"
 

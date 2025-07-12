@@ -3,8 +3,7 @@
 #include "interface/root_signature.hpp"
 #include "interface/root_signature_pool.h"
 #include "EASTL/string.h"
-#include "CyberLog/Log.h"
-#include "interface/texture.hpp"
+#include "log/Log.h"
 
 namespace Cyber
 {
@@ -113,8 +112,6 @@ namespace Cyber
         uint64_t depth_slice_size = 0;
         uint64_t mip_size = 0;
     };
-
-    CYBER_GRAPHICS_API MipLevelProperties compute_mip_level_properties(const RenderObject::TextureCreateDesc& load_info, uint32_t mip_level);
 
 }
 

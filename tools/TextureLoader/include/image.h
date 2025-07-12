@@ -1,5 +1,5 @@
 #pragma once
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "core/interface/data_blob.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)

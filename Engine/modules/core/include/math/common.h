@@ -2,6 +2,7 @@
 
 #include <float.h>
 #include <type_traits>
+#include "log/Log.h"
 #include <DirectXMath.h>
 
 namespace Cyber

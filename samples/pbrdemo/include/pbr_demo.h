@@ -35,6 +35,16 @@ namespace Cyber
                 float4x4 ProjectionMatrix;
             };
 
+            struct PrecomputeEnvMapAttribs
+            {
+                float4x4 rotation;
+
+                float roughness;
+                float env_map_size;
+                uint32_t num_samples;
+                float dummy;
+            };
+
         public:
             PBRApp();
             ~PBRApp();
@@ -54,9 +64,14 @@ namespace Cyber
             void finalize();
 
         protected:
+            void precompute_environment_map();
+
+        protected:
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
             RenderObject::IRenderPipeline* environment_pipeline = nullptr;
+            RenderObject::IRenderPipeline* irradiance_pipeline = nullptr;
+            RenderObject::IRenderPipeline* prefiltered_pipeline = nullptr;
 
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
@@ -66,13 +81,19 @@ namespace Cyber
             RenderObject::ITexture_View* normal_texture_view = nullptr;
             RenderObject::ITexture_View* base_color_texture_view = nullptr;
             RenderObject::ITexture_View* environment_texture_view = nullptr;
+            RenderObject::ITexture_View* prefiltered_cube_texture_view = nullptr;
+            RenderObject::ITexture* irradiance_cube_texture = nullptr;
+
+            static constexpr uint32_t irradiance_cube_size = 64;
+            static constexpr uint32_t prefiltered_cube_size = 256;
 
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;
-            
+            RenderObject::IBuffer* precompute_env_map_buffer = nullptr;
+
             float3 LightDirection = { 0.0f, 0.0f, -10.0f};
             float3 LightColor = { 1.0f, 1.0f, 1.0f };
         };

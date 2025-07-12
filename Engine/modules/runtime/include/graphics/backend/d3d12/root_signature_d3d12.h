@@ -7,7 +7,7 @@
 #include "eastl/array.h"
 #include "d3dx12_root_signature.h"
 #include "graphics_types_d3d12.h"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 
 
 namespace Cyber

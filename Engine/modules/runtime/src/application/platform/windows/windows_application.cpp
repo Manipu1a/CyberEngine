@@ -1,6 +1,6 @@
 #include "application/platform/windows/windows_application.h"
 #include "CyberEvents/ApplicationEvent.h"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include <windef.h>
 #include "imgui/imgui.h"
 #include "imgui/backends/imgui_impl_win32.h"

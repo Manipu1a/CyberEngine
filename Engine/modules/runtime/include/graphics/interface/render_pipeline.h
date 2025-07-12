@@ -102,19 +102,24 @@ namespace Cyber
                     graphics_pipeline.pixel_shader = cyber_new<PipelineShaderCreateDesc>();
                     *graphics_pipeline.pixel_shader = *create_desc.pixel_shader;
                 }
-                VertexLayoutDesc* input_layout = cyber_new<VertexLayoutDesc>();
-                input_layout->attribute_count = graphics_pipeline.vertex_layout->attribute_count;
-                VertexAttribute* attributes = cyber_new_n<VertexAttribute>(input_layout->attribute_count);
-                for(uint32_t i = 0; i < input_layout->attribute_count; i++)
+
+                if(create_desc.vertex_layout)
                 {
-                    attributes[i] = graphics_pipeline.vertex_layout->attributes[i];
-                    if(attributes[i].value_type == VALUE_TYPE_FLOAT32 || attributes[i].value_type == VALUE_TYPE_FLOAT16)
+                    VertexLayoutDesc* input_layout = cyber_new<VertexLayoutDesc>();
+                    input_layout->attribute_count = create_desc.vertex_layout->attribute_count;
+                    VertexAttribute* attributes = cyber_new_n<VertexAttribute>(input_layout->attribute_count);
+                    for(uint32_t i = 0; i < input_layout->attribute_count; i++)
                     {
-                        attributes[i].is_normalized = false;
+                        attributes[i] = create_desc.vertex_layout->attributes[i];
+                        if(attributes[i].value_type == VALUE_TYPE_FLOAT32 || attributes[i].value_type == VALUE_TYPE_FLOAT16)
+                        {
+                            attributes[i].is_normalized = false;
+                        }
                     }
+
+                    graphics_pipeline.vertex_layout->attributes = attributes;
                 }
 
-                graphics_pipeline.vertex_layout->attributes = attributes;
 
                 eastl::array<uint32_t, MAX_BUFFER_SLOTS> strides, tight_strides;
 

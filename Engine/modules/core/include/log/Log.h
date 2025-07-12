@@ -1,5 +1,5 @@
 #pragma once
-#include "cyber_log.config.h"
+#include "cyber_core.config.h"
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 #include <EASTL/shared_ptr.h>
@@ -8,7 +8,7 @@
 
 namespace Cyber
 {
-    class CYBER_LOG_API Log
+    class CYBER_CORE_API Log
     {
     public:
         static void initLog();

@@ -39,8 +39,10 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
 
-            create_render_pipeline();
             create_resource();
+            create_render_pipeline();
+
+            precompute_environment_map();
         }
 
         void PBRApp::run()
@@ -55,11 +57,18 @@ namespace Cyber
 
             static float time = 0.0f;
             time += deltaTime;
+
             float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
-            float4x4 view_matrix = float4x4::translation(0.0f, 0.0f, 5.0f);
+
+            float3 camera_position = { 0.0f, 0.0f, -10.0f };
+            float3 camera_target = { 0.0f, 0.0f, 0.0f };
+            float3 camera_up = { 0.0f, 1.0f, 0.0f };
+            
+            float4x4 view_matrix = float4x4::look_at(camera_position, camera_target, camera_up);
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
             float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
+
             // map vertex constant buffer
             void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
@@ -340,6 +349,9 @@ namespace Cyber
             buffer_desc.size = sizeof(Component::CameraAttribs);
             camera_constant_buffer = render_device->create_buffer(buffer_desc);
 
+            buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
+            precompute_env_map_buffer = render_device->create_buffer(buffer_desc);
+
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             // map vertex buffer
             CubeVertex* vertices_ptr = (CubeVertex*)vtx_resource;
@@ -415,6 +427,88 @@ namespace Cyber
             );
 
             environment_texture_view = environment_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
+            RenderObject::TextureCreateDesc textureDesc = {};
+            textureDesc.m_name = CYBER_UTF8("IrradianceCube");
+            textureDesc.m_width = irradiance_cube_size;
+            textureDesc.m_height = irradiance_cube_size;
+            textureDesc.m_depth = 1;
+            textureDesc.m_arraySize = 6;
+            textureDesc.m_mipLevels = 0;
+            textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_CUBE;
+            textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
+            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
+            textureDesc.m_cpuAccessFlags = CPU_ACCESS_NONE;
+            textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
+            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
+            irradiance_cube_texture = render_device->create_texture(textureDesc);
+        }
+
+        void PBRApp::precompute_environment_map()
+        {
+            auto render_device = m_pApp->get_renderer()->get_render_device();
+            auto renderer = m_pApp->get_renderer();
+            auto device_context = renderer->get_device_context();
+
+            if(irradiance_pipeline)
+            {
+                const eastl::array<float4x4, 6> irradiance_rotation_matrices = {
+                    float4x4::RotationY(PI_ / 2.0f), // +X
+                    float4x4::RotationY(-PI_ / 2.0f), // -X
+                    float4x4::RotationX(-PI_ / 2.0f), // +Y
+                    float4x4::RotationX(PI_ / 2.0f), // -Y
+                    float4x4::Identity(), // +Z
+                    float4x4::RotationY(PI_) // -Z
+                };
+
+                RenderObject::Viewport viewport;
+                viewport.top_left_x = 0.0f;
+                viewport.top_left_y = 0.0f;
+                viewport.width = (float)irradiance_cube_size;
+                viewport.height = (float)irradiance_cube_size;
+                viewport.min_depth = 0.0f;
+                viewport.max_depth = 1.0f;
+                RenderObject::Rect scissor = {
+                    0, 0, 
+                    (int32_t)irradiance_cube_size, 
+                    (int32_t)irradiance_cube_size
+                };
+
+                device_context->render_encoder_bind_pipeline(irradiance_pipeline);
+                device_context->render_encoder_set_viewport(1, &viewport);
+                device_context->render_encoder_set_scissor(1, &scissor);
+
+                const auto& irradiance_cube_desc = irradiance_cube_texture->get_create_desc();
+                auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+
+                for(uint32_t mip = 0; mip < irradiance_cube_desc.m_mipLevels; ++mip)
+                {
+                    for(uint32_t face = 0; face < 6; ++face)
+                    {
+                        void* mapped_data = render_device->map_buffer(precompute_env_map_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                        PrecomputeEnvMapAttribs* precompute_attribs = (PrecomputeEnvMapAttribs*)mapped_data;
+                        precompute_attribs->rotation = irradiance_rotation_matrices[face];
+                        RenderObject::TextureViewCreateDesc rtv_desc = {};
+                        rtv_desc.p_texture = irradiance_cube_texture;
+                        rtv_desc.view_type = TEXTURE_VIEW_RENDER_TARGET;
+                        rtv_desc.format = irradiance_cube_texture->get_create_desc().m_format;
+                        rtv_desc.dimension = TEX_DIMENSION_2D_ARRAY; // 重要：单个面是2D
+                        rtv_desc.baseArrayLayer = face;        // 关键：指定要渲染的面
+                        rtv_desc.arrayLayerCount = 1;          // 只渲染一个面
+                        rtv_desc.baseMipLevel = mip;
+                        rtv_desc.mipLevelCount = 1;
+                        irradiance_cube_texture_view = render_device->create_texture_view(rtv_desc);
+
+                        device_context->set_render_target(1, &irradiance_cube_texture_view, nullptr);
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, precompute_env_map_buffer);
+                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
+                        device_context->prepare_for_rendering();
+                        device_context->render_encoder_draw(4, 0);
+                    }
+                }
+
+                device_context->flush();
+            }
         }
 
         void PBRApp::create_ui()
@@ -451,6 +545,7 @@ namespace Cyber
             };
             eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
+            //todo: remove sampler to static
             RenderObject::SamplerCreateDesc sampler_create_desc = {};
             sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
             sampler_create_desc.mag_filter = FILTER_TYPE_LINEAR;
@@ -559,7 +654,7 @@ namespace Cyber
             {
                 .vertex_shader = env_pipeline_shader_create_desc[0],
                 .pixel_shader = env_pipeline_shader_create_desc[1],
-                .vertex_layout = &vertex_layout_desc,
+                .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &depth_stencil_state_desc,
                 .m_staticSamplers = &sampler,
@@ -570,10 +665,53 @@ namespace Cyber
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
-
             environment_pipeline = render_device->create_render_pipeline(env_rp_desc);
 
-            vs_shader->free();
+            ResourceLoader::ShaderLoadDesc irr_vs_load_desc = {};
+            irr_vs_load_desc.target = SHADER_TARGET_6_0;
+            irr_vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cubemap.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> irr_vs_shader = ResourceLoader::add_shader(render_device, irr_vs_load_desc);
+
+            ResourceLoader::ShaderLoadDesc irr_ps_load_desc = {};
+            irr_ps_load_desc.target = SHADER_TARGET_6_0;
+            irr_ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/compute_irradiance_map.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> irr_ps_shader = ResourceLoader::add_shader(render_device, irr_ps_load_desc);
+            RenderObject::PipelineShaderCreateDesc* irr_pipeline_shader_create_desc[2];
+            irr_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
+            irr_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
+            irr_pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            irr_pipeline_shader_create_desc[0]->m_library = irr_vs_shader;
+            irr_pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            irr_pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            irr_pipeline_shader_create_desc[1]->m_library = irr_ps_shader;
+            irr_pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+            RenderObject::RenderPipelineCreateDesc irr_rp_desc = 
+            {
+                .vertex_shader = irr_pipeline_shader_create_desc[0],
+                .pixel_shader = irr_pipeline_shader_create_desc[1],
+                .vertex_layout = nullptr,
+                .blend_state = &blend_state_desc,
+                .depth_stencil_state = &depth_stencil_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
+                .color_formats = &irradiance_cube_texture->get_create_desc().m_format,
+                .render_target_count = 1,
+                .depth_stencil_format = TEX_FORMAT_UNKNOWN,
+                .prim_topology = PRIM_TOPO_TRIANGLE_STRIP,
+            };
+            irradiance_pipeline = render_device->create_render_pipeline(irr_rp_desc);
+
+            vs_shader->free();  
             ps_shader->free();
             env_vs_shader->free();
             env_ps_shader->free();

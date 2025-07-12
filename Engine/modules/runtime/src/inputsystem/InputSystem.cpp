@@ -1,5 +1,5 @@
 #include "inputsystem/InputSystem.h"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "inputsystem/InputListener.h"
 
 namespace Cyber

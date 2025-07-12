@@ -3,7 +3,7 @@
 #include "device_object.h"
 #include "graphics_types.h"
 #include "eastl/string.h"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 
 namespace Cyber
 {

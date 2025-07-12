@@ -4,7 +4,7 @@
 #include <EASTL/hash_map.h>
 #include <EASTL/string_hash_map.h>
 #include "graphics/backend/d3d12/d3d12_utils.h"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "dxcapi.h"
 #include "math/common.h"
 #include <combaseapi.h>
@@ -567,6 +567,7 @@ namespace Cyber
     RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& Desc, TextureData* pInitData)
     {
         RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this, Desc);
+
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
         bool InitializeTexture = pInitData != nullptr;
@@ -1537,10 +1538,10 @@ namespace Cyber
         const auto& input_layout_desc = pipelineDesc.vertex_layout;
         // Input layout
         eastl::vector<D3D12_INPUT_ELEMENT_DESC> input_elements;
-        input_elements.resize(input_layout_desc->attribute_count);
 
-        if(input_layout_desc->attribute_count > 0)
+        if(input_layout_desc && input_layout_desc->attribute_count > 0)
         {
+            input_elements.resize(input_layout_desc->attribute_count);
             for(uint32_t i = 0; i < input_layout_desc->attribute_count; ++i)
             {
                 const VertexAttribute* attribute = &input_layout_desc->attributes[i];
@@ -1558,6 +1559,7 @@ namespace Cyber
         DECLARE_ZERO(D3D12_INPUT_LAYOUT_DESC, d3d_input_layout_desc);
         d3d_input_layout_desc.pInputElementDescs = input_elements.data();
         d3d_input_layout_desc.NumElements = input_element_count;
+
         for(uint32_t i = 0; i < input_element_count; ++i)
         {
             auto& input_element = input_elements[i];

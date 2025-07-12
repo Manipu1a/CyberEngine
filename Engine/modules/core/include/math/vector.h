@@ -1,6 +1,7 @@
 #pragma once
 #include "math/common.h"
 #include "basic_math.hpp"
+#include <cmath>
 #include "platform/configure.h"
 #include "cyber_core.config.h"
 
@@ -101,12 +102,42 @@ struct Vector3
                         z >= other.z ? static_cast<T>(1) : static_cast<T>(0)};
     }
 
+    constexpr Vector3 operator-(const Vector3& other) const
+    {
+        return Vector3{x - other.x, y - other.y, z - other.z}   ;
+    }
+
     template <typename Y>
     constexpr static Vector3 make_vector(const Y& value) noexcept
     {
         return Vector3 {static_cast<T>(value[0]), static_cast<T>(value[1]), static_cast<T>(value[2])};
     }
+
 };
+
+template<class T>
+static Vector3<T> normalize(const Vector3<T>& v)
+{
+    T length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (length == 0) return Vector3<T>{0, 0, 0};
+    return Vector3<T>{v.x / length, v.y / length, v.z / length};
+}
+
+template<class T>
+static Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b)
+{
+    return Vector3<T>{
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+
+template<class T>
+static float dot(const Vector3<T>& a, const Vector3<T>& b)
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
 
 template <class T>
 struct Vector4

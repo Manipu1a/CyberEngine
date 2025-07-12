@@ -1,7 +1,7 @@
 #include "image.h"
 #include "platform/memory.h"
 #include "core/data_blob_impl.hpp"
-#include "CyberLog/Log.h"
+#include "log/Log.h"
 #include "eastl/string.h"
 #include "png_codec.h"
 #include "jpeg_codec.h"
