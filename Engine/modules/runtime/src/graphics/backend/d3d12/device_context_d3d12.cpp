@@ -34,6 +34,7 @@ DeviceContext_D3D12_Impl::DeviceContext_D3D12_Impl(RenderDeviceImplType* device,
 {
     m_pDynamicHeap = cyber_new<Dynamic_Heap_D3D12>(m_dynamic_mem_mgr, "DynamicHeap", 1024 * 1024);
 
+    default_buffer_allocator = cyber_new<D3D12DefaultBufferAllocator>(device);
     request_command_context();
 }
 

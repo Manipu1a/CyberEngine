@@ -2,6 +2,7 @@
 #include "graphics/interface/device_context.h"
 #include "command_context.h"
 #include "dynamic_heap_d3d12.hpp"
+#include "d3d12_default_buffer_allocator.h"
 #include "engine_impl_traits_d3d12.hpp"
 #include "state_cache_d3d12.h"
 
@@ -96,7 +97,8 @@ private:
 
     Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;
     Dynamic_Heap_D3D12* m_pDynamicHeap;
-
+    D3D12DefaultBufferAllocator* default_buffer_allocator = nullptr;
+    
     // Cached state and shader parameters
     StateCache_D3D12 state_cache;
 
