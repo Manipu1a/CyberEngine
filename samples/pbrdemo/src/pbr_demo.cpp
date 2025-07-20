@@ -177,9 +177,11 @@ namespace Cyber
             device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_texture_view);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, normal_texture_view);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, environment_texture_view);
+            auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(36, 0, 0);
+            /*
             device_context->cmd_next_sub_pass();
             // draw environment map
             device_context->render_encoder_set_viewport(1, &viewport);
@@ -189,6 +191,7 @@ namespace Cyber
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw(3, 0);
+            */
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -418,7 +421,19 @@ namespace Cyber
 
             normal_texture_view = normal_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
 
-            texture_load_info.name = CYBER_UTF8("EnvironmentMap");
+            TextureLoader::TextureLoadInfo env_texture_load_info{
+                CYBER_UTF8("EnvironmentMap"),
+                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
+                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
+                0,
+                CPU_ACCESS_NONE,
+                true,
+                false,
+                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
+                false,
+                FILTER_TYPE::FILTER_TYPE_ANISOTROPIC
+                };
+            //texture_load_info.name = CYBER_UTF8("EnvironmentMap");
             RenderObject::ITexture* environment_texture = nullptr;
             TextureLoader::create_texture_from_file(
                 "samples/pbrdemo/assets/minedump_flats_4k.hdr",
@@ -427,14 +442,14 @@ namespace Cyber
             );
 
             environment_texture_view = environment_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-
+            
             RenderObject::TextureCreateDesc textureDesc = {};
             textureDesc.m_name = CYBER_UTF8("IrradianceCube");
             textureDesc.m_width = irradiance_cube_size;
             textureDesc.m_height = irradiance_cube_size;
             textureDesc.m_depth = 1;
             textureDesc.m_arraySize = 6;
-            textureDesc.m_mipLevels = 0;
+            textureDesc.m_mipLevels = 7;
             textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_CUBE;
             textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
             textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
@@ -474,6 +489,15 @@ namespace Cyber
                     (int32_t)irradiance_cube_size
                 };
 
+                TextureBarrier draw_barrier = {
+                .texture = irradiance_cube_texture,
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
+                };
+                ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                device_context->cmd_resource_barrier(barrier_desc);
+
                 device_context->render_encoder_bind_pipeline(irradiance_pipeline);
                 device_context->render_encoder_set_viewport(1, &viewport);
                 device_context->render_encoder_set_scissor(1, &scissor);
@@ -507,6 +531,9 @@ namespace Cyber
                     }
                 }
 
+                draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+                draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+                device_context->cmd_resource_barrier(barrier_desc);
                 device_context->flush();
             }
         }

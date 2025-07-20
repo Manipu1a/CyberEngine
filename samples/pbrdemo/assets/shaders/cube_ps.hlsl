@@ -14,7 +14,7 @@ struct PSOutput
 
 Texture2D BaseColor_Texture;
 Texture2D Normal_Texture;
-Texture2D Environment_Texture;
+TextureCube Environment_Texture;
 
 SamplerState Texture_sampler;
 
@@ -29,9 +29,10 @@ void PSMain(in  PSInput  PSIn,
 {
     float4 col = BaseColor_Texture.Sample(Texture_sampler, PSIn.UV);
     float3 normal = Normal_Texture.Sample(Texture_sampler, PSIn.UV).xyz;
-    float4 environment_color = Environment_Texture.Sample(Texture_sampler, PSIn.UV);
-    
     normal = normal * float3(2.0, 2.0, 1.0) - float3(1.0, 1.0, 0.0); // Convert normal from [0,1] to [-1,1]
+    normal = normalize(normal);
+    float4 environment_color = Environment_Texture.Sample(Texture_sampler, normal);
+    
     // TBN matrix
     float3 Bitangent = cross(PSIn.Normal, PSIn.Tangent);
     float3x3 TBN = float3x3(PSIn.Tangent, Bitangent, PSIn.Normal);
@@ -39,5 +40,5 @@ void PSMain(in  PSInput  PSIn,
 
     float NoL = dot(normal, normalize(LightDirection.xyz));
     // PSOut.Color = float4(normal, 1.0);
-    PSOut.Color = environment_color * col * NoL;
+    PSOut.Color = environment_color * NoL + col;
 }

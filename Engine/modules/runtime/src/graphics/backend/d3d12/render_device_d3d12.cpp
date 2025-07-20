@@ -336,7 +336,7 @@ namespace Cyber
                     case TEX_DIMENSION_CUBE:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                        srvDesc.TextureCube.MipLevels = viewDesc.mipLevelCount;
+                        srvDesc.TextureCube.MipLevels = -1;
                         srvDesc.TextureCube.MostDetailedMip = viewDesc.baseMipLevel;
                     }
                     break;
@@ -528,6 +528,11 @@ namespace Cyber
                         rtvDesc.Texture3D.MipSlice = viewDesc.baseMipLevel;
                         rtvDesc.Texture3D.FirstWSlice = viewDesc.baseArrayLayer;
                         rtvDesc.Texture3D.WSize = viewDesc.arrayLayerCount;
+                    }
+                    break;
+                    case TEX_DIMENSION_CUBE:
+                    {
+                        // Cube textures are not supported as render targets in D3D12, please use a texture array instead.
                     }
                     break;
                     default:
@@ -2088,6 +2093,8 @@ namespace Cyber
                 if(heap_properties.Type != D3D12_HEAP_TYPE_DEFAULT)
                 {
                     auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
+                    //m_pDxDevice->CreatePlacedResource(ID3D12Heap *pHeap, UINT64 HeapOffset, const D3D12_RESOURCE_DESC *pDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE *pOptimizedClearValue, const IID &riid, void **ppvResource)
+                    
                     if(FAILED(hr))
                     {
                         cyber_error(false, "Failed to create D3D12 Buffer Resource");
@@ -2710,6 +2717,7 @@ namespace Cyber
         //todo 堆内存爆了
         DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
         D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_SRVS];
+        UINT src_size[MAX_SRVS];
 
         for (uint32_t i = 0; i < slots_need; ++i)
         {
@@ -2718,12 +2726,13 @@ namespace Cyber
                 cpu_handle[i] = D3D12_CPU_DESCRIPTOR_HANDLE{texture_view->m_dxDescriptorHandles.ptr + texture_view->m_srvDescriptorOffset };
             }
             else
-            {
+            {       
                 cpu_handle[i] = m_pNullDescriptors->TextureSRV[TEXTURE_DIMENSION::TEX_DIMENSION_2D];
             }
+
+            src_size[i] = 1;
         }
-        //m_pDxDevice->CopyDescriptorsSimple(slots_need, dest_handle.mCpu, cpu_handle[0], D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        m_pDxDevice->CopyDescriptors(1, &dest_handle.mCpu, &slots_need, 1, cpu_handle, &slots_need, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        m_pDxDevice->CopyDescriptors(1, &dest_handle.mCpu, &slots_need, slots_need, cpu_handle, src_size, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         return dest_handle.mGpu;
     }
 

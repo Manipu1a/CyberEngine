@@ -158,8 +158,9 @@ namespace Cyber
                     GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | 
                     GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS | 
                     GRAPHICS_RESOURCE_BIND_SHADING_RATE;
-                return Platform_Misc::count_one_bits(
+                auto num_views = Platform_Misc::count_one_bits(
                     m_desc.m_bindFlags & bind_flags_with_views);
+                return num_views;
             }
 
             TextureViewImplType** get_default_texture_views_array()
@@ -229,7 +230,12 @@ namespace Cyber
                     view_desc.format = m_desc.m_format;
                     view_desc.view_type = view_type;
                     view_desc.aspects = TEXTURE_VIEW_ASPECT::TVA_COLOR;
-                    view_desc.dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
+                    TEXTURE_DIMENSION dim = m_desc.m_dimension;
+                    if((m_desc.m_dimension == TEX_DIMENSION_CUBE || m_desc.m_dimension == TEX_DIMENSION_CUBE_ARRAY) && view_type == TEXTURE_VIEW_TYPE::TEXTURE_VIEW_RENDER_TARGET)
+                    {
+                        dim = TEX_DIMENSION_2D_ARRAY;
+                    }
+                    view_desc.dimension = dim;
                     view_desc.baseArrayLayer = 0;
                     view_desc.arrayLayerCount = 1;
                     view_desc.baseMipLevel = 0;
