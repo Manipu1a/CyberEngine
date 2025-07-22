@@ -38,6 +38,7 @@
 #include "graphics/backend/d3d12/render_pipeline_d3d12.h"
 #include "graphics/backend/d3d12/semaphore_d3d12.h"
 #include "graphics/backend/d3d12/buffer_view_d3d12.h"
+#include "graphics/backend/d3d12/d3d12_default_buffer_allocator.h"
 #include "platform/configure.h"
 
 #pragma comment(lib, "d3d12.lib")
@@ -102,6 +103,8 @@ namespace Cyber
         // Create D3D12MA Allocator
         create_dma_allocallor(dxAdapter);
         cyber_assert(m_pResourceAllocator, "DMA Allocator Must be Created!");
+        // Create Default Buffer Allocator
+        default_buffer_allocator = cyber_new<D3D12DefaultBufferAllocator>(this);
 
         // Create Descriptor Heaps
         for(uint32_t i = 0; i < D3D12_DESCRIPTOR_HEAP_TYPE_NUM_TYPES; ++i)
@@ -1997,7 +2000,10 @@ namespace Cyber
         RenderObject::Buffer_D3D12_Impl* d3d12_buffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this, create_desc);
 
         uint32_t buffer_alignment = 1;
-        if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS)
+
+        RenderObject::Buffer_D3D12_Impl::get_buffer_alignment(create_desc, buffer_alignment);
+
+        if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER)
             buffer_alignment = D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT;
 
         if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING && create_desc.cpu_access_flags == CPU_ACCESS_WRITE)
@@ -2072,6 +2078,15 @@ namespace Cyber
                 else if(heap_properties.Type == D3D12_HEAP_TYPE_UPLOAD)
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_GENERIC_READ);
 
+                if(create_desc.bind_flags | GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER)
+                {
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_VERTEX_BUFFER);
+                }
+                else if(create_desc.bind_flags | GRAPHICS_RESOURCE_BIND_INDEX_BUFFER)
+                {
+                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_INDEX_BUFFER);
+                }
+
                 heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
                 heap_properties.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
                 heap_properties.CreationNodeMask = GRAPHICS_SINGLE_GPU_NODE_MASK;
@@ -2080,9 +2095,6 @@ namespace Cyber
                 const auto initial_data_size = (initial_data != nullptr && initial_data->data != nullptr) ? 
                     std::min(initial_data->data_size, allocationSize) : 0;
 
-                if(initial_data_size > 0)
-                    d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_COPY_DEST);
-
                 if(d3d12_buffer->get_buffer_state() == GRAPHICS_RESOURCE_STATE_UNKNOWN)
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
 
@@ -2090,30 +2102,46 @@ namespace Cyber
                 D3D12_RESOURCE_STATES res_states = D3D12Util_TranslateResourceState(d3d12_buffer->get_buffer_state());
 
                 const auto d3d12_heap_flags = initial_data_size > 0 ? D3D12_HEAP_FLAG_CREATE_NOT_ZEROED : D3D12_HEAP_FLAG_NONE;
-                if(heap_properties.Type != D3D12_HEAP_TYPE_DEFAULT)
+                
+                auto res = default_buffer_allocator->alloc_default_resource(heap_properties.Type, d3d12_buffer_desc, res_states, buffer_alignment, d3d12_buffer);
+                
+                if(!res)
                 {
-                    auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
-                    //m_pDxDevice->CreatePlacedResource(ID3D12Heap *pHeap, UINT64 HeapOffset, const D3D12_RESOURCE_DESC *pDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE *pOptimizedClearValue, const IID &riid, void **ppvResource)
-                    
-                    if(FAILED(hr))
+                    if(heap_properties.Type != D3D12_HEAP_TYPE_DEFAULT)
                     {
-                        cyber_error(false, "Failed to create D3D12 Buffer Resource");
+                        auto hr = m_pDxDevice->CreateCommittedResource(&heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, res_states, nullptr, IID_ARGS(&d3d12_buffer->m_pDxResource));
+                        //m_pDxDevice->CreatePlacedResource(ID3D12Heap *pHeap, UINT64 HeapOffset, const D3D12_RESOURCE_DESC *pDesc, D3D12_RESOURCE_STATES InitialState, const D3D12_CLEAR_VALUE *pOptimizedClearValue, const IID &riid, void **ppvResource)
+                        
+                        if(FAILED(hr))
+                        {
+                            cyber_error(false, "Failed to create D3D12 Buffer Resource");
+                        }
+                    }
+                    else
+                    {
+                        D3D12MA::ALLOCATION_DESC alloc_desc = {};
+                        alloc_desc.HeapType = heap_properties.Type;
+                        alloc_desc.Flags = D3D12MA::ALLOCATION_FLAG_NONE;
+                        alloc_desc.ExtraHeapFlags = d3d12_heap_flags;
+                        CHECK_HRESULT(m_pResourceAllocator->CreateResource(&alloc_desc, &d3d12_buffer_desc, res_states, nullptr, &d3d12_buffer->m_pDxAllocation, IID_ARGS(&d3d12_buffer->m_pDxResource)));
                     }
                 }
-                else
-                {
-                    D3D12MA::ALLOCATION_DESC alloc_desc = {};
-                    alloc_desc.HeapType = heap_properties.Type;
-                    alloc_desc.Flags = D3D12MA::ALLOCATION_FLAG_NONE;
-                    alloc_desc.ExtraHeapFlags = d3d12_heap_flags;
-                    CHECK_HRESULT(m_pResourceAllocator->CreateResource(&alloc_desc, &d3d12_buffer_desc, res_states, nullptr, &d3d12_buffer->m_pDxAllocation, IID_ARGS(&d3d12_buffer->m_pDxResource)));
-                }
+
 
                 if(create_desc.Name != nullptr)
                     d3d12_buffer->m_pDxResource->SetName(u8_to_wstring(create_desc.Name).c_str());
                 
                 if(initial_data_size > 0)
                 {
+                    auto initial_state = d3d12_buffer->get_buffer_state();
+                    BufferBarrier buffer_barrier = {
+                    .buffer = d3d12_buffer,
+                    .src_state = initial_state,
+                    .dst_state = GRAPHICS_RESOURCE_STATE_COPY_DEST
+                    };
+                    ResourceBarrierDesc barrier_desc = { .buffer_barriers = &buffer_barrier, .buffer_barrier_count = 1 };
+                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc);
+
                     D3D12_HEAP_PROPERTIES upload_heap_properties = {};
                     upload_heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
                     upload_heap_properties.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
@@ -2142,6 +2170,13 @@ namespace Cyber
 
                     memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
                     upload_buffer->Unmap(0, nullptr);
+
+                    m_deviceContexts[0]->get_command_context().update_buffer_resource(d3d12_buffer->get_dx_resource(), 0, upload_buffer, 0, initial_data_size);
+                    
+                    buffer_barrier.src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST;
+                    buffer_barrier.dst_state = initial_state;
+                    ResourceBarrierDesc barrier_desc0 = { .buffer_barriers = &buffer_barrier, .buffer_barrier_count = 1 };
+                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc0);
                 }
 
                 // create cbv

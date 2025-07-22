@@ -9,6 +9,15 @@ CYBER_BEGIN_NAMESPACE(RenderObject)
 
 struct PoolCreateAttribs
 {
+    static PoolCreateAttribs create_default_pools()
+    {
+        PoolCreateAttribs attribs;
+        attribs.heap_type = D3D12_HEAP_TYPE_DEFAULT;
+        attribs.heap_flags = D3D12_HEAP_FLAG_NONE;
+        attribs.resource_flags = D3D12_RESOURCE_FLAG_NONE;
+        attribs.initial_state = D3D12_RESOURCE_STATE_COMMON;
+        return attribs;
+    }
     static PoolCreateAttribs create_upload_pools()
     {
       PoolCreateAttribs attribs;
@@ -18,6 +27,17 @@ struct PoolCreateAttribs
       attribs.initial_state = D3D12_RESOURCE_STATE_GENERIC_READ;
       return attribs;
     }
+    static PoolCreateAttribs create_readback_pools()
+    {
+      PoolCreateAttribs attribs;
+      attribs.heap_type = D3D12_HEAP_TYPE_READBACK;
+      attribs.heap_flags = D3D12_HEAP_FLAG_NONE;
+      attribs.resource_flags = D3D12_RESOURCE_FLAG_NONE;
+      attribs.initial_state = D3D12_RESOURCE_STATE_COPY_DEST;
+      return attribs;
+    }
+
+
     bool operator==( const PoolCreateAttribs& other ) const
     {
         return heap_type == other.heap_type &&
@@ -51,10 +71,10 @@ public:
       bool support_allocation(D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_FLAGS resource_flags) const;
       bool try_allocate(uint32_t in_size_bytes, uint32_t in_alignment, PoolAllocationData& allocation_data);
 
-      void alloc_default_resource(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint32_t alignment,
+      bool alloc_default_resource(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint32_t alignment,
                         D3D12_RESOURCE_STATES initial_state, Buffer_D3D12_Impl* allocation_buffer);
       
-      void alloc_resouce(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint64_t size, uint32_t alignment,
+      bool alloc_resouce(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint64_t size, uint32_t alignment,
                         D3D12_RESOURCE_STATES initial_state, Buffer_D3D12_Impl* allocation_buffer);
 
 private:

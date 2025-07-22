@@ -35,4 +35,21 @@ namespace Cyber
      }
 
 
+     [[nodiscard]] static constexpr int32_t greatest_common_divisor(int32_t a, int32_t b) noexcept
+     {
+         while (b != 0)
+         {
+             int32_t t = b;
+             b = a % b;
+             a = t;
+         }
+         return a;
+     }
+
+     [[nodiscard]] static constexpr int32_t least_common_multiple(int32_t a, int32_t b) noexcept
+     {
+         auto gcd = greatest_common_divisor(a, b);
+         if (gcd == 0) return 0; // Avoid division by zero
+         return (a / gcd) * b;
+     }
 }

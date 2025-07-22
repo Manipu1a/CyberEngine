@@ -75,6 +75,10 @@ namespace Cyber
             GRAPHICS_RESOURCE_STATE startState;
             /// Image format
             TEXTURE_FORMAT format;
+
+            void* buffer_data;
+            uint32_t buffer_data_size;
+            uint32_t buffer_data_stride;
         };
 
         

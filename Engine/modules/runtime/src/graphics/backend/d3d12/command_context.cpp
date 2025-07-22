@@ -365,6 +365,11 @@ uint64_t CommandContext::update_sub_resource(ID3D12Resource* pDestResource, ID3D
     return Res;
 }
 
+void CommandContext::update_buffer_resource(ID3D12Resource* dest_resource, uint64_t dest_offset, ID3D12Resource* intermediate_resource, uint64_t inter_offset, size_t dataSize)
+{
+    command_list->CopyBufferRegion(dest_resource, dest_offset, intermediate_resource, inter_offset, dataSize);
+}
+
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE
 

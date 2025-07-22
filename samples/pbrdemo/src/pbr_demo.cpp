@@ -327,15 +327,21 @@ namespace Cyber
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
             buffer_desc.size = vertex_count * sizeof(CubeVertex);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_buffer = render_device->create_buffer(buffer_desc);
+            RenderObject::BufferData vertex_buffer_data = {};
+            vertex_buffer_data.data = cube_verts;
+            vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
+            vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = index_count * sizeof(uint32_t);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            index_buffer = render_device->create_buffer(buffer_desc);
+            RenderObject::BufferData index_buffer_data = {};
+            index_buffer_data.data = cube_indices;
+            index_buffer_data.data_size = index_count * sizeof(uint32_t);
+            index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
 
             buffer_desc.size = sizeof(ConstantMatrix);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
@@ -355,6 +361,7 @@ namespace Cyber
             buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
             precompute_env_map_buffer = render_device->create_buffer(buffer_desc);
 
+            /*
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
             // map vertex buffer
             CubeVertex* vertices_ptr = (CubeVertex*)vtx_resource;
@@ -368,6 +375,7 @@ namespace Cyber
             memcpy(indices_ptr, cube_indices, index_count * sizeof(uint32_t));
             render_device->unmap_buffer(index_buffer, MAP_WRITE);
             index_buffer->set_buffer_size(index_count * sizeof(uint32_t));
+            */
 
             // create texture
             if(meshes[0].image_paths.size() > 0)

@@ -74,6 +74,7 @@ public:
     void end_render_pass();
 
     uint64_t update_sub_resource(ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate, uint32_t firstSubresource, uint32_t numSubresources, const D3D12_SUBRESOURCE_DATA* pSrcData);
+    void update_buffer_resource(ID3D12Resource* dest_resource, uint64_t dest_offset, ID3D12Resource* intermediate_resource, uint64_t inter_offset, size_t dataSize);
 private:
     ID3D12GraphicsCommandList* command_list;
     ID3D12CommandAllocator* command_allocator;

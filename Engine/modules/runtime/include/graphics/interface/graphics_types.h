@@ -719,25 +719,27 @@ namespace Cyber
         GRAPHICS_RESOURCE_BIND_INDEX_BUFFER = 1u << 1u,
         // A buffer can be bound as a uniform buffer.
         GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER = 1u << 2u,
+        // A buffer can be bound as a structured buffer.
+        GRAPHICS_RESOURCE_BIND_STRUCT_BUFFER = 1u << 3u,
         // A buffer or a texture can be bound as a shader resource.
-        GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE = 1u << 3u,
+        GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE = 1u << 4u,
         // A buffer can be bound as a target for stream output stage.
-        GRAPHICS_RESOURCE_BIND_STREAM_OUTPUT = 1u << 4u,
+        GRAPHICS_RESOURCE_BIND_STREAM_OUTPUT = 1u << 5u,
         // A texture can be bound as a render target.
-        GRAPHICS_RESOURCE_BIND_RENDER_TARGET = 1u << 5u,
+        GRAPHICS_RESOURCE_BIND_RENDER_TARGET = 1u << 6u,
         // A texture can be bound as a depth-stencil target.
-        GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL = 1u << 6u,
+        GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL = 1u << 7u,
         // A buffer or a texture can be bound as an unordered access view.
-        GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS = 1u << 7u,
+        GRAPHICS_RESOURCE_BIND_UNORDERED_ACCESS = 1u << 8u,
         // A buffer can be bound as the source buffer for indirect draw commands.
-        GRAPHICS_RESOURCE_BIND_DRAW_ARGS = 1u << 8u,
+        GRAPHICS_RESOURCE_BIND_DRAW_ARGS = 1u << 9u,
         // A texture can be used as render pass input attachment.
-        GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT = 1u << 9u,
+        GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT = 1u << 10u,
         // A buffer can be used as a scratch buffer or as the source of primitive data
         // for acceleration structures building.
-        GRAPHICS_RESOURCE_BIND_RAY_TRACING = 1u << 10u,
+        GRAPHICS_RESOURCE_BIND_RAY_TRACING = 1u << 11u,
         // A texture can be used as a shading rate source.
-        GRAPHICS_RESOURCE_BIND_SHADING_RATE = 1u << 11u,
+        GRAPHICS_RESOURCE_BIND_SHADING_RATE = 1u << 12u,
         
         GRAPHICS_RESOURCE_BIND_LAST = GRAPHICS_RESOURCE_BIND_SHADING_RATE
     };

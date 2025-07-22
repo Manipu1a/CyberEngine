@@ -57,6 +57,9 @@ namespace Cyber
                     return m_pDxResource->GetGPUVirtualAddress();
                 }
             }
+
+            static void get_buffer_alignment(const BufferCreateDesc& desc, uint32_t& alignment);
+
         protected:
             /// GPU Address - Cache to avoid calls to ID3D12Resource::GetGpuVirtualAddress
             // D3D12_GPU_VIRTUAL_ADDRESS m_dxGpuAddress;

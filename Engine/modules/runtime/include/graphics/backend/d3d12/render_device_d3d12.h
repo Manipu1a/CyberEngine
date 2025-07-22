@@ -145,6 +145,7 @@ namespace Cyber
             HRESULT hook_CreateCommittedResource(const D3D12_HEAP_PROPERTIES* pHeapProperties, D3D12_HEAP_FLAGS HeapFlags, const D3D12_RESOURCE_DESC* pDesc, D3D12_RESOURCE_STATES InitialResourceState, const D3D12_CLEAR_VALUE* pOptimizedClearValue, REFIID riidResource, void **ppvResource);
 
             class D3D12MA::Allocator* m_pResourceAllocator;
+            class D3D12DefaultBufferAllocator* default_buffer_allocator = nullptr;
 
             CommandListManager cmd_list_managers[3];
             std::mutex command_pool_mutex;

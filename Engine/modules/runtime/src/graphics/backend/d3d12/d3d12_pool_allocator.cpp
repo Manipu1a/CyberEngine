@@ -41,31 +41,36 @@ bool D3D12PoolAllocator::try_allocate(uint32_t in_size_bytes, uint32_t in_alignm
             allocation_data.offset = start_offset;
             allocation_data.size = aligned_size;
             allocation_data.heap = resource_heap;
+            return true;
     }
-    return true;
+    return false;
 }
 
-void D3D12PoolAllocator::alloc_default_resource(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint32_t alignment,
+bool D3D12PoolAllocator::alloc_default_resource(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint32_t alignment,
                         D3D12_RESOURCE_STATES initial_state, Buffer_D3D12_Impl* allocation_buffer)
 {
-      alloc_resouce(heap_type, resource_desc, resource_desc.Width, alignment, initial_state, allocation_buffer);
+      return alloc_resouce(heap_type, resource_desc, resource_desc.Width, alignment, initial_state, allocation_buffer);
 }
 
-void D3D12PoolAllocator::alloc_resouce(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint64_t size, uint32_t alignment,
+bool D3D12PoolAllocator::alloc_resouce(D3D12_HEAP_TYPE heap_type, const D3D12_RESOURCE_DESC resource_desc, uint64_t size, uint32_t in_alignment,
                         D3D12_RESOURCE_STATES initial_state, Buffer_D3D12_Impl* allocation_buffer)
 {
+      bool use_placed = size < pool_size && in_alignment <= pool_alignment;
 
-      if(alignment > pool_alignment || resource_desc.Alignment > pool_alignment)
+      if(use_placed)
       {
-            cyber_error("Requested alignment {0} exceeds pool alignment {1}", alignment, pool_alignment);
-            return;
+            uint32_t alignment = pool_alignment;
+            D3D12_RESOURCE_DESC placed_resource_desc = resource_desc;
+            placed_resource_desc.Alignment = alignment;
+            ID3D12Resource* resource = create_placed_resouce(placed_resource_desc, initial_state);
+            if(resource)
+            {
+                  allocation_buffer->set_dx_resource(resource);
+                  return true;
+            }
       }
 
-      ID3D12Resource* resource = create_placed_resouce(resource_desc, initial_state);
-      if(resource)
-      {
-            allocation_buffer->set_dx_resource(resource);
-      }
+      return false;
 }
 
 ID3D12Resource* D3D12PoolAllocator::create_placed_resouce(D3D12_RESOURCE_DESC resource_desc, D3D12_RESOURCE_STATES initial_state)
