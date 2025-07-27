@@ -4,6 +4,7 @@
 #include "eastl/vector.h"
 #include "math/advanced_math.hpp"
 #include "graphics/interface/render_device.hpp"
+#include "image.h"
 #include "GLFW/tiny_gltf.h"
 
 
@@ -143,6 +144,99 @@ struct Model
     };
 };
 */
+struct TextureAttributeDesc
+{
+    const char* name = nullptr;
+    uint32_t index = 0;
+};
+
+static constexpr char BaseColorTextureName[] = "baseColorTexture";
+static constexpr char MetallicRoughnessTextureName[] = "metallicRoughnessTexture";
+static constexpr char NormalTextureName[] = "normalTexture";
+static constexpr char OcclusionTextureName[] = "occlusionTexture";
+static constexpr char EmissiveTextureName[] = "emissiveTexture";
+static constexpr char DiffuseTextureName[] = "diffuseTexture";
+static constexpr char SpecularGlossinessTextureName[] = "specularGlossinessTexture";
+
+static constexpr uint32_t DefaultBaseColorTextureAttribId = 0;
+static constexpr uint32_t DefaultMetallicRoughnessTextureAttribId = 1;
+static constexpr uint32_t DefaultNormalTextureAttribId = 2;
+static constexpr uint32_t DefaultOcclusionTextureAttribId = 3;
+static constexpr uint32_t DefaultEmissiveTextureAttribId = 4;
+static constexpr uint32_t DefaultDiffuseTextureAttribId = 0;
+static constexpr uint32_t DefaultSpecularGlossinessTextureAttribId = 1;
+
+static constexpr std::array<TextureAttributeDesc, 7> DefaultTextureAttributes = {
+    TextureAttributeDesc{ BaseColorTextureName, DefaultBaseColorTextureAttribId },
+    TextureAttributeDesc{ MetallicRoughnessTextureName, DefaultMetallicRoughnessTextureAttribId },
+    TextureAttributeDesc{ NormalTextureName, DefaultNormalTextureAttribId },
+    TextureAttributeDesc{ OcclusionTextureName, DefaultOcclusionTextureAttribId },
+    TextureAttributeDesc{ EmissiveTextureName, DefaultEmissiveTextureAttribId },
+    TextureAttributeDesc{ DiffuseTextureName, DefaultDiffuseTextureAttribId },
+    TextureAttributeDesc{ SpecularGlossinessTextureName, DefaultSpecularGlossinessTextureAttribId },
+};
+
+struct Material
+{
+    Material() noexcept
+    {
+        texture_ids.fill(-1);
+        for(size_t i = 0; i < _countof(attribs.uv_scale_bias); ++i)
+        {
+            attribs.uv_scale_bias[i] = float4(1.0f, 1.0f, 0.0f, 0.0f); // Default UV scale and bias
+        }
+    }
+    enum PBR_WORKFLOW
+    {
+        PBR_WORKFLOW_METALL_ROUGH = 0,
+        PBR_WORKFLOW_SPEC_GLOSS
+    };
+
+    enum ALPHA_MODE
+    {
+        ALPHA_MODE_OPAQUE = 0,
+        ALPHA_MODE_MASK,
+        ALPHA_MODE_BLEND,
+        ALPHA_MODE_NUM_MODES
+    };
+
+    static constexpr uint32_t num_texture_attributes = 5;
+
+    struct MaterialAttribs
+    {
+        float4 base_color_factor = { 1.0f, 1.0f, 1.0f, 1.0f }; // Base color factor (RGBA)
+        float4 emissive_factor = { 0.0f, 0.0f, 0.0f, 1.0f }; // Emissive color factor (RGBA)
+        float4 specular_factor = { 1.0f, 1.0f, 1.0f, 1.0f }; // Specular color factor (RGBA)
+
+        int work_flow = PBR_WORKFLOW_METALL_ROUGH;
+        float uv_selector0 = -1;
+        float uv_selector1 = -1;
+        float uv_selector2 = -1;
+        float uv_selector3 = -1;
+        float uv_selector4 = -1;
+
+        float texture_slice0 = 0.0f;
+        float texture_slice1 = 0.0f;
+        float texture_slice2 = 0.0f;
+        float texture_slice3 = 0.0f;
+        float texture_slice4 = 0.0f;
+
+        float metallic_factor = 1.0f; // Metallic factor (0.0 to 1.0)
+        float roughness_factor = 1.0f; // Roughness factor (0.0 to 1.0)
+        int32_t alpha_mode = ALPHA_MODE::ALPHA_MODE_OPAQUE;
+        float alpha_cutoff = 0.5f; // Alpha cutoff value for ALPHA_MODE_MASK
+        float dummy0 = 0.0f; // Padding for alignment
+
+        float4 uv_scale_bias[num_texture_attributes];
+
+        float4 custom_data = float4(0.0f, 0.0f, 0.0f, 0.0f); // Custom data for additional attributes
+    };
+
+    MaterialAttribs attribs;
+
+    bool double_sided = false;
+    std::array<int, num_texture_attributes> texture_ids = {};
+ };
 
 struct Mesh
 {
@@ -164,14 +258,12 @@ struct ModelCreateInfo
     const char* file_path = nullptr; // Path to the model file
 };
 
-class ModelLoader
+class Model
 {
 public:
-    ModelLoader( RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info)
-    {
-        load_from_file(render_device, context, create_info);
-    }
+    Model(const ModelCreateInfo& create_info);
 
+    Model(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info);
     //static tinygltf::Model create_model(const ModelCreateInfo& create_info);
 
     void load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info);
@@ -191,10 +283,46 @@ public:
         return meshes;
     }
 
-private:
-    tinygltf::Model model;
+    struct ImageData
+    {
+        const char* name = nullptr;
+        int width = 0;
+        int height = 0;
+        int num_components = 0;
+        int component_size = 0;
+
+        TEXTURE_FORMAT tex_format = TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN;
+        TextureLoader::IMAGE_FILE_FORMAT file_format = TextureLoader::IMAGE_FILE_FORMAT::IMAGE_FILE_FORMAT_UNKNOWN;
+
+        const void* pData = nullptr;
+        size_t data_size = 0;
+    };
+    uint32_t add_texture(RenderObject::IRenderDevice* render_device, const ImageData& image, int gltf_sampler_id);
     
+private:
+    void load_materials(const tinygltf::Model& gltf_model);
+    void load_textures(RenderObject::IRenderDevice* render_device, const tinygltf::Model& gltf_model, const std::string& base_dir);
+
+
+    uint32_t num_texture_attributes = 0;
+    const TextureAttributeDesc* texture_attribute_descs = nullptr;
+
+    tinygltf::Model model;
+
     std::vector<Mesh> meshes; // Vector of meshes loaded from the model file
+    std::vector<Material> materials; // Materials used by the mesh
+
+    struct TextureInfo
+    {
+        RenderObject::ITexture* texture = nullptr;
+
+        explicit operator bool() const
+        {
+            return texture != nullptr;
+        }
+    };
+
+    std::vector<TextureInfo> textures;
 };
 
 CYBER_END_NAMESPACE

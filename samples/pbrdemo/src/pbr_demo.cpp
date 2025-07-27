@@ -293,7 +293,7 @@ namespace Cyber
             // load model
             ModelLoader::ModelCreateInfo create_info;
             create_info.file_path = "../../../../samples/pbrdemo/assets/Cube/Cube.gltf";
-            ModelLoader::ModelLoader model_loader(render_device, device_context, create_info);
+            ModelLoader::Model model_loader(render_device, device_context, create_info);
             if (!model_loader.is_valid())
             {
                 cyber_error(false, "Failed to load model: {0}", create_info.file_path);

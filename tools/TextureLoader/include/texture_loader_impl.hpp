@@ -25,7 +25,7 @@ private:
     void load_from_dds(const TextureLoadInfo& texLoadInfo, const uint8_t* data, size_t dataSize);
     void load_from_hdr(const TextureLoadInfo& loadInfo, const uint8_t* data, size_t dataSize);
 private:
-    const char8_t* m_name;
+    const char* m_name;
     class IDataBlob* m_dataBlob;
     class Image* m_image;
     RenderObject::TextureCreateDesc m_textureCreateDesc;
