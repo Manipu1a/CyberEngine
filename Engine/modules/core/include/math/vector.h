@@ -1,5 +1,5 @@
 #pragma once
-#include "math/common.h"
+#include "core/common.h"
 #include "basic_math.hpp"
 #include <cmath>
 #include "platform/configure.h"

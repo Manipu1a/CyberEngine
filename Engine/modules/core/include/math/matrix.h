@@ -1,5 +1,5 @@
 #pragma once
-#include "math/common.h"
+#include "core/common.h"
 #include "vector.h"
 #include <cmath>
 #include <algorithm>

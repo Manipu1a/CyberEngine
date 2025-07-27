@@ -1,5 +1,5 @@
 #include "backend/d3d12/dynamic_heap_d3d12.hpp"
-#include "math/common.h"
+#include "core/common.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)

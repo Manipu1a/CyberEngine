@@ -9,7 +9,7 @@
 #include "interface/shader_reflection.hpp"
 #include "interface/shader_library.h"
 #include "log/Log.h"
-#include "math/common.h"
+#include "core/common.h"
 
 namespace Cyber 
 {

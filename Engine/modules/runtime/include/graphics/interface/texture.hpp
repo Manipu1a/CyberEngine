@@ -9,7 +9,7 @@
 #include "platform/platform_misc.h"
 #include "EASTL/map.h"
 #include "graphics/common/graphics_utils.hpp"
-#include "math/common.h"
+#include "core/common.h"
 #include "log/Log.h"
 
 namespace Cyber

@@ -6,7 +6,7 @@
 #include "graphics/backend/d3d12/d3d12_utils.h"
 #include "log/Log.h"
 #include "dxcapi.h"
-#include "math/common.h"
+#include "core/common.h"
 #include <combaseapi.h>
 #include <d3d12.h>
 #include <dxgi.h>

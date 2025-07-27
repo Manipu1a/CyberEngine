@@ -4,7 +4,7 @@
 #include "common/graphics_utils.hpp"
 #include "texture_utils.h"
 #include <algorithm>
-#include "math/common.h"
+#include "core/common.h"
 #include "core/file_helper.hpp"
 #include "dds_loader.h"
 
