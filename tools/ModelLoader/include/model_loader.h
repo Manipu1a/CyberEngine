@@ -283,6 +283,11 @@ public:
         return meshes;
     }
 
+    const std::vector<Material>& get_materials() const
+    {
+        return materials;
+    }
+    
     struct ImageData
     {
         const char* name = nullptr;
@@ -299,10 +304,19 @@ public:
     };
     uint32_t add_texture(RenderObject::IRenderDevice* render_device, const ImageData& image, int gltf_sampler_id);
     
+    RenderObject::ITexture* get_texture(uint32_t index) const
+    {
+        auto& texture_info = textures[index];
+        if (texture_info.texture)
+        {
+            return texture_info.texture;
+        }
+
+        return nullptr;
+    }
 private:
     void load_materials(const tinygltf::Model& gltf_model);
     void load_textures(RenderObject::IRenderDevice* render_device, const tinygltf::Model& gltf_model, const std::string& base_dir);
-
 
     uint32_t num_texture_attributes = 0;
     const TextureAttributeDesc* texture_attribute_descs = nullptr;

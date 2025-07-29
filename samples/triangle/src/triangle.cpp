@@ -264,7 +264,7 @@ namespace Cyber
             // create texture
             RenderObject::ITexture* test_texture = nullptr;
             TextureLoader::TextureLoadInfo texture_load_info{
-                CYBER_UTF8("TEST"),
+                "TEST",
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
                 GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
                 0,

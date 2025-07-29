@@ -168,15 +168,15 @@ namespace Cyber
                 (int32_t)back_buffer->get_create_desc().m_height
             };
             device_context->render_encoder_set_scissor( 1, &scissor);
-            RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
+            RenderObject::IBuffer* vertex_buffers[] = { model_resource_bindings[0].vertex_buffer };
             uint32_t strides[] = { sizeof(CubeVertex) };
             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
+            device_context->render_encoder_bind_index_buffer(model_resource_bindings[0].index_buffer, sizeof(uint32_t), 0);
             device_context->render_encoder_bind_pipeline( pipeline);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_texture_view);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, normal_texture_view);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, model_resource_bindings[0].base_color_texture_view);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, model_resource_bindings[0].normal_texture_view);
             auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
             device_context->prepare_for_rendering();
@@ -294,6 +294,9 @@ namespace Cyber
             ModelLoader::ModelCreateInfo create_info;
             create_info.file_path = "../../../../samples/pbrdemo/assets/Cube/Cube.gltf";
             ModelLoader::Model model_loader(render_device, device_context, create_info);
+            ModelResourceBinding model_resource_binding;
+            model_resource_bindings.push_back(model_resource_binding);
+
             if (!model_loader.is_valid())
             {
                 cyber_error(false, "Failed to load model: {0}", create_info.file_path);
@@ -303,7 +306,8 @@ namespace Cyber
             {
                 cyber_error(false, "No meshes found in the model: {0}", create_info.file_path);
             }
-
+            auto& materials = model_loader.get_materials();
+            
             auto vertex_count = meshes[0].model_data.size();
             auto index_count = meshes[0].indices_data.size();
             auto model_verts = meshes[0].model_data.data();
@@ -332,7 +336,7 @@ namespace Cyber
             RenderObject::BufferData vertex_buffer_data = {};
             vertex_buffer_data.data = cube_verts;
             vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
-            vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
+            model_resource_bindings[0].vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = index_count * sizeof(uint32_t);
@@ -341,11 +345,11 @@ namespace Cyber
             RenderObject::BufferData index_buffer_data = {};
             index_buffer_data.data = cube_indices;
             index_buffer_data.data_size = index_count * sizeof(uint32_t);
-            index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+            model_resource_bindings[0].index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
 
             buffer_desc.size = sizeof(ConstantMatrix);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
+            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = render_device->create_buffer(buffer_desc);
             
@@ -361,76 +365,37 @@ namespace Cyber
             buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
             precompute_env_map_buffer = render_device->create_buffer(buffer_desc);
 
-            /*
-            void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
-            // map vertex buffer
-            CubeVertex* vertices_ptr = (CubeVertex*)vtx_resource;
-            memcpy(vertices_ptr, cube_verts, vertex_count * sizeof(CubeVertex));
-            render_device->unmap_buffer(vertex_buffer, MAP_WRITE);
-            vertex_buffer->set_buffer_size(vertex_count * sizeof(CubeVertex));
-
-            // map index buffer
-            void* idx_resource = render_device->map_buffer(index_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            uint32_t* indices_ptr = (uint32_t*)idx_resource;
-            memcpy(indices_ptr, cube_indices, index_count * sizeof(uint32_t));
-            render_device->unmap_buffer(index_buffer, MAP_WRITE);
-            index_buffer->set_buffer_size(index_count * sizeof(uint32_t));
-            */
-
             // create texture
-            if(meshes[0].image_paths.size() > 0)
+            if(materials.size() > 0)
             {
-                RenderObject::ITexture* test_texture = nullptr;
-
-                eastl::string texture_path(eastl::string::CtorSprintf(), "samples/pbrdemo/assets/Cube/%s", meshes[0].image_paths[0].c_str());
-
-                TextureLoader::TextureLoadInfo texture_load_info{
-                CYBER_UTF8("BaseColor"),
-                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
-                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
-                0,
-                CPU_ACCESS_NONE,
-                true,
-                false,
-                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
-                false,
-                FILTER_TYPE::FILTER_TYPE_ANISOTROPIC
-                };
-
-                TextureLoader::create_texture_from_file(
-                    texture_path.c_str(),
-                    texture_load_info,
-                    &test_texture, render_device
-                );
-
-                base_color_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                for(size_t i = 0; i < materials.size(); ++i)
+                {
+                    auto& material = materials[i];
+                    if(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId] != -1)
+                    {
+                        model_resource_bindings[0].base_color_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                    if(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId] != -1)
+                    {
+                        model_resource_bindings[0].normal_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                    if(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId] != -1)
+                    {
+                        model_resource_bindings[0].metallic_roughness_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                    if(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId] != -1)
+                    {
+                        model_resource_bindings[0].emissive_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                    if(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId] != -1)
+                    {
+                        model_resource_bindings[0].occlusion_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                }
             }
-
-            TextureLoader::TextureLoadInfo texture_load_info{
-                CYBER_UTF8("Normal"),
-                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
-                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
-                0,
-                CPU_ACCESS_NONE,
-                true,
-                false,
-                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
-                false,
-                FILTER_TYPE::FILTER_TYPE_ANISOTROPIC
-                };
-
-            RenderObject::ITexture* normal_texture = nullptr;
-
-            TextureLoader::create_texture_from_file(
-                "samples/pbrdemo/assets/Cube/normal_mapping_normal_map.png",
-                texture_load_info,
-                &normal_texture, render_device
-            );
-
-            normal_texture_view = normal_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-
+    
             TextureLoader::TextureLoadInfo env_texture_load_info{
-                CYBER_UTF8("EnvironmentMap"),
+                "EnvironmentMap",
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
                 GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
                 0,
@@ -445,14 +410,14 @@ namespace Cyber
             RenderObject::ITexture* environment_texture = nullptr;
             TextureLoader::create_texture_from_file(
                 "samples/pbrdemo/assets/minedump_flats_4k.hdr",
-                texture_load_info,
+                env_texture_load_info,
                 &environment_texture, render_device
             );
 
             environment_texture_view = environment_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             RenderObject::TextureCreateDesc textureDesc = {};
-            textureDesc.m_name = CYBER_UTF8("IrradianceCube");
+            textureDesc.m_name = "IrradianceCube";
             textureDesc.m_width = irradiance_cube_size;
             textureDesc.m_height = irradiance_cube_size;
             textureDesc.m_depth = 1;

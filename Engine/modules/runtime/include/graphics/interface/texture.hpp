@@ -19,13 +19,13 @@ namespace Cyber
         struct CYBER_GRAPHICS_API TextureSubResData
         {
             // Pointer to the data in cpu memory
-            const void *pData;
+            const void *pData = nullptr;
             
-            uint64_t srcOffset;
+            uint64_t srcOffset = 0;
 
-            uint64_t stride;
+            uint64_t stride = 0;
 
-            uint64_t depthStride;
+            uint64_t depthStride = 0;
 
             constexpr TextureSubResData() {}
 

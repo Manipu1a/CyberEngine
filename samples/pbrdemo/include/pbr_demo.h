@@ -45,6 +45,20 @@ namespace Cyber
                 float dummy;
             };
 
+            struct ModelResourceBinding
+            {
+                RenderObject::IBuffer* vertex_buffer = nullptr;
+                RenderObject::IBuffer* index_buffer = nullptr;
+
+                RenderObject::ITexture_View* base_color_texture_view = nullptr;
+                RenderObject::ITexture_View* metallic_roughness_texture_view = nullptr;
+                RenderObject::ITexture_View* normal_texture_view = nullptr;
+                RenderObject::ITexture_View* occlusion_texture_view = nullptr;
+                RenderObject::ITexture_View* emissive_texture_view = nullptr;
+
+                ModelResourceBinding() {}
+            };
+
         public:
             PBRApp();
             ~PBRApp();
@@ -78,8 +92,8 @@ namespace Cyber
 
             RenderObject::IRenderPass* render_pass = nullptr;
             
-            RenderObject::ITexture_View* normal_texture_view = nullptr;
-            RenderObject::ITexture_View* base_color_texture_view = nullptr;
+            eastl::vector<ModelResourceBinding> model_resource_bindings;
+
             RenderObject::ITexture_View* environment_texture_view = nullptr;
             RenderObject::ITexture_View* prefiltered_cube_texture_view = nullptr;
             RenderObject::ITexture* irradiance_cube_texture = nullptr;
@@ -87,8 +101,6 @@ namespace Cyber
             static constexpr uint32_t irradiance_cube_size = 64;
             static constexpr uint32_t prefiltered_cube_size = 256;
 
-            RenderObject::IBuffer* vertex_buffer = nullptr;
-            RenderObject::IBuffer* index_buffer = nullptr;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;

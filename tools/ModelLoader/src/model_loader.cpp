@@ -396,7 +396,7 @@ RenderObject::TextureData prepare_gltf_texture_data(const Model::ImageData& imag
     RenderObject::TextureData texture_data;
     texture_data.numSubResources = 1;
     texture_data.pSubResources = cyber_new_n<RenderObject::TextureSubResData>(texture_data.numSubResources);
-    RenderObject::TextureSubResData sub_res_data = texture_data.pSubResources[0];
+    RenderObject::TextureSubResData& sub_res_data = texture_data.pSubResources[0];
     auto& stride = sub_res_data.stride;
     stride = align_up(uint64_t(image_data.width) * fmt_attribs.component_size * image_data.num_components, 4);
     uint8_t* data_buffer = cyber_new_n<uint8_t>(stride * image_data.height);
@@ -419,10 +419,15 @@ RenderObject::TextureData prepare_gltf_texture_data(const Model::ImageData& imag
 
 uint32_t Model::add_texture(RenderObject::IRenderDevice* render_device, const ImageData& image, int gltf_sampler_id)
 {
-    TextureInfo texture_info;
+    const auto new_texture_index = static_cast<uint32_t>(textures.size());
 
+    TextureInfo texture_info;
+    
     if(image.width > 0 && image.height > 0)
     {
+        const auto tex_format = get_image_data_texture_format(image);
+        
+        RenderObject::TextureData texture_data = prepare_gltf_texture_data(image, 0.0f, 1);
 
         RenderObject::TextureCreateDesc texture_desc;
         texture_desc.m_name = image.name;
@@ -431,15 +436,13 @@ uint32_t Model::add_texture(RenderObject::IRenderDevice* render_device, const Im
         texture_desc.m_height = image.height;
         texture_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
         texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
-        texture_desc.m_format = image.tex_format;
+        texture_desc.m_format = tex_format;
         texture_desc.m_mipLevels = 0;
 
-        RenderObject::TextureData texture_data;
-
-        render_device->create_texture(texture_desc, &texture_data);
+        texture_info.texture = render_device->create_texture(texture_desc, &texture_data);
     }
-
-    return -1;
+    textures.push_back(texture_info);
+    return new_texture_index;
 }
 
 CYBER_END_NAMESPACE
