@@ -1,5 +1,6 @@
 #pragma once
 #include "gameruntime/sampleapp.h"
+#include "model_loader.h"
 #include "gameruntime/cyber_game.config.h"
 
 namespace Cyber
@@ -101,6 +102,7 @@ namespace Cyber
             static constexpr uint32_t irradiance_cube_size = 64;
             static constexpr uint32_t prefiltered_cube_size = 256;
 
+            eastl::vector<ModelLoader::Model> models;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;

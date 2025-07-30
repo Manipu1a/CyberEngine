@@ -3,7 +3,6 @@
 #include "rendergraph/render_graph_resource.h"
 #include "rendergraph/render_graph_builder.h"
 #include "resource/resource_loader.h"
-#include "model_loader.h"
 #include "application/application.h"
 #include "texture_utils.h"
 #include "resource/vertex.h"
@@ -58,7 +57,7 @@ namespace Cyber
             static float time = 0.0f;
             time += deltaTime;
 
-            float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
+            float4x4 model_matrix = float4x4::scale(0.2);
 
             float3 camera_position = { 0.0f, 0.0f, -10.0f };
             float3 camera_target = { 0.0f, 0.0f, 0.0f };
@@ -180,7 +179,23 @@ namespace Cyber
             auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
             device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(36, 0, 0);
+
+            for(const auto& model : models)
+            {
+                const auto& meshs = model.get_meshes();
+                for (const auto& mesh : meshs)
+                {
+                    if(mesh.primitives.size() > 0)
+                    {
+                        const auto& primitives = mesh.primitives;
+                        for (const auto& primitive : primitives)
+                        {
+                            device_context->render_encoder_draw_indexed(primitive.index_count, primitive.first_index, 0);
+                        }
+                    }
+                }
+            }
+            //device_context->render_encoder_draw_indexed(36, 0, 0);
             /*
             device_context->cmd_next_sub_pass();
             // draw environment map
@@ -292,8 +307,9 @@ namespace Cyber
             
             // load model
             ModelLoader::ModelCreateInfo create_info;
-            create_info.file_path = "../../../../samples/pbrdemo/assets/Cube/Cube.gltf";
+            create_info.file_path = "../../../../samples/pbrdemo/assets/MetalRoughSpheres/MetalRoughSpheres.gltf";
             ModelLoader::Model model_loader(render_device, device_context, create_info);
+            models.push_back(model_loader);
             ModelResourceBinding model_resource_binding;
             model_resource_bindings.push_back(model_resource_binding);
 
@@ -308,10 +324,10 @@ namespace Cyber
             }
             auto& materials = model_loader.get_materials();
             
-            auto vertex_count = meshes[0].model_data.size();
-            auto index_count = meshes[0].indices_data.size();
-            auto model_verts = meshes[0].model_data.data();
-            auto model_indices = meshes[0].indices_data.data();
+            auto vertex_count = model_loader.get_vertex_count();
+            auto index_count = model_loader.get_index_count();
+            auto model_verts = model_loader.get_vertex_data();
+            auto model_indices = model_loader.get_index_data();
 
             CubeVertex* cube_verts = cyber_new_n<CubeVertex>(vertex_count);
             for(size_t i = 0; i < vertex_count; ++i)

@@ -238,18 +238,22 @@ struct Material
     std::array<int, num_texture_attributes> texture_ids = {};
  };
 
+struct Primitive
+{
+    uint32_t first_index;
+    uint32_t index_count;
+    uint32_t vertex_count;
+    uint32_t material_id;
+
+    Primitive(uint32_t _first_index, uint32_t _index_count, uint32_t _vertex_count, uint32_t _material_id)
+        : first_index(_first_index), index_count(_index_count), vertex_count(_vertex_count), material_id(_material_id) {}
+};
+
 struct Mesh
 {
-    struct VertexBasicAttribs
-    {
-        float3 pos;
-        float3 normal;
-        float2 uv0;
-        float3 tangent;
-    };
+    std::string name;
+    std::vector<Primitive> primitives;
 
-    std::vector<VertexBasicAttribs> model_data;
-    std::vector<uint16_t> indices_data; // Indices for indexed drawing
     std::vector<std::string> image_paths; // Paths to textures used by the mesh
 };
 
@@ -288,6 +292,34 @@ public:
         return materials;
     }
     
+    const uint32_t get_vertex_count() const
+    {
+        return static_cast<uint32_t>(model_data.size());
+    }
+    
+    struct VertexBasicAttribs
+    {
+        float3 pos;
+        float3 normal;
+        float2 uv0;
+        float3 tangent;
+    };
+
+    const std::vector<VertexBasicAttribs>& get_vertex_data() const
+    {
+        return model_data;
+    }
+
+    const uint32_t get_index_count() const
+    {
+        return static_cast<uint32_t>(indices_data.size());
+    }
+
+    const std::vector<uint16_t>& get_index_data() const
+    {
+        return indices_data;
+    }
+
     struct ImageData
     {
         const char* name = nullptr;
@@ -315,6 +347,8 @@ public:
         return nullptr;
     }
 private:
+    void load_node(const tinygltf::Model& gltf_model, uint32_t node_index);
+    void load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index);
     void load_materials(const tinygltf::Model& gltf_model);
     void load_textures(RenderObject::IRenderDevice* render_device, const tinygltf::Model& gltf_model, const std::string& base_dir);
 
@@ -325,6 +359,9 @@ private:
 
     std::vector<Mesh> meshes; // Vector of meshes loaded from the model file
     std::vector<Material> materials; // Materials used by the mesh
+
+    std::vector<VertexBasicAttribs> model_data;
+    std::vector<uint16_t> indices_data; // Indices for indexed drawing
 
     struct TextureInfo
     {
