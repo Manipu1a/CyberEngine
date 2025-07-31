@@ -48,6 +48,8 @@ namespace Cyber
 
             struct ModelResourceBinding
             {
+                ModelLoader::Model* model = nullptr;
+                RenderObject::IRenderPipeline* model_pipeline = nullptr;
                 RenderObject::IBuffer* vertex_buffer = nullptr;
                 RenderObject::IBuffer* index_buffer = nullptr;
 
@@ -81,9 +83,10 @@ namespace Cyber
         protected:
             void precompute_environment_map();
 
+            eastl::vector<ShaderMacro> get_shader_macros(const ModelResourceBinding& model_binding) const;
+            
         protected:
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
-            RenderObject::IRenderPipeline* pipeline = nullptr;
             RenderObject::IRenderPipeline* environment_pipeline = nullptr;
             RenderObject::IRenderPipeline* irradiance_pipeline = nullptr;
             RenderObject::IRenderPipeline* prefiltered_pipeline = nullptr;
@@ -92,7 +95,7 @@ namespace Cyber
             RenderObject::RenderPassAttachmentDesc attachment_desc;
 
             RenderObject::IRenderPass* render_pass = nullptr;
-            
+
             eastl::vector<ModelResourceBinding> model_resource_bindings;
 
             RenderObject::ITexture_View* environment_texture_view = nullptr;
@@ -102,7 +105,6 @@ namespace Cyber
             static constexpr uint32_t irradiance_cube_size = 64;
             static constexpr uint32_t prefiltered_cube_size = 256;
 
-            eastl::vector<ModelLoader::Model> models;
             RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;

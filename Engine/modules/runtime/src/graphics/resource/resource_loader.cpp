@@ -83,7 +83,7 @@ namespace Cyber
 
                     combinedFlags |= desc.stage_load_desc.flags;
 
-                    uint32_t macroCount = desc.stage_load_desc.macro_count;
+                    uint32_t macroCount = desc.stage_load_desc.macros.size();
                     ShaderMacro* macros = (ShaderMacro*)cyber_calloc(macroCount, sizeof(ShaderMacro));
                     for(uint32_t marcoIdx = 0; marcoIdx < macroCount; ++marcoIdx)
                     {

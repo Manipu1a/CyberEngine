@@ -202,6 +202,35 @@ struct Material
 
     static constexpr uint32_t num_texture_attributes = 5;
 
+    bool has_base_color_texture() const
+    {
+        return texture_ids[DefaultBaseColorTextureAttribId] != -1;
+    }
+    bool has_metallic_roughness_texture() const
+    {
+        return texture_ids[DefaultMetallicRoughnessTextureAttribId] != -1;
+    }
+    bool has_normal_map() const
+    {
+        return texture_ids[DefaultNormalTextureAttribId] != -1;
+    }
+    bool has_occlusion_texture() const
+    {
+        return texture_ids[DefaultOcclusionTextureAttribId] != -1;
+    }
+    bool has_emissive_texture() const
+    {
+        return texture_ids[DefaultEmissiveTextureAttribId] != -1;
+    }
+    bool has_diffuse_texture() const
+    {
+        return texture_ids[DefaultDiffuseTextureAttribId] != -1;
+    }
+    bool has_specular_glossiness_texture() const
+    {
+        return texture_ids[DefaultSpecularGlossinessTextureAttribId] != -1;
+    }
+    
     struct MaterialAttribs
     {
         float4 base_color_factor = { 1.0f, 1.0f, 1.0f, 1.0f }; // Base color factor (RGBA)
@@ -315,7 +344,7 @@ public:
         return static_cast<uint32_t>(indices_data.size());
     }
 
-    const std::vector<uint16_t>& get_index_data() const
+    const std::vector<uint32_t>& get_index_data() const
     {
         return indices_data;
     }
@@ -361,7 +390,7 @@ private:
     std::vector<Material> materials; // Materials used by the mesh
 
     std::vector<VertexBasicAttribs> model_data;
-    std::vector<uint16_t> indices_data; // Indices for indexed drawing
+    std::vector<uint32_t> indices_data; // Indices for indexed drawing
 
     struct TextureInfo
     {

@@ -123,60 +123,7 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
         for(size_t primitive_idx = 0; primitive_idx < mesh.primitives.size(); ++primitive_idx)
         {
             const tinygltf::Primitive& primitive = mesh.primitives[primitive_idx];
-            // Accessing the POSITION attribute
-            //auto position_attribs = primitive.attributes.find("POSITION"); 
-            /*if (position_attribs != primitive.attributes.end())
-            {
-                const tinygltf::Accessor& accessor = model.accessors[position_attribs->second];
-                auto vertex_count = accessor.count;
-                model_data.resize(vertex_count);
 
-                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
-                {
-                    continue; // Invalid buffer view index
-                }
-
-                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
-                if (buffer_view.target == 0)
-                {
-                    continue; // Not a valid target for mesh data
-                }
-                
-                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
-                auto stride = accessor.ByteStride(buffer_view);
-                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
-                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
-                const float* vertex_data = static_cast<const float*>(data);
-                auto component_count = stride / sizeof(float);
-                for (size_t j = 0; j < vertex_count; ++j)
-                {
-                    size_t offset = j * component_count;
-                    VertexBasicAttribs& vertex = model_data[j];
-                    vertex.pos = { vertex_data[offset], vertex_data[offset + 1], vertex_data[offset + 2] };
-                }
-            }*/
-           
-            // Indices
-            /*if(primitive.indices >= 0)
-            {
-                const tinygltf::Accessor& accessor = model.accessors[primitive.indices];
-                auto index_count = accessor.count;
-                if (accessor.bufferView < 0 || accessor.bufferView >= model.bufferViews.size())
-                {
-                    continue; // Invalid buffer view index
-                }
-
-                const tinygltf::BufferView& buffer_view = model.bufferViews[accessor.bufferView];
-                const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
-                auto stride = accessor.ByteStride(buffer_view);
-                auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
-                const void* data = &buffer.data[accessor.byteOffset + buffer_view.byteOffset];
-                const uint16_t* index_data = static_cast<const uint16_t*>(data);
-                for (size_t j = 0; j < index_count; ++j)
-                {
-                    indices_data.push_back(index_data[j]);
-                }
-            }*/
             // load materials
             load_materials(model);
             load_textures(render_device, model, base_dir);
@@ -357,7 +304,7 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
                 const uint16_t* index_data = static_cast<const uint16_t*>(data);
                 for (size_t j = 0; j < index_count; ++j)
                 {
-                    indices_data[index_start + j] = index_data[j] + vertex_start; // Adjust index to match vertex start
+                    indices_data[index_start + j] = static_cast<uint32_t>(index_data[j]) + vertex_start; // Adjust index to match vertex start
                 }
             }
 
@@ -369,6 +316,7 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
         }
     }
 }
+
 void Model::load_materials(const tinygltf::Model& gltf_model)
 {
     materials.reserve(gltf_model.materials.size());

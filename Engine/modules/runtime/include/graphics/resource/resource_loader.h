@@ -28,7 +28,6 @@ namespace Cyber
             const char8_t* file_name;
             SHADER_STAGE stage;
             eastl::vector<ShaderMacro> macros;
-            uint32_t macro_count;
             const char8_t* entry_point_name;
             EShaderStageLoadFlags flags;
         };

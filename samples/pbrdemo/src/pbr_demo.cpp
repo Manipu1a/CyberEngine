@@ -166,23 +166,26 @@ namespace Cyber
                 (int32_t)back_buffer->get_create_desc().m_width, 
                 (int32_t)back_buffer->get_create_desc().m_height
             };
-            device_context->render_encoder_set_scissor( 1, &scissor);
-            RenderObject::IBuffer* vertex_buffers[] = { model_resource_bindings[0].vertex_buffer };
-            uint32_t strides[] = { sizeof(CubeVertex) };
-            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(model_resource_bindings[0].index_buffer, sizeof(uint32_t), 0);
-            device_context->render_encoder_bind_pipeline( pipeline);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, model_resource_bindings[0].base_color_texture_view);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, model_resource_bindings[0].normal_texture_view);
-            auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
-            device_context->prepare_for_rendering();
 
-            for(const auto& model : models)
+            device_context->render_encoder_set_scissor( 1, &scissor);
+
+            for(const auto& binding : model_resource_bindings)
             {
-                const auto& meshs = model.get_meshes();
+                RenderObject::IBuffer* vertex_buffers[] = { binding.vertex_buffer };
+                uint32_t strides[] = { sizeof(CubeVertex) };
+                device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
+                device_context->render_encoder_bind_index_buffer(binding.index_buffer, sizeof(uint32_t), 0);
+                device_context->render_encoder_bind_pipeline( binding.model_pipeline);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, model_resource_bindings[0].base_color_texture_view);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, model_resource_bindings[0].metallic_roughness_texture_view);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, model_resource_bindings[0].normal_texture_view);
+                auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 3, irradiance_cube_texture_view);
+                device_context->prepare_for_rendering();
+
+                const auto& meshs = binding.model->get_meshes();
                 for (const auto& mesh : meshs)
                 {
                     if(mesh.primitives.size() > 0)
@@ -195,8 +198,6 @@ namespace Cyber
                     }
                 }
             }
-            //device_context->render_encoder_draw_indexed(36, 0, 0);
-            /*
             device_context->cmd_next_sub_pass();
             // draw environment map
             device_context->render_encoder_set_viewport(1, &viewport);
@@ -206,7 +207,7 @@ namespace Cyber
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw(3, 0);
-            */
+            
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -306,63 +307,93 @@ namespace Cyber
             auto device_context = renderer->get_device_context();
             
             // load model
-            ModelLoader::ModelCreateInfo create_info;
-            create_info.file_path = "../../../../samples/pbrdemo/assets/MetalRoughSpheres/MetalRoughSpheres.gltf";
-            ModelLoader::Model model_loader(render_device, device_context, create_info);
-            models.push_back(model_loader);
-            ModelResourceBinding model_resource_binding;
-            model_resource_bindings.push_back(model_resource_binding);
+            {
+                auto& model_resource_binding = model_resource_bindings.emplace_back();
+                ModelLoader::ModelCreateInfo create_info;
+                create_info.file_path = "../../../../samples/pbrdemo/assets/MetalRoughSpheres/MetalRoughSpheres.gltf";
+                ModelLoader::Model* model_loader = cyber_new<ModelLoader::Model>(render_device, device_context, create_info);
+                model_resource_binding.model = model_loader;
+                if (!model_loader->is_valid())
+                {
+                    cyber_error(false, "Failed to load model: {0}", create_info.file_path);
+                }
+                auto& meshes = model_loader->get_meshes();
+                if (meshes.empty())
+                {
+                    cyber_error(false, "No meshes found in the model: {0}", create_info.file_path);
+                }
+                auto& materials = model_loader->get_materials();
 
-            if (!model_loader.is_valid())
-            {
-                cyber_error(false, "Failed to load model: {0}", create_info.file_path);
-            }
-            auto& meshes = model_loader.get_meshes();
-            if (meshes.empty())
-            {
-                cyber_error(false, "No meshes found in the model: {0}", create_info.file_path);
-            }
-            auto& materials = model_loader.get_materials();
-            
-            auto vertex_count = model_loader.get_vertex_count();
-            auto index_count = model_loader.get_index_count();
-            auto model_verts = model_loader.get_vertex_data();
-            auto model_indices = model_loader.get_index_data();
+                auto vertex_count = model_loader->get_vertex_count();
+                auto index_count = model_loader->get_index_count();
+                auto model_verts = model_loader->get_vertex_data();
+                auto model_indices = model_loader->get_index_data();
 
-            CubeVertex* cube_verts = cyber_new_n<CubeVertex>(vertex_count);
-            for(size_t i = 0; i < vertex_count; ++i)
-            {
-                cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
-                cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data.
-                cube_verts[i].tangent = model_verts[i].tangent;
-                cube_verts[i].uv = model_verts[i].uv0;
+                CubeVertex* cube_verts = cyber_new_n<CubeVertex>(vertex_count);
+                for(size_t i = 0; i < vertex_count; ++i)
+                {
+                    cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
+                    cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data.
+                    cube_verts[i].tangent = model_verts[i].tangent;
+                    cube_verts[i].uv = model_verts[i].uv0;
+                }
+
+                uint32_t* cube_indices = cyber_new_n<uint32_t>(index_count);
+                for(size_t i = 0; i < index_count; ++i)
+                {
+                    cube_indices[i] = model_indices[i];
+                }
+                
+                RenderObject::BufferCreateDesc buffer_desc = {};
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
+                buffer_desc.size = vertex_count * sizeof(CubeVertex);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                RenderObject::BufferData vertex_buffer_data = {};
+                vertex_buffer_data.data = cube_verts;
+                vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
+                model_resource_binding.vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
+                
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
+                buffer_desc.size = index_count * sizeof(uint32_t);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                RenderObject::BufferData index_buffer_data = {};
+                index_buffer_data.data = cube_indices;
+                index_buffer_data.data_size = index_count * sizeof(uint32_t);
+                model_resource_binding.index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+
+                // create texture
+                if(materials.size() > 0)
+                {
+                    for(size_t i = 0; i < materials.size(); ++i)
+                    {
+                        auto& material = materials[i];
+                        if(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId] != -1)
+                        {
+                            model_resource_binding.base_color_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                        }
+                        if(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId] != -1)
+                        {
+                            model_resource_binding.normal_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                        }
+                        if(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId] != -1)
+                        {
+                            model_resource_binding.metallic_roughness_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                        }
+                        if(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId] != -1)
+                        {
+                            model_resource_binding.emissive_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                        }
+                        if(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId] != -1)
+                        {
+                            model_resource_binding.occlusion_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                        }
+                    }
+                }
             }
 
-            uint32_t* cube_indices = cyber_new_n<uint32_t>(index_count);
-            for(size_t i = 0; i < index_count; ++i)
-            {
-                cube_indices[i] = model_indices[i];
-            }
-            
             RenderObject::BufferCreateDesc buffer_desc = {};
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
-            buffer_desc.size = vertex_count * sizeof(CubeVertex);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData vertex_buffer_data = {};
-            vertex_buffer_data.data = cube_verts;
-            vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
-            model_resource_bindings[0].vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
-            
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
-            buffer_desc.size = index_count * sizeof(uint32_t);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData index_buffer_data = {};
-            index_buffer_data.data = cube_indices;
-            index_buffer_data.data_size = index_count * sizeof(uint32_t);
-            model_resource_bindings[0].index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
-
             buffer_desc.size = sizeof(ConstantMatrix);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
@@ -381,35 +412,7 @@ namespace Cyber
             buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
             precompute_env_map_buffer = render_device->create_buffer(buffer_desc);
 
-            // create texture
-            if(materials.size() > 0)
-            {
-                for(size_t i = 0; i < materials.size(); ++i)
-                {
-                    auto& material = materials[i];
-                    if(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId] != -1)
-                    {
-                        model_resource_bindings[0].base_color_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                    }
-                    if(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId] != -1)
-                    {
-                        model_resource_bindings[0].normal_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                    }
-                    if(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId] != -1)
-                    {
-                        model_resource_bindings[0].metallic_roughness_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                    }
-                    if(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId] != -1)
-                    {
-                        model_resource_bindings[0].emissive_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                    }
-                    if(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId] != -1)
-                    {
-                        model_resource_bindings[0].occlusion_texture_view = model_loader.get_texture(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                    }
-                }
-            }
-    
+
             TextureLoader::TextureLoadInfo env_texture_load_info{
                 "EnvironmentMap",
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
@@ -537,29 +540,38 @@ namespace Cyber
 
         }
 
+        eastl::vector<ShaderMacro> PBRApp::get_shader_macros(const ModelResourceBinding& model_binding) const
+        {
+            eastl::vector<ShaderMacro> macros;
+            macros.push_back({ "USE_NORMAL_MAP", model_binding.normal_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_METALLIC_ROUGHNESS_MAP", model_binding.metallic_roughness_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_EMISSIVE_MAP", model_binding.emissive_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_OCCLUSION_MAP", model_binding.occlusion_texture_view == nullptr ? "0" : "1" });
+
+            return macros;
+        }
+
         void PBRApp::create_render_pipeline()
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
 
-            // create shader
-            ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-            vs_load_desc.target = SHADER_TARGET_6_0;
-            vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_vs.hlsl"),
-                .stage = SHADER_STAGE_VERT,
-                .entry_point_name = CYBER_UTF8("VSMain"),
-            };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            BlendStateCreateDesc blend_state_desc = {};
+            blend_state_desc.render_target_count = 1;
+            blend_state_desc.src_factors[0] = BLEND_CONSTANT_ONE;
+            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ZERO;
+            blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
+            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ZERO;
+            blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
+            blend_state_desc.alpha_to_coverage = false;
+            blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
-            ResourceLoader::ShaderLoadDesc ps_load_desc = {};
-            ps_load_desc.target = SHADER_TARGET_6_0;
-            ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_ps.hlsl"),
-                .stage = SHADER_STAGE_FRAG,
-                .entry_point_name = CYBER_UTF8("PSMain"),
-            };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            DepthStateCreateDesc depth_stencil_state_desc = {};
+            depth_stencil_state_desc.depth_test = true;
+            depth_stencil_state_desc.depth_write = true;
+            depth_stencil_state_desc.depth_func = CMP_LESS_EQUAL;
+            depth_stencil_state_desc.stencil_test = false;
 
             //todo: remove sampler to static
             RenderObject::SamplerCreateDesc sampler_create_desc = {};
@@ -582,61 +594,74 @@ namespace Cyber
             RenderObject::ISampler* samplers[] = { sampler, sampler };
 
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
-
-            // create root signature
-            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
-            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
-            pipeline_shader_create_desc[0]->m_library = vs_shader;
-            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
-            pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
-            pipeline_shader_create_desc[1]->m_library = ps_shader;
-            pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-
-            RenderObject::VertexAttribute vertex_attributes[] = {
-                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
-                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
-                {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
-            };
-            RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
-            
-            BlendStateCreateDesc blend_state_desc = {};
-            blend_state_desc.render_target_count = 1;
-            blend_state_desc.src_factors[0] = BLEND_CONSTANT_ONE;
-            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ZERO;
-            blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
-            blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
-            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ZERO;
-            blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
-            blend_state_desc.alpha_to_coverage = false;
-            blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
-
-            DepthStateCreateDesc depth_stencil_state_desc = {};
-            depth_stencil_state_desc.depth_test = true;
-            depth_stencil_state_desc.depth_write = true;
-            depth_stencil_state_desc.depth_func = CMP_LESS_EQUAL;
-            depth_stencil_state_desc.stencil_test = false;
-
             auto& scene_target = renderer->get_scene_target(0);
 
-            RenderObject::RenderPipelineCreateDesc rp_desc = 
+            // Model Binding
+            for(auto& model_binding : model_resource_bindings)
             {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .vertex_layout = &vertex_layout_desc,
-                .blend_state = &blend_state_desc,
-                .depth_stencil_state = &depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-                .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
-                .render_target_count = 1,
-                .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
-                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
-            };
-            pipeline = render_device->create_render_pipeline(rp_desc);
+                auto shader_macros = get_shader_macros(model_binding);
+                
+                // create shader
+                ResourceLoader::ShaderLoadDesc vs_load_desc = {};
+                vs_load_desc.target = SHADER_TARGET_6_0;
+                vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                    .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_vs.hlsl"),
+                    .stage = SHADER_STAGE_VERT,
+                    .macros = shader_macros,
+                    .entry_point_name = CYBER_UTF8("VSMain"),
+                };
+                eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+
+                ResourceLoader::ShaderLoadDesc ps_load_desc = {};
+                ps_load_desc.target = SHADER_TARGET_6_0;
+                ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                    .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_ps.hlsl"),
+                    .stage = SHADER_STAGE_FRAG,
+                    .macros = shader_macros,
+                    .entry_point_name = CYBER_UTF8("PSMain"),
+                };
+                eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+
+                // create root signature
+                RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
+                pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+                pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+                pipeline_shader_create_desc[0]->m_library = vs_shader;
+                pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+                pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+                pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+                pipeline_shader_create_desc[1]->m_library = ps_shader;
+                pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+                RenderObject::VertexAttribute vertex_attributes[] = {
+                    {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
+                    {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
+                    {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
+                    {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+                };
+                RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
+
+
+                RenderObject::RenderPipelineCreateDesc rp_desc = 
+                {
+                    .vertex_shader = pipeline_shader_create_desc[0],
+                    .pixel_shader = pipeline_shader_create_desc[1],
+                    .vertex_layout = &vertex_layout_desc,
+                    .blend_state = &blend_state_desc,
+                    .depth_stencil_state = &depth_stencil_state_desc,
+                    .m_staticSamplers = &sampler,
+                    .m_staticSamplerNames = sampler_names,
+                    .m_staticSamplerCount = 1,
+                    .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
+                    .render_target_count = 1,
+                    .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
+                    .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+                };
+                model_binding.model_pipeline = render_device->create_render_pipeline(rp_desc);
+                
+                vs_shader->free();  
+                ps_shader->free();
+            }
 
             ResourceLoader::ShaderLoadDesc env_vs_load_desc = {};
             env_vs_load_desc.target = SHADER_TARGET_6_0;
@@ -727,8 +752,6 @@ namespace Cyber
             };
             irradiance_pipeline = render_device->create_render_pipeline(irr_rp_desc);
 
-            vs_shader->free();  
-            ps_shader->free();
             env_vs_shader->free();
             env_ps_shader->free();
         }
@@ -747,7 +770,41 @@ namespace Cyber
             }
             render_device->free_swap_chain(swap_chain);
             render_device->free_surface(surface);
-            render_device->free_render_pipeline(pipeline);
+            for(auto& model_binding : model_resource_bindings)
+            {
+                if(model_binding.vertex_buffer)
+                {
+                    render_device->free_buffer(model_binding.vertex_buffer);
+                }
+                if(model_binding.index_buffer)
+                {
+                    render_device->free_buffer(model_binding.index_buffer);
+                }
+                if(model_binding.base_color_texture_view)
+                {
+                    render_device->free_texture_view(model_binding.base_color_texture_view);
+                }
+                if(model_binding.normal_texture_view)
+                {
+                    render_device->free_texture_view(model_binding.normal_texture_view);
+                }
+                if(model_binding.metallic_roughness_texture_view)
+                {
+                    render_device->free_texture_view(model_binding.metallic_roughness_texture_view);
+                }
+                if(model_binding.emissive_texture_view)
+                {
+                    render_device->free_texture_view(model_binding.emissive_texture_view);
+                }
+                if(model_binding.occlusion_texture_view)
+                {
+                    render_device->free_texture_view(model_binding.occlusion_texture_view);
+                }
+                if(model_binding.model_pipeline)
+                {
+                    render_device->free_render_pipeline(model_binding.model_pipeline);
+                }
+            }
             render_device->free_device();
             render_device->free_instance(instance);
         }
