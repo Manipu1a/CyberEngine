@@ -178,11 +178,13 @@ namespace Cyber
                 device_context->render_encoder_bind_pipeline( binding.model_pipeline);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, model_resource_bindings[0].base_color_texture_view);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, model_resource_bindings[0].metallic_roughness_texture_view);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, model_resource_bindings[0].normal_texture_view);
+                binding.model->get_materials();
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, binding.base_color_texture_view);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, binding.metallic_roughness_texture_view);
+                
+                //device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, binding.normal_texture_view);
                 auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 3, irradiance_cube_texture_view);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
                 device_context->prepare_for_rendering();
 
                 const auto& meshs = binding.model->get_meshes();
@@ -600,7 +602,7 @@ namespace Cyber
             for(auto& model_binding : model_resource_bindings)
             {
                 auto shader_macros = get_shader_macros(model_binding);
-                
+
                 // create shader
                 ResourceLoader::ShaderLoadDesc vs_load_desc = {};
                 vs_load_desc.target = SHADER_TARGET_6_0;

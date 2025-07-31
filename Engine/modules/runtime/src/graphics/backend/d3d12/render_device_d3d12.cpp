@@ -2561,7 +2561,14 @@ namespace Cyber
             ID3D12ShaderReflection *pReflection2;
             ID3DBlob *ppCode;
             ID3DBlob* ppErrorMsgs;
-            D3D_SHADER_MACRO Macros[] = {{"D3DCOMPILER", ""}, {}};
+            D3D_SHADER_MACRO *Macros = cyber_new_n<D3D_SHADER_MACRO>(desc.shader_macro_count + 1);
+            for(uint32_t i = 0; i < desc.shader_macro_count; ++i)
+            {
+                eastl::string macro_name(eastl::string::CtorSprintf(), "%s=%s",desc.shader_macros[i].definition, desc.shader_macros[i].value);
+                CB_INFO("Shader Define: {0} ", macro_name.c_str());
+                Macros[i].Name = desc.shader_macros[i].definition;
+                Macros[i].Definition = desc.shader_macros[i].value;
+            }
             DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
             //desc.shader_target;
             ShaderVersion shader_version(5 , 1);
