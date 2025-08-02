@@ -1,6 +1,7 @@
 #pragma once
 #include "gameruntime/sampleapp.h"
 #include "model_loader.h"
+#include "component/camera_component.h"
 #include "gameruntime/cyber_game.config.h"
 
 namespace Cyber
@@ -46,18 +47,26 @@ namespace Cyber
                 float dummy;
             };
 
-            struct ModelResourceBinding
+            struct MaterialResourceBinding
             {
-                ModelLoader::Model* model = nullptr;
+                ModelLoader::Material::MaterialAttribs attribs;
                 RenderObject::IRenderPipeline* model_pipeline = nullptr;
-                RenderObject::IBuffer* vertex_buffer = nullptr;
-                RenderObject::IBuffer* index_buffer = nullptr;
 
                 RenderObject::ITexture_View* base_color_texture_view = nullptr;
                 RenderObject::ITexture_View* metallic_roughness_texture_view = nullptr;
                 RenderObject::ITexture_View* normal_texture_view = nullptr;
                 RenderObject::ITexture_View* occlusion_texture_view = nullptr;
                 RenderObject::ITexture_View* emissive_texture_view = nullptr;
+            };
+
+            struct ModelResourceBinding
+            {
+                ModelLoader::Model* model = nullptr;
+                
+                RenderObject::IBuffer* vertex_buffer = nullptr;
+                RenderObject::IBuffer* index_buffer = nullptr;
+                
+                eastl::vector<MaterialResourceBinding> material_bindings;
 
                 ModelResourceBinding() {}
             };
@@ -77,14 +86,14 @@ namespace Cyber
             void create_render_pipeline();
             void create_resource();
             void create_ui();
-            void draw_ui();
+            virtual void draw_ui(ImGuiContext* in_imgui_context) override;
             void finalize();
 
         protected:
             void precompute_environment_map();
+            void bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding);
+            eastl::vector<ShaderMacro> get_shader_macros(const MaterialResourceBinding& material_binding) const;
 
-            eastl::vector<ShaderMacro> get_shader_macros(const ModelResourceBinding& model_binding) const;
-            
         protected:
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* environment_pipeline = nullptr;
@@ -110,8 +119,15 @@ namespace Cyber
             RenderObject::IBuffer* camera_constant_buffer = nullptr;
             RenderObject::IBuffer* precompute_env_map_buffer = nullptr;
 
-            float3 LightDirection = { 0.0f, 0.0f, -10.0f};
-            float3 LightColor = { 1.0f, 1.0f, 1.0f };
+            float3 light_direction = { 0.0f, 0.0f, -10.0f };
+            float3 light_color = { 1.0f, 1.0f, 1.0f };
+
+            float3 model_position = { 0.0f, 0.0f, 0.0f };
+            float3 model_scale = { 1.0f, 1.0f, 1.0f };
+            float3 model_rotation = { 0.0f, 0.0f, 0.0f };
+
+            Component::CameraComponent* camera_component = nullptr;
+
         };
     }
 

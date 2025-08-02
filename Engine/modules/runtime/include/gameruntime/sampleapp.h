@@ -16,7 +16,7 @@ namespace Cyber
             virtual void run();
             virtual void update(float deltaTime);
             virtual void present();
-
+            virtual void draw_ui(ImGuiContext* in_imgui_context) {}
             uint32_t get_back_buffer_index() const { return m_backBufferIndex; }
             static SampleApp* create_sample_app();
         protected:

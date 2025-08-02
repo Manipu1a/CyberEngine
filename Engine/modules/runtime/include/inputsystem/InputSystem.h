@@ -4,7 +4,7 @@
 #include <gainput/gainput.h>
 #include <EASTL/vector.h>
 #include <EASTL/map.h>
-#include <DirectXMath.h>
+#include "math/basic_math.hpp"
 #include <mimalloc.h>
 
 namespace Cyber
@@ -167,11 +167,11 @@ namespace Cyber
         union
         {
             /// Gesture input
-            DirectX::XMFLOAT4 mFloat4;
+            float4 mFloat4;
             /// 3D input (gyroscope, ...)
-            DirectX::XMFLOAT3 mFloat3;
+            float3 mFloat3;
             /// 2D input (mouse position, delta, composite input (wasd), gamepad stick, joystick, ...)
-            DirectX::XMFLOAT2 mFloat2;
+            float2 mFloat2;
             /// 1D input (composite input (ws), gamepad left trigger, ...)
             float mFloat;
             /// Button input (mouse left button, keyboard keys, ...)
@@ -179,7 +179,7 @@ namespace Cyber
             /// Text input
             wchar_t* pText;
         };
-        DirectX::XMFLOAT2* pPosition = nullptr;
+        float2* pPosition = nullptr;
         bool pCaptured = false;
         float mScrollValue = 0.f;
         uint32_t mActionId = UINT_MAX;
@@ -188,13 +188,15 @@ namespace Cyber
     };
 
     using InputActionCallBack = bool (*)(InputActionContext* pContext);
+     
     //typedef bool (*InputActionCallback)(InputActionContext* pContext);
     struct InputActionDesc
     {
         /// Action ID 
         uint32_t mActionId = UINT_MAX;
         /// Callback when an action is initiated, performed or canceled
-        InputActionCallBack pFunction = nullptr;
+        //InputActionCallBack pFunction = nullptr;
+        eastl::function<bool(InputActionContext*)> pFunction = nullptr;
         /// User data which will be assigned to InputActionContext::pUserData when calling pFunction
         void* pUserData = nullptr;
         /// User management (which user does this action apply to)
@@ -242,7 +244,7 @@ namespace Cyber
             mType = InputControlType::CONTROL_COMPOSITE;
         }
 
-        DirectX::XMFLOAT2 mValue;
+        float2 mValue;
         uint32_t mControls[4];
         uint8_t mComposite;
         uint8_t mStarted;
@@ -263,7 +265,7 @@ namespace Cyber
             mScaleByDT = false;
         }
 
-        DirectX::XMFLOAT3 mValue;
+        float3 mValue;
         float mScale;
         uint16_t mStartButton;
         uint8_t mTarget;
@@ -380,7 +382,7 @@ namespace Cyber
 
         eastl::map<gainput::DeviceId, eastl::vector<IControl>> mControlPool;
 
-        DirectX::XMFLOAT2 mMousePosition;
+        float2 mMousePosition;
         /// Gainput Manager which lets us talk with the gainput backend
         Scope<gainput::InputManager> pInputManager = nullptr;
        

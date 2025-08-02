@@ -377,7 +377,7 @@ namespace Cyber
                     else 
                     {
                         if(!pControl->mValue[0] && !pControl->mValue[1])
-                            ctx.mFloat2 = DirectX::XMFLOAT2(0.0f, 0.0f);
+                            ctx.mFloat2 = float2(0.0f, 0.0f);
                         else
                             ctx.mFloat2 = pControl->mValue;
                     }
@@ -415,7 +415,7 @@ namespace Cyber
 
                         if(allReleased)
                         {
-                            pControl->mValue = DirectX::XMFLOAT2(0.0f, 0.0f);
+                            pControl->mValue = float2(0.0f, 0.0f);
                             pControl->mStarted = 0;
                             ctx.mFloat2 = pControl->mValue;
                             ctx.mPhase = (uint8_t)InputActionPhase::INPUT_ACTION_PHASE_CANCELED;

@@ -116,6 +116,10 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
         }
     }
 
+    // load materials
+    load_materials(model);
+    load_textures(render_device, model, base_dir);
+    /*
     for(size_t i = 0; i < model.meshes.size(); ++i)
     {
         const tinygltf::Mesh& mesh = model.meshes[i];
@@ -123,10 +127,6 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
         for(size_t primitive_idx = 0; primitive_idx < mesh.primitives.size(); ++primitive_idx)
         {
             const tinygltf::Primitive& primitive = mesh.primitives[primitive_idx];
-
-            // load materials
-            load_materials(model);
-            load_textures(render_device, model, base_dir);
 
             if(model.textures.size() > 0 && primitive.material >= 0)
             {
@@ -141,6 +141,7 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
             }
         }
     }
+    */
 }
 
 void Model::load_node(const tinygltf::Model& gltf_model, uint32_t node_index)
@@ -311,7 +312,7 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
             new_mesh.primitives.emplace_back(Primitive{  index_start, 
                                                         index_count, 
                                                         vertex_count, 
-                                                        0 });
+                                                        primitive.material >= 0 ? (uint32_t)primitive.material : 0 });
             // Process other attributes like NORMAL, TEXCOORD_0, etc.
         }
     }

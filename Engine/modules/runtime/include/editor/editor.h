@@ -224,9 +224,14 @@ namespace Cyber
                 //log.AddLog("%s", msg);
             }
             
+            ImGuiContext* get_imgui_context()
+            {
+                return imgui_context;
+            }
         protected:
             Core::Application* m_pApp = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
+            ImGuiContext* imgui_context = nullptr;
         };
     }
 }

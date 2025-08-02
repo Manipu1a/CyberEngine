@@ -9,7 +9,7 @@ namespace Cyber
     public:
         DeviceInputListener(gainput::InputManager& manager, int32_t index): mManager(manager), mIndex(index) { }
 
-        bool OnDeviceButtonBool(gainput::DeviceId deviceId, gainput::DeviceButtonId deviceButton, bool oldValue, bool newValue)
+        virtual bool OnDeviceButtonBool(gainput::DeviceId deviceId, gainput::DeviceButtonId deviceButton, bool oldValue, bool newValue) override
 	    {
 		    const gainput::InputDevice* device = mManager.GetDevice(deviceId);
 		    char buttonName[64] = "";
@@ -19,7 +19,7 @@ namespace Cyber
 		    return false;
 	    }
 
-	    bool OnDeviceButtonFloat(gainput::DeviceId deviceId, gainput::DeviceButtonId deviceButton, float oldValue, float newValue)
+	    virtual bool OnDeviceButtonFloat(gainput::DeviceId deviceId, gainput::DeviceButtonId deviceButton, float oldValue, float newValue) override
 	    {
 	    	const gainput::InputDevice* device = mManager.GetDevice(deviceId);
 	    	char buttonName[64] = "";
@@ -28,7 +28,7 @@ namespace Cyber
 	    	return true;
 	    }
 
-        int32_t GetPriority() const
+        virtual int32_t GetPriority() const override
         {
             return mIndex;
         }

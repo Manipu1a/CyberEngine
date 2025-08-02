@@ -29,6 +29,27 @@ struct Vector2
     constexpr Vector2() noexcept : Vector2{0} {}
 
     constexpr Vector2(T x, T y) noexcept : x(x), y(y) {}  
+
+    static constexpr size_t get_component_count()
+    {
+        return 2;
+    }
+
+    T& operator[](size_t index)
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
+    const T& operator[](size_t index) const
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
+    T* data() { return reinterpret_cast<T*>(this); }
+
+    const T* data() const { return reinterpret_cast<const T*>(this); }
 };
 
 template <class T>
@@ -107,12 +128,32 @@ struct Vector3
         return Vector3{x - other.x, y - other.y, z - other.z}   ;
     }
 
+    static constexpr size_t get_component_count()
+    {
+        return 3;
+    }
+
+    T& operator[](size_t index)
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
+    const T& operator[](size_t index) const
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
     template <typename Y>
     constexpr static Vector3 make_vector(const Y& value) noexcept
     {
         return Vector3 {static_cast<T>(value[0]), static_cast<T>(value[1]), static_cast<T>(value[2])};
     }
 
+    T* data() { return reinterpret_cast<T*>(this); }
+
+    const T* data() const { return reinterpret_cast<const T*>(this); }
 };
 
 template<class T>
@@ -131,12 +172,6 @@ static Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b)
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x
     };
-}
-
-template<class T>
-static float dot(const Vector3<T>& a, const Vector3<T>& b)
-{
-    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <class T>
@@ -163,7 +198,33 @@ struct Vector4
 
     constexpr Vector4(const Vector3<T>& vec, T w_value = 1) noexcept
         : x(vec.x), y(vec.y), z(vec.z), w(w_value) {}
-        
+    
+    static constexpr size_t get_component_count()
+    {
+        return 4;
+    }
+
+    T& operator[](size_t index)
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
+    const T& operator[](size_t index) const
+    {
+        cyber_check(index < get_component_count());
+        return m[index];
+    }
+
+    template <typename Y>
+    constexpr static Vector4 make_vector(const Y& value) noexcept
+    {
+        return Vector4 {static_cast<T>(value[0]), static_cast<T>(value[1]), static_cast<T>(value[2]), static_cast<T>(value[3])};
+    }
+
+    T* data() { return reinterpret_cast<T*>(this); }
+
+    const T* data() const { return reinterpret_cast<const T*>(this); }
 };
 
 template <class T>
@@ -188,6 +249,30 @@ template <class T>
 constexpr Vector4<T>(max)(const Vector4<T>& a, const Vector4<T>& b) noexcept
 {
     return Vector4<T>{ (std::max)(a.x, b.x), (std::max)(a.y, b.y), (std::max)(a.z, b.z), (std::max)(a.w, b.w) };
+}
+
+template <class T>
+constexpr T dot(const Vector2<T>& a, const Vector2<T>& b) noexcept
+{
+    return a.x * b.x + a.y * b.y;
+}
+
+template <class T>
+constexpr T dot(const Vector3<T>& a, const Vector3<T>& b) noexcept
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+template <class T>
+constexpr T dot(const Vector4<T>& a, const Vector4<T>& b) noexcept
+{
+    return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+template <class VectorType>
+constexpr auto length(const VectorType& v) noexcept
+{
+    return std::sqrt(dot(v, v));
 }
 
 CYBER_END_NAMESPACE

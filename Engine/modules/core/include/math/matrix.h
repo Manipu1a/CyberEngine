@@ -528,5 +528,120 @@ constexpr Matrix4x4<T> operator*(const Matrix4x4<T>& lhs, const Matrix4x4<T>& rh
     return Matrix4x4<T>::mul(lhs, rhs);
 }
 
+
+template<class T>
+struct Quaternion
+{
+    Vector4<T> q;
+
+    constexpr Quaternion(const Vector4<T>& _q) noexcept : q(q) {}
+
+    constexpr Quaternion(T x, T y, T z, T w) noexcept : q(x, y, z, w) {}
+
+    constexpr Quaternion() noexcept {}
+
+    constexpr bool operator==(const Quaternion& r) const
+    {
+        return q == r.q;
+    }
+
+    constexpr bool operator!=(const Quaternion& r) const
+    {
+        return !(*this == r);
+    }
+
+    template<typename Y>
+    constexpr static Quaternion make_quaternion(const Y& value)
+    {
+        return Quaternion{Vector4<T>::make_vector(value)};
+    }
+
+    static Quaternion rotation_from_axis_angle(const Vector3<T>& axis, T angle)
+    {
+        Quaternion out{0, 0, 0, 1};
+        const auto norm = length(axis);
+        if (norm > 0)
+        {
+            const auto half_angle = angle * 0.5;
+            const auto s = std::sin(half_angle);
+            out.x = axis.x * s / norm;
+            out.y = axis.y * s / norm;
+            out.z = axis.z * s / norm;
+            out.w = std::cos(half_angle);
+        }
+        return out;
+    }
+
+    void get_axis_angle(Vector3<T>& axis, T& angle) const
+    {
+        auto s = std::sqrt(q.x * q.x + q.y * q.y + q.z * q.z);
+        angle = 2 * std::atan2(s, q.w);
+        auto r = (s > 0) ? 1 / s : 0;
+        axis.x = q.x * r;
+        axis.y = q.y * r;
+        axis.z = q.z * r;
+    }
+
+    Matrix4x4<T> to_matrix() const
+    {
+        Matrix4x4<T> result;
+        auto xx2 = 2.0f * q.x * q.x;
+        auto yy2 = 2.0f * q.y * q.y;
+        auto xy2 = 2.0f * q.x * q.y;
+        auto xz2 = 2.0f * q.x * q.z;
+        auto yz2 = 2.0f * q.y * q.z;
+        auto zz2 = 2.0f * q.z * q.z;
+        auto wx2 = 2.0f * q.w * q.x;
+        auto wy2 = 2.0f * q.w * q.y;
+        auto wz2 = 2.0f * q.w * q.z;
+        result.m00 = -yy2 - zz2 + 1;
+        result.m01 = xy2 + wz2;
+        result.m02 = xz2 - wy2;
+        result.m03 = 0;
+        result.m10 = xy2 - wz2;
+        result.m11 = -xx2 - zz2 + 1;
+        result.m12 = yz2 + wx2;
+        result.m13 = 0;
+        result.m20 = xz2 + wy2;
+        result.m21 = yz2 - wx2;
+        result.m22 = -xx2 - yy2 + 1;
+        result.m23 = 0;
+        result.m30 = 0;
+        result.m31 = 0;
+        result.m32 = 0;
+        result.m33 = 1;
+        return result;
+    }
+
+    constexpr static Quaternion mul(const Quaternion& q1, const Quaternion& q2)
+    {
+        return Quaternion(
+            q1.q.x * q2.q.w + q1.q.y * q2.q.z - q1.q.z * q2.q.y + q1.q.w * q2.q.x,
+            -q1.q.x * q2.q.z + q1.q.y * q2.q.w + q1.q.z * q2.q.x + q1.q.w * q2.q.y,
+            q1.q.x * q2.q.y - q1.q.y * q2.q.x + q1.q.z * q2.q.w + q1.q.w * q2.q.z,
+            -q1.q.x * q2.q.x - q1.q.y * q2.q.y - q1.q.z * q2.q.z + q1.q.w * q2.q.w
+        );
+    }
+    
+    Quaternion& operator=(const Quaternion& r)
+    {
+        q = r.q;
+        return *this;
+    }
+
+    Quaternion& operator*=(const Quaternion& r)
+    {
+        *this = mul(*this, r);
+        return *this;
+    }
+
+    Vector3<T> rotate(const Vector3<T>& v) const
+    {
+        const Vector3<T> axis{q.x, q.y, q.z};
+        return v + 2 * cross(axis, cross(axis, v) + q.w * v);
+    }
+};
+
+
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

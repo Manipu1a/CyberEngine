@@ -37,6 +37,7 @@ namespace Cyber
 
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
+            camera_component = cyber_new<Component::CameraComponent>();
 
             create_resource();
             create_render_pipeline();
@@ -57,9 +58,10 @@ namespace Cyber
             static float time = 0.0f;
             time += deltaTime;
 
-            float4x4 model_matrix = float4x4::scale(0.2);
+            float4x4 model_matrix = float4x4::translation(model_position.x, model_position.y, model_position.z) * float4x4::scale(model_scale);
+            model_matrix = model_matrix * float4x4::RotationY(model_rotation.y) * float4x4::RotationX(model_rotation.x) * float4x4::RotationZ(model_rotation.z);
 
-            float3 camera_position = { 0.0f, 0.0f, -10.0f };
+            float3 camera_position = { 0.0f, 0.0f, -20.0f };
             float3 camera_target = { 0.0f, 0.0f, 0.0f };
             float3 camera_up = { 0.0f, 1.0f, 0.0f };
             
@@ -78,8 +80,8 @@ namespace Cyber
             vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
 
             Component::LightAttribs light_attribs;
-            light_attribs.light_direction = LightDirection;
-            light_attribs.light_intensity = LightColor;
+            light_attribs.light_direction = light_direction;
+            light_attribs.light_intensity = light_color;
 
             void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             Component::LightAttribs* light_ptr = (Component::LightAttribs*)light_resource;
@@ -175,17 +177,8 @@ namespace Cyber
                 uint32_t strides[] = { sizeof(CubeVertex) };
                 device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
                 device_context->render_encoder_bind_index_buffer(binding.index_buffer, sizeof(uint32_t), 0);
-                device_context->render_encoder_bind_pipeline( binding.model_pipeline);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-                binding.model->get_materials();
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, binding.base_color_texture_view);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, binding.metallic_roughness_texture_view);
-                
-                //device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, binding.normal_texture_view);
-                auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 2, irradiance_cube_texture_view);
-                device_context->prepare_for_rendering();
 
                 const auto& meshs = binding.model->get_meshes();
                 for (const auto& mesh : meshs)
@@ -195,6 +188,10 @@ namespace Cyber
                         const auto& primitives = mesh.primitives;
                         for (const auto& primitive : primitives)
                         {
+                            auto& primitive_material = binding.material_bindings[primitive.material_id];
+                            device_context->render_encoder_bind_pipeline( primitive_material.model_pipeline);
+                            bind_material_resources(device_context, primitive_material);
+                            device_context->prepare_for_rendering();
                             device_context->render_encoder_draw_indexed(primitive.index_count, primitive.first_index, 0);
                         }
                     }
@@ -371,25 +368,28 @@ namespace Cyber
                     for(size_t i = 0; i < materials.size(); ++i)
                     {
                         auto& material = materials[i];
+                        auto& material_resource_binding = model_resource_binding.material_bindings.emplace_back();
+                        material_resource_binding.attribs = material.attribs;
+
                         if(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId] != -1)
                         {
-                            model_resource_binding.base_color_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                            material_resource_binding.base_color_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                         if(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId] != -1)
                         {
-                            model_resource_binding.normal_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                            material_resource_binding.normal_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultNormalTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                         if(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId] != -1)
                         {
-                            model_resource_binding.metallic_roughness_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                            material_resource_binding.metallic_roughness_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultMetallicRoughnessTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                         if(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId] != -1)
                         {
-                            model_resource_binding.emissive_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                            material_resource_binding.emissive_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultEmissiveTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                         if(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId] != -1)
                         {
-                            model_resource_binding.occlusion_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                            material_resource_binding.occlusion_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultOcclusionTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                     }
                 }
@@ -532,23 +532,76 @@ namespace Cyber
             }
         }
 
+        void PBRApp::bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding)
+        {
+            uint32_t material_resource_start_index = 0;
+            if(material_binding.base_color_texture_view)
+            {
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.base_color_texture_view);
+            }
+            if(material_binding.metallic_roughness_texture_view)
+            {
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.metallic_roughness_texture_view);
+            }
+            if(material_binding.normal_texture_view)
+            {
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.normal_texture_view);
+            }
+            if(material_binding.emissive_texture_view)
+            {
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.emissive_texture_view);
+            }
+            if(material_binding.occlusion_texture_view)
+            {
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.occlusion_texture_view);
+            }
+
+            if(irradiance_cube_texture)
+            {
+                auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, irradiance_cube_texture_view);
+            }
+        }
+
         void PBRApp::create_ui()
         {
 
         }
 
-        void PBRApp::draw_ui()
+        void PBRApp::draw_ui(ImGuiContext* in_imgui_context)
         {
+            if(in_imgui_context)
+            {
+                ImGui::SetCurrentContext(in_imgui_context);
 
+                if(ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+                {
+                    if(ImGui::TreeNode("Lightning"))
+                    {
+                        ImGui::ColorEdit3("Light Color", light_color.data());
+                        ImGui::InputFloat3("Light Direction", light_direction.data());
+                        ImGui::TreePop();
+                    }
+
+                    if(ImGui::TreeNode("Model Transform"))
+                    {
+                        ImGui::InputFloat3("Position", model_position.data());
+                        ImGui::SliderFloat3("Rotation", model_rotation.data(), 0.0f, 360.0f);
+                        ImGui::SliderFloat3("Scale", model_scale.data(), 0.0f, 10.0f);
+                        ImGui::TreePop();
+                    }
+                }
+                ImGui::End();
+            }
         }
 
-        eastl::vector<ShaderMacro> PBRApp::get_shader_macros(const ModelResourceBinding& model_binding) const
+        eastl::vector<ShaderMacro> PBRApp::get_shader_macros(const MaterialResourceBinding& material_binding) const
         {
             eastl::vector<ShaderMacro> macros;
-            macros.push_back({ "USE_NORMAL_MAP", model_binding.normal_texture_view == nullptr ? "0" : "1" });
-            macros.push_back({ "USE_METALLIC_ROUGHNESS_MAP", model_binding.metallic_roughness_texture_view == nullptr ? "0" : "1" });
-            macros.push_back({ "USE_EMISSIVE_MAP", model_binding.emissive_texture_view == nullptr ? "0" : "1" });
-            macros.push_back({ "USE_OCCLUSION_MAP", model_binding.occlusion_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_NORMAL_MAP", material_binding.normal_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_METALLIC_ROUGHNESS_MAP", material_binding.metallic_roughness_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_EMISSIVE_MAP", material_binding.emissive_texture_view == nullptr ? "0" : "1" });
+            macros.push_back({ "USE_OCCLUSION_MAP", material_binding.occlusion_texture_view == nullptr ? "0" : "1" });
 
             return macros;
         }
@@ -601,68 +654,70 @@ namespace Cyber
             // Model Binding
             for(auto& model_binding : model_resource_bindings)
             {
-                auto shader_macros = get_shader_macros(model_binding);
-
-                // create shader
-                ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-                vs_load_desc.target = SHADER_TARGET_6_0;
-                vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                    .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_vs.hlsl"),
-                    .stage = SHADER_STAGE_VERT,
-                    .macros = shader_macros,
-                    .entry_point_name = CYBER_UTF8("VSMain"),
-                };
-                eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
-
-                ResourceLoader::ShaderLoadDesc ps_load_desc = {};
-                ps_load_desc.target = SHADER_TARGET_6_0;
-                ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                    .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_ps.hlsl"),
-                    .stage = SHADER_STAGE_FRAG,
-                    .macros = shader_macros,
-                    .entry_point_name = CYBER_UTF8("PSMain"),
-                };
-                eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
-
-                // create root signature
-                RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
-                pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-                pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
-                pipeline_shader_create_desc[0]->m_library = vs_shader;
-                pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
-                pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-                pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
-                pipeline_shader_create_desc[1]->m_library = ps_shader;
-                pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-
-                RenderObject::VertexAttribute vertex_attributes[] = {
-                    {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
-                    {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                    {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
-                    {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
-                };
-                RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
-
-
-                RenderObject::RenderPipelineCreateDesc rp_desc = 
+                for(auto& material_binding : model_binding.material_bindings)
                 {
-                    .vertex_shader = pipeline_shader_create_desc[0],
-                    .pixel_shader = pipeline_shader_create_desc[1],
-                    .vertex_layout = &vertex_layout_desc,
-                    .blend_state = &blend_state_desc,
-                    .depth_stencil_state = &depth_stencil_state_desc,
-                    .m_staticSamplers = &sampler,
-                    .m_staticSamplerNames = sampler_names,
-                    .m_staticSamplerCount = 1,
-                    .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
-                    .render_target_count = 1,
-                    .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
-                    .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
-                };
-                model_binding.model_pipeline = render_device->create_render_pipeline(rp_desc);
-                
-                vs_shader->free();  
-                ps_shader->free();
+                    auto shader_macros = get_shader_macros(model_binding.material_bindings[0]);
+                    // create shader
+                    ResourceLoader::ShaderLoadDesc vs_load_desc = {};
+                    vs_load_desc.target = SHADER_TARGET_6_0;
+                    vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                        .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_vs.hlsl"),
+                        .stage = SHADER_STAGE_VERT,
+                        .macros = shader_macros,
+                        .entry_point_name = CYBER_UTF8("VSMain"),
+                    };
+                    eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+
+                    ResourceLoader::ShaderLoadDesc ps_load_desc = {};
+                    ps_load_desc.target = SHADER_TARGET_6_0;
+                    ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                        .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cube_ps.hlsl"),
+                        .stage = SHADER_STAGE_FRAG,
+                        .macros = shader_macros,
+                        .entry_point_name = CYBER_UTF8("PSMain"),
+                    };
+                    eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+
+                    // create root signature
+                    RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
+                    pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+                    pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+                    pipeline_shader_create_desc[0]->m_library = vs_shader;
+                    pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+                    pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+                    pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+                    pipeline_shader_create_desc[1]->m_library = ps_shader;
+                    pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+                    RenderObject::VertexAttribute vertex_attributes[] = {
+                        {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
+                        {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
+                        {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
+                        {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+                    };
+                    RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
+
+
+                    RenderObject::RenderPipelineCreateDesc rp_desc = 
+                    {
+                        .vertex_shader = pipeline_shader_create_desc[0],
+                        .pixel_shader = pipeline_shader_create_desc[1],
+                        .vertex_layout = &vertex_layout_desc,
+                        .blend_state = &blend_state_desc,
+                        .depth_stencil_state = &depth_stencil_state_desc,
+                        .m_staticSamplers = &sampler,
+                        .m_staticSamplerNames = sampler_names,
+                        .m_staticSamplerCount = 1,
+                        .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
+                        .render_target_count = 1,
+                        .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
+                        .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+                    };
+                    material_binding.model_pipeline = render_device->create_render_pipeline(rp_desc);
+                    
+                    vs_shader->free();  
+                    ps_shader->free();
+                }
             }
 
             ResourceLoader::ShaderLoadDesc env_vs_load_desc = {};
@@ -782,29 +837,28 @@ namespace Cyber
                 {
                     render_device->free_buffer(model_binding.index_buffer);
                 }
-                if(model_binding.base_color_texture_view)
+                for(auto& material_binding : model_binding.material_bindings)
                 {
-                    render_device->free_texture_view(model_binding.base_color_texture_view);
-                }
-                if(model_binding.normal_texture_view)
-                {
-                    render_device->free_texture_view(model_binding.normal_texture_view);
-                }
-                if(model_binding.metallic_roughness_texture_view)
-                {
-                    render_device->free_texture_view(model_binding.metallic_roughness_texture_view);
-                }
-                if(model_binding.emissive_texture_view)
-                {
-                    render_device->free_texture_view(model_binding.emissive_texture_view);
-                }
-                if(model_binding.occlusion_texture_view)
-                {
-                    render_device->free_texture_view(model_binding.occlusion_texture_view);
-                }
-                if(model_binding.model_pipeline)
-                {
-                    render_device->free_render_pipeline(model_binding.model_pipeline);
+                    if(material_binding.base_color_texture_view)
+                    {
+                        render_device->free_texture_view(material_binding.base_color_texture_view);
+                    }
+                    if(material_binding.normal_texture_view)
+                    {
+                        render_device->free_texture_view(material_binding.normal_texture_view);
+                    }
+                    if(material_binding.metallic_roughness_texture_view)
+                    {
+                        render_device->free_texture_view(material_binding.metallic_roughness_texture_view);
+                    }
+                    if(material_binding.emissive_texture_view)
+                    {
+                        render_device->free_texture_view(material_binding.emissive_texture_view);
+                    }
+                    if(material_binding.occlusion_texture_view)
+                    {
+                        render_device->free_texture_view(material_binding.occlusion_texture_view);
+                    }
                 }
             }
             render_device->free_device();

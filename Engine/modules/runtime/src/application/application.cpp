@@ -91,15 +91,18 @@ namespace Cyber
         void Application::update(float deltaTime)
         {
             float time = 0.0f;
+
             m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
             m_pWindow->update(deltaTime);
+            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+
             m_pRenderer->update(deltaTime);
             m_pSampleApp->update(deltaTime);
-            
-            m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
+
             m_pEditor->update(deltaTime);
+            m_pSampleApp->draw_ui(m_pEditor->get_imgui_context());
             m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
-            m_pEditor->end_frame();
+            //m_pEditor->end_frame();
 
             m_pSampleApp->present();
         }

@@ -27,16 +27,9 @@ namespace Cyber
 
         void Editor::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
         {
-            RenderObject::RenderDevice_D3D12_Impl* device_d3d12 = static_cast<RenderObject::RenderDevice_D3D12_Impl*>(device);
-            D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-            desc.NumDescriptors = 1;
-            desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-            desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-            desc.NodeMask = 0;
-
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
-            ImGui::CreateContext();
+            imgui_context = ImGui::CreateContext();
             ImGuiIO& io = ImGui::GetIO();
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
             io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
@@ -69,7 +62,6 @@ namespace Cyber
             //ImGui_ImplWin32_NewFrame();
             //ImGui::NewFrame();
             bool show_demo_window = true;
-
             //ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
             
             static bool opt_fullscreen = true;
@@ -170,7 +162,6 @@ namespace Cyber
             }
             ImGui::End();
 
-
             // For the demo: add a debug button _BEFORE_ the normal log window contents
             // We take advantage of a rarely used feature: multiple calls to Begin()/End() are appending to the _same_ window.
             // Most of the contents of the window will be added by the log.Draw() call.
@@ -194,7 +185,7 @@ namespace Cyber
             // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
             log.Draw("Example: Log");
 
-            ImGui::ShowDemoWindow(&show_demo_window);
+            //ImGui::ShowDemoWindow(&show_demo_window);
         }
         
         void Editor::finalize()
