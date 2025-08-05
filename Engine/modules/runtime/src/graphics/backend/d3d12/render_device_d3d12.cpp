@@ -1102,7 +1102,7 @@ namespace Cyber
         CD3DX12_ROOT_PARAMETER1 root_parameters[32];
         CD3DX12_DESCRIPTOR_RANGE1 desc_ranges[32];
         D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
-        uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
+        uint32_t staticSamplerCount = 0;
         
         uint32_t root_parameter_size = 0;
         uint32_t root_parameter_count = 0;
@@ -1166,12 +1166,14 @@ namespace Cyber
                 // todo: fill sampler into global
                 if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
                 {
+                    staticSamplerCount = 1;
                     staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
                     for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
                     {
                         auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
                         for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
                         {
+                            
                             auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
                             if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[i]) == 0)
                             {

@@ -58,30 +58,38 @@ namespace Cyber
             static float time = 0.0f;
             time += deltaTime;
 
-            float4x4 model_matrix = float4x4::translation(model_position.x, model_position.y, model_position.z) * float4x4::scale(model_scale);
-            model_matrix = model_matrix * float4x4::RotationY(model_rotation.y) * float4x4::RotationX(model_rotation.x) * float4x4::RotationZ(model_rotation.z);
+            float4x4 InvYAxis = float4x4::Identity();
+            InvYAxis.m[1][1] = -1.0f;
+            Math::Quaternion<float> rotation_x = Math::Quaternion<float>::rotation_from_axis_angle({ 1.0f, 0.0f, 0.0f }, -PI_F / 2.0f);
+            Math::Quaternion<float> rotation_y = Math::Quaternion<float>::rotation_from_axis_angle({ 0.0f, 1.0f, 0.0f }, PI_F);
+            float4x4 rotation_matrix = rotation_x.to_matrix() * rotation_y.to_matrix();
+            float4x4 model_matrix = float4x4::scale(model_scale) * rotation_matrix * float4x4::translation(model_position.x, model_position.y, model_position.z);
+            //model_matrix = float4x4::scale(0.7)* float4x4::RotationY(static_cast<float>(time) * 1.0f) * float4x4::RotationX(static_cast<float>(time) * 1.0f);
 
-            float3 camera_position = { 0.0f, 0.0f, -20.0f };
             float3 camera_target = { 0.0f, 0.0f, 0.0f };
             float3 camera_up = { 0.0f, 1.0f, 0.0f };
             
             float4x4 view_matrix = float4x4::look_at(camera_position, camera_target, camera_up);
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
-            float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
+            //float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
 
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
-            const_ptr->ModelMatrix = model_matrix;
-            const_ptr->ViewMatrix = view_matrix;
-            const_ptr->ProjectionMatrix = projection_matrix;
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
+            for(auto& binding : model_resource_bindings)
+            {
+                // map vertex constant buffer
+                void* const_resource = render_device->map_buffer(binding.vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
+                const_ptr->ModelMatrix = model_matrix;
+                const_ptr->ViewMatrix = view_matrix;
+                const_ptr->ProjectionMatrix = projection_matrix;
+                render_device->unmap_buffer(binding.vertex_constant_buffer, MAP_WRITE);
+                binding.vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
+            }
 
             Component::LightAttribs light_attribs;
             light_attribs.light_direction = light_direction;
             light_attribs.light_intensity = light_color;
+            light_attribs.camera_position = float4(camera_position, 1.0f);
 
             void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             Component::LightAttribs* light_ptr = (Component::LightAttribs*)light_resource;
@@ -177,9 +185,8 @@ namespace Cyber
                 uint32_t strides[] = { sizeof(CubeVertex) };
                 device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
                 device_context->render_encoder_bind_index_buffer(binding.index_buffer, sizeof(uint32_t), 0);
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, binding.vertex_constant_buffer);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-
                 const auto& meshs = binding.model->get_meshes();
                 for (const auto& mesh : meshs)
                 {
@@ -312,6 +319,17 @@ namespace Cyber
                 create_info.file_path = "../../../../samples/pbrdemo/assets/MetalRoughSpheres/MetalRoughSpheres.gltf";
                 ModelLoader::Model* model_loader = cyber_new<ModelLoader::Model>(render_device, device_context, create_info);
                 model_resource_binding.model = model_loader;
+
+                auto model_bound_box = model_loader->compute_bounding_box(model_loader->get_root_transform());
+                float max_dim = 0;
+                float3 model_dim{model_bound_box.Max - model_bound_box.Min};
+                max_dim = std::max(max_dim, model_dim.x);
+                max_dim = std::max(max_dim, model_dim.y);
+                max_dim = std::max(max_dim, model_dim.z);
+                float model_scale = (1.0f / std::max(max_dim, 0.01f)) * 0.5f;
+                float3 model_position = -model_bound_box.Min - 0.5f * model_dim;
+                model_resource_binding.model_transform = model_loader->get_root_transform();
+
                 if (!model_loader->is_valid())
                 {
                     cyber_error(false, "Failed to load model: {0}", create_info.file_path);
@@ -362,6 +380,12 @@ namespace Cyber
                 index_buffer_data.data_size = index_count * sizeof(uint32_t);
                 model_resource_binding.index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
 
+                buffer_desc.size = sizeof(ConstantMatrix);
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                model_resource_binding.vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+
                 // create texture
                 if(materials.size() > 0)
                 {
@@ -393,15 +417,10 @@ namespace Cyber
                         }
                     }
                 }
-            }
 
-            RenderObject::BufferCreateDesc buffer_desc = {};
-            buffer_desc.size = sizeof(ConstantMatrix);
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+            }
             
+            RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.size = sizeof(Component::LightAttribs);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
@@ -585,9 +604,11 @@ namespace Cyber
 
                     if(ImGui::TreeNode("Model Transform"))
                     {
+
                         ImGui::InputFloat3("Position", model_position.data());
                         ImGui::SliderFloat3("Rotation", model_rotation.data(), 0.0f, 360.0f);
                         ImGui::SliderFloat3("Scale", model_scale.data(), 0.0f, 10.0f);
+                        ImGui::SliderFloat3("Camera Position", camera_position.data(), -100.0f, 100.0f);
                         ImGui::TreePop();
                     }
                 }
@@ -621,6 +642,16 @@ namespace Cyber
             blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
             blend_state_desc.alpha_to_coverage = false;
             blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
+
+            RasterizerStateCreateDesc rasterizer_state_desc = {};
+            rasterizer_state_desc.fill_mode = FILL_MODE_SOLID;
+            rasterizer_state_desc.cull_mode = CULL_MODE_BACK;
+            rasterizer_state_desc.front_face = FRONT_FACE_COUNTER_CLOCKWISE;
+            rasterizer_state_desc.depth_bias = 0;
+            rasterizer_state_desc.slope_scaled_depth_bias = 0;
+            rasterizer_state_desc.enable_multisample = false;
+            rasterizer_state_desc.enable_depth_clip = true;
+            rasterizer_state_desc.enable_scissor = false;
 
             DepthStateCreateDesc depth_stencil_state_desc = {};
             depth_stencil_state_desc.depth_test = true;
@@ -705,6 +736,7 @@ namespace Cyber
                         .vertex_layout = &vertex_layout_desc,
                         .blend_state = &blend_state_desc,
                         .depth_stencil_state = &depth_stencil_state_desc,
+                        .rasterizer_state = &rasterizer_state_desc,
                         .m_staticSamplers = &sampler,
                         .m_staticSamplerNames = sampler_names,
                         .m_staticSamplerCount = 1,

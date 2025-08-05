@@ -274,16 +274,31 @@ struct Primitive
     uint32_t vertex_count;
     uint32_t material_id;
 
-    Primitive(uint32_t _first_index, uint32_t _index_count, uint32_t _vertex_count, uint32_t _material_id)
-        : first_index(_first_index), index_count(_index_count), vertex_count(_vertex_count), material_id(_material_id) {}
+    BoundBox bound_box;
+
+    Primitive(uint32_t _first_index, uint32_t _index_count, uint32_t _vertex_count, uint32_t _material_id, const float3& bb_min, const float3& bb_max)
+        : first_index(_first_index), index_count(_index_count), vertex_count(_vertex_count), material_id(_material_id), bound_box(bb_min, bb_max) {}
 };
 
 struct Mesh
 {
     std::string name;
     std::vector<Primitive> primitives;
-
+    BoundBox bound_box;
     std::vector<std::string> image_paths; // Paths to textures used by the mesh
+
+    void update_bounding_box()
+    {
+        if(primitives.size() > 0)
+        {
+            bound_box = primitives[0].bound_box;
+            for (const auto& primitive : primitives)
+            {
+                bound_box.Min = Math::min(bound_box.Min, primitive.bound_box.Min);
+                bound_box.Max = Math::max(bound_box.Max, primitive.bound_box.Max);
+            }
+        }
+    }
 };
 
 struct ModelCreateInfo
@@ -300,6 +315,8 @@ public:
     //static tinygltf::Model create_model(const ModelCreateInfo& create_info);
 
     void load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info);
+
+    BoundBox compute_bounding_box(const float4x4& model_transform) const;
 
     const tinygltf::Model& get_model() const
     {
@@ -349,6 +366,11 @@ public:
         return indices_data;
     }
 
+    const float4x4& get_root_transform() const
+    {
+        return root_transform;
+    }
+
     struct ImageData
     {
         const char* name = nullptr;
@@ -392,6 +414,7 @@ private:
     std::vector<VertexBasicAttribs> model_data;
     std::vector<uint32_t> indices_data; // Indices for indexed drawing
 
+    float4x4 root_transform = float4x4::Identity();
     struct TextureInfo
     {
         RenderObject::ITexture* texture = nullptr;

@@ -65,7 +65,10 @@ namespace Cyber
                 
                 RenderObject::IBuffer* vertex_buffer = nullptr;
                 RenderObject::IBuffer* index_buffer = nullptr;
+                RenderObject::IBuffer* vertex_constant_buffer = nullptr;
                 
+                float4x4 model_transform = float4x4::Identity();
+
                 eastl::vector<MaterialResourceBinding> material_bindings;
 
                 ModelResourceBinding() {}
@@ -114,7 +117,6 @@ namespace Cyber
             static constexpr uint32_t irradiance_cube_size = 64;
             static constexpr uint32_t prefiltered_cube_size = 256;
 
-            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;
             RenderObject::IBuffer* precompute_env_map_buffer = nullptr;
@@ -125,7 +127,8 @@ namespace Cyber
             float3 model_position = { 0.0f, 0.0f, 0.0f };
             float3 model_scale = { 1.0f, 1.0f, 1.0f };
             float3 model_rotation = { 0.0f, 0.0f, 0.0f };
-
+            float3 camera_position = { 0.0f, 0.0f, -30.0f };
+            
             Component::CameraComponent* camera_component = nullptr;
 
         };

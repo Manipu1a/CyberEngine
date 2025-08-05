@@ -25,10 +25,13 @@ cbuffer Constants
 void VSMain(in VSInput VSIn,
           out PSInput PSIn)
 {
+    float3 model_position = VSIn.pos;
+    model_position.x *= -1.0f; // Invert X axis for right-handed coordinate system
+
     // Transform position to clip space
     float4x4 worldViewProj = mul(ProjectionMatrix, mul(ViewMatrix, ModelMatrix));
 
-    PSIn.Pos = mul(worldViewProj, float4(VSIn.pos, 1.0));
+    PSIn.Pos = mul(worldViewProj, float4(model_position, 1.0));
     PSIn.Normal = normalize(mul(ModelMatrix, float4(VSIn.normal, 0.0)).xyz);
     float3 Tangent = normalize(mul(ModelMatrix, float4(VSIn.tangent, 0.0)).xyz); // Transform tangent to clip space
     // Calculate bitangent using cross product

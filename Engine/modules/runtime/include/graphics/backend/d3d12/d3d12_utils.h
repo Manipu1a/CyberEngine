@@ -602,8 +602,8 @@ namespace Cyber
     static const D3D12_CULL_MODE gDx12CullModeTranslator[CULL_MODE_COUNT] = 
     {
         D3D12_CULL_MODE_NONE,
-        D3D12_CULL_MODE_FRONT,
         D3D12_CULL_MODE_BACK,
+        D3D12_CULL_MODE_FRONT,
     };
 
     static const D3D12_FILL_MODE gDx12FillModeTranslator[FILL_MODE_COUNT] = 

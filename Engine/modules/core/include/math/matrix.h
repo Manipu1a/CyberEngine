@@ -534,7 +534,7 @@ struct Quaternion
 {
     Vector4<T> q;
 
-    constexpr Quaternion(const Vector4<T>& _q) noexcept : q(q) {}
+    constexpr Quaternion(const Vector4<T>& _q) noexcept : q(_q) {}
 
     constexpr Quaternion(T x, T y, T z, T w) noexcept : q(x, y, z, w) {}
 
@@ -564,10 +564,10 @@ struct Quaternion
         {
             const auto half_angle = angle * 0.5;
             const auto s = std::sin(half_angle);
-            out.x = axis.x * s / norm;
-            out.y = axis.y * s / norm;
-            out.z = axis.z * s / norm;
-            out.w = std::cos(half_angle);
+            out.q.x = axis.x * s / norm;
+            out.q.y = axis.y * s / norm;
+            out.q.z = axis.z * s / norm;
+            out.q.w = std::cos(half_angle);
         }
         return out;
     }

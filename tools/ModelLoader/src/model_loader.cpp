@@ -60,7 +60,6 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
     tinygltf::TinyGLTF gltf_context;
     //tinygltf::Model model;
 
-
     std::string input_file_path = create_info.file_path;
     std::string file_extension = get_file_extension(input_file_path);
     std::string base_dir = "";
@@ -106,8 +105,18 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
     {
         for(size_t i = 0; i < scene.nodes.size(); ++i)
         {
-            const tinygltf::Node& node = model.nodes[scene.nodes[i]];
-            for(const auto& child_id : node.children)
+            const tinygltf::Node& root_node = model.nodes[scene.nodes[i]];
+            if(root_node.matrix.size() == 16)
+            {
+                root_transform = float4x4{
+                    (float)root_node.matrix[0], (float)root_node.matrix[1], (float)root_node.matrix[2], (float)root_node.matrix[3],
+                    (float)root_node.matrix[4], (float)root_node.matrix[5], (float)root_node.matrix[6], (float)root_node.matrix[7],
+                    (float)root_node.matrix[8], (float)root_node.matrix[9], (float)root_node.matrix[10], (float)root_node.matrix[11],
+                    (float)root_node.matrix[12], (float)root_node.matrix[13], (float)root_node.matrix[14], (float)root_node.matrix[15]
+                };
+            }
+
+            for(const auto& child_id : root_node.children)
             {
                 const tinygltf::Node& child_node = model.nodes[child_id];
                 // Process child nodes if needed
@@ -144,6 +153,22 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
     */
 }
 
+BoundBox Model::compute_bounding_box(const float4x4& model_transform) const
+{
+    BoundBox model_bound_box;
+    model_bound_box.Min = float3(FLT_MAX, FLT_MAX, FLT_MAX);
+    model_bound_box.Max = float3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+    for(const auto& mesh : meshes)
+    {
+        const BoundBox& mesh_bound_box = mesh.bound_box.Transform(model_transform);
+        model_bound_box.Min = Math::min(model_bound_box.Min, mesh_bound_box.Min);
+        model_bound_box.Max = Math::max(model_bound_box.Max, mesh_bound_box.Max);
+    }
+
+    return model_bound_box;
+}
+
 void Model::load_node(const tinygltf::Model& gltf_model, uint32_t node_index)
 {
     if(node_index < gltf_model.nodes.size())
@@ -177,6 +202,8 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
             uint32_t vertex_start = static_cast<uint32_t>(model_data.size());
             uint32_t index_count = 0;
             uint32_t vertex_count = 0;
+            float3 pos_min;
+            float3 pos_max;
 
             // Accessing the POSITION attribute
             auto position_attribs = primitive.attributes.find("POSITION");
@@ -192,7 +219,10 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
                 {
                     continue; // Not a valid target for mesh data
                 }
-                
+
+                pos_min = float3(accessor.minValues[0], accessor.minValues[1], accessor.minValues[2]);
+                pos_max = float3(accessor.maxValues[0], accessor.maxValues[1], accessor.maxValues[2]);
+
                 const tinygltf::Buffer& buffer = model.buffers[buffer_view.buffer];
                 auto stride = accessor.ByteStride(buffer_view);
                 auto value_type = TinyGltfComponentTypeToValueType(accessor.componentType);
@@ -312,9 +342,11 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
             new_mesh.primitives.emplace_back(Primitive{  index_start, 
                                                         index_count, 
                                                         vertex_count, 
-                                                        primitive.material >= 0 ? (uint32_t)primitive.material : 0 });
+                                                        primitive.material >= 0 ? (uint32_t)primitive.material : 0 , pos_min, pos_max});
             // Process other attributes like NORMAL, TEXCOORD_0, etc.
         }
+
+        new_mesh.update_bounding_box();
     }
 }
 

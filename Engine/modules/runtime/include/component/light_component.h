@@ -10,6 +10,7 @@ struct CYBER_RUNTIME_API LightAttribs
 {
     float4 light_direction;
     float4 light_intensity;
+    float4 camera_position;
 };
 
 struct CYBER_RUNTIME_API LightComponent

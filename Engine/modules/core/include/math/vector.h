@@ -128,6 +128,12 @@ struct Vector3
         return Vector3{x - other.x, y - other.y, z - other.z}   ;
     }
 
+    constexpr Vector3 operator-() const
+    {
+        return Vector3{-x, -y, -z};
+    }
+
+
     static constexpr size_t get_component_count()
     {
         return 3;
@@ -172,6 +178,12 @@ static Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b)
         a.z * b.x - a.x * b.z,
         a.x * b.y - a.y * b.x
     };
+}
+
+template <class T>
+constexpr Vector3<T> operator*(T s, const Vector3<T>& v)
+{
+    return Vector3<T>{v.x * s, v.y * s, v.z * s};
 }
 
 template <class T>
