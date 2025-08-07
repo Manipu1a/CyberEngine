@@ -1094,7 +1094,6 @@ namespace Cyber
         // Pick shader reflection data
         //graphics_util_init_root_signature_tables(dxRootSignature, rootSigDesc);
         // rs pool allocation
-
         static const uint32_t root_constant_cost = 1;
         static const uint32_t root_descriptor_table_cost = 1;
         static const uint32_t root_descriptor_cost = 2;
@@ -1213,113 +1212,6 @@ namespace Cyber
         }
 
         uint32_t valid_root_tables = 0;
-        
-        //D3D12_ROOT_PARAMETER1* rootParams = (D3D12_ROOT_PARAMETER1*)cyber_calloc(tableCount + dxRootSignature->get_push_constant_count(), sizeof(D3D12_ROOT_PARAMETER1));
-        //D3D12_DESCRIPTOR_RANGE1* descRanges = (D3D12_DESCRIPTOR_RANGE1*)cyber_calloc(descRangeCount, sizeof(D3D12_DESCRIPTOR_RANGE1));
-        
-        /*
-        // Create descriptor table parameter
-        for(uint32_t i_set = 0; i_set < tableCount; ++i_set)
-        {
-            RootSignatureParameterTable* paramTable = dxRootSignature->get_parameter_table(i_set);
-            D3D12_ROOT_PARAMETER1& rootParam = rootParams[valid_root_tables];
-            rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-            SHADER_STAGE visStages = SHADER_STAGE::SHADER_STAGE_NONE;
-            uint32_t i_range = 0;
-            for(uint32_t i_register = 0; i_register < paramTable->m_resourceCount; ++i_register)
-            {
-                IShaderResource* resourceSlot = paramTable->m_ppResources[i_register];
-                visStages |= resourceSlot->get_stages();
-                D3D12_DESCRIPTOR_RANGE1* descRange = &descRanges[i_range];
-                descRange->RangeType = D3D12Util_ResourceTypeToDescriptorRangeType(resourceSlot->get_type());
-                descRange->NumDescriptors = (resourceSlot->get_type() != GRAPHICS_RESOURCE_TYPE_UNIFORM_BUFFER) ? resourceSlot->get_size() : 1;
-                descRange->BaseShaderRegister = resourceSlot->get_binding();
-                descRange->RegisterSpace = resourceSlot->get_set();
-                descRange->OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-                descRange->Flags = D3D12_DESCRIPTOR_RANGE_FLAG_NONE;
-                rootParam.DescriptorTable.NumDescriptorRanges++;
-                i_range++;
-            }
-            if(visStages != 0)
-            {
-                rootParam.ShaderVisibility = D3D12Util_TranslateShaderStage(visStages);
-                rootParam.DescriptorTable.pDescriptorRanges = descRanges;
-                valid_root_tables++;
-            }
-        }
-        */
-        // Create push constant parameter
-        /*
-        cyber_assert(dxRootSignature->get_push_constant_count() <= 1, "Only support one push constant range");
-        if(dxRootSignature->get_push_constant_count() > 0)
-        {
-            auto pushConstant = dxRootSignature->get_push_constant(0);
-            D3D12_ROOT_PARAMETER1& root_constant_parameter = rootParams[valid_root_tables];
-            root_constant_parameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-            root_constant_parameter.ShaderVisibility = D3D12Util_TranslateShaderStage(pushConstant->get_stages());
-            root_constant_parameter.Constants.Num32BitValues = pushConstant->get_size() / sizeof(uint32_t);
-            root_constant_parameter.Constants.ShaderRegister = pushConstant->get_binding();
-            root_constant_parameter.Constants.RegisterSpace = pushConstant->get_set();
-            dxRootSignature->root_parameter_index = valid_root_tables;
-            dxRootSignature->root_constant_parameter = root_constant_parameter;
-        }
-        */
-        // Create root descriptor parameter
-        /*
-        auto root_desc_count = dxRootSignature->get_root_descriptor_count();
-        for(uint32_t i = 0; i < root_desc_count; ++i)
-        {
-            auto rst_slot = dxRootSignature->get_root_descriptor(i);
-            D3D12_ROOT_PARAMETER1& rootParam = rootParams[valid_root_tables];
-            rst_slot->get_type();
-            rootParam.ParameterType = D3D12Util_ResourceTypeToRootParameterType(rst_slot->get_type());
-            rootParam.Descriptor.ShaderRegister = rst_slot->get_binding();
-            rootParam.Descriptor.RegisterSpace = rst_slot->get_set();
-            rootParam.Descriptor.Flags = D3D12_ROOT_DESCRIPTOR_FLAG_NONE;
-            rootParam.ShaderVisibility = D3D12Util_TranslateShaderStage(rst_slot->get_stages());
-            //todo: use another index to store root descriptor index
-            dxRootSignature->root_parameter_index = valid_root_tables;
-            valid_root_tables++;
-        }
-            */
-        /*
-        // Create static sampler parameter
-        uint32_t staticSamplerCount = rootSigDesc.m_staticSamplerCount;
-        //D3D12_STATIC_SAMPLER_DESC* staticSamplerDescs = nullptr;
-
-        if(staticSamplerCount > 0)
-        {
-            staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(staticSamplerCount, sizeof(D3D12_STATIC_SAMPLER_DESC));
-            for(uint32_t i = 0;i < dxRootSignature->m_staticSamplerCount; ++i)
-            {
-                auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
-                for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
-                {
-                    auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
-                    if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[j]) == 0)
-                    {
-                        D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
-                        staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
-                        staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
-                        staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
-                        staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
-                        staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
-                        staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
-                        staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
-                        staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
-                        staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
-                        staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
-
-                        IShaderResource* samplerResource = rst_slot;
-                        staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
-                        staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
-                        staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
-                    }
-                }
-            }
-        }
-
-        */
         bool useInputLayout = shader_stage_mask[SHADER_STAGE_VERT]; // VertexStage uses input layout
 
         // Fill RS flags
@@ -1360,6 +1252,10 @@ namespace Cyber
             {
                 CB_ERROR("Failed to create root signature!");
                 return nullptr;
+            }
+            else
+            {
+                CB_CORE_INFO("Created D3D12 RootSignature at address: {0}", (void*)dxRootSignature->dxRootSignature);
             }
         }
         else {

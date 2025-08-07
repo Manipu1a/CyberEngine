@@ -265,6 +265,8 @@ namespace Cyber
             attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[1].m_stencilLoadAction = LOAD_ACTION_DONT_CARE;
+            attachment_ref[1].m_stencilStoreAction = STORE_ACTION_STORE;
 
             // for environment map
             attachment_ref[2].m_attachmentIndex = 0;
@@ -279,7 +281,9 @@ namespace Cyber
             attachment_ref[3].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[3].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
             attachment_ref[3].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-
+            attachment_ref[3].m_stencilLoadAction = LOAD_ACTION_DONT_CARE;
+            attachment_ref[3].m_stencilStoreAction = STORE_ACTION_STORE;
+            
             subpass_desc[0].m_name = u8"Main Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
@@ -290,7 +294,6 @@ namespace Cyber
             subpass_desc[1].m_name = u8"Environment Map Subpass";
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
-            subpass_desc[1].m_pDepthStencilAttachment = nullptr;
             subpass_desc[1].m_pDepthStencilAttachment = &attachment_ref[3];
             subpass_desc[1].m_renderTargetCount = 1;
             subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[2];
@@ -510,7 +513,7 @@ namespace Cyber
                 };
                 ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
                 device_context->cmd_resource_barrier(barrier_desc);
-
+                device_context->cmd_begin();
                 device_context->render_encoder_bind_pipeline(irradiance_pipeline);
                 device_context->render_encoder_set_viewport(1, &viewport);
                 device_context->render_encoder_set_scissor(1, &scissor);
@@ -543,11 +546,11 @@ namespace Cyber
                         device_context->render_encoder_draw(4, 0);
                     }
                 }
-
                 draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
                 draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
                 device_context->cmd_resource_barrier(barrier_desc);
                 device_context->flush();
+                device_context->cmd_end();
             }
         }
 

@@ -1,14 +1,15 @@
 #ifndef USE_NORMAL_MAP
 #define USE_NORMAL_MAP 0
 #endif
+static const float PI = 3.14159265358979323846;
 
 struct PSInput
 {
-    float4 Pos : SV_POSITION;
+    float4 ClipPos : SV_POSITION;
+    float4 WorldPos : TEXCOORD0;
     float3 Normal : NORMAL;
-    float2 UV : TEXCOORD;
-
-    float3 Tangent : TEXCOORD1; // Tangent vector
+    float2 UV : TEXCOORD1;
+    float3 Tangent : TEXCOORD2;
 };
 
 struct PSOutput
@@ -50,6 +51,43 @@ void InitContext(inout BRDFContext Context, float3 N, float3 V, float3 L)
     Context.VoH = saturate( InvLengthH + InvLengthH * Context.VoL);
 }
 
+float3 Diffuse_Lambert(float3 DiffuseColor)
+{
+    return DiffuseColor * (1.0 / PI);
+}
+
+float DistributonGGX(float3 NoH, float roughness)
+{
+    float a2 = roughness * roughness;
+
+    float NoH2 = NoH * NoH;
+
+    float nom = a2;
+    float denom = (NoH2 * (a2 - 1.0) + 1.0);
+    denom = PI * denom * denom;
+
+    return nom / denom;
+}
+
+float3 FresnelSchlick(float cosTheta, float3 F0)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float GeometrySchlickGGX(float NoV, float k)
+{
+    float nom = NoV;
+    float denom = NoV * (1.0 - k) + k;
+    return nom / denom;
+}
+
+float GeometrySmith(float NoV, float NoL, float3 L, float k)
+{
+    float ggx1 = GeometrySchlickGGX(NoV, k);
+    float ggx2 = GeometrySchlickGGX(NoL, k);
+    return ggx1 * ggx2;
+}
+
 void PSMain(in  PSInput  PSIn,
           out PSOutput PSOut)
 {
@@ -68,19 +106,22 @@ void PSMain(in  PSInput  PSIn,
 #endif
 
     BRDFContext Context;
-    float3 V = normalize(CameraPosition.xyz);
-    float3 L = normalize(LightDirection.xyz);
+    float3 V = normalize(CameraPosition.xyz - PSIn.WorldPos.xyz);
+    float3 L = normalize(LightDirection.xyz - PSIn.WorldPos.xyz);
     InitContext(Context, normal, V, L);
+    float D = DistributonGGX(Context.NoH, metallic_roughness.y);
+    float3 F0 = float3(0.04, 0.04, 0.04);
+    F0 = lerp(F0, base_color.xyz, metallic_roughness.x);
+    float3 F = FresnelSchlick(Context.VoH, F0);
 
     float diff = max(dot(normal, L), 0.0);
-    float3 diffuse = diff * base_color.xyz;
-
+    float3 diffuse = diff * Diffuse_Lambert(base_color.xyz);
     float4 environment_color = Environment_Texture.Sample(Texture_sampler, normal);
     
     float NoL = Context.NoL;
     float NoV = dot(normal, V);
-    float3 specular = pow(max(Context.NoH, 0.0), 32.0) * LightColor.xyz;
-    //PSOut.Color = NoV;
+    float3 specular = pow(max(Context.NoH, 0.0), 32.0);
     
-    PSOut.Color = float4(diffuse + specular, 1.0f);
+    float3 FinalColor = (diffuse + specular) * LightColor.xyz;
+    PSOut.Color = float4(FinalColor, 1.0f);
 }

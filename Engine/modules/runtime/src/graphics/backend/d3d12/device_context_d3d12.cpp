@@ -84,7 +84,7 @@ void DeviceContext_D3D12_Impl::set_render_target(uint32_t numRenderTargets, ITex
 void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc)
 {
     TDeviceContextBase::cmd_begin_render_pass( beginRenderPassDesc);
-
+    
     commit_subpass_rendertargets();
 }
 
@@ -103,6 +103,8 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
 
 void DeviceContext_D3D12_Impl::cmd_end_render_pass()
 {
+    state_cache.bound_root_signature =  nullptr;
+
     curr_command_context->end_render_pass();
     ++state.num_command;
 }

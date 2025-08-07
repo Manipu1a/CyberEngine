@@ -8,11 +8,11 @@ struct VSInput
 
 struct PSInput
 {
-    float4 Pos : SV_POSITION;
+    float4 ClipPos : SV_POSITION;
+    float4 WorldPos : TEXCOORD0;
     float3 Normal : NORMAL;
-    float2 UV : TEXCOORD;
-
-    float3 Tangent : TEXCOORD1; // Tangent vector
+    float2 UV : TEXCOORD1;
+    float3 Tangent : TEXCOORD2;
 };
 
 cbuffer Constants
@@ -30,8 +30,8 @@ void VSMain(in VSInput VSIn,
 
     // Transform position to clip space
     float4x4 worldViewProj = mul(ProjectionMatrix, mul(ViewMatrix, ModelMatrix));
-
-    PSIn.Pos = mul(worldViewProj, float4(model_position, 1.0));
+    PSIn.ClipPos = mul(worldViewProj, float4(model_position, 1.0));
+    PSIn.WorldPos = mul(ModelMatrix, float4(model_position, 1.0));
     PSIn.Normal = normalize(mul(ModelMatrix, float4(VSIn.normal, 0.0)).xyz);
     float3 Tangent = normalize(mul(ModelMatrix, float4(VSIn.tangent, 0.0)).xyz); // Transform tangent to clip space
     // Calculate bitangent using cross product
