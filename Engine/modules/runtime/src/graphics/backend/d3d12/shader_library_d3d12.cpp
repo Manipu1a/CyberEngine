@@ -197,6 +197,7 @@ namespace Cyber
             reflection->set_shader_resource_count(shaderDesc.BoundResources);
             auto shader_resources = (RenderObject::IShaderResource**)cyber_calloc(shaderDesc.BoundResources, sizeof(RenderObject::IShaderResource*));
             RenderObject::ShaderRegisterCount register_count;
+            MaterialResourceUsage material_usage = {};
 
             // Count string sizes of the bound resources for the name pool
             for(UINT i = 0;i < shaderDesc.BoundResources; ++i)
@@ -207,8 +208,8 @@ namespace Cyber
                 shader_resources[i] = cyber_new<RenderObject::ShaderResource_D3D12_Impl>(get_device());
                 RenderObject::ShaderResource_D3D12_Impl* resource = static_cast<RenderObject::ShaderResource_D3D12_Impl*>(shader_resources[i]);
 
-                resource->set_name((char8_t*)cyber_malloc(sizeof(char8_t) * (source_len + 1)));
-                
+                resource->set_name((char*)cyber_malloc(sizeof(char) * (source_len + 1)));
+
                 // We are very sure it's windows platform
                 strcpy_s((char*)resource->get_name(), source_len + 1, bindDesc.Name);
                 resource->set_type(gD3D12_TO_DESCRIPTOR[bindDesc.Type]);
@@ -229,6 +230,23 @@ namespace Cyber
                 else if(bindDesc.Type == D3D_SIT_TEXTURE)
                 {
                     register_count.shader_resource_count = eastl::max(register_count.shader_resource_count, bindDesc.BindPoint + bindDesc.BindCount);
+
+                    if(strcmp(bindDesc.Name, "BaseColor_Texture") == 0)
+                    {
+                        material_usage.use_base_color_texture = 1;
+                    }
+                    else if(strcmp(bindDesc.Name, "MetallicRoughness_Texture") == 0)
+                    {
+                        material_usage.use_metallic_roughness_texture = 1;
+                    }
+                    else if(strcmp(bindDesc.Name, "Normal_Texture") == 0)
+                    {
+                        material_usage.use_normal_texture = 1;
+                    }
+                    else if(strcmp(bindDesc.Name, "Emissive_Texture") == 0)
+                    {
+                        material_usage.use_emissive_texture = 1;
+                    }
                 }
                 else if(bindDesc.Type == D3D_SIT_UAV_RWTYPED || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED || 
                     bindDesc.Type == D3D_SIT_UAV_RWBYTEADDRESS || bindDesc.Type == D3D_SIT_UAV_RWSTRUCTURED_WITH_COUNTER ||
@@ -257,6 +275,7 @@ namespace Cyber
                 }
             }
             reflection->set_shader_register_count(register_count);
+            reflection->set_material_resource_usage(material_usage);
             reflection->set_shader_resources( shader_resources );
             m_pEntryReflections[0] = reflection;
         }

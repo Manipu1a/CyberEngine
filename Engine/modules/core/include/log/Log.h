@@ -34,8 +34,8 @@ namespace Cyber
 #define CB_ERROR(...)           ::Cyber::Log::getClientLogger()->error(__VA_ARGS__)
 #define CB_CRITICAL(...)        ::Cyber::Log::getClientLogger()->critical(__VA_ARGS__)
 
-#define cyber_log(x, ...) CB_TRACE(x, __VA_ARGS__)
-#define cyber_info(x, ...) CB_INFO(x, __VA_ARGS__)
+#define cyber_log(...) CB_TRACE(__VA_ARGS__)
+#define cyber_info(...) CB_INFO(__VA_ARGS__)
 
 #ifdef CB_ENABLE_ASSERTS
     #define cyber_check(x) if(!(x)) {__debugbreak();}

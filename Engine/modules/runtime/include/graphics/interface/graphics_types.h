@@ -1633,6 +1633,25 @@ namespace Cyber
         uint32_t num_deferred_contexts;
     };
 
+    
+    struct MaterialResourceUsage
+    {
+        uint8_t use_base_color_texture : 1;
+        uint8_t use_metallic_roughness_texture : 1;
+        uint8_t use_normal_texture : 1;
+        uint8_t use_occlusion_texture : 1;
+        uint8_t use_emissive_texture : 1;
+
+        void merge(const MaterialResourceUsage& other)
+        {
+            use_base_color_texture |= other.use_base_color_texture;
+            use_metallic_roughness_texture |= other.use_metallic_roughness_texture;
+            use_normal_texture |= other.use_normal_texture;
+            use_occlusion_texture |= other.use_occlusion_texture;
+            use_emissive_texture |= other.use_emissive_texture;
+        }
+    };
+
     #define GRAPHICS_SINGLE_GPU_NODE_COUNT 1
     #define GRAPHICS_SINGLE_GPU_NODE_MASK 1
     #define GRAPHICS_SINGLE_GPU_NODE_INDEX 0

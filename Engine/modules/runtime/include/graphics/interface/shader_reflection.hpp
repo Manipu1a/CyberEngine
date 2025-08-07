@@ -44,6 +44,8 @@ namespace Cyber
             virtual void set_shader_stage(SHADER_STAGE stage) = 0;
             virtual void set_shader_register_count(const ShaderRegisterCount& count) = 0;
             virtual const ShaderRegisterCount& get_shader_register_count() const = 0;
+            virtual void set_material_resource_usage(const MaterialResourceUsage& usage) = 0;
+            virtual const MaterialResourceUsage& get_material_resource_usage() const = 0;
             virtual uint32_t get_name_pool_size() const = 0;
             virtual uint32_t get_vertex_input_count() const = 0;
             virtual void set_vertex_input_count(uint32_t count) = 0;
@@ -140,6 +142,16 @@ namespace Cyber
                 return register_count;
             }
 
+            virtual void set_material_resource_usage(const MaterialResourceUsage& usage) override final
+            {
+                material_usage = usage;
+            }
+
+            virtual const MaterialResourceUsage& get_material_resource_usage() const override final
+            {
+                return material_usage;
+            }
+
             virtual RenderObject::IShaderResource** get_shader_resources() const override final 
             {
                 return m_ppShaderResources;
@@ -232,7 +244,7 @@ namespace Cyber
             uint32_t m_variableCount;
 
             ShaderRegisterCount register_count;
-
+            MaterialResourceUsage material_usage;
             // Thread group size for compute shader
             uint32_t m_numThreadsPerGroup;
             // number of tessellation control point

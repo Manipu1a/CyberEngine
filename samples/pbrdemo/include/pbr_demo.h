@@ -52,6 +52,8 @@ namespace Cyber
                 ModelLoader::Material::MaterialAttribs attribs;
                 RenderObject::IRenderPipeline* model_pipeline = nullptr;
 
+                MaterialResourceUsage material_usage;
+
                 RenderObject::ITexture_View* base_color_texture_view = nullptr;
                 RenderObject::ITexture_View* metallic_roughness_texture_view = nullptr;
                 RenderObject::ITexture_View* normal_texture_view = nullptr;
@@ -96,7 +98,7 @@ namespace Cyber
             void precompute_environment_map();
             void bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding);
             eastl::vector<ShaderMacro> get_shader_macros(const MaterialResourceBinding& material_binding) const;
-
+            void reflect_material(MaterialResourceBinding& material_binding, RenderObject::IShaderLibrary* shader_library);
         protected:
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* environment_pipeline = nullptr;

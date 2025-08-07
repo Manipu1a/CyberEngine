@@ -1,5 +1,6 @@
 #pragma once
 #include "common/cyber_graphics_config.h"
+#include "shader_reflection.hpp"
 #include "device_object.h"
 #include "graphics_types.h"
 #include "eastl/string.h"
@@ -9,8 +10,6 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class IShaderReflection;
-
         struct CYBER_GRAPHICS_API ShaderLibraryCreateDesc
         {
             const char8_t* name;
@@ -34,6 +33,8 @@ namespace Cyber
             virtual IShaderReflection* get_entry_reflection(uint32_t index) = 0;
             virtual IShaderReflection** get_entry_reflections() = 0;
             virtual uint32_t get_entry_count() const = 0;
+
+            virtual void get_material_resource_usage(MaterialResourceUsage& usage) const = 0;
         };
         /*
         typedef enum EShaderStageLoadFlag
@@ -151,6 +152,17 @@ namespace Cyber
                 return m_entryCount;
             }
 
+            virtual void get_material_resource_usage(MaterialResourceUsage& usage) const override
+            {
+                for (uint32_t i = 0; i < m_entryCount; ++i)
+                {
+                    if (m_pEntryReflections[i])
+                    {
+                        auto ref = m_pEntryReflections[i]->get_material_resource_usage();
+                        usage.merge(ref);
+                    }
+                }
+            }
         protected:
             const char8_t* m_name;
             IShaderReflection** m_pEntryReflections;

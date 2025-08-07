@@ -557,23 +557,23 @@ namespace Cyber
         void PBRApp::bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding)
         {
             uint32_t material_resource_start_index = 0;
-            if(material_binding.base_color_texture_view)
+            if(material_binding.base_color_texture_view && material_binding.material_usage.use_base_color_texture)
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.base_color_texture_view);
             }
-            if(material_binding.metallic_roughness_texture_view)
+            if(material_binding.metallic_roughness_texture_view && material_binding.material_usage.use_metallic_roughness_texture)
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.metallic_roughness_texture_view);
             }
-            if(material_binding.normal_texture_view)
+            if(material_binding.normal_texture_view && material_binding.material_usage.use_normal_texture)
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.normal_texture_view);
             }
-            if(material_binding.emissive_texture_view)
+            if(material_binding.emissive_texture_view && material_binding.material_usage.use_emissive_texture)
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.emissive_texture_view);
             }
-            if(material_binding.occlusion_texture_view)
+            if(material_binding.occlusion_texture_view && material_binding.material_usage.use_occlusion_texture)
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.occlusion_texture_view);
             }
@@ -628,6 +628,14 @@ namespace Cyber
             macros.push_back({ "USE_OCCLUSION_MAP", material_binding.occlusion_texture_view == nullptr ? "0" : "1" });
 
             return macros;
+        }
+
+        void PBRApp::reflect_material(MaterialResourceBinding& material_binding, RenderObject::IShaderLibrary* shader_library)
+        {
+            if(shader_library)
+            {
+                shader_library->get_material_resource_usage(material_binding.material_usage);
+            }
         }
 
         void PBRApp::create_render_pipeline()
@@ -712,6 +720,9 @@ namespace Cyber
                     };
                     eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
+                    reflect_material(material_binding, vs_shader.get());
+                    reflect_material(material_binding, ps_shader.get());
+
                     // create root signature
                     RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
                     pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -731,7 +742,6 @@ namespace Cyber
                     };
                     RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
 
-
                     RenderObject::RenderPipelineCreateDesc rp_desc = 
                     {
                         .vertex_shader = pipeline_shader_create_desc[0],
@@ -749,8 +759,9 @@ namespace Cyber
                         .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
                     };
                     material_binding.model_pipeline = render_device->create_render_pipeline(rp_desc);
-                    
-                    vs_shader->free();  
+
+
+                    vs_shader->free();
                     ps_shader->free();
                 }
             }

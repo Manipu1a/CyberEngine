@@ -55,11 +55,10 @@ float3 Diffuse_Lambert(float3 DiffuseColor)
 {
     return DiffuseColor * (1.0 / PI);
 }
-
-float DistributonGGX(float3 NoH, float roughness)
+// GGX / Trowbridge-Reitz normal distribution function
+float DistributonGGX(float NoH, float roughness)
 {
     float a2 = roughness * roughness;
-
     float NoH2 = NoH * NoH;
 
     float nom = a2;
@@ -68,23 +67,23 @@ float DistributonGGX(float3 NoH, float roughness)
 
     return nom / denom;
 }
-
+// Fresnel-Schlick approximation
 float3 FresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
-
-float GeometrySchlickGGX(float NoV, float k)
+// Schlick's approximation for geometry term
+float GeometrySchlickGGX(float NoV, float roughness)
 {
     float nom = NoV;
-    float denom = NoV * (1.0 - k) + k;
+    float denom = NoV * (1.0 - roughness) + roughness;
     return nom / denom;
 }
-
-float GeometrySmith(float NoV, float NoL, float3 L, float k)
+// Smith's method for geometry term
+float GeometrySmith(float NoV, float NoL, float roughness)
 {
-    float ggx1 = GeometrySchlickGGX(NoV, k);
-    float ggx2 = GeometrySchlickGGX(NoL, k);
+    float ggx1 = GeometrySchlickGGX(NoV, roughness);
+    float ggx2 = GeometrySchlickGGX(NoL, roughness);
     return ggx1 * ggx2;
 }
 
@@ -93,6 +92,9 @@ void PSMain(in  PSInput  PSIn,
 {
     float4 base_color = BaseColor_Texture.Sample(Texture_sampler, PSIn.UV);
     float4 metallic_roughness = MetallicRoughness_Texture.Sample(Texture_sampler, PSIn.UV);
+    float metallic = metallic_roughness.y;
+    float roughness = metallic_roughness.z;
+    
 #if USE_NORMAL_MAP
     float3 normal = Normal_Texture.Sample(Texture_sampler, PSIn.UV).xyz;
     normal = normal * float3(2.0, 2.0, 1.0) - float3(1.0, 1.0, 0.0); // Convert normal from [0,1] to [-1,1]
@@ -109,19 +111,28 @@ void PSMain(in  PSInput  PSIn,
     float3 V = normalize(CameraPosition.xyz - PSIn.WorldPos.xyz);
     float3 L = normalize(LightDirection.xyz - PSIn.WorldPos.xyz);
     InitContext(Context, normal, V, L);
-    float D = DistributonGGX(Context.NoH, metallic_roughness.y);
-    float3 F0 = float3(0.04, 0.04, 0.04);
-    F0 = lerp(F0, base_color.xyz, metallic_roughness.x);
-    float3 F = FresnelSchlick(Context.VoH, F0);
+    float NDF = DistributonGGX(Context.NoH, roughness);
+    float G = GeometrySmith(Context.NoV, Context.NoL, roughness);
 
-    float diff = max(dot(normal, L), 0.0);
-    float3 diffuse = diff * Diffuse_Lambert(base_color.xyz);
+    float3 F0 = float3(0.04, 0.04, 0.04);
+    F0 = lerp(F0, base_color.xyz, metallic);
+    float3 F = FresnelSchlick(Context.VoH, F0);
+    float3 numerator = NDF * G * F;
+    float denominator = 4.0 * Context.NoV * Context.NoL + 0.001;
+    float3 specular = numerator / denominator;
+
+    float3 kD = 1.0 - F; // Fresnel term == Ks
+    kD *= 1.0 - metallic;
+
+    float3 diffuse = kD * Diffuse_Lambert(base_color.xyz);
     float4 environment_color = Environment_Texture.Sample(Texture_sampler, normal);
     
-    float NoL = Context.NoL;
-    float NoV = dot(normal, V);
-    float3 specular = pow(max(Context.NoH, 0.0), 32.0);
-    
-    float3 FinalColor = (diffuse + specular) * LightColor.xyz;
+    float3 FinalColor = (diffuse + specular) * LightColor.xyz * Context.NoL;
+
+    FinalColor = metallic;
+
+    //FinalColor = FinalColor / (FinalColor + float3(1.0, 1.0, 1.0));
+    float3 gamma = float3(1.0/2.2, 1.0/2.2, 1.0/2.2);
+    //FinalColor = pow(FinalColor, gamma); // Gamma correction
     PSOut.Color = float4(FinalColor, 1.0f);
 }

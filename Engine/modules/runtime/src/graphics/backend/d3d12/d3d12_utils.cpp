@@ -459,9 +459,7 @@ namespace Cyber
             entery_reflection = shader_desc->m_library->get_entry_reflection(0);
         }
         
-
         //rootSignature->set_pipeline_type(PIPELINE_TYPE_GRAPHICS);
-        
         RenderObject::ShaderRegisterCount register_count = entery_reflection->get_shader_register_count();
         rootSignature->set_register_counts(visibility, register_count);
 

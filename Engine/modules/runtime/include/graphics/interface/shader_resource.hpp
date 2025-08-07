@@ -12,8 +12,8 @@ namespace Cyber
         {
             virtual void free() = 0;
 
-            virtual void set_name(const char8_t* name) = 0;
-            virtual const char8_t* get_name() const = 0;
+            virtual void set_name(const char* name) = 0;
+            virtual const char* get_name() const = 0;
             virtual uint64_t get_name_hash() const = 0;
             
             virtual void set_type(GRAPHICS_RESOURCE_TYPE type) = 0;
@@ -49,13 +49,13 @@ namespace Cyber
             ShaderResourceBase(RenderDeviceImplType* device) : TShaderResourceBase(device) {  };
             virtual ~ShaderResourceBase() = default;
 
-            CYBER_FORCE_INLINE void set_name(const char8_t* name)
+            CYBER_FORCE_INLINE void set_name(const char* name)
             {
                 this->m_name = name;
-                this->m_nameHash = graphics_name_hash(name, std::char_traits<char8_t>::length(name)+1);
+                this->m_nameHash = graphics_name_hash(name, std::char_traits<char>::length(name)+1);
             }
 
-            CYBER_FORCE_INLINE const char8_t* get_name() const
+            CYBER_FORCE_INLINE const char* get_name() const
             {
                 return this->m_name;
             }
@@ -142,7 +142,7 @@ namespace Cyber
             }
 
         protected:
-            const char8_t* m_name;
+            const char* m_name;
             uint64_t m_nameHash;
             GRAPHICS_RESOURCE_TYPE m_type;
             TEXTURE_DIMENSION m_dimension;
