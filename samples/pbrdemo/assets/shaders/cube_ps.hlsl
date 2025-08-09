@@ -6,10 +6,10 @@ static const float PI = 3.14159265358979323846;
 struct PSInput
 {
     float4 ClipPos : SV_POSITION;
-    float4 WorldPos : TEXCOORD0;
+    float3 WorldPos : WORLD_POS;
     float3 Normal : NORMAL;
-    float2 UV : TEXCOORD1;
-    float3 Tangent : TEXCOORD2;
+    float2 UV : TEXCOORD0;
+    float3 Tangent : TEXCOORD1;
 };
 
 struct PSOutput
@@ -30,8 +30,7 @@ Texture2D BaseColor_Texture;
 Texture2D MetallicRoughness_Texture;
 Texture2D Normal_Texture;
 
-TextureCube Environment_Texture;
-
+TextureCube Irradiance_Texture;
 SamplerState Texture_sampler;
 
 cbuffer LightingConstants
@@ -43,9 +42,9 @@ cbuffer LightingConstants
 
 void InitContext(inout BRDFContext Context, float3 N, float3 V, float3 L)
 {
-    Context.NoL = dot(N, L);
-    Context.NoV = dot(N, V);
-    Context.VoL = dot(V, L);
+    Context.NoL = max(dot(N, L), 0.0);
+    Context.NoV = max(dot(N, V), 0.0);
+    Context.VoL = max(dot(V, L), 0.0);
     float InvLengthH = rsqrt(2 + 2 * Context.VoL);
     Context.NoH = saturate( (Context.NoL + Context.NoV) * InvLengthH);
     Context.VoH = saturate( InvLengthH + InvLengthH * Context.VoL);
@@ -72,6 +71,13 @@ float3 FresnelSchlick(float cosTheta, float3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
+// Fresnel-Schlick approximation with roughness
+float3 FresnelSchlickRoughness(float cosTheta, float3 F0, float roughness)
+{
+    float3 a = 1.0 - roughness;
+    return F0 + (max(a, F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
 // Schlick's approximation for geometry term
 float GeometrySchlickGGX(float NoV, float roughness)
 {
@@ -109,7 +115,7 @@ void PSMain(in  PSInput  PSIn,
 
     BRDFContext Context;
     float3 V = normalize(CameraPosition.xyz - PSIn.WorldPos.xyz);
-    float3 L = normalize(LightDirection.xyz - PSIn.WorldPos.xyz);
+    float3 L = normalize(LightDirection.xyz);
     InitContext(Context, normal, V, L);
     float NDF = DistributonGGX(Context.NoH, roughness);
     float G = GeometrySmith(Context.NoV, Context.NoL, roughness);
@@ -125,12 +131,15 @@ void PSMain(in  PSInput  PSIn,
     kD *= 1.0 - metallic;
 
     float3 diffuse = kD * Diffuse_Lambert(base_color.xyz);
-    float4 environment_color = Environment_Texture.Sample(Texture_sampler, normal);
-    
+    float3 irradiance = Irradiance_Texture.Sample(Texture_sampler, normal).xyz;
+    float3 indirect_ks = FresnelSchlickRoughness(Context.NoV, F0, roughness);
+    float3 indirect_kd = 1.0 - indirect_ks;
+
+    float3 indirect_diffuse = irradiance * base_color.xyz;
+    float3 ambient =  indirect_diffuse;
+
     float3 FinalColor = (diffuse + specular) * LightColor.xyz * Context.NoL;
-
-    FinalColor = metallic;
-
+    FinalColor += ambient;
     //FinalColor = FinalColor / (FinalColor + float3(1.0, 1.0, 1.0));
     float3 gamma = float3(1.0/2.2, 1.0/2.2, 1.0/2.2);
     //FinalColor = pow(FinalColor, gamma); // Gamma correction

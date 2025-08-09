@@ -339,7 +339,7 @@ namespace Cyber
                     case TEX_DIMENSION_CUBE:
                     {
                         srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
-                        srvDesc.TextureCube.MipLevels = -1;
+                        srvDesc.TextureCube.MipLevels = viewDesc.mipLevelCount;
                         srvDesc.TextureCube.MostDetailedMip = viewDesc.baseMipLevel;
                     }
                     break;
@@ -622,10 +622,16 @@ namespace Cyber
             data.Flags = D3D12_MULTISAMPLE_QUALITY_LEVELS_FLAG_NONE;
             data.SampleCount = d3dTexDesc.SampleDesc.Count;
             hook_CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data));
-            while(data.NumQualityLevels == 0 && data.SampleCount > 0)
+            while(data.NumQualityLevels == 0 && data.SampleCount > 1)
             {
                 CB_CORE_WARN("Sample Count [0] not supported. Trying a lower sample count [1]", data.SampleCount, data.SampleCount / 2);
-                data.SampleCount = d3dTexDesc.SampleDesc.Count / 2;
+                data.SampleCount /= 2;
+                hook_CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data));
+            }
+            if (data.NumQualityLevels == 0)
+            {
+                // 最终兜底为 1x
+                data.SampleCount = 1;
                 hook_CheckFeatureSupport(D3D12_FEATURE_MULTISAMPLE_QUALITY_LEVELS, &data, sizeof(data));
             }
 
@@ -787,6 +793,9 @@ namespace Cyber
                     auto uploadedSize = m_deviceContexts[0]->get_command_context().update_sub_resource(pTexture->native_resource, uploadBuffer, 0, pInitData->numSubResources, subResourceData);
 
                     cyber_assert(uploadedSize == uploadBufferSize, "Upload Buffer Size Mismatch!");
+
+                    //cyber_free(subResourceData);
+                    //SAFE_RELEASE(uploadBuffer);
 
                     TextureBarrier draw_barrier = {
                     .texture = pTexture,
@@ -2075,6 +2084,8 @@ namespace Cyber
                     buffer_barrier.dst_state = initial_state;
                     ResourceBarrierDesc barrier_desc0 = { .buffer_barriers = &buffer_barrier, .buffer_barrier_count = 1 };
                     m_deviceContexts[0]->cmd_resource_barrier(barrier_desc0);
+
+                    //SAFE_RELEASE(upload_buffer);
                 }
 
                 // create cbv

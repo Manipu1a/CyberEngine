@@ -10,6 +10,13 @@ static const float PI = 3.14159265358979323846;
 #define NUM_THETA_SAMPLES 32
 #endif
 
+struct VSOutput
+{
+    float4 Pos : SV_POSITION;
+    float4 ClipPos : CLIP_POS;  // 添加这一行
+};
+
+
 float2 DirectionToSphericalUV(float3 direction)
 {
     float phi = atan2(direction.z, direction.x);
@@ -20,15 +27,15 @@ float2 DirectionToSphericalUV(float3 direction)
     return float2(u, v);
 }
 
-Texture2D Environment_Texture;
+TextureCube Environment_Texture;
 SamplerState Texture_sampler;
 
-void PSMain(in float4 position: SV_Position,
-            in float3 world_pos: TEXCOORD0, out float4 Color : SV_Target)
+void PSMain(in VSOutput PSIn, out float4 Color : SV_Target)
 {
-    float3 N = normalize(world_pos);
+    float3 N = normalize(PSIn.ClipPos.xyz);
     float3 up = float3(0.0f, 1.0f, 0.0f); // 假设上方向为Y轴
     float3 right = normalize(cross(up, N));
+    up = normalize(cross(N, right));
 
     const float delta_phi = 2.0 * PI / float(NUM_PHI_SAMPLES);
     const float delta_theta = 0.5 * PI / float(NUM_THETA_SAMPLES);
@@ -43,11 +50,10 @@ void PSMain(in float4 position: SV_Position,
             float theta = float(j) * delta_theta;
             float3 temp = cos(phi) * right + sin(phi) * up;
             float3 sample_dir = cos(theta) * N + sin(theta) * temp;
-            float2 uv_sample = DirectionToSphericalUV(sample_dir);
-            color += Environment_Texture.Sample(Texture_sampler, uv_sample).rgb;
+            color += Environment_Texture.Sample(Texture_sampler, sample_dir).rgb * cos(theta) * sin(theta);
             sample_count += 1.0f;
         }
     }
 
-    Color = float4(PI * color / sample_count, 1.0f);
+    Color = PI * float4(color / sample_count, 1.0f);
 }

@@ -13,6 +13,27 @@ namespace Cyber
 {
     namespace Samples
     {
+        const static CubeVertex cube_verts[8] = {
+            { {-1, -1, -1}},
+            { {-1, 1, -1}},
+            { {1, 1, -1}},
+            { {1, -1, -1}},
+
+            { {-1, -1, 1}},
+            { {-1, 1, 1}},
+            { {1, 1, 1}},
+            { {1, -1, 1}},
+        };
+
+        const static uint32_t cube_indices[36] = {
+        2,0,1, 2,3,0,
+        4,6,5, 4,7,6,
+        0,7,4, 0,3,7,
+        1,0,4, 1,4,5,
+        1,5,2, 5,6,2,
+        3,6,7, 3,2,6
+        };
+
         Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
         {
             return Cyber::cyber_new<Cyber::Samples::PBRApp>();
@@ -62,8 +83,8 @@ namespace Cyber
             InvYAxis.m[1][1] = -1.0f;
             Math::Quaternion<float> rotation_x = Math::Quaternion<float>::rotation_from_axis_angle({ 1.0f, 0.0f, 0.0f }, -PI_F / 2.0f);
             Math::Quaternion<float> rotation_y = Math::Quaternion<float>::rotation_from_axis_angle({ 0.0f, 1.0f, 0.0f }, PI_F);
-            float4x4 rotation_matrix = rotation_x.to_matrix() * rotation_y.to_matrix();
-            float4x4 model_matrix = float4x4::scale(model_scale) * rotation_matrix * float4x4::translation(model_position.x, model_position.y, model_position.z);
+            float4x4 rotation_matrix = rotation_x.to_matrix();
+            float4x4 model_matrix = float4x4::scale(model_scale) * InvYAxis * rotation_matrix * float4x4::translation(model_position.x, model_position.y, model_position.z);
             //model_matrix = float4x4::scale(0.7)* float4x4::RotationY(static_cast<float>(time) * 1.0f) * float4x4::RotationX(static_cast<float>(time) * 1.0f);
 
             float3 camera_target = { 0.0f, 0.0f, 0.0f };
@@ -79,9 +100,9 @@ namespace Cyber
                 // map vertex constant buffer
                 void* const_resource = render_device->map_buffer(binding.vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
                 ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
-                const_ptr->ModelMatrix = model_matrix;
-                const_ptr->ViewMatrix = view_matrix;
-                const_ptr->ProjectionMatrix = projection_matrix;
+                const_ptr->ModelMatrix = model_matrix.transpose();
+                const_ptr->ViewMatrix = view_matrix.transpose();
+                const_ptr->ProjectionMatrix = projection_matrix.transpose();
                 render_device->unmap_buffer(binding.vertex_constant_buffer, MAP_WRITE);
                 binding.vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
             }
@@ -110,6 +131,8 @@ namespace Cyber
 
         void PBRApp::raster_draw()
         {
+            //precompute_environment_map();
+
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
@@ -182,7 +205,7 @@ namespace Cyber
             for(const auto& binding : model_resource_bindings)
             {
                 RenderObject::IBuffer* vertex_buffers[] = { binding.vertex_buffer };
-                uint32_t strides[] = { sizeof(CubeVertex) };
+                uint32_t strides[] = { sizeof(ModelVertex) };
                 device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
                 device_context->render_encoder_bind_index_buffer(binding.index_buffer, sizeof(uint32_t), 0);
                 device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, binding.vertex_constant_buffer);
@@ -204,6 +227,7 @@ namespace Cyber
                     }
                 }
             }
+            
             device_context->cmd_next_sub_pass();
             // draw environment map
             device_context->render_encoder_set_viewport(1, &viewport);
@@ -213,7 +237,7 @@ namespace Cyber
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw(3, 0);
-            
+
             device_context->cmd_end_render_pass();
 
             TextureBarrier present_barrier = {
@@ -349,29 +373,29 @@ namespace Cyber
                 auto model_verts = model_loader->get_vertex_data();
                 auto model_indices = model_loader->get_index_data();
 
-                CubeVertex* cube_verts = cyber_new_n<CubeVertex>(vertex_count);
+                ModelVertex* model_vertex = cyber_new_n<ModelVertex>(vertex_count);
                 for(size_t i = 0; i < vertex_count; ++i)
                 {
-                    cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
-                    cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data.
-                    cube_verts[i].tangent = model_verts[i].tangent;
-                    cube_verts[i].uv = model_verts[i].uv0;
+                    model_vertex[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
+                    model_vertex[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data.
+                    model_vertex[i].tangent = model_verts[i].tangent;
+                    model_vertex[i].uv = model_verts[i].uv0;
                 }
 
-                uint32_t* cube_indices = cyber_new_n<uint32_t>(index_count);
+                uint32_t* model_indices_data = cyber_new_n<uint32_t>(index_count);
                 for(size_t i = 0; i < index_count; ++i)
                 {
-                    cube_indices[i] = model_indices[i];
+                    model_indices_data[i] = model_indices[i];
                 }
                 
                 RenderObject::BufferCreateDesc buffer_desc = {};
                 buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
-                buffer_desc.size = vertex_count * sizeof(CubeVertex);
+                buffer_desc.size = vertex_count * sizeof(ModelVertex);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 RenderObject::BufferData vertex_buffer_data = {};
-                vertex_buffer_data.data = cube_verts;
-                vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
+                vertex_buffer_data.data = model_vertex;
+                vertex_buffer_data.data_size = vertex_count * sizeof(ModelVertex);
                 model_resource_binding.vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
                 
                 buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
@@ -379,7 +403,7 @@ namespace Cyber
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 RenderObject::BufferData index_buffer_data = {};
-                index_buffer_data.data = cube_indices;
+                index_buffer_data.data = model_indices_data;
                 index_buffer_data.data_size = index_count * sizeof(uint32_t);
                 model_resource_binding.index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
 
@@ -388,6 +412,28 @@ namespace Cyber
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 model_resource_binding.vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
+                buffer_desc.size = 8 * sizeof(float3);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                vertex_buffer_data.data = cube_verts;
+                vertex_buffer_data.data_size = 8 * sizeof(float3);
+                cube_vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
+
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
+                buffer_desc.size = 36 * sizeof(uint32_t);
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                index_buffer_data.data = cube_indices;
+                index_buffer_data.data_size = 36 * sizeof(uint32_t);
+                cube_index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+
+                buffer_desc.size = sizeof(ConstantMatrix);
+                buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
+                buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC; 
+                buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+                cube_vertex_constant_buffer = render_device->create_buffer(buffer_desc);
 
                 // create texture
                 if(materials.size() > 0)
@@ -420,7 +466,6 @@ namespace Cyber
                         }
                     }
                 }
-
             }
             
             RenderObject::BufferCreateDesc buffer_desc = {};
@@ -433,9 +478,8 @@ namespace Cyber
             buffer_desc.size = sizeof(Component::CameraAttribs);
             camera_constant_buffer = render_device->create_buffer(buffer_desc);
 
-            buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
-            precompute_env_map_buffer = render_device->create_buffer(buffer_desc);
-
+            buffer_desc.size = sizeof(EnvironmentConstant);
+            env_map_constant_buffer = render_device->create_buffer(buffer_desc);
 
             TextureLoader::TextureLoadInfo env_texture_load_info{
                 "EnvironmentMap",
@@ -458,8 +502,9 @@ namespace Cyber
             );
 
             environment_texture_view = environment_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-            
+            uint32_t cube_size = environment_texture->get_create_desc().m_height / 2;
             RenderObject::TextureCreateDesc textureDesc = {};
+
             textureDesc.m_name = "IrradianceCube";
             textureDesc.m_width = irradiance_cube_size;
             textureDesc.m_height = irradiance_cube_size;
@@ -473,6 +518,20 @@ namespace Cyber
             textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
             textureDesc.m_sampleCount = SAMPLE_COUNT_1;
             irradiance_cube_texture = render_device->create_texture(textureDesc);
+
+            textureDesc.m_name = "EnvironmentMapCube";
+            textureDesc.m_width = cube_size;
+            textureDesc.m_height = cube_size;
+            textureDesc.m_depth = 1;
+            textureDesc.m_arraySize = 6;
+            textureDesc.m_mipLevels = 1;
+            textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_CUBE;
+            textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
+            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
+            textureDesc.m_cpuAccessFlags = CPU_ACCESS_NONE;
+            textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
+            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
+            environment_cube_texture = render_device->create_texture(textureDesc);
         }
 
         void PBRApp::precompute_environment_map()
@@ -481,17 +540,91 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto device_context = renderer->get_device_context();
 
-            if(irradiance_pipeline)
+            const eastl::array<float4x4, 6> rotation_matrices = {
+                float4x4::RotationY(PI_ / 2.0f), // +X
+                float4x4::RotationY(-PI_ / 2.0f), // -X
+                float4x4::RotationX(-PI_ / 2.0f), // +Y
+                float4x4::RotationX(PI_ / 2.0f), // -Y
+                float4x4::Identity(), // +Z
+                float4x4::RotationY(PI_) // -Z
+            };
+            
+            if(equirectangular_to_cubemap_pipeline)
             {
-                const eastl::array<float4x4, 6> irradiance_rotation_matrices = {
-                    float4x4::RotationY(PI_ / 2.0f), // +X
-                    float4x4::RotationY(-PI_ / 2.0f), // -X
-                    float4x4::RotationX(-PI_ / 2.0f), // +Y
-                    float4x4::RotationX(PI_ / 2.0f), // -Y
-                    float4x4::Identity(), // +Z
-                    float4x4::RotationY(PI_) // -Z
+                uint32_t height = environment_texture_view->get_create_desc().p_texture->get_create_desc().m_height;
+                uint32_t cube_size = height / 2;
+
+                RenderObject::Viewport viewport;
+                viewport.top_left_x = 0.0f;
+                viewport.top_left_y = 0.0f;
+                viewport.width = (float)cube_size;
+                viewport.height = (float)cube_size;
+                viewport.min_depth = 0.0f;
+                viewport.max_depth = 1.0f;
+
+                RenderObject::Rect scissor = {
+                    0, 0, 
+                    (int32_t)cube_size, 
+                    (int32_t)cube_size
                 };
 
+                TextureBarrier draw_barrier = {
+                .texture = environment_cube_texture,
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
+                };
+
+                ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_begin();
+                device_context->render_encoder_bind_pipeline(equirectangular_to_cubemap_pipeline);
+                uint32_t strides[] = { sizeof(float3) };
+                device_context->render_encoder_bind_vertex_buffer(1, &cube_vertex_buffer, strides, nullptr);
+                device_context->render_encoder_bind_index_buffer(cube_index_buffer, sizeof(uint32_t), 0);
+                device_context->render_encoder_set_viewport(1, &viewport);
+                device_context->render_encoder_set_scissor(1, &scissor);
+                
+                auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+                {
+                    for(uint32_t face = 0; face < 6; ++face)
+                    {
+                        void* const_resource = render_device->map_buffer(cube_vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                        ConstantMatrix* const_ptr = (ConstantMatrix*)const_resource;
+                        const_ptr->ModelMatrix = float4x4::Identity();
+                        const_ptr->ViewMatrix = rotation_matrices[face];
+                        const_ptr->ProjectionMatrix = float4x4::Identity();
+                        render_device->unmap_buffer(cube_vertex_constant_buffer, MAP_WRITE);
+                        cube_vertex_constant_buffer->set_buffer_size(sizeof(ConstantMatrix));
+                        RenderObject::TextureViewCreateDesc rtv_desc = {};
+                        rtv_desc.p_texture = environment_cube_texture;
+                        rtv_desc.view_type = TEXTURE_VIEW_RENDER_TARGET;
+                        rtv_desc.format = environment_cube_texture->get_create_desc().m_format;
+                        rtv_desc.dimension = TEX_DIMENSION_2D_ARRAY; // 重要：单个面是2D
+                        rtv_desc.baseArrayLayer = face;        // 关键：指定要渲染的面
+                        rtv_desc.arrayLayerCount = 1;          // 只渲染一个面
+                        rtv_desc.baseMipLevel = 0;
+                        rtv_desc.mipLevelCount = 1;
+                        environment_cube_texture_view = render_device->create_texture_view(rtv_desc);
+
+                        device_context->set_render_target(1, &environment_cube_texture_view, nullptr);
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, cube_vertex_constant_buffer);
+                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
+                        device_context->prepare_for_rendering();
+                        device_context->render_encoder_draw_indexed(36, 0, 0);
+                    }
+                }
+
+                draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+                draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_end();
+                device_context->flush();
+            }
+            
+            if(irradiance_pipeline)
+            {
+                auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 RenderObject::Viewport viewport;
                 viewport.top_left_x = 0.0f;
                 viewport.top_left_y = 0.0f;
@@ -504,7 +637,6 @@ namespace Cyber
                     (int32_t)irradiance_cube_size, 
                     (int32_t)irradiance_cube_size
                 };
-
                 TextureBarrier draw_barrier = {
                 .texture = irradiance_cube_texture,
                 .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
@@ -525,9 +657,10 @@ namespace Cyber
                 {
                     for(uint32_t face = 0; face < 6; ++face)
                     {
-                        void* mapped_data = render_device->map_buffer(precompute_env_map_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-                        PrecomputeEnvMapAttribs* precompute_attribs = (PrecomputeEnvMapAttribs*)mapped_data;
-                        precompute_attribs->rotation = irradiance_rotation_matrices[face];
+                        void* mapped_data = render_device->map_buffer(env_map_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                        EnvironmentConstant* precompute_attribs = (EnvironmentConstant*)mapped_data;
+                        precompute_attribs->rotation = rotation_matrices[face];
+                        render_device->unmap_buffer(env_map_constant_buffer, MAP_WRITE);
                         RenderObject::TextureViewCreateDesc rtv_desc = {};
                         rtv_desc.p_texture = irradiance_cube_texture;
                         rtv_desc.view_type = TEXTURE_VIEW_RENDER_TARGET;
@@ -538,10 +671,11 @@ namespace Cyber
                         rtv_desc.baseMipLevel = mip;
                         rtv_desc.mipLevelCount = 1;
                         irradiance_cube_texture_view = render_device->create_texture_view(rtv_desc);
-
                         device_context->set_render_target(1, &irradiance_cube_texture_view, nullptr);
-                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, precompute_env_map_buffer);
-                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
+                        
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, env_map_constant_buffer);
+                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_cube_texture_view);
+                        
                         device_context->prepare_for_rendering();
                         device_context->render_encoder_draw(4, 0);
                     }
@@ -549,9 +683,10 @@ namespace Cyber
                 draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
                 draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
                 device_context->cmd_resource_barrier(barrier_desc);
-                device_context->flush();
                 device_context->cmd_end();
+                device_context->flush();
             }
+            
         }
 
         void PBRApp::bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding)
@@ -577,9 +712,9 @@ namespace Cyber
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.occlusion_texture_view);
             }
-
             if(irradiance_cube_texture)
             {
+                //auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, irradiance_cube_texture_view);
             }
@@ -735,10 +870,10 @@ namespace Cyber
                     pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
 
                     RenderObject::VertexAttribute vertex_attributes[] = {
-                        {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
-                        {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                        {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, tangent)},
-                        {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+                        {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ModelVertex, position)},
+                        {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ModelVertex, normal)},
+                        {"ATTRIB", 2, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ModelVertex, tangent)},
+                        {"ATTRIB", 3, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(ModelVertex, uv)},
                     };
                     RenderObject::VertexLayoutDesc vertex_layout_desc = {4, vertex_attributes};
 
@@ -760,11 +895,67 @@ namespace Cyber
                     };
                     material_binding.model_pipeline = render_device->create_render_pipeline(rp_desc);
 
-
                     vs_shader->free();
                     ps_shader->free();
                 }
             }
+
+            ResourceLoader::ShaderLoadDesc cube_vs_load_desc = {};
+            cube_vs_load_desc.target = SHADER_TARGET_6_0;
+            cube_vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/equirectangular_to_cubemap_vs.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> cube_vs_shader = ResourceLoader::add_shader(render_device, cube_vs_load_desc);
+
+            ResourceLoader::ShaderLoadDesc cube_ps_load_desc = {};
+            cube_ps_load_desc.target = SHADER_TARGET_6_0;
+            cube_ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/equirectangular_to_cubemap_ps.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> cube_ps_shader = ResourceLoader::add_shader(render_device, cube_ps_load_desc);
+
+            RenderObject::PipelineShaderCreateDesc* cube_pipeline_shader_create_desc[2];
+            cube_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
+            cube_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
+            cube_pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            cube_pipeline_shader_create_desc[0]->m_library = cube_vs_shader;
+            cube_pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            cube_pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            cube_pipeline_shader_create_desc[1]->m_library = cube_ps_shader;
+            cube_pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+            RenderObject::VertexAttribute vertex_attributes[] = {
+            {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ModelVertex, position)}
+            };
+            RenderObject::VertexLayoutDesc vertex_layout_desc = {1, vertex_attributes};
+
+            DepthStateCreateDesc cube_map_depth_stencil_state_desc = {};
+            cube_map_depth_stencil_state_desc.depth_test = false;
+            cube_map_depth_stencil_state_desc.depth_write = false;
+            cube_map_depth_stencil_state_desc.depth_func = CMP_ALWAYS;
+            cube_map_depth_stencil_state_desc.stencil_test = false;
+
+            RenderObject::RenderPipelineCreateDesc cube_rp_desc = 
+            {
+                .vertex_shader = cube_pipeline_shader_create_desc[0],
+                .pixel_shader = cube_pipeline_shader_create_desc[1],
+                .vertex_layout = &vertex_layout_desc,
+                .blend_state = &blend_state_desc,
+                .depth_stencil_state = &cube_map_depth_stencil_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
+                .color_formats = &environment_cube_texture->get_create_desc().m_format,
+                .render_target_count = 1,
+                .depth_stencil_format = TEX_FORMAT_UNKNOWN,
+                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+            };
+
+            equirectangular_to_cubemap_pipeline = render_device->create_render_pipeline(cube_rp_desc);
 
             ResourceLoader::ShaderLoadDesc env_vs_load_desc = {};
             env_vs_load_desc.target = SHADER_TARGET_6_0;
@@ -844,7 +1035,7 @@ namespace Cyber
                 .pixel_shader = irr_pipeline_shader_create_desc[1],
                 .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
-                .depth_stencil_state = &depth_stencil_state_desc,
+                .depth_stencil_state = &cube_map_depth_stencil_state_desc,
                 .m_staticSamplers = &sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,

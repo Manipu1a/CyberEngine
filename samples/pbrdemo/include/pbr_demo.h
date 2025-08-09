@@ -20,9 +20,15 @@ namespace Cyber
 
     namespace Samples
     {
+        struct CubeVertex
+        {
+            float3 position;
+        };
+            
         class CYBER_GAME_API PBRApp : public SampleApp
         {
-            struct CubeVertex
+
+            struct ModelVertex
             {
                 float3 position;
                 float3 normal;
@@ -35,6 +41,11 @@ namespace Cyber
                 float4x4 ModelMatrix;
                 float4x4 ViewMatrix;
                 float4x4 ProjectionMatrix;
+            };
+
+            struct EnvironmentConstant
+            {
+                float4x4 rotation;
             };
 
             struct PrecomputeEnvMapAttribs
@@ -101,6 +112,7 @@ namespace Cyber
             void reflect_material(MaterialResourceBinding& material_binding, RenderObject::IShaderLibrary* shader_library);
         protected:
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
+            RenderObject::IRenderPipeline* equirectangular_to_cubemap_pipeline = nullptr;
             RenderObject::IRenderPipeline* environment_pipeline = nullptr;
             RenderObject::IRenderPipeline* irradiance_pipeline = nullptr;
             RenderObject::IRenderPipeline* prefiltered_pipeline = nullptr;
@@ -114,14 +126,20 @@ namespace Cyber
 
             RenderObject::ITexture_View* environment_texture_view = nullptr;
             RenderObject::ITexture_View* prefiltered_cube_texture_view = nullptr;
+
+            RenderObject::ITexture* environment_cube_texture = nullptr;
             RenderObject::ITexture* irradiance_cube_texture = nullptr;
 
             static constexpr uint32_t irradiance_cube_size = 64;
             static constexpr uint32_t prefiltered_cube_size = 256;
 
+            RenderObject::IBuffer* cube_vertex_buffer = nullptr;
+            RenderObject::IBuffer* cube_index_buffer = nullptr;
+            RenderObject::IBuffer* cube_vertex_constant_buffer = nullptr;
+
             RenderObject::IBuffer* light_constant_buffer = nullptr;
             RenderObject::IBuffer* camera_constant_buffer = nullptr;
-            RenderObject::IBuffer* precompute_env_map_buffer = nullptr;
+            RenderObject::IBuffer* env_map_constant_buffer = nullptr;
 
             float3 light_direction = { 0.0f, 0.0f, -10.0f };
             float3 light_color = { 1.0f, 1.0f, 1.0f };
