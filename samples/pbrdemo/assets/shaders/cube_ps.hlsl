@@ -31,6 +31,7 @@ Texture2D MetallicRoughness_Texture;
 Texture2D Normal_Texture;
 
 TextureCube Irradiance_Texture;
+TextureCube Prefiltered_Texture;
 SamplerState Texture_sampler;
 
 cbuffer LightingConstants

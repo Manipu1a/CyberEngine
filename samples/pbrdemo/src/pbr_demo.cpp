@@ -481,6 +481,9 @@ namespace Cyber
             buffer_desc.size = sizeof(EnvironmentConstant);
             env_map_constant_buffer = render_device->create_buffer(buffer_desc);
 
+            buffer_desc.size = sizeof(PrecomputeEnvMapAttribs);
+            prefiltered_map_constant_buffer = render_device->create_buffer(buffer_desc);
+
             TextureLoader::TextureLoadInfo env_texture_load_info{
                 "EnvironmentMap",
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
@@ -510,7 +513,7 @@ namespace Cyber
             textureDesc.m_height = irradiance_cube_size;
             textureDesc.m_depth = 1;
             textureDesc.m_arraySize = 6;
-            textureDesc.m_mipLevels = 7;
+            textureDesc.m_mipLevels = 1;
             textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_CUBE;
             textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
             textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
@@ -518,6 +521,32 @@ namespace Cyber
             textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
             textureDesc.m_sampleCount = SAMPLE_COUNT_1;
             irradiance_cube_texture = render_device->create_texture(textureDesc);
+
+            textureDesc.m_name = "PrefilteredCube";
+            textureDesc.m_width = prefiltered_cube_size;
+            textureDesc.m_height = prefiltered_cube_size;
+            textureDesc.m_depth = 1;
+            textureDesc.m_arraySize = 6;
+            textureDesc.m_mipLevels = 7;
+            textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_CUBE;
+            textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
+            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
+            textureDesc.m_cpuAccessFlags = CPU_ACCESS_NONE;
+            textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
+            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
+            prefiltered_cube_texture = render_device->create_texture(textureDesc);
+
+            textureDesc.m_name = "BRDFLUT";
+            textureDesc.m_width = brdf_lut_size;
+            textureDesc.m_height = brdf_lut_size;
+            textureDesc.m_depth = 1;
+            textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
+            textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
+            textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
+            textureDesc.m_cpuAccessFlags = CPU_ACCESS_NONE;
+            textureDesc.m_format = TEX_FORMAT_RGBA32_FLOAT;
+            textureDesc.m_sampleCount = SAMPLE_COUNT_1;
+            brdf_lut_texture = render_device->create_texture(textureDesc);
 
             textureDesc.m_name = "EnvironmentMapCube";
             textureDesc.m_width = cube_size;
@@ -653,7 +682,7 @@ namespace Cyber
                 const auto& irradiance_cube_desc = irradiance_cube_texture->get_create_desc();
                 auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
 
-                for(uint32_t mip = 0; mip < irradiance_cube_desc.m_mipLevels; ++mip)
+                //for(uint32_t mip = 0; mip < irradiance_cube_desc.m_mipLevels; ++mip)
                 {
                     for(uint32_t face = 0; face < 6; ++face)
                     {
@@ -664,11 +693,11 @@ namespace Cyber
                         RenderObject::TextureViewCreateDesc rtv_desc = {};
                         rtv_desc.p_texture = irradiance_cube_texture;
                         rtv_desc.view_type = TEXTURE_VIEW_RENDER_TARGET;
-                        rtv_desc.format = irradiance_cube_texture->get_create_desc().m_format;
+                        rtv_desc.format = irradiance_cube_desc.m_format;
                         rtv_desc.dimension = TEX_DIMENSION_2D_ARRAY; // 重要：单个面是2D
                         rtv_desc.baseArrayLayer = face;        // 关键：指定要渲染的面
                         rtv_desc.arrayLayerCount = 1;          // 只渲染一个面
-                        rtv_desc.baseMipLevel = mip;
+                        rtv_desc.baseMipLevel = 0;
                         rtv_desc.mipLevelCount = 1;
                         irradiance_cube_texture_view = render_device->create_texture_view(rtv_desc);
                         device_context->set_render_target(1, &irradiance_cube_texture_view, nullptr);
@@ -687,6 +716,120 @@ namespace Cyber
                 device_context->flush();
             }
             
+            if(prefiltered_pipeline)
+            {
+                auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
+                TextureBarrier draw_barrier = {
+                .texture = prefiltered_cube_texture,
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
+                };
+                ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_begin();
+                device_context->render_encoder_bind_pipeline(irradiance_pipeline);
+
+                const auto& prefiltered_cube_desc = prefiltered_cube_texture->get_create_desc();
+                auto prefiltered_cube_texture_view = prefiltered_cube_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+
+                for(uint32_t mip = 0; mip < prefiltered_cube_desc.m_mipLevels; ++mip)
+                {
+                    float roughness = float(mip) / float(prefiltered_cube_desc.m_mipLevels - 1);
+                    uint32_t mip_width = prefiltered_cube_size >> mip;
+                    uint32_t mip_height = mip_width;
+                    RenderObject::Viewport viewport;
+                    viewport.top_left_x = 0.0f;
+                    viewport.top_left_y = 0.0f;
+                    viewport.width = (float)mip_width;
+                    viewport.height = (float)mip_height;
+                    viewport.min_depth = 0.0f;
+                    viewport.max_depth = 1.0f;
+                    RenderObject::Rect scissor = {
+                        0, 0, 
+                        (int32_t)mip_width, 
+                        (int32_t)mip_height
+                    };
+                    device_context->render_encoder_set_viewport(1, &viewport);
+                    device_context->render_encoder_set_scissor(1, &scissor);
+
+                    for(uint32_t face = 0; face < 6; ++face)
+                    {
+                        void* mapped_data = render_device->map_buffer(env_map_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                        EnvironmentConstant* precompute_attribs = (EnvironmentConstant*)mapped_data;
+                        precompute_attribs->rotation = rotation_matrices[face];
+                        render_device->unmap_buffer(env_map_constant_buffer, MAP_WRITE);
+
+                        mapped_data = render_device->map_buffer(prefiltered_map_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+                        PrecomputeEnvMapAttribs* prefiltered_attribs = (PrecomputeEnvMapAttribs*)mapped_data;
+                        prefiltered_attribs->roughness = roughness;
+                        render_device->unmap_buffer(prefiltered_map_constant_buffer, MAP_WRITE);
+                        RenderObject::TextureViewCreateDesc rtv_desc = {};
+                        rtv_desc.p_texture = prefiltered_cube_texture;
+                        rtv_desc.view_type = TEXTURE_VIEW_RENDER_TARGET;
+                        rtv_desc.format = prefiltered_cube_desc.m_format;
+                        rtv_desc.dimension = TEX_DIMENSION_2D_ARRAY; // 重要：单个面是2D
+                        rtv_desc.baseArrayLayer = face;        // 关键：指定要渲染的面
+                        rtv_desc.arrayLayerCount = 1;          // 只渲染一个面
+                        rtv_desc.baseMipLevel = 0;
+                        rtv_desc.mipLevelCount = 1;
+                        prefiltered_cube_texture_view = render_device->create_texture_view(rtv_desc);
+                        device_context->set_render_target(1, &prefiltered_cube_texture_view, nullptr);
+
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, env_map_constant_buffer);
+                        device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, prefiltered_map_constant_buffer);
+                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_cube_texture_view);
+
+                        device_context->prepare_for_rendering();
+                        device_context->render_encoder_draw(4, 0);
+                    }
+                }
+                draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+                draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_end();
+                device_context->flush();
+            }
+
+            if(brdf_lut_pipeline)
+            {
+                RenderObject::Viewport viewport;
+                viewport.top_left_x = 0.0f;
+                viewport.top_left_y = 0.0f;
+                viewport.width = (float)brdf_lut_size;
+                viewport.height = (float)brdf_lut_size;
+                viewport.min_depth = 0.0f;
+                viewport.max_depth = 1.0f;
+
+                RenderObject::Rect scissor = {
+                    0, 0, 
+                    (int32_t)brdf_lut_size, 
+                    (int32_t)brdf_lut_size
+                };
+
+                TextureBarrier draw_barrier = {
+                .texture = brdf_lut_texture,
+                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .subresource_barrier = 0
+                };
+                ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_begin();
+                device_context->render_encoder_bind_pipeline(brdf_lut_pipeline);
+                device_context->render_encoder_set_viewport(1, &viewport);
+                device_context->render_encoder_set_scissor(1, &scissor);
+                auto brdf_lut_texture_view = brdf_lut_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+                device_context->set_render_target(1, &brdf_lut_texture_view, nullptr);
+                device_context->prepare_for_rendering();
+                device_context->render_encoder_draw(4, 0);
+                draw_barrier.src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+                draw_barrier.dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+                device_context->cmd_resource_barrier(barrier_desc);
+                device_context->cmd_end();
+                device_context->flush();
+            }
         }
 
         void PBRApp::bind_material_resources(RenderObject::IDeviceContext* device_context, const MaterialResourceBinding& material_binding)
@@ -1045,6 +1188,99 @@ namespace Cyber
                 .prim_topology = PRIM_TOPO_TRIANGLE_STRIP,
             };
             irradiance_pipeline = render_device->create_render_pipeline(irr_rp_desc);
+
+            
+            ResourceLoader::ShaderLoadDesc prefilter_vs_load_desc = {};
+            prefilter_vs_load_desc.target = SHADER_TARGET_6_0;
+            prefilter_vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/cubemap.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> prefilter_vs_shader = ResourceLoader::add_shader(render_device, prefilter_vs_load_desc);
+
+            ResourceLoader::ShaderLoadDesc prefilter_ps_load_desc = {};
+            prefilter_ps_load_desc.target = SHADER_TARGET_6_0;
+            prefilter_ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/prefilter_environment_map.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> prefilter_ps_shader = ResourceLoader::add_shader(render_device, prefilter_ps_load_desc);
+            RenderObject::PipelineShaderCreateDesc* prefilter_pipeline_shader_create_desc[2];
+            prefilter_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
+            prefilter_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
+            prefilter_pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            prefilter_pipeline_shader_create_desc[0]->m_library = prefilter_vs_shader;
+            prefilter_pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            prefilter_pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            prefilter_pipeline_shader_create_desc[1]->m_library = prefilter_ps_shader;
+            prefilter_pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+            RenderObject::RenderPipelineCreateDesc prefilter_rp_desc = 
+            {
+                .vertex_shader = prefilter_pipeline_shader_create_desc[0],
+                .pixel_shader = prefilter_pipeline_shader_create_desc[1],
+                .vertex_layout = nullptr,
+                .blend_state = &blend_state_desc,
+                .depth_stencil_state = &cube_map_depth_stencil_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
+                .color_formats = &prefiltered_cube_texture->get_create_desc().m_format,
+                .render_target_count = 1,
+                .depth_stencil_format = TEX_FORMAT_UNKNOWN,
+                .prim_topology = PRIM_TOPO_TRIANGLE_STRIP,
+            };
+
+            
+            prefiltered_pipeline = render_device->create_render_pipeline(prefilter_rp_desc);
+            prefilter_vs_shader->free();
+            prefilter_ps_shader->free();
+
+            ResourceLoader::ShaderLoadDesc brdf_lut_vs_load_desc = {};
+            brdf_lut_vs_load_desc.target = SHADER_TARGET_6_0;
+            brdf_lut_vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/quad_vs.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("VSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> brdf_lut_vs_shader = ResourceLoader::add_shader(render_device, brdf_lut_vs_load_desc);
+
+            ResourceLoader::ShaderLoadDesc brdf_lut_ps_load_desc = {};
+            brdf_lut_ps_load_desc.target = SHADER_TARGET_6_0;
+            brdf_lut_ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/pbrdemo/assets/shaders/compute_lut_ps.hlsl"),
+                .stage = SHADER_STAGE_FRAG,
+                .entry_point_name = CYBER_UTF8("PSMain"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> brdf_lut_ps_shader = ResourceLoader::add_shader(render_device, brdf_lut_ps_load_desc);
+            RenderObject::PipelineShaderCreateDesc* brdf_lut_pipeline_shader_create_desc[2];
+            brdf_lut_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
+            brdf_lut_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
+            brdf_lut_pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            brdf_lut_pipeline_shader_create_desc[0]->m_library = brdf_lut_vs_shader;
+            brdf_lut_pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+            brdf_lut_pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
+            brdf_lut_pipeline_shader_create_desc[1]->m_library = brdf_lut_ps_shader;
+            brdf_lut_pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
+
+            RenderObject::RenderPipelineCreateDesc brdf_lut_rp_desc = 
+            {
+                .vertex_shader = brdf_lut_pipeline_shader_create_desc[0],
+                .pixel_shader = brdf_lut_pipeline_shader_create_desc[1],
+                .vertex_layout = nullptr,
+                .blend_state = &blend_state_desc,
+                .depth_stencil_state = &cube_map_depth_stencil_state_desc,
+                .m_staticSamplers = &sampler,
+                .m_staticSamplerNames = sampler_names,
+                .m_staticSamplerCount = 1,
+                .color_formats = &prefiltered_cube_texture->get_create_desc().m_format,
+                .render_target_count = 1,
+                .depth_stencil_format = TEX_FORMAT_UNKNOWN,
+                .prim_topology = PRIM_TOPO_TRIANGLE_STRIP,
+            };
+            brdf_lut_pipeline = render_device->create_render_pipeline(brdf_lut_rp_desc);
 
             env_vs_shader->free();
             env_ps_shader->free();
