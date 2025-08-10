@@ -32,6 +32,8 @@ Texture2D Normal_Texture;
 
 TextureCube Irradiance_Texture;
 TextureCube Prefiltered_Texture;
+Texture2D Preintegrated_Texture;
+
 SamplerState Texture_sampler;
 
 cbuffer LightingConstants
@@ -134,15 +136,22 @@ void PSMain(in  PSInput  PSIn,
     float3 diffuse = kD * Diffuse_Lambert(base_color.xyz);
     float3 irradiance = Irradiance_Texture.Sample(Texture_sampler, normal).xyz;
     float3 indirect_ks = FresnelSchlickRoughness(Context.NoV, F0, roughness);
+
+    float3 R = reflect(-V, normal);
+    const float MAX_REFLECTION_LOD = 4.0;
+    float3 prefilter_color = Prefiltered_Texture.SampleLevel(Texture_sampler, R, roughness * MAX_REFLECTION_LOD).xyz;
+    float2 env_brdf = Preintegrated_Texture.Sample(Texture_sampler, float2(Context.NoV, roughness)).xy;
     float3 indirect_kd = 1.0 - indirect_ks;
 
     float3 indirect_diffuse = irradiance * base_color.xyz;
-    float3 ambient =  indirect_diffuse;
+    float3 indirect_spec = prefilter_color * (indirect_ks * env_brdf.x + env_brdf.y);
+
+    float3 ambient =  indirect_kd * indirect_diffuse + indirect_spec;
 
     float3 FinalColor = (diffuse + specular) * LightColor.xyz * Context.NoL;
     FinalColor += ambient;
-    //FinalColor = FinalColor / (FinalColor + float3(1.0, 1.0, 1.0));
+    FinalColor = FinalColor / (FinalColor + float3(1.0, 1.0, 1.0));
     float3 gamma = float3(1.0/2.2, 1.0/2.2, 1.0/2.2);
-    //FinalColor = pow(FinalColor, gamma); // Gamma correction
+    FinalColor = pow(FinalColor, gamma); // Gamma correction
     PSOut.Color = float4(FinalColor, 1.0f);
 }

@@ -772,7 +772,7 @@ namespace Cyber
                         rtv_desc.dimension = TEX_DIMENSION_2D_ARRAY; // 重要：单个面是2D
                         rtv_desc.baseArrayLayer = face;        // 关键：指定要渲染的面
                         rtv_desc.arrayLayerCount = 1;          // 只渲染一个面
-                        rtv_desc.baseMipLevel = 0;
+                        rtv_desc.baseMipLevel = mip;
                         rtv_desc.mipLevelCount = 1;
                         prefiltered_cube_texture_view = render_device->create_texture_view(rtv_desc);
                         device_context->set_render_target(1, &prefiltered_cube_texture_view, nullptr);
@@ -857,9 +857,18 @@ namespace Cyber
             }
             if(irradiance_cube_texture)
             {
-                //auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, irradiance_cube_texture_view);
+            }
+            if(prefiltered_cube_texture)
+            {
+                auto prefiltered_cube_texture_view = prefiltered_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, prefiltered_cube_texture_view);
+            }
+            if(brdf_lut_texture)
+            {
+                auto brdf_lut_texture_view = brdf_lut_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, brdf_lut_texture_view);
             }
         }
 

@@ -8,11 +8,11 @@ void VSMain(in  uint    VertId : SV_VertexID,
           out PSInput PSIn) 
 {
     float4 Pos[4];
-    Pos[0] = float4(-1.0f, -1.0f, 0.0f, 1.0f);
-    Pos[1] = float4( 1.0f, -1.0f, 0.0f, 1.0f);
-    Pos[2] = float4(-1.0f,  1.0f, 0.0f, 1.0f);
-    Pos[3] = float4( 1.0f,  1.0f, 0.0f, 1.0f);
-
+    Pos[0] = float4(-1.0, -1.0, 0.0, 1.0);
+    Pos[1] = float4(-1.0, 1.0, 0.0, 1.0);
+    Pos[2] = float4(1.0, -1.0, 0.0, 1.0);
+    Pos[3] = float4(1.0, 1.0, 0.0, 1.0);
+    
     float2 UV[4];
     UV[0] = float2(0.0, 0.0);
     UV[1] = float2(1.0, 0.0);
