@@ -1,11 +1,11 @@
 #include "application/application.h"
 #include "application/platform/windows/windows_application.h"
 #include "platform/memory.h"
-#include "inputsystem/InputSystem.h"
 #include "core/Timestep.h"
 #include "core/window.h"
 #include "gameruntime/sampleapp.h"
 #include "editor/editor_impl_win32.h"
+#include "inputsystem/core/input_manager.h"
 
 namespace Cyber
 {
@@ -45,8 +45,13 @@ namespace Cyber
 
             m_pRenderer = cyber_new<Renderer::Renderer>();
             m_pRenderer->create_gfx_objects();
-            m_pInputSystem = cyber_new<InputSystem>();
-            m_pInputSystem->initInputSystem();
+            //m_pInputSystem = cyber_new<InputSystem>();
+            //m_pInputSystem->initInputSystem();
+            
+            // Initialize new input system
+            m_pNewInputManager = &CyberEngine::Input::InputManager::get_instance();
+            m_pNewInputManager->initialize(hwnd);
+            m_pNewInputManager->set_window_size(width, height);
             Editor::EditorCreateInfo createInfo = {};
             createInfo.application = this;
             createInfo.pDevice = m_pRenderer->get_render_device();
@@ -92,7 +97,12 @@ namespace Cyber
         {
             float time = 0.0f;
 
-            m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
+           // m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
+            
+            // Update new input system
+            if (m_pNewInputManager) {
+                m_pNewInputManager->update(deltaTime);
+            }
             m_pWindow->update(deltaTime);
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
 

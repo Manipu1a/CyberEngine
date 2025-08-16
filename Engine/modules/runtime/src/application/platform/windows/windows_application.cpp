@@ -7,6 +7,7 @@
 #include "imgui/backends/imgui_impl_dx12.h"
 #include "application/platform/windows/windows_window.h"
 #include "platform/memory.h"
+#include "inputsystem/core/input_manager.h"
 
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -30,6 +31,12 @@ namespace Cyber
             
             if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam))
                 return true;
+            
+            // Process input with new input system
+            if (m_pNewInputManager) {
+                MSG winMsg = { hwnd, msg, wParam, lParam };
+                m_pNewInputManager->process_platform_event(&winMsg);
+            }
             
             return 0;
         }

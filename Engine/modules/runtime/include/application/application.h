@@ -7,6 +7,8 @@
 #include "editor/editor.h"
 #include "cyber_runtime.config.h"
 
+namespace CyberEngine::Input { class InputManager; }
+
 namespace Cyber
 {
     class InputSystem;
@@ -41,7 +43,7 @@ namespace Cyber
             void resize_window(uint32_t width, uint32_t height);
 
             CYBER_FORCE_INLINE Window* get_window() const { return m_pWindow; }
-            CYBER_FORCE_INLINE InputSystem* get_input_system() const { return m_pInputSystem; }
+            CYBER_FORCE_INLINE CyberEngine::Input::InputManager* get_new_input_manager() const { return m_pNewInputManager; }
             CYBER_FORCE_INLINE Renderer::Renderer* get_renderer() const { return m_pRenderer; }
             CYBER_FORCE_INLINE Editor::Editor* get_editor() const { return m_pEditor; }
             CYBER_FORCE_INLINE Samples::SampleApp* get_sample_app() const { return m_pSampleApp; }
@@ -53,7 +55,8 @@ namespace Cyber
             CYBER_FORCE_INLINE void quit_application() { m_running = false; }
         protected:
             Window* m_pWindow;
-            InputSystem* m_pInputSystem;
+            //InputSystem* m_pInputSystem;
+            CyberEngine::Input::InputManager* m_pNewInputManager;
             Renderer::Renderer* m_pRenderer;
             Samples::SampleApp* m_pSampleApp;
             Editor::Editor* m_pEditor;
