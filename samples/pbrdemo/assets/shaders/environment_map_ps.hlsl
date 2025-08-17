@@ -5,7 +5,7 @@ struct VSOutput
     float4 ClipPos : CLIP_POS; // 添加这一行
 };
 
-Texture2D Environment_Texture;
+TextureCube Environment_Texture;
 SamplerState Texture_sampler;
 
 cbuffer Constant
@@ -33,5 +33,5 @@ void PSMain(in VSOutput input, out float4 Color : SV_Target)
     float2 uv = DirectionToSphericalUV(direction);
     
     // Set the output color
-    Color = Environment_Texture.Sample(Texture_sampler, uv); // 将方向映射到纹理坐标
+    Color = Environment_Texture.Sample(Texture_sampler, direction); // 将方向映射到纹理坐标
 }

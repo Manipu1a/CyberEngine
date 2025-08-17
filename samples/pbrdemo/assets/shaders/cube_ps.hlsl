@@ -35,6 +35,8 @@ TextureCube Prefiltered_Texture;
 Texture2D Preintegrated_Texture;
 
 SamplerState Texture_sampler;
+SamplerState Env_sampler;
+SamplerState LUT_sampler;
 
 cbuffer LightingConstants
 {
@@ -101,8 +103,8 @@ void PSMain(in  PSInput  PSIn,
 {
     float4 base_color = BaseColor_Texture.Sample(Texture_sampler, PSIn.UV);
     float4 metallic_roughness = MetallicRoughness_Texture.Sample(Texture_sampler, PSIn.UV);
-    float metallic = metallic_roughness.y;
-    float roughness = metallic_roughness.z;
+    float roughness = metallic_roughness.y;
+    float metallic = metallic_roughness.z;
     
 #if USE_NORMAL_MAP
     float3 normal = Normal_Texture.Sample(Texture_sampler, PSIn.UV).xyz;
@@ -128,19 +130,19 @@ void PSMain(in  PSInput  PSIn,
     float3 F = FresnelSchlick(Context.VoH, F0);
     float3 numerator = NDF * G * F;
     float denominator = 4.0 * Context.NoV * Context.NoL + 0.001;
-    float3 specular = numerator / denominator;
+    float3 specular = saturate(numerator / denominator);
 
     float3 kD = 1.0 - F; // Fresnel term == Ks
     kD *= 1.0 - metallic;
 
     float3 diffuse = kD * Diffuse_Lambert(base_color.xyz);
-    float3 irradiance = Irradiance_Texture.Sample(Texture_sampler, normal).xyz;
+    float3 irradiance = Irradiance_Texture.Sample(Env_sampler, normal).xyz;
     float3 indirect_ks = FresnelSchlickRoughness(Context.NoV, F0, roughness);
 
     float3 R = reflect(-V, normal);
-    const float MAX_REFLECTION_LOD = 4.0;
-    float3 prefilter_color = Prefiltered_Texture.SampleLevel(Texture_sampler, R, roughness * MAX_REFLECTION_LOD).xyz;
-    float2 env_brdf = Preintegrated_Texture.Sample(Texture_sampler, float2(Context.NoV, roughness)).xy;
+    const float MAX_REFLECTION_LOD = 6.0; // prefiltered texture 有 7 个 mipmap levels (0-6)
+    float3 prefilter_color = Prefiltered_Texture.SampleLevel(Env_sampler, R, roughness * MAX_REFLECTION_LOD).xyz;
+    float2 env_brdf = Preintegrated_Texture.Sample(LUT_sampler, float2(Context.NoV, roughness)).xy;
     float3 indirect_kd = 1.0 - indirect_ks;
 
     float3 indirect_diffuse = irradiance * base_color.xyz;

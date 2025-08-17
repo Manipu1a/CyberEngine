@@ -1117,15 +1117,15 @@ namespace Cyber
 
         const D3D12_ROOT_PARAMETER_TYPE root_parameter_type_priority_order[2] = { D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE, D3D12_ROOT_PARAMETER_TYPE_CBV };
 
-        for(uint32_t root_parameter_type_index = 0; root_parameter_type_index < GRAPHICS_ARRAY_LEN(root_parameter_type_priority_order); ++root_parameter_type_index)
-        {
-            const D3D12_ROOT_PARAMETER_TYPE root_parameter_type = root_parameter_type_priority_order[root_parameter_type_index];
 
-            for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
+        for(uint32_t shader_visibility_index = 0; shader_visibility_index < SV_SHADERVISIBILITY_COUNT; ++shader_visibility_index)
+        {
+            ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
+            const auto& shader_register_count = dxRootSignature->get_register_counts(shaderVisibility);
+            
+            for(uint32_t root_parameter_type_index = 0; root_parameter_type_index < GRAPHICS_ARRAY_LEN(root_parameter_type_priority_order); ++root_parameter_type_index)
             {
-                ShaderVisibility shaderVisibility = (ShaderVisibility)shader_visibility_index;
-                const auto& shader_register_count = dxRootSignature->get_register_counts(shaderVisibility);
-                
+                const D3D12_ROOT_PARAMETER_TYPE root_parameter_type = root_parameter_type_priority_order[root_parameter_type_index];
                 switch(root_parameter_type)
                 {
                     case D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE:
@@ -1170,38 +1170,38 @@ namespace Cyber
                         cyber_assert(false, "Unknown root parameter type!");
                         break;
                 }
+            }
 
-                // todo: fill sampler into global
-                if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
+            // todo: fill sampler into global
+            if(shader_register_count.sampler_count > 0 && shader_register_count.sampler_count <= rootSigDesc.m_staticSamplerCount)
+            {
+                staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
+                for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
                 {
-                    staticSamplerCount = 1;
-                    staticSamplerDescs = (D3D12_STATIC_SAMPLER_DESC*)cyber_calloc(shader_register_count.sampler_count, sizeof(D3D12_STATIC_SAMPLER_DESC));
-                    for(uint32_t i = 0; i < shader_register_count.sampler_count; ++i)
+                    auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
+                    for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
                     {
-                        auto& rst_slot = dxRootSignature->m_pStaticSamplers[i];
-                        for(uint32_t j = 0; j < rootSigDesc.m_staticSamplerCount; ++j)
+                        auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[j];
+                        if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[j]) == 0)
                         {
-                            
-                            auto input_slot = (Sampler_D3D12_Impl*)rootSigDesc.m_staticSamplers[i];
-                            if(strcmp((char*)rst_slot->get_name(), (char*)rootSigDesc.m_staticSamplerNames[i]) == 0)
-                            {
-                                D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
-                                staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
-                                staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
-                                staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
-                                staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
-                                staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
-                                staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
-                                staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
-                                staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
-                                staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
-                                staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+                            staticSamplerCount++;
 
-                                IShaderResource* samplerResource = rst_slot;
-                                staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
-                                staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
-                                staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
-                            }
+                            D3D12_SAMPLER_DESC& dxSamplerDesc = input_slot->m_dxSamplerDesc;
+                            staticSamplerDescs[i].Filter = dxSamplerDesc.Filter;
+                            staticSamplerDescs[i].AddressU = dxSamplerDesc.AddressU;
+                            staticSamplerDescs[i].AddressV = dxSamplerDesc.AddressV;
+                            staticSamplerDescs[i].AddressW = dxSamplerDesc.AddressW;
+                            staticSamplerDescs[i].MipLODBias = dxSamplerDesc.MipLODBias;
+                            staticSamplerDescs[i].MaxAnisotropy = dxSamplerDesc.MaxAnisotropy;
+                            staticSamplerDescs[i].ComparisonFunc = dxSamplerDesc.ComparisonFunc;
+                            staticSamplerDescs[i].MinLOD = dxSamplerDesc.MinLOD;
+                            staticSamplerDescs[i].MaxLOD = dxSamplerDesc.MaxLOD;
+                            staticSamplerDescs[i].BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+
+                            IShaderResource* samplerResource = rst_slot;
+                            staticSamplerDescs[i].ShaderRegister = samplerResource->get_binding();
+                            staticSamplerDescs[i].RegisterSpace = samplerResource->get_set();
+                            staticSamplerDescs[i].ShaderVisibility = D3D12Util_TranslateShaderStage(samplerResource->get_stages());
                         }
                     }
                 }

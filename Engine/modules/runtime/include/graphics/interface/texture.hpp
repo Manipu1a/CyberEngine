@@ -239,7 +239,9 @@ namespace Cyber
                     view_desc.baseArrayLayer = 0;
                     view_desc.arrayLayerCount = 1;
                     view_desc.baseMipLevel = 0;
-                    view_desc.mipLevelCount = 1;
+                    // For shader resource views, include all mipmap levels
+                    // For render target views, only include the first mipmap level
+                    view_desc.mipLevelCount = (view_type == TEXTURE_VIEW_TYPE::TEXTURE_VIEW_SHADER_RESOURCE) ? m_desc.m_mipLevels : 1;
                     view_desc.p_native_resource = m_pNativeHandle;
                     auto* view = create_view_internal(view_desc);
                     cyber_assert(view != nullptr, "Failed to create default texture view");

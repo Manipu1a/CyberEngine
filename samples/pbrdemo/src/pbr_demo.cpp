@@ -234,7 +234,8 @@ namespace Cyber
             device_context->render_encoder_set_scissor( 1, &scissor);
             device_context->render_encoder_bind_pipeline( environment_pipeline);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, camera_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_texture_view);
+            auto environment_cube_texture_view = environment_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, environment_cube_texture_view);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw(3, 0);
 
@@ -541,6 +542,8 @@ namespace Cyber
             textureDesc.m_height = brdf_lut_size;
             textureDesc.m_depth = 1;
             textureDesc.m_dimension = TEXTURE_DIMENSION::TEX_DIMENSION_2D;
+            textureDesc.m_mipLevels = 1;
+            textureDesc.m_arraySize = 1;
             textureDesc.m_usage = GRAPHICS_RESOURCE_USAGE::GRAPHICS_RESOURCE_USAGE_DEFAULT;
             textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
             textureDesc.m_cpuAccessFlags = CPU_ACCESS_NONE;
@@ -729,7 +732,7 @@ namespace Cyber
                 ResourceBarrierDesc barrier_desc = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
                 device_context->cmd_resource_barrier(barrier_desc);
                 device_context->cmd_begin();
-                device_context->render_encoder_bind_pipeline(irradiance_pipeline);
+                device_context->render_encoder_bind_pipeline(prefiltered_pipeline);
 
                 const auto& prefiltered_cube_desc = prefiltered_cube_texture->get_create_desc();
                 auto prefiltered_cube_texture_view = prefiltered_cube_texture->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
@@ -855,16 +858,19 @@ namespace Cyber
             {
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, material_binding.occlusion_texture_view);
             }
+
             if(irradiance_cube_texture)
             {
                 auto irradiance_cube_texture_view = irradiance_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, irradiance_cube_texture_view);
             }
+
             if(prefiltered_cube_texture)
             {
                 auto prefiltered_cube_texture_view = prefiltered_cube_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                 device_context->set_shader_resource_view(SHADER_STAGE_FRAG, material_resource_start_index++, prefiltered_cube_texture_view);
             }
+
             if(brdf_lut_texture)
             {
                 auto brdf_lut_texture_view = brdf_lut_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
@@ -957,27 +963,66 @@ namespace Cyber
             depth_stencil_state_desc.depth_func = CMP_LESS_EQUAL;
             depth_stencil_state_desc.stencil_test = false;
 
-            //todo: remove sampler to static
-            RenderObject::SamplerCreateDesc sampler_create_desc = {};
-            sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.mag_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.mip_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.address_u = ADDRESS_MODE_WRAP;
-            sampler_create_desc.address_v = ADDRESS_MODE_WRAP;
-            sampler_create_desc.address_w = ADDRESS_MODE_WRAP;
-            sampler_create_desc.flags = SAMPLER_FLAG_NONE;
-            sampler_create_desc.unnormalized_coordinates = false;
-            sampler_create_desc.mip_lod_bias = 0.0f;
-            sampler_create_desc.max_anisotropy = 0;
-            sampler_create_desc.compare_mode = CMP_NEVER;
-            sampler_create_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-            sampler_create_desc.min_lod = 0.0f;
-            sampler_create_desc.max_lod = 0.0f;
-            auto sampler = render_device->create_sampler(sampler_create_desc);
+            // 创建多个专用采样器
+            
+            // 1. 材质贴图采样器 (BaseColor, Normal, MetallicRoughness)
+            RenderObject::SamplerCreateDesc material_sampler_desc = {};
+            material_sampler_desc.min_filter = FILTER_TYPE_LINEAR;
+            material_sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
+            material_sampler_desc.mip_filter = FILTER_TYPE_LINEAR;
+            material_sampler_desc.address_u = ADDRESS_MODE_WRAP;
+            material_sampler_desc.address_v = ADDRESS_MODE_WRAP;
+            material_sampler_desc.address_w = ADDRESS_MODE_WRAP;
+            material_sampler_desc.flags = SAMPLER_FLAG_NONE;
+            material_sampler_desc.unnormalized_coordinates = false;
+            material_sampler_desc.mip_lod_bias = 0.0f;
+            material_sampler_desc.max_anisotropy = 8; // 启用各向异性过滤提高质量
+            material_sampler_desc.compare_mode = CMP_NEVER;
+            material_sampler_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+            material_sampler_desc.min_lod = 0.0f;
+            material_sampler_desc.max_lod = 0.0f;
+            auto material_sampler = render_device->create_sampler(material_sampler_desc);
 
-            RenderObject::ISampler* samplers[] = { sampler, sampler };
+            // 2. 环境贴图采样器 (Irradiance, Prefiltered Cube)
+            RenderObject::SamplerCreateDesc env_sampler_desc = {};
+            env_sampler_desc.min_filter = FILTER_TYPE_LINEAR;
+            env_sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
+            env_sampler_desc.mip_filter = FILTER_TYPE_LINEAR;
+            env_sampler_desc.address_u = ADDRESS_MODE_WRAP;
+            env_sampler_desc.address_v = ADDRESS_MODE_WRAP;
+            env_sampler_desc.address_w = ADDRESS_MODE_WRAP;
+            env_sampler_desc.flags = SAMPLER_FLAG_NONE;
+            env_sampler_desc.unnormalized_coordinates = false;
+            env_sampler_desc.mip_lod_bias = 0.0f;
+            env_sampler_desc.max_anisotropy = 0;
+            env_sampler_desc.compare_mode = CMP_NEVER;
+            env_sampler_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+            env_sampler_desc.min_lod = 0.0f;
+            env_sampler_desc.max_lod = 16.0f; // 支持所有 mipmap 级别
+            auto env_sampler = render_device->create_sampler(env_sampler_desc);
 
-            const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
+            // 3. BRDF LUT 采样器 (2D查找表)
+            RenderObject::SamplerCreateDesc lut_sampler_desc = {};
+            lut_sampler_desc.min_filter = FILTER_TYPE_LINEAR;
+            lut_sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
+            lut_sampler_desc.mip_filter = FILTER_TYPE_POINT; // LUT 通常不需要 mipmap
+            lut_sampler_desc.address_u = ADDRESS_MODE_CLAMP; // 重要：防止边缘采样错误
+            lut_sampler_desc.address_v = ADDRESS_MODE_CLAMP;
+            lut_sampler_desc.address_w = ADDRESS_MODE_CLAMP;
+            lut_sampler_desc.flags = SAMPLER_FLAG_NONE;
+            lut_sampler_desc.unnormalized_coordinates = false;
+            lut_sampler_desc.mip_lod_bias = 0.0f;
+            lut_sampler_desc.max_anisotropy = 0;
+            lut_sampler_desc.compare_mode = CMP_NEVER;
+            lut_sampler_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
+            lut_sampler_desc.min_lod = 0.0f;
+            lut_sampler_desc.max_lod = 0.0f; // LUT 只有一个级别
+            auto lut_sampler = render_device->create_sampler(lut_sampler_desc);
+
+            // 为了保持兼容性，暂时使用同一个采样器
+            RenderObject::ISampler* samplers[] = { material_sampler, env_sampler, lut_sampler };
+
+            const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler"), CYBER_UTF8("Env_sampler"), CYBER_UTF8("LUT_sampler") };
             auto& scene_target = renderer->get_scene_target(0);
 
             // Model Binding
@@ -1037,9 +1082,9 @@ namespace Cyber
                         .blend_state = &blend_state_desc,
                         .depth_stencil_state = &depth_stencil_state_desc,
                         .rasterizer_state = &rasterizer_state_desc,
-                        .m_staticSamplers = &sampler,
+                        .m_staticSamplers = samplers,
                         .m_staticSamplerNames = sampler_names,
-                        .m_staticSamplerCount = 1,
+                        .m_staticSamplerCount = 3,
                         .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
                         .render_target_count = 1,
                         .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
@@ -1098,7 +1143,7 @@ namespace Cyber
                 .vertex_layout = &vertex_layout_desc,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &cube_map_depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
+                .m_staticSamplers = &material_sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
                 .color_formats = &environment_cube_texture->get_create_desc().m_format,
@@ -1144,7 +1189,7 @@ namespace Cyber
                 .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
+                .m_staticSamplers = &material_sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
                 .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
@@ -1188,7 +1233,7 @@ namespace Cyber
                 .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &cube_map_depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
+                .m_staticSamplers = &env_sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
                 .color_formats = &irradiance_cube_texture->get_create_desc().m_format,
@@ -1233,7 +1278,7 @@ namespace Cyber
                 .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &cube_map_depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
+                .m_staticSamplers = &env_sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
                 .color_formats = &prefiltered_cube_texture->get_create_desc().m_format,
@@ -1281,7 +1326,7 @@ namespace Cyber
                 .vertex_layout = nullptr,
                 .blend_state = &blend_state_desc,
                 .depth_stencil_state = &cube_map_depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
+                .m_staticSamplers = &material_sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,
                 .color_formats = &prefiltered_cube_texture->get_create_desc().m_format,
