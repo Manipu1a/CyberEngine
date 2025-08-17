@@ -5,7 +5,7 @@
 #include <Windows.h>
 #endif
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 #ifdef _WIN32
 std::unordered_map<int, Key> KeyboardDevice::s_vkToKeyMap;

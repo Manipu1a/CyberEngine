@@ -4,7 +4,7 @@
 #include <array>
 #include <unordered_map>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 class KeyboardDevice : public IInputDevice {
 public:

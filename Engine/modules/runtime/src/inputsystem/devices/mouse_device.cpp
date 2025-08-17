@@ -5,7 +5,7 @@
 #include <Windows.h>
 #endif
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 MouseDevice::MouseDevice(DeviceID id)
     : IInputDevice(id, DeviceType::Mouse) {

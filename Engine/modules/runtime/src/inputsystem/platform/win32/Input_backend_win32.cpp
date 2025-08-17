@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <windowsx.h>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 void InputBackendWin32::process_platform_event(void* nativeEvent) {
     if (!nativeEvent) return;

@@ -4,7 +4,7 @@
 #include <functional>
 #include <chrono>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 using DeviceID = uint32_t;
 using ButtonID = uint32_t;

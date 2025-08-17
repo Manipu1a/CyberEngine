@@ -13,7 +13,7 @@ namespace Cyber
     {
         Application* Application::sInstance = nullptr;
 
-        Application::Application(const WindowDesc& desc)
+        Application::Application(const WindowDesc& desc) : m_pNewInputManager(nullptr), m_pRenderer(nullptr), m_pSampleApp(nullptr), m_pEditor(nullptr)
         {
             if(sInstance == nullptr)
                 sInstance = this;
@@ -49,7 +49,7 @@ namespace Cyber
             //m_pInputSystem->initInputSystem();
             
             // Initialize new input system
-            m_pNewInputManager = &CyberEngine::Input::InputManager::get_instance();
+            m_pNewInputManager = Input::InputManager::get_instance();
             m_pNewInputManager->initialize(hwnd);
             m_pNewInputManager->set_window_size(width, height);
             Editor::EditorCreateInfo createInfo = {};
@@ -80,25 +80,12 @@ namespace Cyber
         void Application::run()
         {
             CB_CORE_INFO("Application :: run()");
-            Timestep timestep;
-            m_last_frame_time = timestep.get_seconds();
-            while(m_running)
-            {
-                auto now = timestep.get_seconds();
-                auto elapsed = now - m_last_frame_time;
-                m_last_frame_time = now;
-                update(elapsed);
-            }
-
             CB_CORE_INFO("Application :: run() - finished");
         }
 
         void Application::update(float deltaTime)
         {
             float time = 0.0f;
-
-           // m_pInputSystem->updateInputSystem(m_pWindow->get_native_window());
-            
             // Update new input system
             if (m_pNewInputManager) {
                 m_pNewInputManager->update(deltaTime);

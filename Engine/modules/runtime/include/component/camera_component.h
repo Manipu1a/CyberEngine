@@ -1,7 +1,7 @@
 #pragma once 
 #include "platform/configure.h"
 #include "math/basic_math.hpp"
-#include <gainput/gainput.h>
+#include "inputsystem/core/input_manager.h"
 #include "cyber_runtime.config.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
@@ -38,9 +38,7 @@ private:
     float roll = 0.0f;
 
     Math::Quaternion<float> rotation;
-    gainput::InputManager* input_manager = nullptr;
-    gainput::InputMap* map;
-
+    Input::InputContext* m_gameContext = nullptr;
 };
 
 CYBER_END_NAMESPACE

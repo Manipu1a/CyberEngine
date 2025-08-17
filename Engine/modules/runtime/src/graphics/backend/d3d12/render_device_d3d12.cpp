@@ -1985,11 +1985,11 @@ namespace Cyber
                 else if(heap_properties.Type == D3D12_HEAP_TYPE_UPLOAD)
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_GENERIC_READ);
 
-                if(create_desc.bind_flags | GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER)
+                if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER)
                 {
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_VERTEX_BUFFER);
                 }
-                else if(create_desc.bind_flags | GRAPHICS_RESOURCE_BIND_INDEX_BUFFER)
+                else if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_INDEX_BUFFER)
                 {
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_INDEX_BUFFER);
                 }
@@ -2666,7 +2666,7 @@ namespace Cyber
         uint32_t first_slot = heap_slot;
         heap_slot += slots_need;
         //todo 堆内存爆了
-        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
+        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(first_slot);
         D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_SRVS];
         UINT src_size[MAX_SRVS];
 
@@ -2692,7 +2692,7 @@ namespace Cyber
         auto& cbv_cache = constant_buffer_view_cache.views[stage];
         uint32_t first_slot = heap_slot;
         heap_slot += slots_need;
-        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(heap_slot);
+        DescriptorHandle dest_handle = m_cbvSrvUavHeaps[0]->get_slot_handle(first_slot);
         D3D12_CPU_DESCRIPTOR_HANDLE cpu_handle[MAX_CBS];
         for (uint32_t i = 0; i < slots_need; ++i)
         {

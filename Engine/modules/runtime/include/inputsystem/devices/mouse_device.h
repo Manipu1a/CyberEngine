@@ -3,7 +3,7 @@
 #include "inputsystem/core/input_device.h"
 #include <array>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 class MouseDevice : public IInputDevice {
 public:

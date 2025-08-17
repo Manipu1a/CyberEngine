@@ -2,7 +2,7 @@
 #include "inputsystem/core/input_manager.h"
 #include <algorithm>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 InputAction* InputContext::create_action(ActionID id, const std::string& name) {
     auto action = std::make_unique<InputAction>(id, name);

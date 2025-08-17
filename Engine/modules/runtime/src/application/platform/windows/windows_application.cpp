@@ -8,6 +8,7 @@
 #include "application/platform/windows/windows_window.h"
 #include "platform/memory.h"
 #include "inputsystem/core/input_manager.h"
+#include "core/Timestep.h"
 
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -50,7 +51,36 @@ namespace Cyber
 
         void WindowsApplication::run()
         {
-            Application::run();
+            CB_CORE_INFO("WindowsApplication :: run()");
+            Timestep timestep;
+            m_last_frame_time = timestep.get_seconds();
+            
+            MSG msg = {};
+            while(m_running)
+            {
+                // Process all pending Windows messages
+                while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+                {
+                    if(msg.message == WM_QUIT)
+                    {
+                        m_running = false;
+                        break;
+                    }
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+                
+                if(!m_running)
+                    break;
+                
+                auto now = timestep.get_seconds();
+                auto elapsed = now - m_last_frame_time;
+                m_last_frame_time = now;
+                update(elapsed);
+            }
+            
+            CB_CORE_INFO("WindowsApplication :: run() - finished");
+
         }
         void WindowsApplication::update(float deltaTime)
         {

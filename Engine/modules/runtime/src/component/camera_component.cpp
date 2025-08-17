@@ -4,30 +4,51 @@
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)
 
+enum GameActions : Input::ActionID {
+    ACTION_MOVE_FORWARD = 0,
+    ACTION_MOVE_BACKWARD,
+    ACTION_MOVE_LEFT,
+    ACTION_MOVE_RIGHT,
+    ACTION_JUMP,
+    ACTION_FIRE,
+    ACTION_AIM,
+    ACTION_LOOK_X,
+    ACTION_LOOK_Y,
+    ACTION_PAUSE
+};
+
 CameraComponent::CameraComponent()
 {
-    input_manager = cyber_new<gainput::InputManager>();
-    const gainput::DeviceId keyboardId = input_manager->CreateDevice<gainput::InputDeviceKeyboard>();
-    const gainput::DeviceId mouseId = input_manager->CreateDevice<gainput::InputDeviceMouse>();
+    auto inputMgr = Input::InputManager::get_instance();
 
-    input_manager->SetDisplaySize(1280, 720);
+    // Create game context
+    m_gameContext = inputMgr->create_context("Game");
+    
+    auto* moveForward = m_gameContext->create_action(ACTION_MOVE_FORWARD, "MoveForward");
+    auto* moveBackward = m_gameContext->create_action(ACTION_MOVE_BACKWARD, "MoveBackward");
+    auto* moveLeft = m_gameContext->create_action(ACTION_MOVE_LEFT, "MoveLeft");
+    auto* moveRight = m_gameContext->create_action(ACTION_MOVE_RIGHT, "MoveRight");
 
-    map = cyber_new<gainput::InputMap>(*input_manager);
-    map->MapBool(CameraMovement::Forward, keyboardId, gainput::KeyW);
-    map->MapBool(CameraMovement::Backward, keyboardId, gainput::KeyS);
-    map->MapBool(CameraMovement::Left, keyboardId, gainput::KeyA);
-    map->MapBool(CameraMovement::Right, keyboardId, gainput::KeyD);
-    map->MapBool(CameraMovement::Up, mouseId, gainput::MouseButtonLeft);
+    // Bind keyboard controls
+    m_gameContext->bind_action(ACTION_MOVE_FORWARD, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::W));
+    m_gameContext->bind_action(ACTION_MOVE_BACKWARD, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::S));
+    m_gameContext->bind_action(ACTION_MOVE_LEFT, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::A));
+    m_gameContext->bind_action(ACTION_MOVE_RIGHT, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::D));
+
+    // Set callbacks for actions
+    moveForward->set_callback([](float value) {
+        if (value > 0.0f) {
+            cyber_log("Moving forward");
+        }
+    });
+    
+    // Push context to make it active
+    inputMgr->push_context(m_gameContext);
 }
 
 void CameraComponent::update()
 {
-    input_manager->Update();
 
-    if(map->GetBoolWasDown(CameraMovement::Forward))
-    {
-        
-    }
 }
 
 CYBER_END_NAMESPACE

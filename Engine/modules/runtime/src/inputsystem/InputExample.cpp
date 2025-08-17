@@ -4,7 +4,7 @@
 #include "inputsystem/core/input_context.h"
 #include <iostream>
 
-using namespace CyberEngine::Input;
+using namespace Cyber::Input;
 
 // Define action IDs for your game
 enum GameActions : ActionID {
@@ -24,13 +24,13 @@ class InputExample {
 public:
     void Initialize() {
         // Get the input manager instance
-        auto& inputMgr = InputManager::get_instance();
+        auto inputMgr = InputManager::get_instance();
         
         // Initialize with window handle (pass actual HWND in real application)
-        inputMgr.initialize(nullptr);
+        inputMgr->initialize(nullptr);
 
         // Create game context
-        m_gameContext = inputMgr.create_context("Game");
+        m_gameContext = inputMgr->create_context("Game");
 
         // Create actions
         auto* moveForward = m_gameContext->create_action(ACTION_MOVE_FORWARD, "MoveForward");
@@ -72,10 +72,10 @@ public:
         });
         
         // Push context to make it active
-        inputMgr.push_context(m_gameContext);
+        inputMgr->push_context(m_gameContext);
 
         // Create menu context (for UI)
-        m_menuContext = inputMgr.create_context("Menu");
+        m_menuContext = inputMgr->create_context("Menu");
 
         // Menu controls might have different bindings
         auto* menuSelect = m_menuContext->create_action(0, "Select");
@@ -87,10 +87,10 @@ public:
     }
     
     void Update(float deltaTime) {
-        auto& inputMgr = InputManager::get_instance();
+        auto inputMgr = InputManager::get_instance();
         
         // Update input system
-        inputMgr.update(deltaTime);
+        inputMgr->update(deltaTime);
 
         // Check for input in game context
         if (m_gameContext->is_enabled()) {
@@ -133,32 +133,32 @@ public:
             
             // Mouse look
             float mouseX, mouseY;
-            inputMgr.get_mouse_delta(mouseX, mouseY);
+            inputMgr->get_mouse_delta(mouseX, mouseY);
             if (mouseX != 0.0f || mouseY != 0.0f) {
                 RotateCamera(mouseX, mouseY, deltaTime);
             }
         }
         
         // Quick access methods (bypass context)
-        if (inputMgr.is_key_just_pressed(Key::F1)) {
+        if (inputMgr->is_key_just_pressed(Key::F1)) {
             ShowHelp();
         }
 
-        if (inputMgr.is_key_just_pressed(Key::F11)) {
+        if (inputMgr->is_key_just_pressed(Key::F11)) {
             ToggleFullscreen();
         }
     }
     
     void SwitchToMenu() {
-        auto& inputMgr = InputManager::get_instance();
-        inputMgr.pop_context(); // Remove game context
-        inputMgr.push_context(m_menuContext); // Add menu context
+        auto inputMgr = InputManager::get_instance();
+        inputMgr->pop_context(); // Remove game context
+        inputMgr->push_context(m_menuContext); // Add menu context
     }
     
     void SwitchToGame() {
-        auto& inputMgr = InputManager::get_instance();
-        inputMgr.pop_context(); // Remove menu context
-        inputMgr.push_context(m_gameContext); // Add game context
+        auto inputMgr = InputManager::get_instance();
+        inputMgr->pop_context(); // Remove menu context
+        inputMgr->push_context(m_gameContext); // Add game context
     }
     
 private:

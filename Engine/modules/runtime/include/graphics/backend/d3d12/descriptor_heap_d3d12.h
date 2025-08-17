@@ -29,6 +29,8 @@ namespace Cyber
 
             void copy_descriptor_handle(const D3D12_CPU_DESCRIPTOR_HANDLE& srcHandle, const uint64_t& dstHandle, uint32_t index);
 
+            void reset();
+
             static void create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap);
 
             void free();

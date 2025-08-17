@@ -9,14 +9,12 @@
 #include <queue>
 #include <mutex>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 class InputManager {
 public:
-    static InputManager& get_instance() {
-        static InputManager instance;
-        return instance;
-    }
+    static InputManager* get_instance();
+
 
     bool initialize(void* windowHandle = nullptr);
     void shutdown();
@@ -91,6 +89,8 @@ public:
     int get_window_height() const { return m_windowHeight; }
 
 protected:
+    static InputManager* instance;
+
     InputManager() = default;
     ~InputManager() = default;
     InputManager(const InputManager&) = delete;
@@ -98,7 +98,8 @@ protected:
     
     void process_events();
     void update_devices(float deltaTime);
-
+    void update_context(float deltaTime);
+    
     std::unordered_map<DeviceID, std::unique_ptr<IInputDevice>> m_devices;
     std::unordered_map<std::string, std::unique_ptr<InputContext>> m_contexts;
     std::vector<InputContext*> m_contextStack;

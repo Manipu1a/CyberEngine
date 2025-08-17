@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 class InputManager;
 

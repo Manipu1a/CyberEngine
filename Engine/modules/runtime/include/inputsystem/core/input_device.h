@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
 class IInputDevice {
 public:

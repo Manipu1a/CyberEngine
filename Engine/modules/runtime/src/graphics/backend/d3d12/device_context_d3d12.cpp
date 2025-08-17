@@ -606,8 +606,8 @@ void DeviceContext_D3D12_Impl::set_bound_heap(uint32_t index, DescriptorHeap_D3D
 
 void DeviceContext_D3D12_Impl::commit_bound_heaps()
 {
-    state_cache.bound_heaps[0] = render_device->GetCbvSrvUavHeaps();
-    state_cache.bound_heaps[1] = render_device->GetSamplerHeaps();
+    state_cache.bound_heaps[0] = render_device->GetCbvSrvUavHeaps(0);
+    state_cache.bound_heaps[1] = render_device->GetSamplerHeaps(0);
     if(state_cache.bound_heaps[0] || state_cache.bound_heaps[1])
     {
         ID3D12DescriptorHeap* heaps[2] = { state_cache.bound_heaps[0]->get_heap(), state_cache.bound_heaps[1]->get_heap() };
@@ -625,6 +625,20 @@ void DeviceContext_D3D12_Impl::flush()
 void DeviceContext_D3D12_Impl::finish_frame()
 {
     m_pDynamicHeap->release_allocated_pages(0);
+    
+    // Reset shader visible descriptor heaps for next frame
+    // This prevents the D3D12 STATIC_DESCRIPTOR_INVALID_DESCRIPTOR_CHANGE error
+    for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
+    {
+        if(render_device->GetCbvSrvUavHeaps(i))
+        {
+            render_device->GetCbvSrvUavHeaps(i)->reset();
+        }
+        if(render_device->GetSamplerHeaps(i))
+        {
+            render_device->GetSamplerHeaps(i)->reset();
+        }
+    }
 }
 
 void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists)

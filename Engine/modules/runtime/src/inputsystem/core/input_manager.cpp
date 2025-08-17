@@ -3,9 +3,21 @@
 #include "inputsystem/devices/keyboard_device.h"
 #include "inputsystem/devices/mouse_device.h"
 #include <algorithm>
+#include "inputsystem/platform/win32/Input_backend_win32.h"
 
-namespace CyberEngine::Input {
+namespace Cyber::Input {
 
+InputManager* InputManager::instance = nullptr;
+InputManager* InputManager::get_instance()
+{
+    if(instance == nullptr)
+    {
+        #if defined(_WINDOWS)
+        instance = new InputBackendWin32();
+        #endif
+    }
+    return instance;
+}
 bool InputManager::initialize(void* windowHandle) {
     m_windowHandle = windowHandle;
     
@@ -33,6 +45,7 @@ void InputManager::shutdown() {
 void InputManager::update(float deltaTime) {
     update_devices(deltaTime);
     process_events();
+    update_context(deltaTime);
 }
 
 void InputManager::remove_device(DeviceID id) {
@@ -254,4 +267,10 @@ void InputManager::update_devices(float deltaTime) {
     }
 }
 
+void InputManager::update_context(float deltaTime)
+{
+    if (auto* context = get_active_context()) {
+            context->update(deltaTime);
+    }
+}
 } // namespace CyberEngine::Input

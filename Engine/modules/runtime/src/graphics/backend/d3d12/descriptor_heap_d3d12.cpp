@@ -143,6 +143,16 @@ namespace Cyber
             m_pDevice->CopyDescriptorsSimple(1, {m_startHandle.mCpu.ptr + dstHandle + (index * m_descriptorSize)}, srcHandle, m_type);
         }
 
+        void DescriptorHeap_D3D12::reset()
+        {
+            // Only reset shader visible heaps, not CPU descriptor heaps
+            if(m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+            {
+                m_usedDescriptors = 0;
+                // Note: We don't clear m_pHandles as they will be overwritten
+            }
+        }
+
         void DescriptorHeap_D3D12::create_descriptor_heap(ID3D12Device* device, const D3D12_DESCRIPTOR_HEAP_DESC& desc, struct DescriptorHeap_D3D12** destHeap)
         {
             uint32_t numDesciptors = desc.NumDescriptors;
