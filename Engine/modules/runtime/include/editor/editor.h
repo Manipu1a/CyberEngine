@@ -232,6 +232,7 @@ namespace Cyber
             Core::Application* m_pApp = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
             ImGuiContext* imgui_context = nullptr;
+            std::shared_ptr<class ImGuiLogSink> m_imgui_log_sink;
         };
     }
 }

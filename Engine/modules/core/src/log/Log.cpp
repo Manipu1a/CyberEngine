@@ -19,6 +19,18 @@ namespace Cyber
 		return sClientLogger;
 	}
 	
+    void Log::addSink(std::shared_ptr<spdlog::sinks::sink> sink)
+    {
+        if (sCoreLogger)
+        {
+            sCoreLogger->sinks().push_back(sink);
+        }
+        if (sClientLogger)
+        {
+            sClientLogger->sinks().push_back(sink);
+        }
+    }
+	
     void Log::initLog()
     {
         std::vector<spdlog::sink_ptr> logSinks;
@@ -27,12 +39,6 @@ namespace Cyber
 
 		logSinks[0]->set_pattern("%^[%T] %n: %v%$");
 		logSinks[1]->set_pattern("[%T] [%l] %n: %v");
-
-		auto callback_sink = std::make_shared<spdlog::sinks::callback_sink_mt>([]( const spdlog::details::log_msg& msg) {
-
-		});
-		callback_sink->set_level(spdlog::level::trace);
-		logSinks.emplace_back(callback_sink);
 
 		sCoreLogger = eastl::make_shared<spdlog::logger>("CYBER", begin(logSinks), end(logSinks));
 		spdlog::register_logger(std::make_shared<spdlog::logger>(*sCoreLogger.get()));

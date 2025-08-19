@@ -58,7 +58,7 @@ namespace Cyber
 
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            camera_component = cyber_new<Component::CameraComponent>();
+            camera_component = cyber_new<Component::CameraComponent>(float3{ 0.0f, 0.0f, -30.0f });
 
             create_resource();
             create_render_pipeline();
@@ -73,6 +73,8 @@ namespace Cyber
 
         void PBRApp::update(float deltaTime)
         {
+            camera_component->update();
+
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
 
@@ -86,11 +88,12 @@ namespace Cyber
             float4x4 rotation_matrix = rotation_x.to_matrix();
             float4x4 model_matrix = float4x4::scale(model_scale) * InvYAxis * rotation_matrix * float4x4::translation(model_position.x, model_position.y, model_position.z);
             //model_matrix = float4x4::scale(0.7)* float4x4::RotationY(static_cast<float>(time) * 1.0f) * float4x4::RotationX(static_cast<float>(time) * 1.0f);
-
-            float3 camera_target = { 0.0f, 0.0f, 0.0f };
+            auto camera_position = camera_component->get_camera_position();
+            float3 camera_target = camera_position + float3(0.0f, 0.0f, 10.0f);
             float3 camera_up = { 0.0f, 1.0f, 0.0f };
             
-            float4x4 view_matrix = float4x4::look_at(camera_position, camera_target, camera_up);
+            //float4x4 view_matrix = float4x4::look_at(camera_position, camera_target, camera_up);
+            float4x4 view_matrix = camera_component->get_rotation().to_matrix() * float4x4::translation(-camera_position.x, -camera_position.y, -camera_position.z);
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
             //float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
@@ -904,7 +907,9 @@ namespace Cyber
                         ImGui::InputFloat3("Position", model_position.data());
                         ImGui::SliderFloat3("Rotation", model_rotation.data(), 0.0f, 360.0f);
                         ImGui::SliderFloat3("Scale", model_scale.data(), 0.0f, 10.0f);
+                        float3 camera_position = camera_component->get_camera_position();
                         ImGui::SliderFloat3("Camera Position", camera_position.data(), -100.0f, 100.0f);
+                        camera_component->set_camera_position(camera_position);
                         ImGui::TreePop();
                     }
                 }

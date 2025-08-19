@@ -187,6 +187,12 @@ constexpr Vector3<T> operator*(T s, const Vector3<T>& v)
 }
 
 template <class T>
+constexpr Vector3<T> operator+(const Vector3<T>& a, const Vector3<T>& b)
+{
+    return Vector3<T>{a.x + b.x, a.y + b.y, a.z + b.z};
+}
+
+template <class T>
 struct Vector4
 {
     union

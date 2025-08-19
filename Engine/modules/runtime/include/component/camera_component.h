@@ -29,14 +29,27 @@ enum CameraMovement
 class CYBER_RUNTIME_API CameraComponent
 {
 public:
-    CameraComponent();
+    CameraComponent(float3 _camera_position);
     
     void update();
+
+    void move_forward(float value);
+    void move_backward(float value);
+    void move_left(float value);
+    void move_right(float value);
+
+    float3 get_camera_position() const { return camera_position; }
+    void set_camera_position(const float3& position) { camera_position = position; }
+    Math::Quaternion<float> get_rotation() const { return rotation; }
 private:
     float yaw = 0.0f;
     float pitch = 0.0f;
     float roll = 0.0f;
 
+    float last_mouse_x = 0.0f;
+    float last_mouse_y = 0.0f;
+    
+    float3 camera_position = { 0.0f, 0.0f, 5.0f };
     Math::Quaternion<float> rotation;
     Input::InputContext* m_gameContext = nullptr;
 };

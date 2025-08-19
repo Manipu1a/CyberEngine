@@ -146,7 +146,6 @@ namespace Cyber
             float3 model_position = { 0.0f, 0.0f, 0.0f };
             float3 model_scale = { 1.0f, 1.0f, 1.0f };
             float3 model_rotation = { 0.0f, 0.0f, 0.0f };
-            float3 camera_position = { 0.0f, 0.0f, -30.0f };
             
             Component::CameraComponent* camera_component = nullptr;
 

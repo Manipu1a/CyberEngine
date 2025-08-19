@@ -642,6 +642,11 @@ struct Quaternion
     }
 };
 
+template<typename T>
+constexpr inline Quaternion<T> operator*(const Quaternion<T>& lhs, const Quaternion<T>& rhs)
+{
+    return Quaternion<T>::mul(lhs, rhs);
+}
 
 CYBER_END_NAMESPACE
 CYBER_END_NAMESPACE

@@ -15,6 +15,10 @@ namespace Cyber
         
         static eastl::shared_ptr<spdlog::logger>& getCoreLogger();
         static eastl::shared_ptr<spdlog::logger>& getClientLogger();
+        
+        // Add a custom sink to both loggers
+        static void addSink(std::shared_ptr<spdlog::sinks::sink> sink);
+        
     private:
         static eastl::shared_ptr<spdlog::logger> sCoreLogger;
         static eastl::shared_ptr<spdlog::logger> sClientLogger;
