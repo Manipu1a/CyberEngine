@@ -28,7 +28,10 @@ void MouseDevice::update(float deltaTime) {
     }
     
     m_previousButtonStates = m_buttonStates;
-    
+}
+
+void MouseDevice::end_frame()
+{
     // Reset deltas at the end of frame
     reset_deltas();
 }

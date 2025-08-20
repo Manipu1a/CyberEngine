@@ -37,6 +37,7 @@ public:
     void move_backward(float value);
     void move_left(float value);
     void move_right(float value);
+    void mouse_wheel_move(float value);
 
     float3 get_camera_position() const { return camera_position; }
     void set_camera_position(const float3& position) { camera_position = position; }
@@ -48,7 +49,7 @@ private:
 
     float last_mouse_x = 0.0f;
     float last_mouse_y = 0.0f;
-    
+    float move_speed = 0.05f;
     float3 camera_position = { 0.0f, 0.0f, 5.0f };
     Math::Quaternion<float> rotation;
     Input::InputContext* m_gameContext = nullptr;

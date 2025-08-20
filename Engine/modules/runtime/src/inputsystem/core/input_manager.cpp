@@ -46,6 +46,8 @@ void InputManager::update(float deltaTime) {
     update_devices(deltaTime);
     process_events();
     update_context(deltaTime);
+
+    m_mouse->end_frame();
 }
 
 void InputManager::remove_device(DeviceID id) {
@@ -208,7 +210,7 @@ void InputManager::get_mouse_delta(float& deltaX, float& deltaY) const {
 
 float InputManager::get_mouse_wheel() const {
     if (m_mouse) {
-        return m_mouse->get_axis_delta(static_cast<AxisID>(MouseAxis::Wheel));
+        return m_mouse->get_axis_value(static_cast<AxisID>(MouseAxis::Wheel));
     }
     return 0.0f;
 }

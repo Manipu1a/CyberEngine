@@ -14,7 +14,8 @@ public:
     bool initialize() override;
     void shutdown() override;
     void update(float deltaTime) override;
-
+    void end_frame() override;
+    
     bool is_connected() const override { return m_connected; }
     std::string get_device_name() const override { return "Keyboard"; }
     

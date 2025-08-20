@@ -16,6 +16,7 @@ public:
     virtual bool initialize() = 0;
     virtual void shutdown() = 0;
     virtual void update(float deltaTime) = 0;
+    virtual void end_frame() = 0;
     
     virtual bool is_connected() const = 0;
     virtual std::string get_device_name() const = 0;

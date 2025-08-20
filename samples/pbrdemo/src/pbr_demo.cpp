@@ -94,6 +94,9 @@ namespace Cyber
             
             //float4x4 view_matrix = float4x4::look_at(camera_position, camera_target, camera_up);
             float4x4 view_matrix = camera_component->get_rotation().to_matrix() * float4x4::translation(-camera_position.x, -camera_position.y, -camera_position.z);
+            float4x4 camera_world = view_matrix.inverse();
+            float3 camera_world_pos = float3::make_vector(camera_world[3]);
+
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
             //float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
@@ -113,7 +116,7 @@ namespace Cyber
             Component::LightAttribs light_attribs;
             light_attribs.light_direction = light_direction;
             light_attribs.light_intensity = light_color;
-            light_attribs.camera_position = float4(camera_position, 1.0f);
+            light_attribs.camera_position = float4(camera_world_pos, 1.0f);
 
             void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             Component::LightAttribs* light_ptr = (Component::LightAttribs*)light_resource;
@@ -122,7 +125,7 @@ namespace Cyber
 
             void* camera_resource = render_device->map_buffer(camera_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             Component::CameraAttribs* camera_ptr = (Component::CameraAttribs*)camera_resource;
-            camera_ptr->camera_position = float4(0.0f, 0.0f, -10.0f, 1.0f);
+            camera_ptr->camera_position = camera_world_pos;
             //camera_ptr->view_matrix = view_matrix;
             //camera_ptr->projection_matrix = projection_matrix;
             //camera_ptr->view_projection_matrix = view_matrix * projection_matrix;

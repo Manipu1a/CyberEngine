@@ -37,6 +37,11 @@ void KeyboardDevice::update(float deltaTime) {
     m_previousKeyStates = m_keyStates;
 }
 
+void KeyboardDevice::end_frame()
+{
+    
+}
+
 ButtonState KeyboardDevice::get_button_state(ButtonID button) const {
     if (button < static_cast<ButtonID>(Key::Count)) {
         return m_keyStates[button].pressed ? ButtonState::Pressed : ButtonState::Released;

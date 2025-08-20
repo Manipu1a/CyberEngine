@@ -10,6 +10,7 @@ enum GameActions : Input::ActionID {
     ACTION_MOVE_LEFT,
     ACTION_MOVE_RIGHT,
     ACTION_MOUSE_LEFT,
+    ACTION_MOUSE_WHEEL,
     ACTION_LOOK_X,
     ACTION_LOOK_Y,
     ACTION_PAUSE
@@ -33,14 +34,15 @@ CameraComponent::CameraComponent(float3 _camera_position) : camera_position(_cam
     auto* moveLeft = m_gameContext->create_action(ACTION_MOVE_LEFT, "MoveLeft");
     auto* moveRight = m_gameContext->create_action(ACTION_MOVE_RIGHT, "MoveRight");
     auto* mouse_left = m_gameContext->create_action(ACTION_MOUSE_LEFT, "MouseLeft");
-
+    auto* mouse_wheel = m_gameContext->create_action(ACTION_MOUSE_WHEEL, "MouseWheel");
     // Bind keyboard controls
     m_gameContext->bind_action(ACTION_MOVE_FORWARD, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::W));
     m_gameContext->bind_action(ACTION_MOVE_BACKWARD, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::S));
     m_gameContext->bind_action(ACTION_MOVE_LEFT, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::A));
     m_gameContext->bind_action(ACTION_MOVE_RIGHT, Input::DeviceType::Keyboard, static_cast<Input::ButtonID>(Input::Key::D));
     m_gameContext->bind_action(ACTION_MOUSE_LEFT, Input::DeviceType::Mouse, static_cast<Input::ButtonID>(Input::MouseButton::Left));
-
+    m_gameContext->bind_action(ACTION_MOUSE_WHEEL, Input::DeviceType::Mouse, static_cast<Input::ButtonID>(Input::MouseAxis::Wheel) + 1000); // Assuming MouseWheel is a button ID
+    
     // Set callbacks for actions
     moveForward->set_callback([this](float value){
         move_forward(value);
@@ -53,6 +55,10 @@ CameraComponent::CameraComponent(float3 _camera_position) : camera_position(_cam
     });
     moveRight->set_callback([this](float value){
         move_right(value);
+    });
+
+    mouse_wheel->set_callback([this](float value){
+        mouse_wheel_move(value);
     });
 
     // Push context to make it active
@@ -72,12 +78,12 @@ void CameraComponent::update()
         delta_mouse_x = x - last_mouse_x;
         delta_mouse_y = y - last_mouse_y;
 
-        yaw += delta_mouse_x * 0.1f;
-        pitch += delta_mouse_y * 0.1f;
+        yaw += delta_mouse_x * move_speed;
+        pitch += delta_mouse_y * move_speed;
     }
     last_mouse_x = x;
     last_mouse_y = y;
-
+    
     rotation = Math::Quaternion<float>::rotation_from_axis_angle(float3(1.0f, 0.0f, 0.0f), -pitch) * 
     Math::Quaternion<float>::rotation_from_axis_angle(float3(0.0f, 1.0f, 0.0f), -yaw);
 }
@@ -111,6 +117,14 @@ void CameraComponent::move_right(float value)
     if(value > 0.0f)
     {
         camera_position += float3(1.0f, 0.0f, 0.0f) * value;
+    }
+}
+
+void CameraComponent::mouse_wheel_move(float value)
+{
+    if(value != 0.0f)
+    {
+        camera_position += float3(0.0f, 0.0f, 1.0f) * value;
     }
 }
 

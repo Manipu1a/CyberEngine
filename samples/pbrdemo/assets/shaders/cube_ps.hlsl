@@ -152,6 +152,7 @@ void PSMain(in  PSInput  PSIn,
 
     float3 FinalColor = (diffuse + specular) * LightColor.xyz * Context.NoL;
     FinalColor += ambient;
+
     FinalColor = FinalColor / (FinalColor + float3(1.0, 1.0, 1.0));
     float3 gamma = float3(1.0/2.2, 1.0/2.2, 1.0/2.2);
     FinalColor = pow(FinalColor, gamma); // Gamma correction
