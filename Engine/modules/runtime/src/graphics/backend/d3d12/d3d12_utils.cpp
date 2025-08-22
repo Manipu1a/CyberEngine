@@ -561,8 +561,19 @@ namespace Cyber
         if(DxcLoader.pDxcCreateInstance == nullptr)
         {
             d3d12_util_load_dxc_dll();
+            TestModel(); 
         }
         return DxcLoader.Get();
+    }
+    
+    D3D12Util_DXCLoader& d3d12_get_dxc_loader()
+    {
+        if(DxcLoader.pDxcCreateInstance == nullptr)
+        {
+            d3d12_util_load_dxc_dll();
+            TestModel();  // Initialize shader model capabilities
+        }
+        return DxcLoader;
     }
 #endif
 }

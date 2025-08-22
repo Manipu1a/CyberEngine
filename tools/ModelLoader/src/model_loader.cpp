@@ -88,7 +88,7 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
     {
         if(!warning.empty())
         {
-            cyber_warn(false, "GLTF Warning: {0}", warning.c_str());
+            cyber_warn("GLTF Warning: {0}", warning.c_str());
         }
 
         if(!error.empty())

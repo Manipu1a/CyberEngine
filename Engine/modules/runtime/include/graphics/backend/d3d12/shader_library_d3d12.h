@@ -37,10 +37,30 @@ namespace Cyber
             void reflection_record_shader_resource( ID3D12ShaderReflection* d3d12Reflection, SHADER_STAGE stage, const D3D12_SHADER_DESC& shaderDesc);
 
             CYBER_FORCE_INLINE ID3DBlob* get_shader_blob() const { return m_pShaderBlob; }
-        protected:
-            ID3DBlob* m_pShaderBlob;
-            struct IDxcResult* m_pShaderResult;
 
+            CYBER_FORCE_INLINE IDxcBlob* get_shader_blob_dxc() const { return m_pShaderBlobDXC; }
+            
+            CYBER_FORCE_INLINE void* get_shader_buffer() const {
+                if(m_desc.shader_compiler == SHADER_COMPILER_DXC)
+                    return m_pShaderBlobDXC->GetBufferPointer();
+                else
+                    return m_pShaderBlob->GetBufferPointer();
+            }
+            CYBER_FORCE_INLINE size_t get_shader_buffer_size() const {
+                if(m_desc.shader_compiler == SHADER_COMPILER_DXC)
+                    return m_pShaderBlobDXC->GetBufferSize();
+                else
+                    return m_pShaderBlob->GetBufferSize();
+            }
+        protected:
+            
+            union
+            {
+                ID3DBlob* m_pShaderBlob;
+                IDxcBlob* m_pShaderBlobDXC;
+            };
+
+            struct IDxcResult* m_pShaderResult;
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
     }

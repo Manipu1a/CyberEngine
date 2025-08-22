@@ -169,6 +169,7 @@ namespace Cyber
             uint32_t m_entryCount;
             const char8_t* m_entryPoint;
             ShaderLibraryCreateDesc m_desc;
+            
         };
     }
 

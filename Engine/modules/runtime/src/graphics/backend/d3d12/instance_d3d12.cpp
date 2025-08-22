@@ -105,7 +105,7 @@ namespace Cyber
             }
             else if(m_desc.m_enableGpuBasedValidation)
             {
-                cyber_warn(false, "D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
+                cyber_warn("D3D12 GpuBasedValidation enabled while DebugLayer is closed, there'll be no effect.");
             }
         }
 

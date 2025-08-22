@@ -296,7 +296,7 @@ void CommandContext::end_render_pass()
     #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
         static_cast<ID3D12GraphicsCommandList4*>(command_list)->EndRenderPass();
     #else
-        cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+        cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
     #endif
 }
 

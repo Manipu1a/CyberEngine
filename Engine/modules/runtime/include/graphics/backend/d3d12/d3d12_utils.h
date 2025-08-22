@@ -701,6 +701,7 @@ namespace Cyber
         void d3d12_util_load_dxc_dll();
         void d3d12_util_unload_dxc_dll();
         DxcCreateInstanceProc d3d12_util_get_dxc_create_instance_proc();
+        D3D12Util_DXCLoader& d3d12_get_dxc_loader();
     #endif
 
     static constexpr uint8_t d3d12_queue_index_graphics{0};

@@ -5,7 +5,7 @@
 #include "math/basic_math.hpp"
 #include "debug.h"
 #include <functional>
-#include "../../../config.h"
+#include "core/config.h"
 
 #ifdef _WIN32
     #ifdef _WIN64
@@ -16,11 +16,10 @@
     #endif
 #endif
 
-/*
 #ifndef PROJECT_PATH
     #define PROJECT_PATH ""
 #endif
-*/
+
 namespace Cyber
 {
     template<typename T>

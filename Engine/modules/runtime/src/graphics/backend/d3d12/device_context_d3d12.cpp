@@ -563,7 +563,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
         ++state.num_command;
    #else
-       cyber_warn(false, "ID3D12GraphicsCommandList4 is not defined!");
+       cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
    #endif
 }
 

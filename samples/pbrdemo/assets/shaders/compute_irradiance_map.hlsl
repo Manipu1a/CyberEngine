@@ -1,6 +1,7 @@
 
+#include "precompute_common.hlsl"
 
-static const float PI = 3.14159265358979323846;
+static const uint NUM_SAMPLES = 1024;
 
 #ifndef NUM_PHI_SAMPLES
 #define NUM_PHI_SAMPLES 64
@@ -33,27 +34,21 @@ SamplerState Texture_sampler;
 void PSMain(in VSOutput PSIn, out float4 Color : SV_Target)
 {
     float3 N = normalize(PSIn.ClipPos.xyz);
-    float3 up = float3(0.0f, 1.0f, 0.0f); // 假设上方向为Y轴
-    float3 right = normalize(cross(up, N));
-    up = normalize(cross(N, right));
+    float3 T = normalize(cross(N, abs(N.y) > 0.5 ? float3(1.0, 0.0, 0.0) : float3(0.0, 1.0, 0.0)));
+    float3 B = normalize(cross(N, T));
 
-    const float delta_phi = 2.0 * PI / float(NUM_PHI_SAMPLES);
-    const float delta_theta = 0.5 * PI / float(NUM_THETA_SAMPLES);
-
-    float3 color = float3(0.0f, 0.0f, 0.0f);
-    float sample_count = 0.0f;
-    for (int i = 0; i < NUM_PHI_SAMPLES; ++i)
+    float3 irradiance = float3(0.0, 0.0, 0.0);
+    for(uint i = 0; i < NUM_SAMPLES; ++i)
     {
-        float phi = float(i) * delta_phi;
-        for (int j = 0; j < NUM_THETA_SAMPLES; ++j)
-        {
-            float theta = float(j) * delta_theta;
-            float3 temp = cos(phi) * right + sin(phi) * up;
-            float3 sample_dir = cos(theta) * N + sin(theta) * temp;
-            color += Environment_Texture.Sample(Texture_sampler, sample_dir).rgb * cos(theta) * sin(theta);
-            sample_count += 1.0f;
-        }
+        float2 Xi = Hammersley(i, NUM_SAMPLES);
+
+        float3 L;
+        float pdf;
+        SampleDirectionCosineHemisphere(Xi, L, pdf);
+        L = normalize(L.x * T + L.y * B + L.z * N);
+
+        irradiance += Environment_Texture.Sample(Texture_sampler, L).rgb;
     }
 
-    Color = PI * float4(color / sample_count, 1.0f);
+    Color = float4(irradiance / NUM_SAMPLES, 1.0f);
 }

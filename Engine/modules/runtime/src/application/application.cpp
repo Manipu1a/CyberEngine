@@ -61,7 +61,11 @@ namespace Cyber
             createInfo.Hwnd = hwnd;
             m_pEditor = Editor::Editor_Impl_Win32::create(createInfo);
             m_pEditor->initialize(createInfo.pDevice, createInfo.Hwnd);
-            m_pSampleApp->initialize();
+            
+            // Only initialize sample app if it exists
+            if(m_pSampleApp) {
+                m_pSampleApp->initialize();
+            }
         }
 
         void Application::resize_window(uint32_t width, uint32_t height)

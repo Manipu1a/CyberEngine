@@ -1,5 +1,5 @@
 #pragma once
-#include "config.h"
+#include "core/config.h"
 /*
 #include <stdint.h>
 #include <EASTL/string.h>

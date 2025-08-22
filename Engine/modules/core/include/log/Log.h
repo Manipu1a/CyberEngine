@@ -45,14 +45,14 @@ namespace Cyber
     #define cyber_check(x) if(!(x)) {__debugbreak();}
     #define cyber_check_msg(x, ...) if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}
     #define cyber_assert(x, ...) if(!(x)) {CB_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}
-    #define cyber_warn(x, ...) CB_WARN("Warn: {0}", __VA_ARGS__)
+    #define cyber_warn(...) CB_WARN(__VA_ARGS__)
     #define cyber_core_assert(x, ...) { if(!(x)) {CB_CORE_ERROR("Assertion Failed: {0}", __VA_ARGS__);  __debugbreak();}}
-    #define cyber_error(...) {CB_ERROR("Error: {0}", __VA_ARGS__);  __debugbreak();}
+    #define cyber_error(...) {CB_ERROR(__VA_ARGS__);  __debugbreak();}
 #else
     #define cyber_check(x)
     #define cyber_check_msg(x, ...)
     #define cyber_assert(x, ...)
-    #define cyber_warn(x, ...)
+    #define cyber_warn(...)
     #define cyber_core_assert(x, ...)
     #define cyber_error(...)
 #endif

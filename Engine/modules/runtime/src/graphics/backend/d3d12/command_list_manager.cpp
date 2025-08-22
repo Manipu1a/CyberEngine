@@ -56,7 +56,8 @@ void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allo
         return;
 
     // todo: reuse allocators
-    cyber_warn((*command_allocator) == nullptr, "Allocator is not nullptr");
+    if((*command_allocator) == nullptr)
+        cyber_warn("Allocator is not nullptr");
     *command_allocator = nullptr;
 
     auto* d3d12_device = device->GetD3D12Device();

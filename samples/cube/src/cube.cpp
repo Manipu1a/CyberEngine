@@ -259,12 +259,12 @@ namespace Cyber
             ModelLoader::ModelLoader model_loader(render_device, device_context, create_info);
             if (!model_loader.is_valid())
             {
-                cyber_error(false, "Failed to load model: {0}", create_info.file_path);
+                cyber_error("Failed to load model: {0}", create_info.file_path);
             }
             auto& meshes = model_loader.get_meshes();
             if (meshes.empty())
             {
-                cyber_error(false, "No meshes found in the model: {0}", create_info.file_path);
+                cyber_error("No meshes found in the model: {0}", create_info.file_path);
             }
 
             auto vertex_count = meshes[0].model_data.size();

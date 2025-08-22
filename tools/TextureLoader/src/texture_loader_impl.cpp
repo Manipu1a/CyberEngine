@@ -113,7 +113,7 @@ void TextureLoaderImpl::load_from_image(const TextureLoadInfo& texLoadInfo)
                 case 1 : m_textureCreateDesc.m_format = TEX_FORMAT_R8_UNORM; break; 
                 case 2 : m_textureCreateDesc.m_format = TEX_FORMAT_RG8_UNORM; break;
                 case 4 : m_textureCreateDesc.m_format = texLoadInfo.isSRGB ? TEX_FORMAT_RGBA8_UNORM_SRGB : TEX_FORMAT_RGBA8_UNORM; break; 
-                cyber_warn(false, "Unsupported number of components ({0})", num_components);
+                cyber_warn("Unsupported number of components ({0})", num_components);
             }
         }
         else if(channelDepth == 16)

@@ -40,6 +40,7 @@
 #include "graphics/backend/d3d12/buffer_view_d3d12.h"
 #include "graphics/backend/d3d12/d3d12_default_buffer_allocator.h"
 #include "platform/configure.h"
+#include "core/config.h"
 
 #pragma comment(lib, "d3d12.lib")
 #pragma comment(lib, "dxgi.lib")
@@ -1535,8 +1536,8 @@ namespace Cyber
                     if(pipelineDesc.vertex_shader)
                     {
                         ShaderLibrary_D3D12_Impl* vert_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.vertex_shader->m_library.get();
-                        vertex_shader.pShaderBytecode = vert_lib->m_pShaderBlob->GetBufferPointer();
-                        vertex_shader.BytecodeLength = vert_lib->m_pShaderBlob->GetBufferSize();
+                        vertex_shader.pShaderBytecode = vert_lib->get_shader_buffer();
+                        vertex_shader.BytecodeLength = vert_lib->get_shader_buffer_size ();
                     }
                     break;
                 }
@@ -1545,8 +1546,8 @@ namespace Cyber
                     if(pipelineDesc.mesh_shader)
                     {
                         ShaderLibrary_D3D12_Impl* mesh_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.mesh_shader->m_library.get();
-                        mesh_shader.pShaderBytecode = mesh_lib->get_shader_blob()->GetBufferPointer();
-                        mesh_shader.BytecodeLength = mesh_lib->get_shader_blob()->GetBufferSize();
+                        mesh_shader.pShaderBytecode = mesh_lib->get_shader_buffer();
+                        mesh_shader.BytecodeLength = mesh_lib->get_shader_buffer_size();
                     }
                     break;
                 }
@@ -1555,8 +1556,8 @@ namespace Cyber
                     if(pipelineDesc.amplification_shader)
                     {
                         ShaderLibrary_D3D12_Impl* amp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.amplification_shader->m_library.get();
-                        amplification_shader.pShaderBytecode = amp_lib->get_shader_blob()->GetBufferPointer();
-                        amplification_shader.BytecodeLength = amp_lib->get_shader_blob()->GetBufferSize();
+                        amplification_shader.pShaderBytecode = amp_lib->get_shader_buffer();
+                        amplification_shader.BytecodeLength = amp_lib->get_shader_buffer_size();
                     }
                     break;
                 }
@@ -1565,8 +1566,8 @@ namespace Cyber
                     if(pipelineDesc.pixel_shader)
                     {
                         ShaderLibrary_D3D12_Impl* frag_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.pixel_shader->m_library.get();
-                        pixel_shader.pShaderBytecode = frag_lib->get_shader_blob()->GetBufferPointer();
-                        pixel_shader.BytecodeLength = frag_lib->get_shader_blob()->GetBufferSize();
+                        pixel_shader.pShaderBytecode = frag_lib->get_shader_buffer();
+                        pixel_shader.BytecodeLength = frag_lib->get_shader_buffer_size();
                     }
                     break;
                 }
@@ -1575,8 +1576,8 @@ namespace Cyber
                     if(pipelineDesc.geometry_shader)
                     {
                         ShaderLibrary_D3D12_Impl* geom_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.geometry_shader->m_library.get();
-                        geometry_shader.pShaderBytecode = geom_lib->get_shader_blob()->GetBufferPointer();
-                        geometry_shader.BytecodeLength = geom_lib->get_shader_blob()->GetBufferSize();
+                        geometry_shader.pShaderBytecode = geom_lib->get_shader_buffer();
+                        geometry_shader.BytecodeLength = geom_lib->get_shader_buffer_size();
                     }
                     break;
                 }
@@ -1585,8 +1586,8 @@ namespace Cyber
                     if(pipelineDesc.compute_shader)
                     {
                         ShaderLibrary_D3D12_Impl* comp_lib = (ShaderLibrary_D3D12_Impl*)pipelineDesc.compute_shader->m_library.get();
-                        compute_shader.pShaderBytecode = comp_lib->get_shader_blob()->GetBufferPointer();
-                        compute_shader.BytecodeLength = comp_lib->get_shader_blob()->GetBufferSize();
+                        compute_shader.pShaderBytecode = comp_lib->get_shader_buffer();
+                        compute_shader.BytecodeLength = comp_lib->get_shader_buffer_size();
                     }
                     break;
                 }
@@ -2021,7 +2022,7 @@ namespace Cyber
                         
                         if(FAILED(hr))
                         {
-                            cyber_error(false, "Failed to create D3D12 Buffer Resource");
+                            cyber_error("Failed to create D3D12 Buffer Resource");
                         }
                     }
                     else
@@ -2061,7 +2062,7 @@ namespace Cyber
                     auto hr = m_pDxDevice->CreateCommittedResource(&upload_heap_properties, d3d12_heap_flags, &d3d12_buffer_desc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_ARGS(&upload_buffer));
                     if(FAILED(hr))
                     {
-                        cyber_error(false, "Failed to create upload buffer");
+                        cyber_error("Failed to create upload buffer");
                     }
                     
                     const auto upload_buffer_name = eastl::wstring(L"Upload buffer for buffer '") + u8_to_wstring(create_desc.Name) + L"\'";
@@ -2072,7 +2073,7 @@ namespace Cyber
 
                     if(FAILED(hr))
                     {
-                        cyber_error(false, "Failed to map upload buffer");
+                        cyber_error("Failed to map upload buffer");
                     }
 
                     memcpy(dest_address, initial_data->data, static_cast<size_t>(initial_data_size));
@@ -2238,7 +2239,7 @@ namespace Cyber
 
             if((map_flags & MAP_FLAG_DO_NOT_WAIT) == 0)
             {
-                cyber_warn(false, "D3D12 backend never waits for GPU when mapping staging buffers for reading. "
+                cyber_warn("D3D12 backend never waits for GPU when mapping staging buffers for reading. "
                                 "Applications must use fences or other synchronization methods to explicitly synchronize "
                                 "access and use MAP_FLAG_DO_NOT_WAIT flag.");
             }
@@ -2355,117 +2356,279 @@ namespace Cyber
         HRESULT hr = S_OK;
         if(bUseDXC)
         {
-            IDxcUtils* pDxcUtils;
-            IDxcLibrary* pDxcLibrary;
-            IDxcContainerReflection* pReflection;
-            IDxcValidator* pValidator;
-
+            // COM object helper with automatic cleanup
+            struct COMDeleter {
+                void operator()(IUnknown* p) { if(p) p->Release(); }
+            };
+            
+            // Use smart pointers for automatic COM object cleanup
+            eastl::unique_ptr<IDxcUtils, COMDeleter> pDxcUtils;
+            eastl::unique_ptr<IDxcCompiler3, COMDeleter> pCompiler3;
+            eastl::unique_ptr<IDxcIncludeHandler, COMDeleter> pIncludeHandler;
+            eastl::unique_ptr<IDxcBlobEncoding, COMDeleter> pBlobEncoding;
+            
             auto procDxcCreateInstance = d3d12_util_get_dxc_create_instance_proc();
             if(!procDxcCreateInstance)
             {
                 CB_CORE_ERROR("Cannot find dxc.dll");
                 return nullptr;
             }
-            procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pDxcUtils));
-            procDxcCreateInstance(CLSID_DxcLibrary, IID_PPV_ARGS(&pDxcLibrary));
-            procDxcCreateInstance(CLSID_DxcContainerReflection, IID_PPV_ARGS(&pReflection));
-            procDxcCreateInstance(CLSID_DxcValidator, IID_PPV_ARGS(&pValidator));
-            if(!pDxcLibrary)
+            
+            // Create DXC utils
             {
-                CB_CORE_ERROR("Cannot create dxc library");
+                IDxcUtils* pUtils = nullptr;
+                hr = procDxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&pUtils));
+                if(FAILED(hr) || !pUtils)
+                {
+                    CB_CORE_ERROR("Cannot create DXC utils");
+                    return nullptr;
+                }
+                pDxcUtils.reset(pUtils);
+            }
+            
+            // Create DXC compiler
+            {
+                IDxcCompiler3* pComp = nullptr;
+                hr = procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pComp));
+                if(FAILED(hr) || !pComp)
+                {
+                    CB_CORE_ERROR("Cannot create DXC compiler");
+                    return nullptr;
+                }
+                pCompiler3.reset(pComp);
+            }
+            
+            // Build compilation arguments
+            // Use a vector to store all strings to ensure they stay alive
+            eastl::vector<eastl::wstring> argumentStrings;
+            argumentStrings.reserve(16);
+            eastl::vector<const wchar_t*> arguments;
+            
+            // Add shader file name (for debug info)
+            argumentStrings.push_back(eastl::wstring(eastl::wstring::CtorConvert(), desc.name));
+            arguments.push_back(argumentStrings.back().c_str());
+            
+            // Entry point
+            if(!desc.entry_point || strlen((const char*)desc.entry_point) == 0)
+            {
+                cyber_error("Shader entry point is empty for shader: {0}", (const char*)desc.name);
                 return nullptr;
             }
-            /*
-            LPCWSTR* pszArgs = cyber_new_n<LPCWSTR>(12);
-            pszArgs[0] = L"shaders.hlsl";
-            pszArgs[1] = L"-E";
-            pszArgs[2] = L"VSMain";
-            pszArgs[3] = L"-T";
-            pszArgs[4] = L"vs_6_0";
-            pszArgs[5] = L"D";
-            pszArgs[6] = L"MYDEFINE=1";
-            pszArgs[7] = L"-Fo";
-            pszArgs[8] = L"shaders.bin";
-            pszArgs[9] = L"-Fd";
-            pszArgs[10] = L"shaders.pdb";
-            pszArgs[11] = L"-Qstrip_reflect";
-            */
+            arguments.push_back(L"-E");
+            argumentStrings.push_back(eastl::wstring(eastl::wstring::CtorConvert(), desc.entry_point));
+            arguments.push_back(argumentStrings.back().c_str());
 
-            eastl::wstring shaderName(eastl::wstring::CtorConvert(), desc.name);
-            eastl::wstring entry_point(eastl::wstring::CtorConvert(), desc.entry_point);
-            auto entry = entry_point.c_str();
-            ShaderVersion shader_version(6 , 0);
+            // Target profile
+            arguments.push_back(L"-T");
+            auto& DxcLoader = d3d12_get_dxc_loader();
+            ShaderVersion shader_version(DxcLoader.shader_model_major, DxcLoader.shader_model_minor);
             eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
-            eastl::wstring profile_wstr(eastl::wstring::CtorConvert(),profile.c_str());
-            eastl::vector<const wchar_t*> DxilArgs;
+            CB_INFO("Compiling shader {0} with profile: {1}, entry point: {2}", (const char*)desc.name, profile.c_str(), (const char*)desc.entry_point);
+            argumentStrings.push_back(eastl::wstring(eastl::wstring::CtorConvert(), profile.c_str()));
+            arguments.push_back(argumentStrings.back().c_str());
 
-            DxilArgs.push_back(shaderName.c_str());
-            DxilArgs.push_back(L"-E");
-            DxilArgs.push_back(entry_point.c_str());
-            DxilArgs.push_back(L"-T");
-            DxilArgs.push_back(profile_wstr.c_str());
-            if(desc.shader_macro_count > 0)
+            // Include path
+            arguments.push_back(L"-I");
+            const char8_t* project_path = u8"../../../../";
+            eastl::string include_path(eastl::string::CtorSprintf(), "%s%s", project_path, desc.name);
+            auto pos = include_path.find_last_of("/");
+            if(pos != eastl::string::npos)
+                include_path = include_path.left(pos);
+            argumentStrings.push_back(eastl::wstring(eastl::wstring::CtorConvert(), include_path.c_str()));
+            arguments.push_back(argumentStrings.back().c_str());
+            
+            // Add shader macros
+            if(desc.shader_macro_count > 0 && desc.shader_macros)
             {
-                DxilArgs.push_back(L"-D");
-
                 for(uint32_t i = 0; i < desc.shader_macro_count; ++i)
                 {
-                    eastl::string macro_name(eastl::string::CtorSprintf(), "%s=%s",desc.shader_macros[i].definition, desc.shader_macros[i].value);
-                    CB_INFO("Shader Define: {0} ", macro_name.c_str());
-                    eastl::wstring wmacro_name(eastl::wstring::CtorConvert(), macro_name.c_str());
-                    DxilArgs.push_back(wmacro_name.c_str());
+                    if(desc.shader_macros[i].definition && desc.shader_macros[i].value)
+                    {
+                        arguments.push_back(L"-D");
+                        eastl::string macro(eastl::string::CtorSprintf(), "%s=%s",
+                            desc.shader_macros[i].definition, desc.shader_macros[i].value);
+                        CB_INFO("Shader Define: {0}", macro.c_str());
+                        argumentStrings.push_back(eastl::wstring(eastl::wstring::CtorConvert(), macro.c_str()));
+                        arguments.push_back(argumentStrings.back().c_str());
+                    }
                 }
             }
-
-            // debug
+            
+            // Debug options
+            #ifdef _DEBUG
+            arguments.push_back(L"-Zi");  // Enable debug info
+            arguments.push_back(L"-Od");  // Disable optimizations
+            #else
+            arguments.push_back(L"-O3");  // Max optimizations
+            #endif
+            
+            #if 0
+            // Print all arguments for debugging
+            CB_INFO("DXC Compile arguments:");
+            for(size_t i = 0; i < arguments.size(); ++i)
             {
-                DxilArgs.push_back(L"-Fo");
-                eastl::wstring shader_bin(shaderName.substr(0, shaderName.find(L".")));
-                shader_bin += L".bin";
-                DxilArgs.push_back(shader_bin.c_str());
-
-                DxilArgs.push_back(L"-Fd");
-                eastl::wstring shader_pdb(shaderName.substr(0, shaderName.find(L".")));
-                shader_pdb += L".pdb";
-                DxilArgs.push_back(shader_pdb.c_str());
+                eastl::string arg(eastl::string::CtorConvert(), arguments[i]);
+                CB_INFO("  Arg[{0}]: {1}", i, arg.c_str());
+            }
+            #endif
+            
+            // Create source blob
+            {
+                IDxcBlobEncoding* pBlob = nullptr;
+                hr = pDxcUtils->CreateBlob(desc.code, desc.code_size, DXC_CP_UTF8, &pBlob);
+                if(FAILED(hr) || !pBlob)
+                {
+                    cyber_error("Failed to create source blob");
+                    return nullptr;
+                }
+                pBlobEncoding.reset(pBlob);
             }
             
-            IDxcBlobEncoding* pBlobEncoding;
-            CHECK_HRESULT(pDxcUtils->CreateBlob((LPCVOID)desc.code, desc.code_size, DXC_CP_ACP, &pBlobEncoding));
-            //CHECK_HRESULT(pDxcLibrary->CreateBlobWithEncodingFromPinned((LPCVOID)TestShader, sizeof(TestShader), 0, &pBlobEncoding));
-            
-            //IDxcCompiler *pCompiler;
-            IDxcCompiler3 *pCompiler3;
-            CHECK_HRESULT(procDxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&pCompiler3)));
-            DxcBuffer pSource;
-            pSource.Ptr = pBlobEncoding->GetBufferPointer();
-            pSource.Size = pBlobEncoding->GetBufferSize();
-            pSource.Encoding = DXC_CP_ACP;
-            IDxcIncludeHandler* pIncludeHandler;
-            pDxcUtils->CreateDefaultIncludeHandler(&pIncludeHandler);
-
-            pCompiler3->Compile(&pSource, DxilArgs.data(), DxilArgs.size(), pIncludeHandler, IID_PPV_ARGS(&pLibrary->m_pShaderResult));
-
-            IDxcBlobUtf8* pErrors = nullptr;
-            pLibrary->m_pShaderResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr);
-            // Note that d3dcompiler would return null if no errors or warnings are present.
-            // IDxcCompiler3::Compile will always return an error buffer, but its length
-            // will be zero if there are no warnings or errors.
-            if (pErrors != nullptr && pErrors->GetStringLength() != 0)
-                CB_WARN("Warnings and Errors:{0}", pErrors->GetStringPointer());
-            
-            pLibrary->m_pShaderResult->GetStatus(&hr);
-            if(FAILED(hr))
+            // Create include handler
             {
+                IDxcIncludeHandler* pHandler = nullptr;
+                hr = pDxcUtils->CreateDefaultIncludeHandler(&pHandler);
+                if(FAILED(hr) || !pHandler)
+                {
+                    cyber_error("Failed to create include handler");
+                    return nullptr;
+                }
+                pIncludeHandler.reset(pHandler);
+            }
+            
+            // Prepare source buffer
+            DxcBuffer sourceBuffer = {};
+            sourceBuffer.Ptr = pBlobEncoding->GetBufferPointer();
+            sourceBuffer.Size = pBlobEncoding->GetBufferSize();
+            sourceBuffer.Encoding = DXC_CP_UTF8;
+
+            // Compile shader
+            IDxcResult* pResult = nullptr;
+            hr = pCompiler3->Compile(
+                &sourceBuffer,
+                arguments.data(),
+                (UINT32)arguments.size(),
+                pIncludeHandler.get(),
+                IID_PPV_ARGS(&pResult)
+            );
+            
+            if(SUCCEEDED(hr) && pResult)
+            {
+                pLibrary->m_pShaderResult = pResult;
+                
+                // Check compilation status
+                pResult->GetStatus(&hr);
+                if(FAILED(hr))
+                {
+                    // Get error messages
+                    IDxcBlobUtf8* pErrors = nullptr;
+                    if(SUCCEEDED(pResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&pErrors), nullptr)))
+                    {
+                        if(pErrors && pErrors->GetStringLength() > 0)
+                        {
+                            cyber_error("Shader compilation failed: {0}", pErrors->GetStringPointer());
+                        }
+                        if(pErrors) pErrors->Release();
+                    }
+                    return nullptr;
+                }
+                
+                // Get compiled shader blob
+                IDxcBlob* pShaderBlob = nullptr;
+                hr = pResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShaderBlob), nullptr);
+                if(SUCCEEDED(hr) && pShaderBlob)
+                {
+                    pLibrary->m_pShaderBlobDXC = pShaderBlob;
+                }
+                else
+                {
+                    cyber_error("Failed to get shader blob");
+                    return nullptr;
+                }
+                
+                // Optionally get debug info
+                #ifdef _DEBUG
+                IDxcBlobUtf8* pDebugData = nullptr;
+                if(SUCCEEDED(pResult->GetOutput(DXC_OUT_PDB, IID_PPV_ARGS(&pDebugData), nullptr)))
+                {
+                    if(pDebugData)
+                    {
+                        // Could save PDB here if needed
+                        pDebugData->Release();
+                    }
+                }
+                #endif
+            }
+            else
+            {
+                cyber_error("Failed to compile shader");
                 return nullptr;
             }
-
-            pLibrary->m_pShaderResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pLibrary->m_pShaderBlob), nullptr);
-
-            pDxcUtils->Release();
-            pDxcLibrary->Release();
         }
         else {
+            // Custom Include Handler for shader compilation
+            class ShaderIncludeHandler : public ID3DInclude
+            {
+            private:
+                eastl::vector<eastl::string> m_includePaths;
+                
+            public:
+                ShaderIncludeHandler()
+                {
+                    // Add default shader include paths
+                    eastl::string includePath;
+                    includePath = eastl::string(PROJECT_PATH) + "/samples/pbrdemo/assets/shaders/";
+                    m_includePaths.push_back(includePath);
+                    includePath = eastl::string(PROJECT_PATH) + "/Engine/shaders/";
+                    m_includePaths.push_back(includePath);
+                    includePath = eastl::string(PROJECT_PATH) + "/shaders/";
+                    m_includePaths.push_back(includePath);
+                }
+                
+                HRESULT STDMETHODCALLTYPE Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, UINT *pBytes) override
+                {
+                    eastl::string filePath;
+                    
+                    // First try relative to the shader being compiled
+                    if(pParentData != nullptr)
+                    {
+                        // Try relative path first
+                        filePath = pFileName;
+                    }
+                    
+                    // Try each include path
+                    for(const auto& includePath : m_includePaths)
+                    {
+                        eastl::string fullPath = includePath + pFileName;
+                        FILE* file = fopen(fullPath.c_str(), "rb");
+                        if(file)
+                        {
+                            fseek(file, 0, SEEK_END);
+                            long fileSize = ftell(file);
+                            fseek(file, 0, SEEK_SET);
+                            
+                            char* buffer = (char*)cyber_malloc(fileSize + 1);
+                            fread(buffer, 1, fileSize, file);
+                            buffer[fileSize] = '\0';
+                            fclose(file);
+                            
+                            *ppData = buffer;
+                            *pBytes = fileSize;
+                            return S_OK;
+                        }
+                    }
+                    
+                    // If not found, try standard include
+                    return E_FAIL;
+                }
+                
+                HRESULT STDMETHODCALLTYPE Close(LPCVOID pData) override
+                {
+                    cyber_free((void*)pData);
+                    return S_OK;
+                }
+            };
+            
             //hr = (pReflection->Load(pBlobEncoding));
             ID3D12ShaderReflection *pReflection2;
             ID3DBlob *ppCode;
@@ -2483,7 +2646,11 @@ namespace Cyber
             ShaderVersion shader_version(5 , 1);
             eastl::string profile = GetHLSLProfileString(desc.stage, shader_version);
             eastl::string entry_point(eastl::string::CtorConvert(), desc.entry_point);
-            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, nullptr, entry_point.c_str(), profile.c_str(), dwShaderFlags, 0, &pLibrary->m_pShaderBlob, &ppErrorMsgs);
+            eastl::string shaderName(eastl::string::CtorConvert(), desc.name);
+            
+            // Use custom include handler instead of D3D_COMPILE_STANDARD_FILE_INCLUDE
+            ShaderIncludeHandler includeHandler;
+            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, &includeHandler, entry_point.c_str(), profile.c_str(), dwShaderFlags, 0, &pLibrary->m_pShaderBlob, &ppErrorMsgs);
 
             if(hr != S_OK)
             {
