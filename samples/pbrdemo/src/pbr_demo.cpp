@@ -897,6 +897,9 @@ namespace Cyber
 
                 if(ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
                 {
+                    float3 transform = float3(1.0f, 1.0f, 0.0f);
+                    ImGui::gizmo3D("Gizmo", transform, 100, 2);
+
                     if(ImGui::TreeNode("Lightning"))
                     {
                         ImGui::ColorEdit3("Light Color", light_color.data());

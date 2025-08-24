@@ -415,7 +415,7 @@ namespace Cyber
             RenderObject::VertexLayoutDesc vertex_layout = {3, vertex_attributes};
             BlendStateCreateDesc blend_state_desc = {};
             blend_state_desc.render_target_count = 1;
-            blend_state_desc.src_factors[0] = BLEND_CONSTANT_SRC_ALPHA;
+            blend_state_desc.src_factors[0] = BLEND_CONSTANT_ONE;
             blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ONE_MINUS_SRC_ALPHA;
             blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
             blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
@@ -424,11 +424,23 @@ namespace Cyber
             blend_state_desc.alpha_to_coverage = false;
             blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
+            RasterizerStateCreateDesc rasterizer_state_desc = {};
+            rasterizer_state_desc.fill_mode = FILL_MODE_SOLID;
+            rasterizer_state_desc.cull_mode = CULL_MODE_NONE;
+            rasterizer_state_desc.front_face = FRONT_FACE_COUNTER_CLOCKWISE;
+            rasterizer_state_desc.depth_bias = 0;
+            rasterizer_state_desc.slope_scaled_depth_bias = 0;
+            rasterizer_state_desc.enable_multisample = false;
+            rasterizer_state_desc.enable_depth_clip = true;
+            rasterizer_state_desc.enable_scissor = false;
+
+
             RenderObject::RenderPipelineCreateDesc rp_desc = {
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .pixel_shader = pipeline_shader_create_desc[1],
                 .vertex_layout = &vertex_layout,
                 .blend_state = &blend_state_desc,
+                .rasterizer_state = &rasterizer_state_desc,
                 .m_staticSamplers = &sampler,
                 .m_staticSamplerNames = sampler_names,
                 .m_staticSamplerCount = 1,

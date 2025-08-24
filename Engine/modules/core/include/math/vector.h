@@ -47,10 +47,21 @@ struct Vector2
         return m[index];
     }
 
+    bool operator==(const Vector2& other) const
+    {
+        return x == other.x && y == other.y;
+    }
+
+    bool operator!=(const Vector2& other) const
+    {
+        return !(*this == other);
+    }
+
     T* data() { return reinterpret_cast<T*>(this); }
 
     const T* data() const { return reinterpret_cast<const T*>(this); }
 };
+
 
 template <class T>
 struct Vector3
@@ -79,11 +90,24 @@ struct Vector3
         return Vector3 {x * scalar, y * scalar, z * scalar};
     }
 
+    constexpr Vector3 operator*(const Vector3& right) const
+    {
+        return Vector3{x * right.x, y * right.y, z * right.z};
+    }
+
     constexpr Vector3& operator*=(T scalar) noexcept
     {
         x *= scalar;
         y *= scalar;
         z *= scalar;
+        return *this;
+    }
+
+    constexpr Vector3& operator*=(const Vector3& right)
+    {
+        x *= right.x;
+        y *= right.y;
+        z *= right.z;
         return *this;
     }
 
@@ -95,6 +119,22 @@ struct Vector3
         return *this;
     }
     
+    constexpr Vector3& operator-=(const Vector3& other) noexcept
+    {
+        x -= other.x;
+        y -= other.y;
+        z -= other.z;
+        return *this;
+    }
+
+    constexpr Vector3& operator/=(float scalar) noexcept
+    {
+        x /= scalar;
+        y /= scalar;
+        z /= scalar;
+        return *this;
+    }
+
     constexpr Vector3 operator<(const Vector3& other) const noexcept
     {
         return Vector3{ x < other.x ? static_cast<T>(1) : static_cast<T>(0),
@@ -133,6 +173,15 @@ struct Vector3
         return Vector3{-x, -y, -z};
     }
 
+    bool operator==(const Vector3& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    bool operator!=(const Vector3& other) const
+    {
+        return !(*this == other);
+    }
 
     static constexpr size_t get_component_count()
     {
@@ -183,7 +232,7 @@ static Vector3<T> cross(const Vector3<T>& a, const Vector3<T>& b)
 template <class T>
 constexpr Vector3<T> operator*(T s, const Vector3<T>& v)
 {
-    return Vector3<T>{v.x * s, v.y * s, v.z * s};
+    return v * s;
 }
 
 template <class T>
@@ -234,6 +283,11 @@ struct Vector4
         return m[index];
     }
 
+    constexpr operator Vector3<T>() const noexcept
+    {
+        return Vector3<T>{x, y, z};
+    }
+
     template <typename Y>
     constexpr static Vector4 make_vector(const Y& value) noexcept
     {
@@ -244,6 +298,14 @@ struct Vector4
 
     const T* data() const { return reinterpret_cast<const T*>(this); }
 };
+
+template<class T>
+static Vector4<T> normalize(const Vector4<T>& v)
+{
+    T length = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z + v.w * v.w);
+    if (length == 0) return Vector4<T>{0, 0, 0, 0};
+    return Vector4<T>{v.x / length, v.y / length, v.z / length, v.w / length};
+}
 
 template <class T>
 constexpr Vector3<T>(min)(const Vector3<T>& a, const Vector3<T>& b) noexcept
@@ -291,6 +353,30 @@ template <class VectorType>
 constexpr auto length(const VectorType& v) noexcept
 {
     return std::sqrt(dot(v, v));
+}
+
+template <class T>
+constexpr Vector2<T> abs(const Vector2<T>& v) noexcept
+{
+    return Vector2<T>{ (v.x >= 0) ? v.x : -v.x, 
+        (v.y >= 0) ? v.y : -v.y };
+}
+
+template <class T>
+constexpr Vector3<T> abs(const Vector3<T>& v) noexcept
+{
+    return Vector3<T>{ (v.x >= 0) ? v.x : -v.x, 
+        (v.y >= 0) ? v.y : -v.y,
+        (v.z >= 0) ? v.z : -v.z };
+}
+
+template <class T>
+constexpr Vector4<T> abs(const Vector4<T>& v) noexcept
+{
+    return Vector4<T>{ (v.x >= 0) ? v.x : -v.x, 
+        (v.y >= 0) ? v.y : -v.y,
+        (v.z >= 0) ? v.z : -v.z,
+        (v.w >= 0) ? v.w : -v.w };
 }
 
 CYBER_END_NAMESPACE

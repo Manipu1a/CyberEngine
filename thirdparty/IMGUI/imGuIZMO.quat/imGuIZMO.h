@@ -19,8 +19,10 @@
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
 #endif
-#include "imgui.h"
-#include "imgui_internal.h"
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
+#include "math/basic_math.hpp"
 
 ////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////
@@ -65,8 +67,8 @@ static constexpr float STARTING_ALPHA_PLANE = 0.75f;
 // The data structure that holds the orientation among other things
 struct imguiGizmo
 {
-    Diligent::QuaternionF qtV  = {0, 0, 0, 1}; // Quaternion value
-    Diligent::QuaternionF qtV2 = {0, 0, 0, 1}; // Quaternion value
+    quaternion_f qtV  = {0, 0, 0, 1}; // Quaternion value
+    quaternion_f qtV2 = {0, 0, 0, 1}; // Quaternion value
 
     enum 
     {                              //0b0000'0000, //C++14 notation
@@ -115,26 +117,26 @@ struct imguiGizmo
         frontSide
     }; // or viceversa... 
 
-    static ImVector<Diligent::float3> sphereVtx;
+    static ImVector<float3> sphereVtx;
     static ImVector<int>              sphereTess;
-    static ImVector<Diligent::float3> cubeVtx;
-    static ImVector<Diligent::float3> cubeNorm;
-    static ImVector<Diligent::float3> planeVtx;
-    static ImVector<Diligent::float3> planeNorm;
-    static ImVector<Diligent::float3> arrowVtx[4];
-    static ImVector<Diligent::float3> arrowNorm[4];
+    static ImVector<float3> cubeVtx;
+    static ImVector<float3> cubeNorm;
+    static ImVector<float3> planeVtx;
+    static ImVector<float3> planeNorm;
+    static ImVector<float3> arrowVtx[4];
+    static ImVector<float3> arrowNorm[4];
 
     static void buildPlane(const float size, const float thickness = planeThickness)
     {
-        buildPolygon(Diligent::float3(thickness, size, size), planeVtx, planeNorm);
+        buildPolygon(float3(thickness, size, size), planeVtx, planeNorm);
     }
 
     static void buildCube(const float size)
     {
-        buildPolygon(Diligent::float3(size, size, size), cubeVtx, cubeNorm);
+        buildPolygon(float3(size, size, size), cubeVtx, cubeNorm);
     }
 
-    static void buildPolygon (const Diligent::float3& size, ImVector<Diligent::float3>& vtx, ImVector<Diligent::float3>& norm);
+    static void buildPolygon (const float3& size, ImVector<float3>& vtx, ImVector<float3>& norm);
     static void buildSphere  (const float radius, const int tessFactor);
     static void buildCone    (const float x0, const float x1, const float radius, const int slices);
     static void buildCylinder(const float x0, const float x1, const float radius, const int slices);
@@ -142,7 +144,7 @@ struct imguiGizmo
     
     // helper functions
     ///////////////////////////////////////
-    static void resizeAxesOf(const Diligent::float3& newSize)
+    static void resizeAxesOf(const float3& newSize)
     {
         savedAxesResizeFactor = axesResizeFactor;
         axesResizeFactor = newSize;
@@ -239,25 +241,25 @@ struct imguiGizmo
 
     // vec3 -> quat -> trackbalTransforms -> quat -> vec3
     ////////////////////////////////////////////////////////////////////////////
-    bool getTransforms(Diligent::QuaternionF& q, const char* label, Diligent::float3& dir, float size)
+    bool getTransforms(quaternion_f& q, const char* label, float3& dir, float size)
     {
-        const float len = Diligent::length(dir);
-        q = Diligent::QuaternionF::RotationFromAxisAngle(Diligent::normalize(Diligent::float3(0, -dir.z, dir.y)), acosf(dir.x/len));
+        const float len = length(dir);
+        q = quaternion_f::rotation_from_axis_angle(normalize(float3(0, -dir.z, dir.y)), acosf(dir.x/len));
 
         bool ret = drawFunc(label, size);
-        if (ret) dir = q.RotateVector(Diligent::float3(1, 0, 0)) * len; //return vector with original length
+        if (ret) dir = q.rotate(float3(1, 0, 0)) * len; //return vector with original length
 
         return ret;
     }
     // Vec4 (xyz axis, w angle) -> quat -> trackbalTransforms -> quat -> vec4
     ////////////////////////////////////////////////////////////////////////////
-    bool getTransforms(Diligent::QuaternionF& q, const char* label, Diligent::float4& axis_angle, float size)
+    bool getTransforms(quaternion_f& q, const char* label, float4& axis_angle, float size)
     {
-        q = Diligent::QuaternionF::RotationFromAxisAngle(Diligent::float3(axis_angle), axis_angle.w); //g.ConvertFromAxisAngle();
+        q = quaternion_f::rotation_from_axis_angle(float3(axis_angle), axis_angle.w); //g.ConvertFromAxisAngle();
    
         bool ret = drawFunc(label, size);
-        
-        if (ret)q.GetAxisAngle((Diligent::float3&)axis_angle, axis_angle.w);
+
+        if (ret) q.get_axis_angle((float3&)axis_angle, axis_angle.w);
 
         return ret; 
     }
@@ -323,8 +325,8 @@ struct imguiGizmo
 
     // Axes reduction
     ///////////////////////////////////////
-    static Diligent::float3 axesResizeFactor;
-    static Diligent::float3 savedAxesResizeFactor;
+    static float3 axesResizeFactor;
+    static float3 savedAxesResizeFactor;
 
     // solid reduction
     ///////////////////////////////////////
@@ -353,13 +355,13 @@ struct imguiGizmo
 namespace ImGui
 {
 
-IMGUI_API bool gizmo3D(const char*, Diligent::QuaternionF&, float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::mode3Axes|imguiGizmo::cubeAtOrigin);
-IMGUI_API bool gizmo3D(const char*, Diligent::float4&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::mode3Axes|imguiGizmo::cubeAtOrigin);
-IMGUI_API bool gizmo3D(const char*, Diligent::float3&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDirection);
+IMGUI_API bool gizmo3D(const char*, quaternion_f&, float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::mode3Axes|imguiGizmo::cubeAtOrigin);
+IMGUI_API bool gizmo3D(const char*, float4&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::mode3Axes|imguiGizmo::cubeAtOrigin);
+IMGUI_API bool gizmo3D(const char*, float3&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDirection);
 
-IMGUI_API bool gizmo3D(const char*, Diligent::QuaternionF&, Diligent::QuaternionF&, float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
-IMGUI_API bool gizmo3D(const char*, Diligent::QuaternionF&, Diligent::float4&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
-IMGUI_API bool gizmo3D(const char*, Diligent::QuaternionF&, Diligent::float3&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
+IMGUI_API bool gizmo3D(const char*, quaternion_f&, quaternion_f&, float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
+IMGUI_API bool gizmo3D(const char*, quaternion_f&, float4&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
+IMGUI_API bool gizmo3D(const char*, quaternion_f&, float3&,      float=IMGUIZMO_DEF_SIZE, const int=imguiGizmo::modeDual|imguiGizmo::cubeAtOrigin);
 
 };
 

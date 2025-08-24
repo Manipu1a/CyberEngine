@@ -3,7 +3,13 @@
 #include "graphics/interface/swap_chain.hpp"
 #include "graphics/backend/d3d12/descriptor_heap_d3d12.h"
 #include "application/application.h"
+
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#endif
+
 #include "imgui/imgui.h"
+#include "imGuIZMO.quat/imGuIZMO.h"
 #include "cyber_runtime.config.h"
 
 namespace Cyber

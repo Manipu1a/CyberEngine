@@ -638,7 +638,7 @@ struct Quaternion
     Vector3<T> rotate(const Vector3<T>& v) const
     {
         const Vector3<T> axis{q.x, q.y, q.z};
-        return v + 2 * cross(axis, cross(axis, v) + q.w * v);
+        return v + T{2} * cross(axis, cross(axis, v) + q.w * v);
     }
 };
 
@@ -646,6 +646,12 @@ template<typename T>
 constexpr inline Quaternion<T> operator*(const Quaternion<T>& lhs, const Quaternion<T>& rhs)
 {
     return Quaternion<T>::mul(lhs, rhs);
+}
+
+template<typename T>
+constexpr inline Quaternion<T> normalize(const Quaternion<T>& q)
+{
+    return Quaternion<T>(normalize(q.q));
 }
 
 CYBER_END_NAMESPACE
