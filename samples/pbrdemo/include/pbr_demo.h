@@ -140,7 +140,7 @@ namespace Cyber
             RenderObject::IBuffer* env_map_constant_buffer = nullptr;
             RenderObject::IBuffer* prefiltered_map_constant_buffer = nullptr;
 
-            float3 light_direction = { 0.0f, 0.0f, -10.0f };
+            float3 light_direction = { 10.0f, 0.0f, 0.0f };
             float3 light_color = { 1.0f, 1.0f, 1.0f };
 
             float3 model_position = { 0.0f, 0.0f, 0.0f };

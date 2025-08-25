@@ -100,6 +100,8 @@ namespace Cyber
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
             //float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
+            camera_component->set_view_matrix(view_matrix);
+            camera_component->set_projection_matrix(projection_matrix);
 
             for(auto& binding : model_resource_bindings)
             {
@@ -895,21 +897,25 @@ namespace Cyber
             {
                 ImGui::SetCurrentContext(in_imgui_context);
 
+                ImGuizmo::SetOrthographic(false);
+                ImGuizmo::BeginFrame();
+
                 if(ImGui::Begin("Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
                 {
-                    float3 transform = float3(1.0f, 1.0f, 0.0f);
-                    ImGui::gizmo3D("Gizmo", transform, 100, 2);
-
                     if(ImGui::TreeNode("Lightning"))
                     {
                         ImGui::ColorEdit3("Light Color", light_color.data());
-                        ImGui::InputFloat3("Light Direction", light_direction.data());
+                        float3 transform = light_direction;
+                        if(ImGui::gizmo3D("Gizmo", transform))
+                        {
+                            light_direction = transform;
+                        }
+
                         ImGui::TreePop();
                     }
 
                     if(ImGui::TreeNode("Model Transform"))
                     {
-
                         ImGui::InputFloat3("Position", model_position.data());
                         ImGui::SliderFloat3("Rotation", model_rotation.data(), 0.0f, 360.0f);
                         ImGui::SliderFloat3("Scale", model_scale.data(), 0.0f, 10.0f);

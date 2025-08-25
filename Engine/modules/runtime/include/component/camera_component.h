@@ -42,6 +42,11 @@ public:
     float3 get_camera_position() const { return camera_position; }
     void set_camera_position(const float3& position) { camera_position = position; }
     Math::Quaternion<float> get_rotation() const { return rotation; }
+
+    float4x4 get_view_matrix() const { return view_matrix; }
+    void set_view_matrix(const float4x4& matrix) { view_matrix = matrix; }
+    float4x4 get_projection_matrix() const { return projection_matrix; }
+    void set_projection_matrix(const float4x4& matrix) { projection_matrix = matrix; }
 private:
     float yaw = 0.0f;
     float pitch = 0.0f;
@@ -53,6 +58,9 @@ private:
     float3 camera_position = { 0.0f, 0.0f, 5.0f };
     Math::Quaternion<float> rotation;
     Input::InputContext* m_gameContext = nullptr;
+
+    float4x4 view_matrix;
+    float4x4 projection_matrix;
 };
 
 CYBER_END_NAMESPACE

@@ -1,5 +1,8 @@
 #include "component/camera_component.h"
 #include "application/application.h"
+#include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
+#include <cstring>
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)
@@ -73,7 +76,27 @@ void CameraComponent::update()
     float delta_mouse_y = 0.0f;
     float x, y;
     inputMgr->get_mouse_position(x, y);
-    if(m_gameContext->is_action_pressed(ACTION_MOUSE_LEFT))
+    
+    // Check if mouse is over the Viewport window
+    bool isMouseInViewport = false;
+    if (ImGui::GetCurrentContext() != nullptr)
+    {
+        ImGuiWindow* viewportWindow = ImGui::FindWindowByName("Viewport");
+        if (viewportWindow != nullptr && ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow))
+        {
+            // Check if the currently hovered window is the Viewport window
+            ImGuiWindow* hoveredWindow = ImGui::GetCurrentContext()->HoveredWindow;
+            if (hoveredWindow != nullptr)
+            {
+                // Check if it's the viewport window or its child (ViewportChild)
+                isMouseInViewport = (hoveredWindow == viewportWindow) || 
+                                   (hoveredWindow->ParentWindow == viewportWindow) ||
+                                   (strcmp(hoveredWindow->Name, "ViewportChild") == 0);
+            }
+        }
+    }
+    
+    if(m_gameContext->is_action_pressed(ACTION_MOUSE_LEFT) && isMouseInViewport)
     {
         delta_mouse_x = x - last_mouse_x;
         delta_mouse_y = y - last_mouse_y;

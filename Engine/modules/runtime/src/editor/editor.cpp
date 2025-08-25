@@ -61,6 +61,9 @@ namespace Cyber
 
             m_imguiRenderer->new_frame(renderSurfaceWidth, renderSurfaceHeight);
             ImGui::NewFrame();
+            
+            // Initialize ImGuizmo for this frame
+            ImGuizmo::BeginFrame();
         }
 
         void Editor::update(float deltaTime)
@@ -163,6 +166,71 @@ namespace Cyber
                     //renderer->resize_swap_chain(viewport_size.x, viewport_size.y);
                     //render_device->bind_texture_view(color_buffer);
                     ImGui::Image((ImTextureID)color_buffer, ImVec2(viewport_size.x, viewport_size.y), ImVec2(0, 0), ImVec2(1, 1), tint_col, border_col);
+                    
+                    // Draw world coordinate arrow gizmo in bottom-left corner
+                    ImVec2 window_pos = ImGui::GetWindowPos();
+                    ImVec2 window_size = ImGui::GetWindowSize();
+
+                    ImVec2 bottom_left = ImVec2(window_pos.x, window_pos.y + window_size.y);
+
+                    // Set gizmo position and size (bottom-left corner)
+                    float gizmo_size = 100.0f;
+                    float gizmo_offset = 20.0f;
+                    ImVec2 gizmo_center = ImVec2(bottom_left.x + gizmo_offset, 
+                                                 bottom_left.y - gizmo_offset);
+                    
+                    ImDrawList* draw_list = ImGui::GetWindowDrawList();
+                    
+                    // Arrow parameters
+                    float arrow_length = gizmo_size * 0.4f;
+                    float arrow_head_size = 8.0f;
+                    float line_thickness = 3.0f;
+                    
+                    // Helper lambda to draw arrow
+                    auto DrawArrow = [&](ImVec2 start, ImVec2 end, ImU32 color, const char* label) {
+                        // Draw arrow line
+                        draw_list->AddLine(start, end, color, line_thickness);
+                        
+                        // Calculate arrow head direction
+                        ImVec2 dir = ImVec2(end.x - start.x, end.y - start.y);
+                        float len = sqrtf(dir.x * dir.x + dir.y * dir.y);
+                        if (len > 0) {
+                            dir.x /= len;
+                            dir.y /= len;
+                        }
+                        
+                        // Calculate perpendicular vector for arrow head
+                        ImVec2 perp = ImVec2(-dir.y, dir.x);
+                        
+                        // Draw arrow head (triangle)
+                        ImVec2 p1 = end;
+                        ImVec2 p2 = ImVec2(end.x - dir.x * arrow_head_size - perp.x * arrow_head_size * 0.5f,
+                                          end.y - dir.y * arrow_head_size - perp.y * arrow_head_size * 0.5f);
+                        ImVec2 p3 = ImVec2(end.x - dir.x * arrow_head_size + perp.x * arrow_head_size * 0.5f,
+                                          end.y - dir.y * arrow_head_size + perp.y * arrow_head_size * 0.5f);
+                        draw_list->AddTriangleFilled(p1, p2, p3, color);
+                        
+                        // Draw label
+                        ImVec2 label_pos = ImVec2(end.x + dir.x * 10.0f - 4.0f, end.y + dir.y * 10.0f - 7.0f);
+                        draw_list->AddText(label_pos, color, label);
+                    };
+                    
+                    // Draw origin sphere
+                    draw_list->AddCircleFilled(gizmo_center, 5.0f, IM_COL32(255, 255, 255, 255));
+                    draw_list->AddCircle(gizmo_center, 5.0f, IM_COL32(0, 0, 0, 255), 0, 1.5f);
+                    
+                    // Draw X axis (Red) - pointing right
+                    ImVec2 x_end = ImVec2(gizmo_center.x + arrow_length, gizmo_center.y);
+                    DrawArrow(gizmo_center, x_end, IM_COL32(255, 0, 0, 255), "X");
+                    
+                    // Draw Y axis (Green) - pointing up
+                    ImVec2 y_end = ImVec2(gizmo_center.x, gizmo_center.y - arrow_length);
+                    DrawArrow(gizmo_center, y_end, IM_COL32(0, 255, 0, 255), "Y");
+                    
+                    // Draw Z axis (Blue) - pointing diagonal (to simulate coming out of screen)
+                    float z_diagonal = arrow_length * 0.707f; // 45 degree angle
+                    ImVec2 z_end = ImVec2(gizmo_center.x - z_diagonal * 0.5f, gizmo_center.y - z_diagonal * 0.5f);
+                    DrawArrow(gizmo_center, z_end, IM_COL32(0, 0, 255, 255), "Z");
                 }
                 ImGui::EndChild();
             }
@@ -183,7 +251,7 @@ namespace Cyber
             // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
             log.Draw("Log");
 
-            //ImGui::ShowDemoWindow(&show_demo_window);
+            ImGui::ShowDemoWindow(&show_demo_window);
         }
         
         void Editor::finalize()

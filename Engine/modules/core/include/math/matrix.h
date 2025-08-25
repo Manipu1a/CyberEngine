@@ -182,6 +182,7 @@ struct Matrix4x4
     union
     {
         T m[4][4];
+        T m16[16];
         struct
         {
             T m00, m01, m02, m03;

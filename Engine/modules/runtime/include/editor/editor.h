@@ -9,6 +9,8 @@
 #endif
 
 #include "imgui/imgui.h"
+#include "imgui/imgui_internal.h"
+#include "imgui/ImGuizmo.h"
 #include "imGuIZMO.quat/imGuIZMO.h"
 #include "cyber_runtime.config.h"
 
@@ -239,6 +241,14 @@ namespace Cyber
             class ImGuiRenderer* m_imguiRenderer;
             ImGuiContext* imgui_context = nullptr;
             std::shared_ptr<class ImGuiLogSink> m_imgui_log_sink;
+            
+            // View matrix for the orientation gizmo
+            float m_view_matrix[16] = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            };
         };
     }
 }
