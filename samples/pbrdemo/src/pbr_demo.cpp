@@ -96,6 +96,12 @@ namespace Cyber
             float4x4 view_matrix = camera_component->get_rotation().to_matrix() * float4x4::translation(-camera_position.x, -camera_position.y, -camera_position.z);
             float4x4 camera_world = view_matrix.inverse();
             float3 camera_world_pos = float3::make_vector(camera_world[3]);
+            
+            // Update editor gizmo with current view matrix
+            if (m_pApp->get_editor())
+            {
+                m_pApp->get_editor()->set_view_matrix(view_matrix.Data());
+            }
 
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;

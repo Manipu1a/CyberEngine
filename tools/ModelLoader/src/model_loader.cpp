@@ -115,7 +115,14 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
                     (float)root_node.matrix[12], (float)root_node.matrix[13], (float)root_node.matrix[14], (float)root_node.matrix[15]
                 };
             }
-
+            
+            // Process root node's mesh if it has one
+            if(root_node.mesh >= 0 && root_node.mesh < model.meshes.size())
+            {
+                load_mesh(model, root_node.mesh);
+            }
+            
+            // Process child nodes
             for(const auto& child_id : root_node.children)
             {
                 const tinygltf::Node& child_node = model.nodes[child_id];

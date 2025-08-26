@@ -1,0 +1,7 @@
+target("shadow_sample")
+    set_kind("shared")
+    add_includedirs("include", {public = true})
+    add_files("src/shadow_sample.cpp")
+    add_deps("TextureLoader", {public=true})
+    add_deps("ModelLoader", {public=true})
+    add_defines("CYBER_API_EXPORT")

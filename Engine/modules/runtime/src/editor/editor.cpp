@@ -175,7 +175,7 @@ namespace Cyber
 
                     // Set gizmo position and size (bottom-left corner)
                     float gizmo_size = 100.0f;
-                    float gizmo_offset = 20.0f;
+                    float gizmo_offset = 50.0f;
                     ImVec2 gizmo_center = ImVec2(bottom_left.x + gizmo_offset, 
                                                  bottom_left.y - gizmo_offset);
                     
@@ -215,22 +215,68 @@ namespace Cyber
                         draw_list->AddText(label_pos, color, label);
                     };
                     
+                    // Get view matrix from Editor
+                    const float* view_matrix = m_view_matrix;
+                    
+                    // Extract rotation part from view matrix (upper-left 3x3)
+                    // View matrix transforms from world to camera space
+                    // We need to extract the world axes in camera space
+                    float3 x_axis_world = float3(view_matrix[0], view_matrix[4], view_matrix[8]);
+                    float3 y_axis_world = float3(view_matrix[1], view_matrix[5], view_matrix[9]);
+                    float3 z_axis_world = float3(view_matrix[2], view_matrix[6], view_matrix[10]);
+                    
+                    // Normalize axes
+                    x_axis_world = Math::normalize(x_axis_world);
+                    y_axis_world = Math::normalize(y_axis_world);
+                    z_axis_world = Math::normalize(z_axis_world);
+                    
+                    // Project 3D axes to 2D screen space
+                    // X axis points right in world space
+                    ImVec2 x_end = ImVec2(gizmo_center.x + x_axis_world.x * arrow_length, 
+                                         gizmo_center.y - x_axis_world.y * arrow_length);
+                    
+                    // Y axis points up in world space
+                    ImVec2 y_end = ImVec2(gizmo_center.x + y_axis_world.x * arrow_length, 
+                                         gizmo_center.y - y_axis_world.y * arrow_length);
+                    
+                    // Z axis points forward in world space
+                    ImVec2 z_end = ImVec2(gizmo_center.x + z_axis_world.x * arrow_length, 
+                                         gizmo_center.y - z_axis_world.y * arrow_length);
+                    
                     // Draw origin sphere
                     draw_list->AddCircleFilled(gizmo_center, 5.0f, IM_COL32(255, 255, 255, 255));
                     draw_list->AddCircle(gizmo_center, 5.0f, IM_COL32(0, 0, 0, 255), 0, 1.5f);
                     
-                    // Draw X axis (Red) - pointing right
-                    ImVec2 x_end = ImVec2(gizmo_center.x + arrow_length, gizmo_center.y);
-                    DrawArrow(gizmo_center, x_end, IM_COL32(255, 0, 0, 255), "X");
+                    // Draw axes with proper depth ordering (draw farthest axis first)
+                    // Check z component to determine drawing order
+                    struct AxisInfo {
+                        float depth;
+                        ImVec2 end;
+                        ImU32 color;
+                        const char* label;
+                    };
                     
-                    // Draw Y axis (Green) - pointing up
-                    ImVec2 y_end = ImVec2(gizmo_center.x, gizmo_center.y - arrow_length);
-                    DrawArrow(gizmo_center, y_end, IM_COL32(0, 255, 0, 255), "Y");
+                    AxisInfo axes[3] = {
+                        { z_axis_world.z, z_end, IM_COL32(0, 0, 255, 255), "Z" },
+                        { y_axis_world.z, y_end, IM_COL32(0, 255, 0, 255), "Y" },
+                        { x_axis_world.z, x_end, IM_COL32(255, 0, 0, 255), "X" }
+                    };
                     
-                    // Draw Z axis (Blue) - pointing diagonal (to simulate coming out of screen)
-                    float z_diagonal = arrow_length * 0.707f; // 45 degree angle
-                    ImVec2 z_end = ImVec2(gizmo_center.x - z_diagonal * 0.5f, gizmo_center.y - z_diagonal * 0.5f);
-                    DrawArrow(gizmo_center, z_end, IM_COL32(0, 0, 255, 255), "Z");
+                    // Sort axes by depth (draw back to front)
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = i + 1; j < 3; j++) {
+                            if (axes[i].depth > axes[j].depth) {
+                                AxisInfo temp = axes[i];
+                                axes[i] = axes[j];
+                                axes[j] = temp;
+                            }
+                        }
+                    }
+                    
+                    // Draw axes in sorted order
+                    for (int i = 0; i < 3; i++) {
+                        DrawArrow(gizmo_center, axes[i].end, axes[i].color, axes[i].label);
+                    }
                 }
                 ImGui::EndChild();
             }
@@ -251,7 +297,7 @@ namespace Cyber
             // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
             log.Draw("Log");
 
-            ImGui::ShowDemoWindow(&show_demo_window);
+            //ImGui::ShowDemoWindow(&show_demo_window);
         }
         
         void Editor::finalize()

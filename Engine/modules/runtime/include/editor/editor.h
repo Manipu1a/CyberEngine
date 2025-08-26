@@ -236,6 +236,19 @@ namespace Cyber
             {
                 return imgui_context;
             }
+            
+            void set_view_matrix(const float* view_matrix)
+            {
+                if (view_matrix)
+                {
+                    memcpy(m_view_matrix, view_matrix, sizeof(float) * 16);
+                }
+            }
+            
+            const float* get_view_matrix() const
+            {
+                return m_view_matrix;
+            }
         protected:
             Core::Application* m_pApp = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
