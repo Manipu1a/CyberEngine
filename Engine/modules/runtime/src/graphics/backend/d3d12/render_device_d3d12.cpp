@@ -751,6 +751,8 @@ namespace Cyber
                 pTexture->m_pNativeHandle = pTexture->native_resource;
                 if(InitializeTexture)
                 {
+                    m_deviceContexts[0]->cmd_resource_barrier(pTexture, actualStartState, GRAPHICS_RESOURCE_STATE_COPY_DEST);
+
                     uint64_t uploadBufferSize = 0;
                     m_pDxDevice->GetCopyableFootprints(&d3dTexDesc, 0, pInitData->numSubResources, 0, nullptr, nullptr, nullptr, &uploadBufferSize);
                     
@@ -797,15 +799,7 @@ namespace Cyber
 
                     //cyber_free(subResourceData);
                     //SAFE_RELEASE(uploadBuffer);
-
-                    TextureBarrier draw_barrier = {
-                    .texture = pTexture,
-                    .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
-                    .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
-                    .subresource_barrier = 0
-                    };
-                    ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc0);
+                    m_deviceContexts[0]->cmd_resource_barrier(pTexture, GRAPHICS_RESOURCE_STATE_COPY_DEST, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE);
                 }
             }
         }
@@ -2042,13 +2036,7 @@ namespace Cyber
                 if(initial_data_size > 0)
                 {
                     auto initial_state = d3d12_buffer->get_buffer_state();
-                    BufferBarrier buffer_barrier = {
-                    .buffer = d3d12_buffer,
-                    .src_state = initial_state,
-                    .dst_state = GRAPHICS_RESOURCE_STATE_COPY_DEST
-                    };
-                    ResourceBarrierDesc barrier_desc = { .buffer_barriers = &buffer_barrier, .buffer_barrier_count = 1 };
-                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc);
+                    m_deviceContexts[0]->cmd_resource_barrier(d3d12_buffer, initial_state, GRAPHICS_RESOURCE_STATE_COPY_DEST);
 
                     D3D12_HEAP_PROPERTIES upload_heap_properties = {};
                     upload_heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -2080,12 +2068,7 @@ namespace Cyber
                     upload_buffer->Unmap(0, nullptr);
 
                     m_deviceContexts[0]->get_command_context().update_buffer_resource(d3d12_buffer->get_dx_resource(), 0, upload_buffer, 0, initial_data_size);
-                    
-                    buffer_barrier.src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST;
-                    buffer_barrier.dst_state = initial_state;
-                    ResourceBarrierDesc barrier_desc0 = { .buffer_barriers = &buffer_barrier, .buffer_barrier_count = 1 };
-                    m_deviceContexts[0]->cmd_resource_barrier(barrier_desc0);
-
+                    m_deviceContexts[0]->cmd_resource_barrier(d3d12_buffer, GRAPHICS_RESOURCE_STATE_COPY_DEST,initial_state );
                     //SAFE_RELEASE(upload_buffer);
                 }
 

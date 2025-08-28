@@ -1467,6 +1467,16 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API BufferBarrier
     {
+        BufferBarrier()
+            : buffer(nullptr), src_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), dst_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), queue_acquire(0), queue_release(0)
+        {
+        }
+        
+        BufferBarrier(RenderObject::IBuffer* in_buffer, GRAPHICS_RESOURCE_STATE from, GRAPHICS_RESOURCE_STATE to)
+            : buffer(in_buffer), src_state(from), dst_state(to), queue_acquire(0), queue_release(0)
+            {
+
+            }
         RenderObject::IBuffer* buffer;
         GRAPHICS_RESOURCE_STATE src_state;
         GRAPHICS_RESOURCE_STATE dst_state;
@@ -1481,6 +1491,16 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API TextureBarrier
     {
+        TextureBarrier()
+            : texture(nullptr), src_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), dst_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), queue_acquire(0), queue_release(0), subresource_barrier(0), mip_level(0), array_layer(0)
+        {
+        }
+
+        TextureBarrier(RenderObject::ITexture* in_texture, GRAPHICS_RESOURCE_STATE from, GRAPHICS_RESOURCE_STATE to)
+            : texture(in_texture), src_state(from), dst_state(to), queue_acquire(0), queue_release(0), subresource_barrier(0)
+        {
+        }
+
         RenderObject::ITexture* texture;
         GRAPHICS_RESOURCE_STATE src_state;
         GRAPHICS_RESOURCE_STATE dst_state;
@@ -1500,10 +1520,8 @@ namespace Cyber
 
     struct CYBER_GRAPHICS_API ResourceBarrierDesc
     {
-        const BufferBarrier* buffer_barriers;
-        uint32_t buffer_barrier_count;
-        const TextureBarrier* texture_barriers;
-        uint32_t texture_barrier_count;
+        eastl::vector<BufferBarrier> buffer_barriers;
+        eastl::vector<TextureBarrier> texture_barriers;
     };
 
     /// Device Group

@@ -80,7 +80,7 @@ namespace Cyber
             RenderObject::ISwapChain* m_pSwapChain = nullptr;
 
             SceneTarget scene_target[MAX_FRAMES_IN_FLIGHT];
-
+            
             RenderObject::IFrameBuffer* frame_buffer = nullptr;
             RenderObject::IRenderPass* m_pRenderPass = nullptr;
             Surface* m_pSurface = nullptr;

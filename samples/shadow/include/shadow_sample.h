@@ -40,6 +40,8 @@ namespace Cyber
             void raster_draw();
             void create_gfx_objects();
             void create_render_pipeline();
+            void create_shadow_pipeline();
+
             void create_resource();
             void create_ui();
             void draw_ui();
@@ -49,10 +51,12 @@ namespace Cyber
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
+            RenderObject::IRenderPipeline* shadow_pipeline = nullptr;
             RenderObject::RenderSubpassDesc subpass_desc[2];
             RenderObject::RenderPassAttachmentDesc attachment_desc;
-            RenderObject::AttachmentReference attachment_ref[2];
+            RenderObject::AttachmentReference attachment_ref[3];
             RenderObject::IRenderPass* render_pass = nullptr;
+            RenderObject::ITexture* shadow_depth = nullptr;
             
             RenderObject::ITexture_View* test_texture_view = nullptr;
             RenderObject::IBuffer* vertex_buffer = nullptr;

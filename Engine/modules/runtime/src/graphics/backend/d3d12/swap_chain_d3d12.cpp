@@ -87,18 +87,6 @@ namespace Cyber
             for(uint32_t i = 0; i < buffer_count; ++i)
             {
                 CHECK_HRESULT(m_pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
-                TextureViewCreateDesc textureViewDesc = {};
-                textureViewDesc.dimension = TEX_DIMENSION_2D;
-                textureViewDesc.format = swap_chain_desc.m_format;
-                textureViewDesc.view_type = TEXTURE_VIEW_RENDER_TARGET;
-                textureViewDesc.aspects = TVA_COLOR;
-                textureViewDesc.arrayLayerCount = 1;
-                textureViewDesc.p_native_resource = backbuffers[i];
-                textureViewDesc.mipLevelCount = 1;
-                textureViewDesc.baseMipLevel = 0;
-                auto back_buffer_view = render_device->create_texture_view(textureViewDesc);
-                m_ppBackBufferSRVs[i] = back_buffer_view;
-
                 textureDesc.m_width = swap_chain_desc.m_width;
                 textureDesc.m_height = swap_chain_desc.m_height;
                 textureDesc.m_depth = 1;
@@ -113,6 +101,9 @@ namespace Cyber
                 textureDesc.m_clearValue = fastclear_1111;
                 auto Ts = render_device->create_texture(textureDesc);
                 m_ppBackBuffers[i] = Ts;
+
+                auto back_buffer_view = Ts->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
+                m_ppBackBufferSRVs[i] = back_buffer_view;
             }
             //dxSwapChain->mBackBuffers = Ts;
             m_bufferSRVCount = buffer_count;

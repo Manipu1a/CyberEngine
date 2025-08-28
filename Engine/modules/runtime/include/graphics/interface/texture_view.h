@@ -29,8 +29,8 @@ namespace Cyber
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
 
             virtual void* get_gpu_native_resource() = 0;
-            virtual bool operator==(const ITexture_View& other) const = 0;
-            virtual bool operator!=(const ITexture_View& other) const = 0;
+            virtual bool operator==(const ITexture_View& other) = 0;
+            virtual bool operator!=(const ITexture_View& other) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -51,18 +51,26 @@ namespace Cyber
                 return m_desc;
             }
 
-            bool operator==(const ITexture_View& other) const override
+            virtual void* get_gpu_native_resource() override
+            {
+                return m_desc.p_native_resource;
+            }
+
+            bool operator==(const ITexture_View& other) override
             {
                 const Texture_View* other_view = static_cast<const Texture_View*>(&other);
-                return m_desc.p_texture == other_view->m_desc.p_texture &&
+                return m_desc.p_texture == other_view->m_desc.p_texture && 
+                        m_desc.format == other_view->m_desc.format &&
                        m_desc.view_type == other_view->m_desc.view_type &&
+                       m_desc.aspects == other_view->m_desc.aspects &&
+                       m_desc.dimension == other_view->m_desc.dimension &&
                        m_desc.baseArrayLayer == other_view->m_desc.baseArrayLayer &&
                        m_desc.arrayLayerCount == other_view->m_desc.arrayLayerCount &&
                        m_desc.baseMipLevel == other_view->m_desc.baseMipLevel &&
                        m_desc.mipLevelCount == other_view->m_desc.mipLevelCount;
             }
 
-            bool operator!=(const ITexture_View& other) const override
+            bool operator!=(const ITexture_View& other) override
             {
                 return !(*this == other);
             }

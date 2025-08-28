@@ -30,17 +30,7 @@ namespace Cyber
             m_pSwapChain->set_back_buffer_srv_views(backBufferSRV); 
             for(uint32_t i = 0; i < m_pSwapChain->get_buffer_srv_count(); ++i)
             {
-                eastl::basic_string<char8_t> swap_chain_name(eastl::basic_string<char8_t>::CtorSprintf(), u8"backbuffer_%d", i); // CYBER_UTF8("backbuffer_%d", i
-                RenderObject::TextureViewCreateDesc view_desc = {
-                    .m_name = swap_chain_name.c_str(),
-                    .m_pTexture = m_pSwapChain->get_back_buffer(i),
-                    .m_format = (TEXTURE_FORMAT)m_pSwapChain->get_back_buffer(i)->get_create_desc().m_format,
-                    .m_usages = TVU_RTV_DSV,
-                    .m_aspects = TVA_COLOR,
-                    .m_dimension = TEX_DIMENSION_2D,
-                    .m_arrayLayerCount = 1
-                };
-                auto view = m_pRenderDevice->create_texture_view(view_desc);
+                auto view = m_pSwapChain->get_back_buffer(i)->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
                 m_pSwapChain->set_back_buffer_srv_view(view, i);
             }
             

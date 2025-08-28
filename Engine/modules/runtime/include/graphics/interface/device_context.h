@@ -94,6 +94,8 @@ namespace Cyber
             /// CMDS
             virtual void cmd_begin() = 0;
             virtual void cmd_end() = 0;
+            virtual void cmd_resource_barrier(ITexture* texture, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) = 0;
+            virtual void cmd_resource_barrier(IBuffer* buffer, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) = 0;
             virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) = 0;
 
             virtual void flush() = 0;

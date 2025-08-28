@@ -16,28 +16,17 @@ namespace Cyber
         {
             return Cyber::cyber_new<Cyber::Samples::ShadowApp>();
         }
-        /*
-        const static Vertex cube_verts[8] = {
-            { {-1, -1, -1}, {0.0f, 0.0f}, {1, 0, 0, 1}},
-            { {-1, 1, -1}, {0.0f, 1.0f}, {0,1,0,1}},
-            { {1, 1, -1}, {1.0f, 1.0f}, {0,0,1,1}},
-            { {1, -1, -1}, {1.0f, 0.0f}, {1,1,1,1}},
 
-            { {-1, -1, 1}, {0.0f, 0.0f}, {1,1,0,1}},
-            { {-1, 1, 1}, {0.0f, 1.0f}, {0,1,1,1}},
-            { {1, 1, 1}, {1.0f, 1.0f}, {1,0,1,1}},
-            { {1, -1, 1}, {1.0f, 0.0f}, {0.2f,0.2f,0.2f,1}},
+        const static Vertex plane_verts[4] = {
+            { {-1, -1, 0}, {0.0f, 0.0f}, {1, 0, 0, 1}},
+            { {1, -1, 0}, {1.0f, 0.0f}, {0,1,0,1}},
+            { {1, 1, 0}, {1.0f, 1.0f}, {0,0,1,1}},
+            { {-1, 1, 0}, {0.0f, 1.0f}, {1,1,1,1}},
         };
 
-        const static uint32_t cube_indices[36] = {
-        2,0,1, 2,3,0,
-        4,6,5, 4,7,6,
-        0,7,4, 0,3,7,
-        1,0,4, 1,4,5,
-        1,5,2, 5,6,2,
-        3,6,7, 3,2,6
+        const static uint32_t plane_indices[6] = {
+            0,1,2, 2,3,0
         };
-        */
 
         ShadowApp::ShadowApp()
         {
@@ -105,15 +94,15 @@ namespace Cyber
             auto back_depth_buffer = scene_target.depth_buffer;
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
-
-
+            auto shadow_buffer_view = shadow_depth->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
+            
             // record
             device_context->cmd_begin();
 
             auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
             GRAPHICS_CLEAR_VALUE* clear_values = { &clear_value };
-            RenderObject::ITexture_View* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view};
-            frame_buffer->update_attachments(attachment_resources, 2);
+            RenderObject::ITexture_View* attachment_resources[3] = { back_buffer_view, back_depth_buffer_view, shadow_buffer_view };
+            frame_buffer->update_attachments(attachment_resources, 3);
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
                 .pFramebuffer = frame_buffer,
@@ -124,26 +113,9 @@ namespace Cyber
                 .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             };
 
-            TextureBarrier draw_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
-                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .subresource_barrier = 0
-            };
-            TextureBarrier depth_barrier = {
-                .texture = back_depth_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
-                .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
-                .subresource_barrier = 0
-            };
-            
-            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            device_context->cmd_resource_barrier(barrier_desc0);
-            ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
-            device_context->cmd_resource_barrier(barrier_desc1);
-
-            device_context->cmd_begin_render_pass(RenderPassBeginInfo);
+            // BeginRenderPass will handle transitions automatically with RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             device_context->set_frame_buffer(frame_buffer);
+            device_context->cmd_begin_render_pass(RenderPassBeginInfo);
             RenderObject::Viewport viewport;
             viewport.top_left_x = 0.0f;
             viewport.top_left_y = 0.0f;
@@ -164,6 +136,14 @@ namespace Cyber
             uint32_t strides[] = { sizeof(CubeVertex) };
             device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
             device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
+
+            device_context->render_encoder_bind_pipeline(shadow_pipeline);
+            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+            device_context->prepare_for_rendering();
+            device_context->render_encoder_draw_indexed(36, 0, 0);
+            device_context->cmd_next_sub_pass();
+
+            // Resources are already in correct states within render pass - no barriers needed
             device_context->render_encoder_bind_pipeline( pipeline);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
@@ -172,13 +152,7 @@ namespace Cyber
             device_context->render_encoder_draw_indexed(36, 0, 0);
             device_context->cmd_end_render_pass();
 
-            TextureBarrier present_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE
-            };
-            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            device_context->cmd_resource_barrier(barrier_desc2);
+            // EndRenderPass will handle transitions back to final state automatically
         }
 
         void ShadowApp::present()
@@ -212,7 +186,7 @@ namespace Cyber
             attachment_ref[0].m_loadAction = LOAD_ACTION_CLEAR;
             attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
             
             attachment_ref[1].m_attachmentIndex = 1;
             attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
@@ -221,29 +195,51 @@ namespace Cyber
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
 
-            subpass_desc[0].m_name = u8"Main Subpass";
+            attachment_ref[2].m_attachmentIndex = 2;
+            attachment_ref[2].m_sampleCount = SAMPLE_COUNT_1;
+            attachment_ref[2].m_loadAction = LOAD_ACTION_CLEAR;
+            attachment_ref[2].m_storeAction = STORE_ACTION_STORE;
+            attachment_ref[2].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[2].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+
+            subpass_desc[0].m_name = u8"Shadow Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
-            subpass_desc[0].m_pDepthStencilAttachment = &attachment_ref[1];
-            subpass_desc[0].m_renderTargetCount = 1;
-            subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
+            subpass_desc[0].m_pDepthStencilAttachment = &attachment_ref[2];
+            subpass_desc[0].m_renderTargetCount = 0;
+            subpass_desc[0].m_pRenderTargetAttachments = nullptr;
             
-            subpass_desc[1].m_name = u8"UI Subpass";
+            subpass_desc[1].m_name = u8"Main Subpass";
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
-            subpass_desc[1].m_pDepthStencilAttachment = nullptr;
+            subpass_desc[1].m_pDepthStencilAttachment = &attachment_ref[1];
             subpass_desc[1].m_renderTargetCount = 1;
-            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[1];
+            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[0];
             
             RenderObject::RenderPassDesc rp_desc1 = {
                 .m_name = u8"Triangle RenderPass",
                 .m_attachmentCount = 1,
                 .m_pAttachments = &attachment_desc,
-                .m_subpassCount = 1,
+                .m_subpassCount = 2,
                 .m_pSubpasses = subpass_desc
             };
             
             render_pass = device_context->create_render_pass(rp_desc1);
+            auto& scene_target = renderer->get_scene_target(0);
+            auto& depth_rt_desc = scene_target.depth_buffer->get_create_desc();
+            RenderObject::TextureCreateDesc depth_buffer_desc;
+            depth_buffer_desc.m_name = "DepthBuffer";
+            depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
+            depth_buffer_desc.m_width = depth_rt_desc.m_width;
+            depth_buffer_desc.m_height = depth_rt_desc.m_height;
+            depth_buffer_desc.m_depth = 1;
+            depth_buffer_desc.m_arraySize = 1;
+            depth_buffer_desc.m_mipLevels = 1;
+            depth_buffer_desc.m_dimension = TEX_DIMENSION_2D;
+            depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+            depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
+            depth_buffer_desc.m_pNativeHandle = nullptr;
+            shadow_depth = render_device->create_texture(depth_buffer_desc);
             //renderer->set_render_pass(render_pass);
         }
 
@@ -310,36 +306,20 @@ namespace Cyber
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = render_device->create_buffer(buffer_desc);
-            
+
+            auto& materials = model_loader->get_materials();
             // create texture
-            if(meshes[0].image_paths.size() > 0)
+            if(materials.size() > 0)
             {
-                RenderObject::ITexture* test_texture = nullptr;
-
-                eastl::string texture_path(eastl::string::CtorSprintf(), "samples/cube/assets/Cube/%s", meshes[0].image_paths[0].c_str());
-
-                TextureLoader::TextureLoadInfo texture_load_info{
-                "TEST",
-                GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
-                GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
-                0,
-                CPU_ACCESS_NONE,
-                true,
-                false,
-                TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
-                false,
-                FILTER_TYPE::FILTER_TYPE_ANISOTROPIC
-                };
-
-                TextureLoader::create_texture_from_file(
-                    texture_path.c_str(),
-                    texture_load_info,
-                    &test_texture, render_device
-                );
-
-                test_texture_view = test_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                for(size_t i = 0; i < materials.size(); ++i)
+                {
+                    auto& material = materials[i];
+                    if(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId] != -1)
+                    {
+                        test_texture_view = model_loader->get_texture(material.texture_ids[ModelLoader::DefaultBaseColorTextureAttribId])->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                    }
+                }
             }
-
         }
 
         void ShadowApp::create_ui()
@@ -361,7 +341,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
             vs_load_desc.target = SHADER_TARGET_6_0;
             vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/cube/assets/shaders/cube_vs.hlsl"),
+                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/cube_vs.hlsl"),
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
@@ -370,7 +350,7 @@ namespace Cyber
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
             ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/cube/assets/shaders/cube_ps.hlsl"),
+                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/cube_ps.hlsl"),
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
@@ -405,22 +385,6 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_library = ps_shader;
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
             
-            RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-            };
-            root_signature = render_device->create_root_signature(root_signature_create_desc);
-            // create descriptor set
-
-            RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
-                .root_signature = root_signature,
-                .set_index = 0
-            };
-
-            //descriptor_set = render_device->create_descriptor_set(desc_set_create_desc);
             RenderObject::VertexAttribute vertex_attributes[] = {
                 {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
                 {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
@@ -467,6 +431,48 @@ namespace Cyber
 
             vs_shader->free();
             ps_shader->free();
+
+            create_shadow_pipeline();
+        }
+
+        void ShadowApp::create_shadow_pipeline()
+        {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+
+            // create shader
+            ResourceLoader::ShaderLoadDesc vs_load_desc = {};
+            vs_load_desc.target = SHADER_TARGET_6_0;
+            vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
+                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/shadow.hlsl"),
+                .stage = SHADER_STAGE_VERT,
+                .entry_point_name = CYBER_UTF8("main"),
+            };
+            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+
+            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[1];
+            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
+            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
+            pipeline_shader_create_desc[0]->m_library = vs_shader;
+            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
+
+            RenderObject::VertexAttribute vertex_attributes[] = {
+                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
+                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
+                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+            };
+            RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
+
+            RenderObject::RenderPipelineCreateDesc rp_desc = 
+            {
+                .vertex_shader = pipeline_shader_create_desc[0],
+                .vertex_layout = &vertex_layout_desc,
+                .depth_stencil_format = shadow_depth->get_create_desc().m_format,
+                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
+            };
+            shadow_pipeline = render_device->create_render_pipeline(rp_desc);
+
+            vs_shader->free();
         }
 
         void ShadowApp::finalize()

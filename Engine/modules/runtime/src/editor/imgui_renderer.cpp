@@ -169,15 +169,7 @@ namespace Cyber
             auto back_buffer_view = swap_chain->get_back_buffer_srv_view(m_backBufferIndex);
             auto back_depth_buffer_view = swap_chain->get_back_buffer_dsv();
             auto frame_buffer = renderer->get_frame_buffer();
-
-            TextureBarrier draw_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
-                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .subresource_barrier = 0
-            };
-            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-            device_context->cmd_resource_barrier(barrier_desc0);
+            //device_context->cmd_resource_barrier(back_buffer, GRAPHICS_RESOURCE_STATE_COMMON, GRAPHICS_RESOURCE_STATE_RENDER_TARGET);
 
             RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
             frame_buffer->update_attachments(attachment_resources, 1);
@@ -192,7 +184,7 @@ namespace Cyber
                 .depth_stencil_clear_value = { 1.0f, 0 },
                 .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             };
-
+            device_context->set_frame_buffer(frame_buffer);
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
 
             //todo use native render pipeline
@@ -265,15 +257,7 @@ namespace Cyber
                         if(curr_texture_view != last_texture_view)
                         {
                             last_texture_view = curr_texture_view;
-
-                            TextureBarrier draw_barrier = {
-                            .texture = font_texture,
-                            .src_state = GRAPHICS_RESOURCE_STATE_COPY_DEST,
-                            .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
-                            .subresource_barrier = 0
-                            };
-                            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
-                            device_context->cmd_resource_barrier(barrier_desc0);
+                            //device_context->cmd_resource_barrier(font_texture, GRAPHICS_RESOURCE_STATE_COPY_DEST, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE);
                         }                   
                         // shader variable binding
                         device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
@@ -302,14 +286,7 @@ namespace Cyber
             }
 
             device_context->cmd_end_render_pass();
-            
-            TextureBarrier present_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .dst_state = GRAPHICS_RESOURCE_STATE_PRESENT
-            };
-            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
-            device_context->cmd_resource_barrier(barrier_desc2);
+            //device_context->cmd_resource_barrier(back_buffer, GRAPHICS_RESOURCE_STATE_RENDER_TARGET, GRAPHICS_RESOURCE_STATE_PRESENT);
             
         }
 
@@ -482,7 +459,7 @@ namespace Cyber
             texture_desc.m_arraySize = 1;
             texture_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
             texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
-            texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_COPY_DEST;
+            texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
             texture_desc.m_sampleCount = SAMPLE_COUNT_1;
             texture_desc.m_sampleQuality = 1;
 

@@ -35,7 +35,7 @@ public:
     ///  SDL_Renderer: ImTextureID = SDL_Texture*                (see ImGui_ImplSDLRenderer2_RenderDrawData() in imgui_impl_sdlrenderer2.cpp)
     ///  Vulkan:       ImTextureID = VkDescriptorSet             (see ImGui_ImplVulkan_RenderDrawData()       in imgui_impl_vulkan.cpp)
     ///  WebGPU:       ImTextureID = WGPUTextureView             (see ImGui_ImplWGPU_RenderDrawData()         in imgui_impl_wgpu.cpp)
-    virtual void* get_gpu_native_resource()
+    virtual void* get_gpu_native_resource() override
     {
         return (void*)gpu_descriptor_handle.ptr;
     }

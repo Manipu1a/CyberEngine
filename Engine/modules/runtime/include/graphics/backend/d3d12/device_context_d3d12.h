@@ -30,6 +30,8 @@ public:
 
     virtual void cmd_begin() override;
     virtual void cmd_end() override;
+    virtual void cmd_resource_barrier(ITexture* texture, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) override;
+    virtual void cmd_resource_barrier(IBuffer* buffer, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) override;
     virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) override;
 
     virtual void flush() override;

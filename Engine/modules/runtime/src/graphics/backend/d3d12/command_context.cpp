@@ -144,13 +144,16 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RES
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& transition_barrier)
 {
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
-    if(texture.get_new_state() == transition_barrier.dst_state)
+    GRAPHICS_RESOURCE_STATE current_state = transition_barrier.src_state;
+    GRAPHICS_RESOURCE_STATE expected_state = transition_barrier.dst_state;
+
+    if(current_state == transition_barrier.dst_state)
     {
         return;
     }
 
-    texture.set_old_state(texture.get_new_state());
-    texture.set_new_state(transition_barrier.dst_state);
+    texture.set_old_state(current_state);
+    texture.set_new_state(expected_state);
 
     if(transition_barrier.src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
         transition_barrier.dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
@@ -176,7 +179,7 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
         d3d_barrier.Transition.pResource = texture.get_d3d12_resource();
         const auto& create_desc = texture.get_create_desc();
         d3d_barrier.Transition.Subresource = transition_barrier.subresource_barrier != 0 ?
-                                         CALC_SUBRESOURCE_INDEX(transition_barrier.mip_level, transition_barrier.array_layer, 0, create_desc.m_mipLevels, create_desc.m_arraySize + 1)
+                                         CALC_SUBRESOURCE_INDEX(transition_barrier.mip_level, transition_barrier.array_layer, 0, create_desc.m_mipLevels, create_desc.m_arraySize)
                                         : D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
         if(transition_barrier.queue_acquire)
         {
@@ -184,7 +187,7 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
         }
         else 
         {
-            d3d_barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier.src_state);
+            d3d_barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(current_state);
         }
 
         if(transition_barrier.queue_release)
