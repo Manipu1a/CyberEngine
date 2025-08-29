@@ -747,7 +747,15 @@ namespace Cyber
                 CB_CORE_TRACE("[D3D12] Create Texture Resource Succeed! \n\t With Name: {0}\n\t Size: {1}x{2} \n\t Format: {3} \n\t Sample Count: {4}", 
                                 (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
                                 (uint32_t)Desc.m_format, (uint8_t)Desc.m_sampleCount);
-                
+
+                if(Desc.m_name && Desc.m_name != u8"")
+                {
+                    pTexture->native_resource->SetName(u8_to_wstring(Desc.m_name).c_str());
+                }
+                else
+                {
+                    pTexture->native_resource->SetName(L"Debug Texture");
+                }
                 pTexture->m_pNativeHandle = pTexture->native_resource;
                 if(InitializeTexture)
                 {

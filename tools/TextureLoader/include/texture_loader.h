@@ -8,7 +8,7 @@ CYBER_BEGIN_NAMESPACE(TextureLoader)
 
 struct TextureLoadInfo
 {
-    const char* name;
+    const char8_t* name;
 
     GRAPHICS_RESOURCE_USAGE usage;
 
@@ -28,7 +28,7 @@ struct TextureLoadInfo
 
     FILTER_TYPE filter;
 
-    explicit TextureLoadInfo(const char* name,
+    explicit TextureLoadInfo(const char8_t* name,
                              GRAPHICS_RESOURCE_USAGE usage, 
                              GRAPHICS_RESOURCE_BIND_FLAGS bindFlags, 
                              uint32_t mipLevels, 

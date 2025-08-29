@@ -452,6 +452,7 @@ namespace Cyber
             IO.Fonts->GetTexDataAsRGBA32(&pData, &Width, &Weight);
 
             RenderObject::TextureCreateDesc texture_desc = {};
+            texture_desc.m_name = u8"FontAtlas";
             texture_desc.m_width = Width;
             texture_desc.m_height = Weight;
             texture_desc.m_depth = 1;

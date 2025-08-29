@@ -373,7 +373,7 @@ public:
 
     struct ImageData
     {
-        const char* name = nullptr;
+        const char8_t* name = nullptr;
         int width = 0;
         int height = 0;
         int num_components = 0;

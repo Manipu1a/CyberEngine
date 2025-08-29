@@ -50,7 +50,7 @@ namespace Cyber
             /// Pointer to native texture handle if the texture does not own underlying resource
             void* m_pNativeHandle;
             /// Debug name used in gpu profile
-            const char* m_name;
+            const char8_t* m_name;
             uint32_t m_width;
             uint32_t m_height;
             uint32_t m_depth;

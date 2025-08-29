@@ -193,14 +193,14 @@ namespace Cyber
             attachment_ref[1].m_loadAction = LOAD_ACTION_CLEAR;
             attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
 
             attachment_ref[2].m_attachmentIndex = 2;
             attachment_ref[2].m_sampleCount = SAMPLE_COUNT_1;
             attachment_ref[2].m_loadAction = LOAD_ACTION_CLEAR;
             attachment_ref[2].m_storeAction = STORE_ACTION_STORE;
             attachment_ref[2].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_ref[2].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[2].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
 
             subpass_desc[0].m_name = u8"Shadow Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
@@ -228,7 +228,7 @@ namespace Cyber
             auto& scene_target = renderer->get_scene_target(0);
             auto& depth_rt_desc = scene_target.depth_buffer->get_create_desc();
             RenderObject::TextureCreateDesc depth_buffer_desc;
-            depth_buffer_desc.m_name = "DepthBuffer";
+            depth_buffer_desc.m_name = u8"DepthBuffer";
             depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
             depth_buffer_desc.m_width = depth_rt_desc.m_width;
             depth_buffer_desc.m_height = depth_rt_desc.m_height;

@@ -93,7 +93,7 @@ namespace Cyber
             for(uint32_t i = 0;i < MAX_FRAMES_IN_FLIGHT; ++i)
             {
                 RenderObject::TextureCreateDesc color_buffer_desc;
-                color_buffer_desc.m_name = "ColorBuffer";
+                color_buffer_desc.m_name = u8"ColorBuffer";
                 color_buffer_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
                 color_buffer_desc.m_width = chain_desc.m_width;
                 color_buffer_desc.m_height = chain_desc.m_height;
@@ -108,7 +108,7 @@ namespace Cyber
                 scene_target[i].color_buffer = m_pRenderDevice->create_texture(color_buffer_desc);
 
                 RenderObject::TextureCreateDesc depth_buffer_desc;
-                depth_buffer_desc.m_name = "DepthBuffer";
+                depth_buffer_desc.m_name = u8"DepthBuffer";
                 depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
                 depth_buffer_desc.m_width = chain_desc.m_width;
                 depth_buffer_desc.m_height = chain_desc.m_height;

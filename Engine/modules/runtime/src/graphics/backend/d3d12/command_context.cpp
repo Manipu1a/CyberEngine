@@ -144,7 +144,10 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RES
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& transition_barrier)
 {
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
-    GRAPHICS_RESOURCE_STATE current_state = transition_barrier.src_state;
+    GRAPHICS_RESOURCE_STATE Debug = texture.get_new_state();
+
+    GRAPHICS_RESOURCE_STATE current_state = transition_barrier.src_state != GRAPHICS_RESOURCE_STATE_UNKNOWN ? 
+                                            transition_barrier.src_state : texture.get_new_state();
     GRAPHICS_RESOURCE_STATE expected_state = transition_barrier.dst_state;
 
     if(current_state == transition_barrier.dst_state)

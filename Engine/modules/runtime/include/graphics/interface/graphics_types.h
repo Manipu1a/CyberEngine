@@ -1492,12 +1492,14 @@ namespace Cyber
     struct CYBER_GRAPHICS_API TextureBarrier
     {
         TextureBarrier()
-            : texture(nullptr), src_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), dst_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), queue_acquire(0), queue_release(0), subresource_barrier(0), mip_level(0), array_layer(0)
+            : texture(nullptr), src_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), dst_state(GRAPHICS_RESOURCE_STATE_UNKNOWN), queue_acquire(0), queue_release(0), subresource_barrier(0)
+            , mip_level(0), array_layer(0), d3d12{0, 0}
         {
         }
 
         TextureBarrier(RenderObject::ITexture* in_texture, GRAPHICS_RESOURCE_STATE from, GRAPHICS_RESOURCE_STATE to)
             : texture(in_texture), src_state(from), dst_state(to), queue_acquire(0), queue_release(0), subresource_barrier(0)
+            , mip_level(0), array_layer(0), d3d12{0, 0}
         {
         }
 

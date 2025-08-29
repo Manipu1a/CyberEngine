@@ -129,11 +129,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
             Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
             Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
             
-            // Transition from initial state to render target state
-            if (attachmentRef.m_initialState != GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
-            {
-                curr_command_context->transition_resource(*tex, TextureBarrier{tex, attachmentRef.m_initialState, GRAPHICS_RESOURCE_STATE_RENDER_TARGET});
-            }
+            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_initialState});
         }
         
         // Transition depth attachment
@@ -146,9 +142,9 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
             Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
             
             // Transition from initial state to depth write state
-            if (attachmentRef.m_initialState != GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
+            //if (attachmentRef.m_initialState != GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
             {
-                curr_command_context->transition_resource(*tex, TextureBarrier{tex, attachmentRef.m_initialState, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE});
+                curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_initialState});
             }
         }
     }
@@ -286,7 +282,7 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
                     Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
                     
                     // Transition to render target state
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, nextAttachmentRef.m_initialState, GRAPHICS_RESOURCE_STATE_RENDER_TARGET});
+                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, nextAttachmentRef.m_initialState});
                 }
             }
             
@@ -307,7 +303,7 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
                     Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
                     
                     // Transition to depth write state
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, nextAttachmentRef.m_initialState, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE});
+                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE});
                 }
             }
         }
@@ -348,11 +344,7 @@ void DeviceContext_D3D12_Impl::cmd_end_render_pass()
             Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
             Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
             
-            // Transition from render target state to final state
-            if (attachmentRef.m_finalState != GRAPHICS_RESOURCE_STATE_RENDER_TARGET)
-            {
-                curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_RENDER_TARGET, attachmentRef.m_finalState});
-            }
+            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_finalState});
         }
         
         // Transition depth attachment to final state
@@ -365,10 +357,7 @@ void DeviceContext_D3D12_Impl::cmd_end_render_pass()
             Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
             
             // Transition from depth write state to final state
-            if (attachmentRef.m_finalState != GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
-            {
-                curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE, attachmentRef.m_finalState});
-            }
+            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_finalState});
         }
     }
 }

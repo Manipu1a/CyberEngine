@@ -462,6 +462,7 @@ void Model::load_textures(RenderObject::IRenderDevice* render_device, const tiny
         image_data.file_format = (gltf_image.width < 0 && gltf_image.height < 0) ? static_cast<TextureLoader::IMAGE_FILE_FORMAT>(gltf_image.pixel_type) : TextureLoader::IMAGE_FILE_FORMAT::IMAGE_FILE_FORMAT_UNKNOWN;
         image_data.pData = gltf_image.image.data();
         image_data.data_size = gltf_image.image.size();
+        image_data.name = reinterpret_cast<const char8_t*>(gltf_image.uri.c_str());
 
         add_texture(render_device, image_data, gltf_texture.sampler);
     }
