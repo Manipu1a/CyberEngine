@@ -44,7 +44,7 @@ namespace Cyber
 
             void create_resource();
             void create_ui();
-            void draw_ui();
+            virtual void draw_ui(ImGuiContext* in_imgui_context) override;
             void finalize();
 
         protected:
@@ -61,11 +61,15 @@ namespace Cyber
             RenderObject::ITexture_View* test_texture_view = nullptr;
             RenderObject::IBuffer* vertex_buffer = nullptr;
             RenderObject::IBuffer* index_buffer = nullptr;
-            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
-
-            float3 LightDirection = { 0.577f, -0.577f, 0.577f };
-            float3 LightColor = { 1.0f, 1.0f, 1.0f };
+            RenderObject::IBuffer* plane_vertex_buffer = nullptr;
+            RenderObject::IBuffer* plane_index_buffer = nullptr;
             
+            RenderObject::IBuffer* shadow_constant_buffer = nullptr;
+            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
+            RenderObject::IBuffer* plane_shadow_constant_buffer = nullptr;
+            RenderObject::IBuffer* plane_vertex_constant_buffer = nullptr;
+            float3 light_direction = { 0.577f, -0.577f, 0.577f };
+            float3 light_color = { 1.0f, 1.0f, 1.0f };
         };
     }
 

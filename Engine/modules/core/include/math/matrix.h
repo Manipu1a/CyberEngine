@@ -493,6 +493,30 @@ struct Matrix4x4
 
         return inv;
     }
+    static Matrix4x4 view_from_basis(const Vector3<T>& f3x, const Vector3<T>& f3y, const Vector3<T>& f3z)
+    {
+        return Matrix4x4
+        {
+            f3x.x, f3y.x, f3z.x, 0,
+            f3x.y, f3y.y, f3z.y, 0,
+            f3x.z, f3y.z, f3z.z, 0,
+            0,     0,     0,     1
+        };
+    }
+
+    static Matrix4x4 ortho_off_center(T left, T right, T bottom, T top, T znear, T zfar)
+    {
+        T rl = 1.0f / (right - left);
+        T tb = 1.0f / (top - bottom);
+        T fn = 1.0f / (zfar - znear);
+
+        return Matrix4x4(
+            2.0f * rl, 0, 0, 0,
+            0, 2.0f * tb, 0, 0,
+            0, 0, -2.0f * fn, 0,
+            -(right + left) * rl, -(top + bottom) * tb, -(zfar + znear) * fn, 1
+        );
+    }
 
     static Matrix4x4 look_at(const Vector3<T>& eye, const Vector3<T>& target, const Vector3<T>& up)
     {
