@@ -26,6 +26,13 @@ namespace Cyber
                 float3 normal;
                 float2 uv;
             };
+            
+            struct ViewConstants
+            {
+                float4x4 ModelMatrix;
+                float4x4 ViewProjectionMatrix;
+                float4x4 ShadowMatrix;
+            };
 
         public:
             ShadowApp();

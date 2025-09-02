@@ -23,7 +23,7 @@ namespace Cyber
             
             if(texture_view == nullptr)
             {
-                
+                cyber_error("Failed to create texture view");
                 return nullptr;
             }
 

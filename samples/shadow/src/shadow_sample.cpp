@@ -61,13 +61,7 @@ namespace Cyber
 
             float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
             float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
-            float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* const_ptr = (float4x4*)const_resource;
-            *const_ptr = world_view_proj_matrix;
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
+            float4x4 view_proj_matrix = model_matrix * view_matrix * projection_matrix;
 
             // Calculate shadow projection matrix from directional light
             float3 normalized_light_dir = normalize(light_direction);
@@ -110,6 +104,16 @@ namespace Cyber
 
             // Shadow MVP matrix for cube: transforms from world space to light's clip space
             float4x4 shadow_mvp_matrix = model_matrix * light_view_matrix * shadow_projection_matrix;
+            float4x4 shadow_view_proj_matrix = light_view_matrix * shadow_projection_matrix;
+            
+            // map vertex constant buffer
+            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            ViewConstants* const_ptr = (ViewConstants*)const_resource;
+            const_ptr->ModelMatrix = model_matrix.transpose();
+            const_ptr->ViewProjectionMatrix = view_proj_matrix.transpose();
+            const_ptr->ShadowMatrix = shadow_view_proj_matrix.transpose();
+            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
+            vertex_constant_buffer->set_buffer_size(sizeof(ViewConstants));
 
             void* shadow_resource = render_device->map_buffer(shadow_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
             float4x4* shadow_ptr = (float4x4*)shadow_resource;
@@ -119,15 +123,17 @@ namespace Cyber
             
             // Plane transformation matrices
             float4x4 plane_model_matrix = float4x4::Identity(); // Plane is already positioned at y=-2
-            float4x4 plane_world_view_proj_matrix = plane_model_matrix * view_matrix * projection_matrix;
-            
+            float4x4 plane_view_proj_matrix = plane_model_matrix * view_matrix * projection_matrix;
+
             // Map plane vertex constant buffer
             void* plane_const_resource = render_device->map_buffer(plane_vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* plane_const_ptr = (float4x4*)plane_const_resource;
-            *plane_const_ptr = plane_world_view_proj_matrix;
+            ViewConstants* plane_const_ptr = (ViewConstants*)plane_const_resource;
+            plane_const_ptr->ModelMatrix = plane_model_matrix.transpose();
+            plane_const_ptr->ViewProjectionMatrix = plane_view_proj_matrix.transpose();
+            plane_const_ptr->ShadowMatrix = shadow_view_proj_matrix.transpose();
             render_device->unmap_buffer(plane_vertex_constant_buffer, MAP_WRITE);
-            plane_vertex_constant_buffer->set_buffer_size(sizeof(float4x4));
-            
+            plane_vertex_constant_buffer->set_buffer_size(sizeof(ViewConstants));
+
             // Shadow MVP matrix for plane
             float4x4 plane_shadow_mvp_matrix = plane_model_matrix * light_view_matrix * shadow_projection_matrix;
             
@@ -227,7 +233,6 @@ namespace Cyber
                 (int32_t)back_buffer->get_create_desc().m_width, 
                 (int32_t)back_buffer->get_create_desc().m_height
             };
-            
             device_context->render_encoder_set_scissor( 1, &scene_scissor);
             // Resources are already in correct states within render pass - no barriers needed
             device_context->render_encoder_bind_pipeline( pipeline);
@@ -238,17 +243,22 @@ namespace Cyber
             device_context->render_encoder_bind_vertex_buffer(1, cube_vbs, cube_strides, nullptr);
             device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
+            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, vertex_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+            auto shadow_depth_srv = shadow_depth->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(36, 0, 0);
             
-            // Draw plane
+            // Draw plane 
             RenderObject::IBuffer* plane_vbs2[] = { plane_vertex_buffer };
             uint32_t plane_strides2[] = { sizeof(CubeVertex) };
             device_context->render_encoder_bind_vertex_buffer(1, plane_vbs2, plane_strides2, nullptr);
             device_context->render_encoder_bind_index_buffer(plane_index_buffer, sizeof(uint32_t), 0);
             device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, plane_vertex_constant_buffer);
+            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, plane_vertex_constant_buffer);
             device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
             device_context->prepare_for_rendering();
             device_context->render_encoder_draw_indexed(6, 0, 0);
             
@@ -329,7 +339,7 @@ namespace Cyber
             auto& scene_target = renderer->get_scene_target(0);
             auto& depth_rt_desc = scene_target.depth_buffer->get_create_desc();
             RenderObject::TextureCreateDesc depth_buffer_desc;
-            depth_buffer_desc.m_name = u8"DepthBuffer";
+            depth_buffer_desc.m_name = u8"ShadowDepthBuffer";
             depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
             depth_buffer_desc.m_width = 512;
             depth_buffer_desc.m_height = 512;
@@ -338,10 +348,9 @@ namespace Cyber
             depth_buffer_desc.m_mipLevels = 1;
             depth_buffer_desc.m_dimension = TEX_DIMENSION_2D;
             depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
+            depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
             depth_buffer_desc.m_pNativeHandle = nullptr;
             shadow_depth = render_device->create_texture(depth_buffer_desc);
-            //renderer->set_render_pass(render_pass);
         }
 
         void ShadowApp::create_resource()
@@ -437,17 +446,19 @@ namespace Cyber
             index_buffer_data.data_size = index_count * sizeof(uint32_t);
             index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
 
-            buffer_desc.size = sizeof(float4x4);
+            buffer_desc.size = sizeof(ViewConstants);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
             vertex_constant_buffer = render_device->create_buffer(buffer_desc);
 
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
+            buffer_desc.size = sizeof(float4x4);
             shadow_constant_buffer = render_device->create_buffer(buffer_desc);
             
             // Create plane constant buffers
+            buffer_desc.size = sizeof(ViewConstants);
             plane_vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+            buffer_desc.size = sizeof(float4x4);
             plane_shadow_constant_buffer = render_device->create_buffer(buffer_desc);
 
             auto& materials = model_loader->get_materials();

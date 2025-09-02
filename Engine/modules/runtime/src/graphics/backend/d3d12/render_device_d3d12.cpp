@@ -656,7 +656,7 @@ namespace Cyber
             }
             if((Desc.m_bindFlags & (GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE | GRAPHICS_RESOURCE_BIND_INPUT_ATTACHMENT)) != 0 && (Desc.m_bindFlags & GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL) != 0)
             {
-                d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
+                //d3dTexDesc.Flags |= D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE;
             }
             // Decide resource states
             if(Desc.m_initializeState & GRAPHICS_RESOURCE_STATE_RENDER_TARGET)

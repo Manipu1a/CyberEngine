@@ -235,6 +235,10 @@ namespace Cyber
                     {
                         dim = TEX_DIMENSION_2D_ARRAY;
                     }
+                    if(view_desc.format == TEX_FORMAT_D32_FLOAT && view_type == TEXTURE_VIEW_TYPE::TEXTURE_VIEW_SHADER_RESOURCE)
+                    {
+                        view_desc.format = TEX_FORMAT_R32_FLOAT;
+                    }
                     view_desc.dimension = dim;
                     view_desc.baseArrayLayer = 0;
                     view_desc.arrayLayerCount = 1;
