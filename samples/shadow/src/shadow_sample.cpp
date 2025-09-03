@@ -106,42 +106,20 @@ namespace Cyber
             float4x4 shadow_mvp_matrix = model_matrix * light_view_matrix * shadow_projection_matrix;
             float4x4 shadow_view_proj_matrix = light_view_matrix * shadow_projection_matrix;
             
-            // map vertex constant buffer
-            void* const_resource = render_device->map_buffer(vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            ViewConstants* const_ptr = (ViewConstants*)const_resource;
-            const_ptr->ModelMatrix = model_matrix.transpose();
-            const_ptr->ViewProjectionMatrix = view_proj_matrix.transpose();
-            const_ptr->ShadowMatrix = shadow_view_proj_matrix.transpose();
-            render_device->unmap_buffer(vertex_constant_buffer, MAP_WRITE);
-            vertex_constant_buffer->set_buffer_size(sizeof(ViewConstants));
-
-            void* shadow_resource = render_device->map_buffer(shadow_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* shadow_ptr = (float4x4*)shadow_resource;
-            *shadow_ptr = shadow_mvp_matrix;
-            render_device->unmap_buffer(shadow_constant_buffer, MAP_WRITE);
-            shadow_constant_buffer->set_buffer_size(sizeof(float4x4));
+            // Update cube transform
+            cube_item.model_matrix = model_matrix;
             
-            // Plane transformation matrices
-            float4x4 plane_model_matrix = float4x4::Identity(); // Plane is already positioned at y=-2
-            float4x4 plane_view_proj_matrix = plane_model_matrix * view_matrix * projection_matrix;
-
-            // Map plane vertex constant buffer
-            void* plane_const_resource = render_device->map_buffer(plane_vertex_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            ViewConstants* plane_const_ptr = (ViewConstants*)plane_const_resource;
-            plane_const_ptr->ModelMatrix = plane_model_matrix.transpose();
-            plane_const_ptr->ViewProjectionMatrix = plane_view_proj_matrix.transpose();
-            plane_const_ptr->ShadowMatrix = shadow_view_proj_matrix.transpose();
-            render_device->unmap_buffer(plane_vertex_constant_buffer, MAP_WRITE);
-            plane_vertex_constant_buffer->set_buffer_size(sizeof(ViewConstants));
-
-            // Shadow MVP matrix for plane
-            float4x4 plane_shadow_mvp_matrix = plane_model_matrix * light_view_matrix * shadow_projection_matrix;
+            // Update light constants
+            void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            LightConstants* light_ptr = (LightConstants*)light_resource;
+            light_ptr->light_direction = float4(-light_direction, 0.0f);
+            light_ptr->light_color = float4(light_color, 1.0f);
+            render_device->unmap_buffer(light_constant_buffer, MAP_WRITE);
+            light_constant_buffer->set_buffer_size(sizeof(LightConstants));
             
-            void* plane_shadow_resource = render_device->map_buffer(plane_shadow_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* plane_shadow_ptr = (float4x4*)plane_shadow_resource;
-            *plane_shadow_ptr = plane_shadow_mvp_matrix;
-            render_device->unmap_buffer(plane_shadow_constant_buffer, MAP_WRITE);
-            plane_shadow_constant_buffer->set_buffer_size(sizeof(float4x4));
+            // Update render items' constants
+            update_render_item_constants(cube_item, view_matrix * projection_matrix, shadow_view_proj_matrix);
+            update_render_item_constants(plane_item, view_matrix * projection_matrix, shadow_view_proj_matrix);
 
             raster_draw();
         }
@@ -201,27 +179,11 @@ namespace Cyber
             };
             
             device_context->render_encoder_set_scissor( 1, &scissor);
-            RenderObject::IBuffer* vertex_buffers[] = { vertex_buffer };
-            uint32_t strides[] = { sizeof(CubeVertex) };
-            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
-
             device_context->render_encoder_bind_pipeline(shadow_pipeline);
             
-            // Draw cube shadow
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, shadow_constant_buffer);
-            device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(36, 0, 0);
+            // Draw shadows for all render items
+            draw_render_item(device_context, cube_item, true);
             
-            // Draw plane shadow
-            RenderObject::IBuffer* plane_vbs[] = { plane_vertex_buffer };
-            uint32_t plane_strides[] = { sizeof(CubeVertex) };
-            device_context->render_encoder_bind_vertex_buffer(1, plane_vbs, plane_strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(plane_index_buffer, sizeof(uint32_t), 0);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, plane_shadow_constant_buffer);
-            device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(6, 0, 0);
-
             // Base Pass
             device_context->cmd_next_sub_pass();
             viewport.width = back_buffer->get_create_desc().m_width;
@@ -237,30 +199,9 @@ namespace Cyber
             // Resources are already in correct states within render pass - no barriers needed
             device_context->render_encoder_bind_pipeline( pipeline);
             
-            // Draw cube
-            RenderObject::IBuffer* cube_vbs[] = { vertex_buffer };
-            uint32_t cube_strides[] = { sizeof(CubeVertex) };
-            device_context->render_encoder_bind_vertex_buffer(1, cube_vbs, cube_strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(index_buffer, sizeof(uint32_t), 0);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, vertex_constant_buffer);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, vertex_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
-            auto shadow_depth_srv = shadow_depth->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
-            device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(36, 0, 0);
-            
-            // Draw plane 
-            RenderObject::IBuffer* plane_vbs2[] = { plane_vertex_buffer };
-            uint32_t plane_strides2[] = { sizeof(CubeVertex) };
-            device_context->render_encoder_bind_vertex_buffer(1, plane_vbs2, plane_strides2, nullptr);
-            device_context->render_encoder_bind_index_buffer(plane_index_buffer, sizeof(uint32_t), 0);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, plane_vertex_constant_buffer);
-            device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, plane_vertex_constant_buffer);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
-            device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
-            device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(6, 0, 0);
+            // Draw all render items
+            draw_render_item(device_context, cube_item, false);
+            draw_render_item(device_context, plane_item, false);
             
             device_context->cmd_end_render_pass();
             // EndRenderPass will handle transitions back to final state automatically
@@ -381,7 +322,7 @@ namespace Cyber
             RenderObject::BufferData plane_vertex_data = {};
             plane_vertex_data.data = plane_verts;
             plane_vertex_data.data_size = 4 * sizeof(CubeVertex);
-            plane_vertex_buffer = render_device->create_buffer(plane_vb_desc, &plane_vertex_data);
+            plane_item.vertex_buffer = render_device->create_buffer(plane_vb_desc, &plane_vertex_data);
             
             // Create plane index buffer
             RenderObject::BufferCreateDesc plane_ib_desc = {};
@@ -392,7 +333,8 @@ namespace Cyber
             RenderObject::BufferData plane_index_data = {};
             plane_index_data.data = plane_indices;
             plane_index_data.data_size = 6 * sizeof(uint32_t);
-            plane_index_buffer = render_device->create_buffer(plane_ib_desc, &plane_index_data);
+            plane_item.index_buffer = render_device->create_buffer(plane_ib_desc, &plane_index_data);
+            plane_item.index_count = 6;
             
             // load model
             ModelLoader::ModelCreateInfo create_info;
@@ -417,7 +359,7 @@ namespace Cyber
             for(size_t i = 0; i < vertex_count; ++i)
             {
                 cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
-                cube_verts[i].normal = float3(0.0f, 0.0f, 0.0f); // Default normal, can be adjusted based on model data
+                cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data
                 cube_verts[i].uv = model_verts[i].uv0;
             }
 
@@ -435,7 +377,7 @@ namespace Cyber
             RenderObject::BufferData vertex_buffer_data = {};
             vertex_buffer_data.data = cube_verts;
             vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
-            vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
+            cube_item.vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = index_count * sizeof(uint32_t);
@@ -444,22 +386,26 @@ namespace Cyber
             RenderObject::BufferData index_buffer_data = {};
             index_buffer_data.data = cube_indices;
             index_buffer_data.data_size = index_count * sizeof(uint32_t);
-            index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+            cube_item.index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+            cube_item.index_count = index_count;
 
             buffer_desc.size = sizeof(ViewConstants);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+            cube_item.constant_buffer = render_device->create_buffer(buffer_desc);
 
             buffer_desc.size = sizeof(float4x4);
-            shadow_constant_buffer = render_device->create_buffer(buffer_desc);
+            cube_item.shadow_constant_buffer = render_device->create_buffer(buffer_desc);
             
             // Create plane constant buffers
             buffer_desc.size = sizeof(ViewConstants);
-            plane_vertex_constant_buffer = render_device->create_buffer(buffer_desc);
+            plane_item.constant_buffer = render_device->create_buffer(buffer_desc);
             buffer_desc.size = sizeof(float4x4);
-            plane_shadow_constant_buffer = render_device->create_buffer(buffer_desc);
+            plane_item.shadow_constant_buffer = render_device->create_buffer(buffer_desc);
+
+            buffer_desc.size = sizeof(LightConstants);
+            light_constant_buffer = render_device->create_buffer(buffer_desc);
 
             auto& materials = model_loader->get_materials();
             // create texture
@@ -649,6 +595,63 @@ namespace Cyber
             shadow_pipeline = render_device->create_render_pipeline(rp_desc);
 
             vs_shader->free();
+        }
+
+        void ShadowApp::draw_render_item(RenderObject::IDeviceContext* device_context, const RenderItem& item, bool is_shadow_pass)
+        {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+            
+            // Bind vertex and index buffers
+            RenderObject::IBuffer* vertex_buffers[] = { item.vertex_buffer };
+            uint32_t strides[] = { item.vertex_stride };
+            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
+            device_context->render_encoder_bind_index_buffer(item.index_buffer, sizeof(uint32_t), 0);
+            
+            if (is_shadow_pass)
+            {
+                // Shadow pass only needs shadow matrix
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.shadow_constant_buffer);
+            }
+            else
+            {
+                // Main render pass needs full constants
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 1, item.constant_buffer);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+                auto shadow_depth_srv = shadow_depth->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
+            }
+            
+            device_context->prepare_for_rendering();
+            device_context->render_encoder_draw_indexed(item.index_count, 0, 0);
+        }
+        
+        void ShadowApp::update_render_item_constants(const RenderItem& item, const float4x4& view_proj_matrix, const float4x4& shadow_view_proj_matrix)
+        {
+            auto renderer = m_pApp->get_renderer();
+            auto render_device = renderer->get_render_device();
+            
+            // Update main constants
+            float4x4 mvp_matrix = item.model_matrix * view_proj_matrix;
+            
+            void* const_resource = render_device->map_buffer(item.constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            ViewConstants* const_ptr = (ViewConstants*)const_resource;
+            const_ptr->model_matrix = item.model_matrix.transpose();
+            const_ptr->view_projection_matrix = mvp_matrix.transpose();
+            const_ptr->shadow_matrix = shadow_view_proj_matrix.transpose();
+            render_device->unmap_buffer(item.constant_buffer, MAP_WRITE);
+            item.constant_buffer->set_buffer_size(sizeof(ViewConstants));
+            
+            // Update shadow constants
+            float4x4 shadow_mvp_matrix = item.model_matrix * shadow_view_proj_matrix;
+            
+            void* shadow_resource = render_device->map_buffer(item.shadow_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
+            float4x4* shadow_ptr = (float4x4*)shadow_resource;
+            *shadow_ptr = shadow_mvp_matrix;
+            render_device->unmap_buffer(item.shadow_constant_buffer, MAP_WRITE);
+            item.shadow_constant_buffer->set_buffer_size(sizeof(float4x4));
         }
 
         void ShadowApp::finalize()

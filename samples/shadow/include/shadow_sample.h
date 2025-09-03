@@ -26,12 +26,28 @@ namespace Cyber
                 float3 normal;
                 float2 uv;
             };
-            
             struct ViewConstants
             {
-                float4x4 ModelMatrix;
-                float4x4 ViewProjectionMatrix;
-                float4x4 ShadowMatrix;
+                float4x4 model_matrix;
+                float4x4 view_projection_matrix;
+                float4x4 shadow_matrix;
+            };
+
+            struct LightConstants
+            {
+                float4 light_direction;
+                float4 light_color;
+            };
+
+            struct RenderItem
+            {
+                RenderObject::IBuffer* vertex_buffer = nullptr;
+                RenderObject::IBuffer* index_buffer = nullptr;
+                RenderObject::IBuffer* constant_buffer = nullptr;
+                RenderObject::IBuffer* shadow_constant_buffer = nullptr;
+                uint32_t index_count = 0;
+                uint32_t vertex_stride = sizeof(CubeVertex);
+                float4x4 model_matrix = float4x4::Identity();
             };
 
         public:
@@ -54,6 +70,10 @@ namespace Cyber
             virtual void draw_ui(ImGuiContext* in_imgui_context) override;
             void finalize();
 
+        private:
+            void draw_render_item(RenderObject::IDeviceContext* device_context, const RenderItem& item, bool is_shadow_pass = false);
+            void update_render_item_constants(const RenderItem& item, const float4x4& view_proj_matrix, const float4x4& shadow_view_proj_matrix);
+
         protected:
             RenderObject::IRootSignature* root_signature = nullptr;
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
@@ -66,15 +86,11 @@ namespace Cyber
             RenderObject::ITexture* shadow_depth = nullptr;
             
             RenderObject::ITexture_View* test_texture_view = nullptr;
-            RenderObject::IBuffer* vertex_buffer = nullptr;
-            RenderObject::IBuffer* index_buffer = nullptr;
-            RenderObject::IBuffer* plane_vertex_buffer = nullptr;
-            RenderObject::IBuffer* plane_index_buffer = nullptr;
+            RenderObject::IBuffer* light_constant_buffer = nullptr;
+
+            RenderItem cube_item;
+            RenderItem plane_item;
             
-            RenderObject::IBuffer* shadow_constant_buffer = nullptr;
-            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
-            RenderObject::IBuffer* plane_shadow_constant_buffer = nullptr;
-            RenderObject::IBuffer* plane_vertex_constant_buffer = nullptr;
             float3 light_direction = { 0.577f, -0.577f, 0.577f };
             float3 light_color = { 1.0f, 1.0f, 1.0f };
         };

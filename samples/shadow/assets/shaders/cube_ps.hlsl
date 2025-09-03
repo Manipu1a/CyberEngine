@@ -18,8 +18,8 @@ SamplerState Texture_sampler;
 
 cbuffer LightingConstants
 {
+    float4 LightDirection; // Direction of the light in world space
     float4 LightColor; // Color of the light
-    float4 LightPosition; // Position of the light in world space
 };
 
 cbuffer ViewConstants
@@ -69,7 +69,7 @@ void PSMain(in  PSInput  PSIn,
 {
     float4 col = Texture.Sample(Texture_sampler, PSIn.UV);
     
-    float3 lightDir = normalize(LightPosition.xyz - PSIn.WorldPos.xyz);
+    float3 lightDir = normalize(LightDirection.xyz);
     float3 normal = normalize(PSIn.Normal);
     
     float NdotL = max(dot(normal, lightDir), 0.0);
