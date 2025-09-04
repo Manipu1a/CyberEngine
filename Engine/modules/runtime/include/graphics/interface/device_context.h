@@ -4,6 +4,7 @@
 #include "frame_buffer.h"
 #include "descriptor_set.h"
 #include "render_pipeline.h"
+#include "texture_view.h"
 #include "render_pass.h"
 
 namespace Cyber
@@ -154,11 +155,44 @@ namespace Cyber
                 }
                 depth_stencil_clear_value = beginRenderPassDesc.depth_stencil_clear_value;
                 TransitionMode = beginRenderPassDesc.TransitionMode;
+
+                if(TransitionMode != RESOURCE_STATE_TRANSITION_MODE_NONE)
+                {
+                    const auto& render_pass_desc =m_pRenderPass->get_create_desc();
+                    for(uint32_t i = 0; i < render_pass_desc.m_attachmentCount; ++i)
+                    {
+                        auto view = m_pFrameBuffer->get_attachment(i);
+                        const auto& attachment_desc = render_pass_desc.m_pAttachments[i];
+                        auto tex = view->get_texture();
+                        GRAPHICS_RESOURCE_STATE required_state = attachment_desc.initial_state;
+                        if(TransitionMode == RESOURCE_STATE_TRANSITION_MODE_TRANSITION)
+                        {
+                            cmd_resource_barrier(tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, required_state);
+                        }
+                        else if(TransitionMode == RESOURCE_STATE_TRANSITION_MODE_VERIFY)
+                        {
+                            
+                        }
+                    }
+                }
             }
 
             virtual void cmd_next_sub_pass() override
             {
                 m_subpassIndex++;
+            }
+
+            virtual void cmd_resource_barrier(ITexture* texture, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) override
+            {
+
+            }
+            virtual void cmd_resource_barrier(IBuffer* buffer, GRAPHICS_RESOURCE_STATE srcState, GRAPHICS_RESOURCE_STATE dstState) override
+            {
+
+            }
+            virtual void cmd_resource_barrier(const ResourceBarrierDesc& barrierDesc) override
+            {
+
             }
 
             virtual void set_frame_buffer(IFrameBuffer* frameBuffer) override

@@ -27,7 +27,7 @@ namespace Cyber
         struct CYBER_GRAPHICS_API ITexture_View : public IDeviceObject
         { 
             virtual const TextureViewCreateDesc& get_create_desc() = 0;
-
+            virtual ITexture* get_texture() = 0;
             virtual void* get_gpu_native_resource() = 0;
             virtual bool operator==(const ITexture_View& other) = 0;
             virtual bool operator!=(const ITexture_View& other) = 0;
@@ -56,6 +56,11 @@ namespace Cyber
                 return m_desc.p_native_resource;
             }
 
+            virtual ITexture* get_texture() override
+            {
+                return m_desc.p_texture;
+            }
+            
             bool operator==(const ITexture_View& other) override
             {
                 const Texture_View* other_view = static_cast<const Texture_View*>(&other);

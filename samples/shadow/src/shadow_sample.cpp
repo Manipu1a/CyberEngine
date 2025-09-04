@@ -279,11 +279,11 @@ namespace Cyber
 
             RenderObject::AttachmentReference color_attachment_ref1[]
             {
-                {0, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE}
+                {0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET}
             };
             RenderObject::AttachmentReference depth_attachment_ref1
             {
-                1, GRAPHICS_RESOURCE_STATE_RENDER_TARGET
+                1, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
             };
             RenderObject::AttachmentReference input_attachment_ref1
             {
