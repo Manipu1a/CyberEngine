@@ -110,45 +110,7 @@ void DeviceContext_D3D12_Impl::cmd_begin_render_pass(const BeginRenderPassAttrib
 {
     TDeviceContextBase::cmd_begin_render_pass( beginRenderPassDesc);
     
-    // Handle resource transitions based on TransitionMode
-    if (TransitionMode == RESOURCE_STATE_TRANSITION_MODE_TRANSITION)
-    {
-        auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_pRenderPass);
-        auto RenderPassDesc = RenderPass->get_create_desc();
-        auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_pFrameBuffer);
-        
-        // Transition all attachments to their required states for the first subpass
-        auto SubPassDesc = RenderPassDesc.m_pSubpasses[0];
-        
-        // Transition color attachments
-        for(uint32_t i = 0; i < SubPassDesc.m_renderTargetCount; ++i)
-        {
-            auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
-            auto attachmentIndex = attachmentRef.m_attachmentIndex;
-            auto view = Framebuffer->get_attachment(attachmentIndex);
-            Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-            Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-            
-            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_initialState});
-        }
-        
-        // Transition depth attachment
-        if (SubPassDesc.m_pDepthStencilAttachment != nullptr)
-        {
-            auto attachmentRef = *SubPassDesc.m_pDepthStencilAttachment;
-            auto attachmentIndex = attachmentRef.m_attachmentIndex;
-            auto view = Framebuffer->get_attachment(attachmentIndex);
-            Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-            Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-            
-            // Transition from initial state to depth write state
-            //if (attachmentRef.m_initialState != GRAPHICS_RESOURCE_STATE_DEPTH_WRITE)
-            {
-                curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_initialState});
-            }
-        }
-    }
-    
+    transition_subpass_attachments(m_subpassIndex);
     commit_subpass_rendertargets();
 }
 
@@ -157,164 +119,13 @@ void DeviceContext_D3D12_Impl::cmd_next_sub_pass()
     curr_command_context->end_render_pass();
     ++state.num_command;
     
-    // Handle resource transitions between subpasses based on TransitionMode
-    if (TransitionMode == RESOURCE_STATE_TRANSITION_MODE_TRANSITION)
-    {
-        auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_pRenderPass);
-        auto RenderPassDesc = RenderPass->get_create_desc();
-        auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_pFrameBuffer);
-        
-        // Get current and next subpass
-        uint32_t prevSubpassIndex = m_subpassIndex;
-        uint32_t nextSubpassIndex = m_subpassIndex + 1;
-        
-        if (nextSubpassIndex < RenderPassDesc.m_subpassCount)
-        {
-            auto PrevSubPassDesc = RenderPassDesc.m_pSubpasses[prevSubpassIndex];
-            auto NextSubPassDesc = RenderPassDesc.m_pSubpasses[nextSubpassIndex];
-            
-            // Transition resources from previous subpass states to next subpass states
-            // Handle color attachments that were render targets in previous subpass
-            for(uint32_t i = 0; i < PrevSubPassDesc.m_renderTargetCount; ++i)
-            {
-                auto prevAttachmentRef = PrevSubPassDesc.m_pRenderTargetAttachments[i];
-                auto attachmentIndex = prevAttachmentRef.m_attachmentIndex;
-                auto view = Framebuffer->get_attachment(attachmentIndex);
-                Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-                
-                // Check if this attachment is used in the next subpass
-                bool usedAsRenderTarget = false;
-                bool usedAsInput = false;
-                bool usedAsDepth = false;
-                
-                // Check if used as render target in next subpass
-                for(uint32_t j = 0; j < NextSubPassDesc.m_renderTargetCount; ++j)
-                {
-                    if (NextSubPassDesc.m_pRenderTargetAttachments[j].m_attachmentIndex == attachmentIndex)
-                    {
-                        usedAsRenderTarget = true;
-                        break;
-                    }
-                }
-                
-                // Check if used as input attachment in next subpass
-                for(uint32_t j = 0; j < NextSubPassDesc.m_inputAttachmentCount; ++j)
-                {
-                    if (NextSubPassDesc.m_pInputAttachments[j].m_attachmentIndex == attachmentIndex)
-                    {
-                        usedAsInput = true;
-                        break;
-                    }
-                }
-                
-                // Transition if needed
-                if (usedAsInput && !usedAsRenderTarget)
-                {
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_RENDER_TARGET, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE});
-                }
-                else if (!usedAsRenderTarget && !usedAsInput)
-                {
-                    // Resource no longer used, transition to its final state if this is the last subpass using it
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_RENDER_TARGET, prevAttachmentRef.m_finalState});
-                }
-            }
-            
-            // Handle previous depth attachment
-            if (PrevSubPassDesc.m_pDepthStencilAttachment != nullptr)
-            {
-                auto prevAttachmentRef = *PrevSubPassDesc.m_pDepthStencilAttachment;
-                auto attachmentIndex = prevAttachmentRef.m_attachmentIndex;
-                auto view = Framebuffer->get_attachment(attachmentIndex);
-                Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-                
-                // Check if still used as depth in next subpass
-                bool stillUsedAsDepth = (NextSubPassDesc.m_pDepthStencilAttachment != nullptr &&
-                                        NextSubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex == attachmentIndex);
-                
-                if (!stillUsedAsDepth)
-                {
-                    // Check if used as input attachment
-                    bool usedAsInput = false;
-                    for(uint32_t j = 0; j < NextSubPassDesc.m_inputAttachmentCount; ++j)
-                    {
-                        if (NextSubPassDesc.m_pInputAttachments[j].m_attachmentIndex == attachmentIndex)
-                        {
-                            usedAsInput = true;
-                            break;
-                        }
-                    }
-                    
-                    if (usedAsInput)
-                    {
-                        curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE});
-                    }
-                    else
-                    {
-                        curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE, prevAttachmentRef.m_finalState});
-                    }
-                }
-            }
-            
-            // Handle new attachments in next subpass
-            // Transition new render targets
-            for(uint32_t i = 0; i < NextSubPassDesc.m_renderTargetCount; ++i)
-            {
-                auto nextAttachmentRef = NextSubPassDesc.m_pRenderTargetAttachments[i];
-                auto attachmentIndex = nextAttachmentRef.m_attachmentIndex;
-                
-                // Check if this was already a render target in previous subpass
-                bool wasRenderTarget = false;
-                for(uint32_t j = 0; j < PrevSubPassDesc.m_renderTargetCount; ++j)
-                {
-                    if (PrevSubPassDesc.m_pRenderTargetAttachments[j].m_attachmentIndex == attachmentIndex)
-                    {
-                        wasRenderTarget = true;
-                        break;
-                    }
-                }
-                
-                if (!wasRenderTarget)
-                {
-                    auto view = Framebuffer->get_attachment(attachmentIndex);
-                    Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-                    Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-                    
-                    // Transition to render target state
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, nextAttachmentRef.m_initialState});
-                }
-            }
-            
-            // Handle new depth attachment
-            if (NextSubPassDesc.m_pDepthStencilAttachment != nullptr)
-            {
-                auto nextAttachmentRef = *NextSubPassDesc.m_pDepthStencilAttachment;
-                auto attachmentIndex = nextAttachmentRef.m_attachmentIndex;
-                
-                // Check if this was already depth in previous subpass
-                bool wasDepth = (PrevSubPassDesc.m_pDepthStencilAttachment != nullptr &&
-                               PrevSubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex == attachmentIndex);
-                
-                if (!wasDepth)
-                {
-                    auto view = Framebuffer->get_attachment(attachmentIndex);
-                    Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-                    Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-                    
-                    // Transition to depth write state
-                    curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE});
-                }
-            }
-        }
-    }
-    
     TDeviceContextBase::cmd_next_sub_pass();
 
     if( m_pRenderPass == nullptr || m_pFrameBuffer == nullptr)
     {
         cyber_assert(false, "RenderPass or FrameBuffer is nullptr!");
     }
+    transition_subpass_attachments(m_subpassIndex);
     commit_subpass_rendertargets();
 }
 
@@ -325,39 +136,39 @@ void DeviceContext_D3D12_Impl::cmd_end_render_pass()
     curr_command_context->end_render_pass();
     ++state.num_command;
     
-    // Handle resource transitions back to final states based on TransitionMode
+    transition_subpass_attachments(m_subpassIndex+1);
+}
+
+void DeviceContext_D3D12_Impl::transition_subpass_attachments(uint32_t subpass_index)
+{
     if (TransitionMode == RESOURCE_STATE_TRANSITION_MODE_TRANSITION)
     {
         auto* RenderPass = static_cast<RenderPass_D3D12_Impl*>(m_pRenderPass);
         auto RenderPassDesc = RenderPass->get_create_desc();
         auto* Framebuffer = static_cast<FrameBuffer_D3D12_Impl*>(m_pFrameBuffer);
         
-        // Get the last subpass to determine final states
-        auto SubPassDesc = RenderPassDesc.m_pSubpasses[m_subpassIndex];
-        
-        // Transition color attachments to their final states
-        for(uint32_t i = 0; i < SubPassDesc.m_renderTargetCount; ++i)
+        for(uint32_t i = 0; i < RenderPassDesc.m_attachmentCount; ++i)
         {
-            auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
-            auto attachmentIndex = attachmentRef.m_attachmentIndex;
-            auto view = Framebuffer->get_attachment(attachmentIndex);
-            Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-            Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-            
-            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_finalState});
-        }
-        
-        // Transition depth attachment to final state
-        if (SubPassDesc.m_pDepthStencilAttachment != nullptr)
-        {
-            auto attachmentRef = *SubPassDesc.m_pDepthStencilAttachment;
-            auto attachmentIndex = attachmentRef.m_attachmentIndex;
-            auto view = Framebuffer->get_attachment(attachmentIndex);
-            Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
-            Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
-            
-            // Transition from depth write state to final state
-            curr_command_context->transition_resource(*tex, TextureBarrier{tex, GRAPHICS_RESOURCE_STATE_UNKNOWN, attachmentRef.m_finalState});
+            auto attachment_desc = RenderPassDesc.m_pAttachments[i];
+
+            auto currentState = subpass_index > 0 ? RenderPass->get_attachment_state(subpass_index - 1, i) : attachment_desc.initial_state;
+            auto desiredState = subpass_index < RenderPassDesc.m_subpassCount ? RenderPass->get_attachment_state(subpass_index, i) : attachment_desc.final_state;
+
+            if (currentState != desiredState)
+            {
+                ResourceBarrierDesc barrierDesc;
+                TextureBarrier textureBarrier;
+                auto view = Framebuffer->get_attachment(i);
+                Texture_View_D3D12_Impl* tex_view = static_cast<Texture_View_D3D12_Impl*>(view);
+                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
+                textureBarrier.texture = tex;
+                textureBarrier.src_state = currentState;
+                textureBarrier.dst_state = desiredState;
+                textureBarrier.d3d12 = {0, 0};
+                barrierDesc.texture_barriers = {textureBarrier};
+
+                transition_resource_state(barrierDesc);
+            }
         }
     }
 }
@@ -739,7 +550,8 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        for(uint32_t i = 0; i < SubPassDesc.m_renderTargetCount; ++i)
        {
            auto attachmentRef = SubPassDesc.m_pRenderTargetAttachments[i];
-           auto attachmentIndex = attachmentRef.m_attachmentIndex;
+           auto attachmentIndex = attachmentRef.attachment_index;
+           auto attachment_desc = RenderPassDesc.m_pAttachments[attachmentIndex];
            auto view = Framebuffer->get_attachment(attachmentIndex);
            Texture_View_D3D12_Impl * tex_view = static_cast<Texture_View_D3D12_Impl *>(view);
 
@@ -748,10 +560,10 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            clearValues[i].Color[1] = color_clear_values[i].g;
            clearValues[i].Color[2] = color_clear_values[i].b;
            clearValues[i].Color[3] = color_clear_values[i].a;
-           
-           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachmentRef.m_loadAction];
+
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE beginningAccess = gDx12PassBeginOpTranslator[attachment_desc.load_action];
            Texture_View_D3D12_Impl * tex_view_resolve = static_cast<Texture_View_D3D12_Impl *>(FramebufferDesc.m_ppAttachments[attachmentIndex]);
-           if(attachmentRef.m_sampleCount != SAMPLE_COUNT_1 && tex_view_resolve)
+           if(attachment_desc.sample_count != SAMPLE_COUNT_1 && tex_view_resolve)
            {
                Texture_D3D12_Impl* tex = static_cast<Texture_D3D12_Impl*>(tex_view->get_create_desc().p_texture);
                Texture_D3D12_Impl* tex_resolve = static_cast<Texture_D3D12_Impl*>(tex_view_resolve->get_create_desc().p_texture);
@@ -777,7 +589,7 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
            else
            {
                // Load & Store action
-               D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attachmentRef.m_storeAction];
+               D3D12_RENDER_PASS_ENDING_ACCESS_TYPE endingAccess = gDx12PassEndOpTranslator[attachment_desc.store_action];
                renderPassRenderTargetDescs[colorTargetCount].cpuDescriptor = tex_view->m_rtvDsvDescriptorHandle;
                renderPassRenderTargetDescs[colorTargetCount].BeginningAccess = { beginningAccess, clearValues[i] };
                renderPassRenderTargetDescs[colorTargetCount].EndingAccess = { endingAccess , {} };
@@ -791,17 +603,17 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        if(SubPassDesc.m_pDepthStencilAttachment != nullptr)
        {
            auto attachmentRef = SubPassDesc.m_pDepthStencilAttachment;
-           auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->m_attachmentIndex;
-           auto attachDesc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
+           auto depthStencilAttachIndex = SubPassDesc.m_pDepthStencilAttachment->attachment_index;
+           auto attachment_desc = RenderPassDesc.m_pAttachments[depthStencilAttachIndex];
            auto clearValue = depth_stencil_clear_value;
            Texture_View_D3D12_Impl * dt_view = static_cast<Texture_View_D3D12_Impl *>(Framebuffer->get_attachment(depthStencilAttachIndex));
-           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_loadAction];
-           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_storeAction];
-           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachmentRef->m_stencilLoadAction];
-           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachmentRef->m_stencilStoreAction];
-           clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE depthBeginningAccess = gDx12PassBeginOpTranslator[attachment_desc.load_action];
+           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE depthEndingAccess = gDx12PassEndOpTranslator[attachment_desc.store_action];
+           D3D12_RENDER_PASS_BEGINNING_ACCESS_TYPE stencilBeginningAccess = gDx12PassBeginOpTranslator[attachment_desc.stencil_load_action];
+           D3D12_RENDER_PASS_ENDING_ACCESS_TYPE stencilEndingAccess = gDx12PassEndOpTranslator[attachment_desc.stencil_store_action];
+           clearDepth.Format = DXGIUtil_TranslatePixelFormat(attachment_desc.format);
            clearDepth.DepthStencil.Depth = clearValue.depth;
-           clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachDesc.m_format);;
+           clearStencil.Format = DXGIUtil_TranslatePixelFormat(attachment_desc.format);
            clearStencil.DepthStencil.Stencil = clearValue.stencil;
            renderPassDepthStencilDesc.cpuDescriptor = dt_view->m_rtvDsvDescriptorHandle;
            renderPassDepthStencilDesc.DepthBeginningAccess = { depthBeginningAccess, clearDepth };

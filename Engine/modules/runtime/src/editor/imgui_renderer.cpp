@@ -354,26 +354,29 @@ namespace Cyber
             auto sampler = render_device->create_sampler(sampler_create_desc);
             const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
             const char8_t* root_descriptor_names[] = { CYBER_UTF8("Constants") };
+            RenderObject::RenderPassAttachmentDesc attachment_desc[1];
+            RenderObject::AttachmentReference attachment_ref;
 
-            attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
-            attachment_ref[0].m_attachmentIndex = 0;
-            attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[0].m_loadAction = LOAD_ACTION_LOAD;
-            attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
-            
+            attachment_desc[0].format = TEX_FORMAT_RGBA8_UNORM;
+            attachment_desc[0].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[0].load_action = LOAD_ACTION_LOAD;
+            attachment_desc[0].store_action = STORE_ACTION_STORE;
+            attachment_desc[0].initial_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_desc[0].final_state = GRAPHICS_RESOURCE_STATE_PRESENT;
+
+            attachment_ref = {0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET};
+
             subpass_desc[0].m_name = u8"UI Subpass";
             subpass_desc[0].m_inputAttachmentCount = 0;
             subpass_desc[0].m_pInputAttachments = nullptr;
             subpass_desc[0].m_pDepthStencilAttachment = nullptr;
             subpass_desc[0].m_renderTargetCount = 1;
-            subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
+            subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref;
             
             RenderObject::RenderPassDesc rp_desc1 = {
                 .m_name = u8"UI RenderPass",
                 .m_attachmentCount = 1,
-                .m_pAttachments = &attachment_desc,
+                .m_pAttachments = attachment_desc,
                 .m_subpassCount = 1,
                 .m_pSubpasses = subpass_desc
             };

@@ -231,54 +231,10 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
-            //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
-            attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
-            attachment_ref[0].m_attachmentIndex = 0;
-            attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[0].m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
-            
-            attachment_ref[1].m_attachmentIndex = 1;
-            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[1].m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+            auto& scene_target = renderer->get_scene_target(m_backBufferIndex);
+            auto back_buffer = scene_target.color_buffer;
+            auto back_depth_buffer = scene_target.depth_buffer;
 
-            attachment_ref[2].m_attachmentIndex = 2;
-            attachment_ref[2].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[2].m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_ref[2].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[2].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_ref[2].m_finalState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
-
-            subpass_desc[0].m_name = u8"Shadow Subpass";
-            subpass_desc[0].m_inputAttachmentCount = 0;
-            subpass_desc[0].m_pInputAttachments = nullptr;
-            subpass_desc[0].m_pDepthStencilAttachment = &attachment_ref[2];
-            subpass_desc[0].m_renderTargetCount = 0;
-            subpass_desc[0].m_pRenderTargetAttachments = nullptr;
-            
-            subpass_desc[1].m_name = u8"Main Subpass";
-            subpass_desc[1].m_inputAttachmentCount = 0;
-            subpass_desc[1].m_pInputAttachments = nullptr;
-            subpass_desc[1].m_pDepthStencilAttachment = &attachment_ref[1];
-            subpass_desc[1].m_renderTargetCount = 1;
-            subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[0];
-            
-            RenderObject::RenderPassDesc rp_desc1 = {
-                .m_name = u8"Triangle RenderPass",
-                .m_attachmentCount = 1,
-                .m_pAttachments = &attachment_desc,
-                .m_subpassCount = 2,
-                .m_pSubpasses = subpass_desc
-            };
-            
-            render_pass = device_context->create_render_pass(rp_desc1);
-            auto& scene_target = renderer->get_scene_target(0);
-            auto& depth_rt_desc = scene_target.depth_buffer->get_create_desc();
             RenderObject::TextureCreateDesc depth_buffer_desc;
             depth_buffer_desc.m_name = u8"ShadowDepthBuffer";
             depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
@@ -292,6 +248,72 @@ namespace Cyber
             depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
             depth_buffer_desc.m_pNativeHandle = nullptr;
             shadow_depth = render_device->create_texture(depth_buffer_desc);
+
+            RenderObject::RenderPassAttachmentDesc attachment_desc[3];
+            // three attachments: color, depth, shadow depth
+            attachment_desc[0].format = back_buffer->get_create_desc().m_format;
+            attachment_desc[0].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[0].load_action = LOAD_ACTION_CLEAR;
+            attachment_desc[0].store_action = STORE_ACTION_STORE;
+            attachment_desc[0].initial_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_desc[0].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+
+            attachment_desc[1].format = back_depth_buffer->get_create_desc().m_format;
+            attachment_desc[1].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[1].load_action = LOAD_ACTION_CLEAR;
+            attachment_desc[1].store_action = STORE_ACTION_STORE;
+            attachment_desc[1].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_desc[1].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+
+            attachment_desc[2].format = shadow_depth->get_create_desc().m_format;
+            attachment_desc[2].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[2].load_action = LOAD_ACTION_CLEAR;
+            attachment_desc[2].store_action = STORE_ACTION_STORE;
+            attachment_desc[2].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_desc[2].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+
+            RenderObject::AttachmentReference depth_attachment_ref0
+            {
+                2, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
+            };
+
+            RenderObject::AttachmentReference color_attachment_ref1[]
+            {
+                {0, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE}
+            };
+            RenderObject::AttachmentReference depth_attachment_ref1
+            {
+                1, GRAPHICS_RESOURCE_STATE_RENDER_TARGET
+            };
+            RenderObject::AttachmentReference input_attachment_ref1
+            {
+                2, GRAPHICS_RESOURCE_STATE_INPUT_ATTACHMENT
+            };
+
+            subpass_desc[0].m_name = u8"Shadow Subpass";
+            subpass_desc[0].m_inputAttachmentCount = 0;
+            subpass_desc[0].m_pInputAttachments = nullptr;
+            subpass_desc[0].m_pDepthStencilAttachment = &depth_attachment_ref0;
+            subpass_desc[0].m_renderTargetCount = 0;
+            subpass_desc[0].m_pRenderTargetAttachments = nullptr;
+            
+            subpass_desc[1].m_name = u8"Main Subpass";
+            subpass_desc[1].m_inputAttachmentCount = 1;
+            subpass_desc[1].m_pInputAttachments = &input_attachment_ref1;
+            subpass_desc[1].m_pDepthStencilAttachment = &depth_attachment_ref1;
+            subpass_desc[1].m_renderTargetCount = 1;
+            subpass_desc[1].m_pRenderTargetAttachments = color_attachment_ref1;
+
+            RenderObject::RenderPassDesc rp_desc1 = {
+                .m_name = u8"Triangle RenderPass",
+                .m_attachmentCount = 3,
+                .m_pAttachments = attachment_desc,
+                .m_subpassCount = 2,
+                .m_pSubpasses = subpass_desc
+            };
+            
+            render_pass = device_context->create_render_pass(rp_desc1);
+
         }
 
         void ShadowApp::create_resource()
@@ -420,6 +442,7 @@ namespace Cyber
                     }
                 }
             }
+
         }
 
         void ShadowApp::create_ui()

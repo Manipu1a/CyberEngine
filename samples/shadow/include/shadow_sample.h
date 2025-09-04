@@ -80,8 +80,8 @@ namespace Cyber
             RenderObject::IRenderPipeline* pipeline = nullptr;
             RenderObject::IRenderPipeline* shadow_pipeline = nullptr;
             RenderObject::RenderSubpassDesc subpass_desc[2];
-            RenderObject::RenderPassAttachmentDesc attachment_desc;
-            RenderObject::AttachmentReference attachment_ref[3];
+            //RenderObject::RenderPassAttachmentDesc attachment_desc;
+            //RenderObject::AttachmentReference attachment_ref[3];
             RenderObject::IRenderPass* render_pass = nullptr;
             RenderObject::ITexture* shadow_depth = nullptr;
             

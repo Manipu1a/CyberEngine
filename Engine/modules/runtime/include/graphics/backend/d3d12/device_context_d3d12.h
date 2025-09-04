@@ -41,6 +41,7 @@ public:
     virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) override;
     virtual void cmd_next_sub_pass() override;
     virtual void cmd_end_render_pass() override;
+    virtual void transition_subpass_attachments(uint32_t subpass_index) override;
     virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) override;
     virtual void render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps) override;
     virtual void render_encoder_set_scissor(uint32_t num_rects, const Rect* rect) override;

@@ -46,8 +46,6 @@ namespace Cyber
             RenderObject::IShaderResource* m_pSRB = nullptr;
             RenderObject::IShaderResource* texture_resource = nullptr;
 
-            RenderObject::RenderPassAttachmentDesc attachment_desc;
-            RenderObject::AttachmentReference attachment_ref[1];
             RenderObject::RenderSubpassDesc subpass_desc[1] = {};
 
             const TEXTURE_FORMAT m_backBufferFmt = {};

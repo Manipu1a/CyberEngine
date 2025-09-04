@@ -108,6 +108,7 @@ namespace Cyber
             virtual void cmd_begin_render_pass(const BeginRenderPassAttribs& beginRenderPassDesc) = 0;
             virtual void cmd_next_sub_pass() = 0;
             virtual void cmd_end_render_pass() = 0;
+            virtual void transition_subpass_attachments(uint32_t subpass_index) = 0;
             virtual void render_encoder_bind_descriptor_set(IDescriptorSet* descriptorSet) = 0;
             virtual void render_encoder_set_viewport(uint32_t num_viewport, const Viewport* vps) = 0;
             virtual void render_encoder_set_scissor(uint32_t num_rects, const Rect* rect) = 0;
