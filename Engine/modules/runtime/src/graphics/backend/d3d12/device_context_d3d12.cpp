@@ -522,10 +522,10 @@ void DeviceContext_D3D12_Impl::set_root_cbv(SHADER_STAGE stage, RootSignature_D3
     }
 }
 
-IRenderPass* DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc)
+void DeviceContext_D3D12_Impl::create_render_pass(const RenderPassDesc& renderPassDesc, IRenderPass** render_pass)
 {
     RenderPass_D3D12_Impl* dxRenderPass = cyber_new<RenderPass_D3D12_Impl>(render_device, renderPassDesc);
-    return dxRenderPass;
+    *render_pass = dxRenderPass;
 }
 
 void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()

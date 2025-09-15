@@ -573,9 +573,10 @@ namespace Cyber
         }
     }
 
-    RenderObject::ITexture* RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& Desc, TextureData* pInitData)
+    void RenderDevice_D3D12_Impl::create_texture(const RenderObject::TextureCreateDesc& Desc, TextureData* pInitData, ITexture** texture)
     {
         RenderObject::Texture_D3D12_Impl* pTexture = cyber_new<RenderObject::Texture_D3D12_Impl>(this, Desc);
+        *texture = pTexture;
 
         cyber_assert(pTexture != nullptr, "rhi texture create failed!");
 
@@ -823,8 +824,6 @@ namespace Cyber
         {
             pTexture->create_default_views();
         }
-
-        return pTexture;
     }
 
     void RenderDevice_D3D12_Impl::free_texture(ITexture* texture)
@@ -1047,7 +1046,7 @@ namespace Cyber
         return dxSwapChain->get_dx_swap_chain()->GetCurrentBackBufferIndex();
     }
 
-    IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBuffserDesc& frameBufferDesc)
+    IFrameBuffer* RenderDevice_D3D12_Impl::create_frame_buffer(const FrameBufferDesc& frameBufferDesc)
     {
         FrameBuffer_D3D12_Impl* frameBuffer = cyber_new<FrameBuffer_D3D12_Impl>(this, frameBufferDesc);
         
@@ -1427,7 +1426,7 @@ namespace Cyber
     CD3D12_BLEND_DESC gDefaultBlendDesc(D3D12_DEFAULT);
     CD3D12_RASTERIZER_DESC gDefaultRasterizerDesc(D3D12_DEFAULT);
 
-    IRenderPipeline* RenderDevice_D3D12_Impl::create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc)
+    void RenderDevice_D3D12_Impl::create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc, IRenderPipeline** pipeline)
     {
         RenderObject::RootSignatureCreateDesc root_signature_create_desc = {
                 .vertex_shader = pipelineDesc.vertex_shader,
@@ -1440,8 +1439,8 @@ namespace Cyber
         RootSignature_D3D12_Impl* DxRootSignature = static_cast<RootSignature_D3D12_Impl*>(root_signature);
         RenderPipeline_D3D12_Impl* pPipeline = cyber_new<RenderPipeline_D3D12_Impl>(this, pipelineDesc);
         pPipeline->root_signature = DxRootSignature;
-
-       // DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
+        *pipeline = pPipeline;
+        // DECLARE_ZERO(D3D12_INPUT_ELEMENT_DESC, input_elements[GRAPHICS_MAX_VERTEX_ATTRIBUTES]);
         uint32_t input_element_count = 0;
 
         /*static const D3D12_INPUT_ELEMENT_DESC s_inputElementDesc[] =
@@ -1714,7 +1713,6 @@ namespace Cyber
                 break;
         }
         pPipeline->mPrimitiveTopologyType = topology;
-        return pPipeline;
     }
 
     void RenderDevice_D3D12_Impl::free_render_pipeline(IRenderPipeline* pipeline)
@@ -1903,12 +1901,12 @@ namespace Cyber
         }
     }
 
-    RenderObject::IBuffer* RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& create_desc, BufferData* initial_data)
+    void RenderDevice_D3D12_Impl::create_buffer(const BufferCreateDesc& create_desc, BufferData* initial_data, IBuffer** buffer)
     {
         Adapter_D3D12_Impl* DxAdapter = static_cast<Adapter_D3D12_Impl*>(m_pAdapter);
         
         RenderObject::Buffer_D3D12_Impl* d3d12_buffer = cyber_new<RenderObject::Buffer_D3D12_Impl>(this, create_desc);
-
+        *buffer = d3d12_buffer;
         uint32_t buffer_alignment = 1;
 
         RenderObject::Buffer_D3D12_Impl::get_buffer_alignment(create_desc, buffer_alignment);
@@ -1926,7 +1924,6 @@ namespace Cyber
         if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_UNIFIED)
         {
             CB_CORE_ERROR("Unified resource usage is not supported");
-            return nullptr;
         }
         
         if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC && 
@@ -2088,9 +2085,6 @@ namespace Cyber
             }
             d3d12_buffer->m_size = allocationSize;      
         }   
-
-        
-        return d3d12_buffer;
     }
 
     IBuffer_View* RenderDevice_D3D12_Impl::create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc)

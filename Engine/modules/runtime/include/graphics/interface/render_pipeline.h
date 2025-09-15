@@ -5,7 +5,7 @@
 #include "eastl/array.h"
 #include "eastl/shared_ptr.h"
 #include "device_object.h"
-
+#include "common/smart_ptr.h"
 
 namespace Cyber
 {
@@ -13,7 +13,7 @@ namespace Cyber
     {
         struct CYBER_GRAPHICS_API PipelineShaderCreateDesc
         {
-            eastl::shared_ptr<RenderObject::IShaderLibrary> m_library;
+            RefCntAutoPtr<RenderObject::IShaderLibrary> m_library;
             const char8_t* m_entry;
             SHADER_STAGE m_stage;
         };

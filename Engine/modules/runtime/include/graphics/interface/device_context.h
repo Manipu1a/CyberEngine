@@ -131,7 +131,7 @@ namespace Cyber
             virtual void prepare_for_rendering() = 0;
             
             // Render Pass
-            virtual IRenderPass* create_render_pass(const RenderPassDesc& renderPassDesc) = 0;
+            virtual void create_render_pass(const RenderPassDesc& renderPassDesc, IRenderPass** render_pass) = 0;
         };
 
         template<typename EngineImplTraits>

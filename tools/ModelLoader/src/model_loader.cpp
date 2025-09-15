@@ -541,8 +541,7 @@ uint32_t Model::add_texture(RenderObject::IRenderDevice* render_device, const Im
         texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
         texture_desc.m_format = tex_format;
         texture_desc.m_mipLevels = 0;
-
-        texture_info.texture = render_device->create_texture(texture_desc, &texture_data);
+        render_device->create_texture(texture_desc, &texture_data, &texture_info.texture);
     }
     textures.push_back(texture_info);
     return new_texture_index;

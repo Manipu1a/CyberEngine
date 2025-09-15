@@ -6,6 +6,7 @@
 #include "debug.h"
 #include <functional>
 #include "core/config.h"
+#include "common/smart_ptr.h"
 
 #ifdef _WIN32
     #ifdef _WIN64

@@ -1,7 +1,6 @@
 #pragma once
 #include "editor.h"
 
-
 namespace Cyber
 {
     namespace RenderObject
@@ -33,18 +32,18 @@ namespace Cyber
             float4 transform_clip_rect(const ImVec2& display_size, const float4 rect) const;
 
         protected:
-            RenderObject::IRenderDevice* render_device = nullptr;
-            RenderObject::ISwapChain* swap_chain = nullptr;
-            RenderObject::IBuffer* vertex_buffer = nullptr;
-            RenderObject::IBuffer* index_buffer = nullptr;
-            RenderObject::IBuffer* vertex_constant_buffer = nullptr;
-            RenderObject::IDescriptorSet* descriptor_set = nullptr;
-            RenderObject::IRenderPipeline* render_pipeline = nullptr;
-            RenderObject::IRenderPass* render_pass = nullptr;
-            RenderObject::ITexture_View* font_srv = nullptr;
-            RenderObject::ITexture* font_texture = nullptr;
-            RenderObject::IShaderResource* m_pSRB = nullptr;
-            RenderObject::IShaderResource* texture_resource = nullptr;
+            RefCntAutoPtr<RenderObject::IRenderDevice> render_device = nullptr;
+            RefCntAutoPtr<RenderObject::ISwapChain> swap_chain = nullptr;
+            RefCntAutoPtr<RenderObject::IBuffer> vertex_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::IBuffer> index_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::IBuffer> vertex_constant_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::IDescriptorSet> descriptor_set = nullptr;
+            RefCntAutoPtr<RenderObject::IRenderPipeline> render_pipeline = nullptr;
+            RefCntAutoPtr<RenderObject::IRenderPass> render_pass = nullptr;
+            RefCntAutoPtr<RenderObject::ITexture_View> font_srv = nullptr;
+            RefCntAutoPtr<RenderObject::ITexture> font_texture = nullptr;
+            RefCntAutoPtr<RenderObject::IShaderResource> m_pSRB = nullptr;
+            RefCntAutoPtr<RenderObject::IShaderResource> texture_resource = nullptr;
 
             RenderObject::RenderSubpassDesc subpass_desc[1] = {};
 

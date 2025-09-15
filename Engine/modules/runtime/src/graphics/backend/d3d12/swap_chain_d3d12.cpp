@@ -30,33 +30,29 @@ namespace Cyber
             //device_context->flush();
             TSwapChainBase::resize(width, height);
             // Clear old buffers
-            if(m_ppBackBufferSRVs)
+            if(m_ppBackBufferSRVs.size() > 0)
             {
                 for(uint32_t i = 0; i < m_bufferSRVCount; ++i)
                 {
-                    m_ppBackBufferSRVs[i]->free();
+                    m_ppBackBufferSRVs[i].reset();
                 }
-                cyber_free(m_ppBackBufferSRVs);
-                m_ppBackBufferSRVs = nullptr;
+                m_ppBackBufferSRVs.clear();
             }
-            if(m_ppBackBuffers)
+            if(m_ppBackBuffers.size() > 0)
             {
                 for(uint32_t i = 0; i < m_bufferSRVCount; ++i)
                 {
-                    m_ppBackBuffers[i]->free();
+                    m_ppBackBuffers[i].reset();
                 }
-                cyber_free(m_ppBackBuffers);
-                m_ppBackBuffers = nullptr;
+                m_ppBackBuffers.clear();
             }
             if(m_pBackBufferDSV)
             {
-                m_pBackBufferDSV->free();
-                m_pBackBufferDSV = nullptr;
+                m_pBackBufferDSV.reset();
             }
             if(m_pBackBufferDepth)
             {
-                m_pBackBufferDepth->free();
-                m_pBackBufferDepth = nullptr;
+                m_pBackBufferDepth.reset();
             }
 
             //todo idle the GPU
@@ -79,8 +75,8 @@ namespace Cyber
         {
             auto buffer_count = swap_chain_desc.m_imageCount;
             // Get swapchain images
-            m_ppBackBufferSRVs = (RenderObject::ITexture_View**)cyber_malloc(sizeof(RenderObject::ITexture_View*) * buffer_count);
-            m_ppBackBuffers = (RenderObject::ITexture**)cyber_malloc(buffer_count * sizeof(RenderObject::ITexture*));
+            m_ppBackBufferSRVs.resize(buffer_count);
+            m_ppBackBuffers.resize(buffer_count);
 
             ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
             TextureCreateDesc textureDesc = {};
@@ -99,7 +95,8 @@ namespace Cyber
                 textureDesc.m_name = u8"SwapChain Back Buffer";
                 textureDesc.m_pNativeHandle = backbuffers[i];
                 textureDesc.m_clearValue = fastclear_1111;
-                auto Ts = render_device->create_texture(textureDesc);
+                RefCntAutoPtr<RenderObject::ITexture> Ts;
+                render_device->create_texture(textureDesc, nullptr, &Ts);
                 m_ppBackBuffers[i] = Ts;
 
                 auto back_buffer_view = Ts->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
@@ -123,13 +120,12 @@ namespace Cyber
             depthStencilDesc.m_name = u8"Main Depth Stencil";
             depthStencilDesc.m_clearValue.depth = 1.0f;
             depthStencilDesc.m_clearValue.stencil = 0;
-            auto depth_buffer = render_device->create_texture(depthStencilDesc);
-            m_pBackBufferDepth = depth_buffer;
+            render_device->create_texture(depthStencilDesc, nullptr, &m_pBackBufferDepth);
 
             //auto dsv = static_cast<RenderObject::Texture_D3D12_Impl*>(depth_buffer);
 
             TextureViewCreateDesc depthStencilViewDesc = {};
-            depthStencilViewDesc.p_texture = depth_buffer;
+            depthStencilViewDesc.p_texture = m_pBackBufferDepth;
             depthStencilViewDesc.dimension = TEX_DIMENSION_2D;
             depthStencilViewDesc.format = TEX_FORMAT_D24_UNORM_S8_UINT;
             depthStencilViewDesc.view_type = TEXTURE_VIEW_DEPTH_STENCIL;

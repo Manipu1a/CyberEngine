@@ -249,7 +249,7 @@ namespace Cyber
                 gbuffer.final_color_texture->get_default_texture_view(TVU_RTV_DSV)
             };
 
-            RenderObject::FrameBuffserDesc frame_buffer_desc = {
+            RenderObject::FrameBufferDesc frame_buffer_desc = {
                 .m_name = CYBER_UTF8("frame_buffer"),
                 .m_pRenderPass = nullptr,
                 .m_attachmentCount = 3,

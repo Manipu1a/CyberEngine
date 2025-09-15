@@ -8,10 +8,10 @@ namespace Cyber
     {
         class ITexture;
 
-        struct CYBER_GRAPHICS_API FrameBuffserDesc
+        struct CYBER_GRAPHICS_API FrameBufferDesc
         {
-            FrameBuffserDesc() {}
-            ~FrameBuffserDesc() {}
+            FrameBufferDesc() {}
+            ~FrameBufferDesc() {}
 
             const char8_t* m_name;
             uint32_t m_attachmentCount;
@@ -20,7 +20,7 @@ namespace Cyber
         
         struct CYBER_GRAPHICS_API IFrameBuffer : public IDeviceObject
         {
-            virtual const FrameBuffserDesc& get_create_desc() const = 0;
+            virtual const FrameBufferDesc& get_create_desc() const = 0;
 
             virtual ITexture_View* get_attachment(uint32_t index) const = 0;
             virtual void update_attachments(ITexture_View** ppAttachments, uint32_t attachmentCount) = 0;
@@ -34,7 +34,7 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TFrameBufferBase = DeviceObjectBase<FrameBufferInterface, RenderDeviceImplType>;
 
-            FrameBufferBase(RenderDeviceImplType* device, const FrameBuffserDesc& desc) : TFrameBufferBase(device), m_desc(desc)
+            FrameBufferBase(RenderDeviceImplType* device, const FrameBufferDesc& desc) : TFrameBufferBase(device), m_desc(desc)
             {
                 m_ppAttachments = (ITexture_View**)cyber_malloc(desc.m_attachmentCount * sizeof(ITexture_View*));
                 for (uint32_t i = 0; i < desc.m_attachmentCount; ++i)
@@ -45,7 +45,7 @@ namespace Cyber
 
             virtual ~FrameBufferBase() = default;
 
-            virtual const FrameBuffserDesc& get_create_desc() const override final
+            virtual const FrameBufferDesc& get_create_desc() const override final
             {
                 return m_desc;
             }
@@ -64,7 +64,7 @@ namespace Cyber
                 m_desc.m_attachmentCount = attachmentCount;
             }
         private:
-            FrameBuffserDesc m_desc;
+            FrameBufferDesc m_desc;
             RenderObject::ITexture* colorAttachments[1] = { nullptr };
             RenderObject::ITexture* depthAttachment = nullptr;
 

@@ -21,7 +21,9 @@ namespace Cyber
             using TBaseInterface = ObjectBase<BaseInterface>;
             using TRenderDeviceType = RenderDeviceType;
             DeviceObjectBase(RenderDeviceType* device) :TBaseInterface(), render_device(device) { }
-            virtual ~DeviceObjectBase() = default;
+            virtual ~DeviceObjectBase()
+            {
+            }
 
             RenderDeviceType* get_device() const { return render_device; }
 

@@ -105,7 +105,7 @@ namespace Cyber
                 color_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_RENDER_TARGET | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
                 color_buffer_desc.m_pNativeHandle = nullptr;
                 color_buffer_desc.m_clearValue = fastclear_1111;
-                scene_target[i].color_buffer = m_pRenderDevice->create_texture(color_buffer_desc);
+                m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &scene_target[i].color_buffer);
 
                 RenderObject::TextureCreateDesc depth_buffer_desc;
                 depth_buffer_desc.m_name = u8"DepthBuffer";
@@ -119,12 +119,11 @@ namespace Cyber
                 depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
                 depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
                 depth_buffer_desc.m_pNativeHandle = nullptr;
-                scene_target[i].depth_buffer = m_pRenderDevice->create_texture(depth_buffer_desc);
+                m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &scene_target[i].depth_buffer);
             }
-
             auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
-            RenderObject::FrameBuffserDesc frame_buffer_desc;
+            RenderObject::FrameBufferDesc frame_buffer_desc;
             frame_buffer_desc.m_name = u8"FrameBuffer";
             frame_buffer_desc.m_attachmentCount = 1;
             frame_buffer_desc.m_ppAttachments = attachment_resources;
@@ -159,8 +158,8 @@ namespace Cyber
                     scene_target[i].depth_buffer->free();
                     scene_target[i].depth_buffer = nullptr;
 
-                    scene_target[i].color_buffer = m_pRenderDevice->create_texture(color_buffer_desc);
-                    scene_target[i].depth_buffer = m_pRenderDevice->create_texture(depth_buffer_desc);
+                    m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &scene_target[i].color_buffer);
+                    m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &scene_target[i].depth_buffer);
                 }
 
                 // Update frame buffer

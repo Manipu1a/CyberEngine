@@ -69,7 +69,7 @@ TextureLoaderImpl::TextureLoaderImpl(const TextureLoadInfo& texLoadInfo, class I
 void TextureLoaderImpl::create_texture(RenderObject::IRenderDevice* device, RenderObject::ITexture** texture)
 {
     RenderObject::TextureData InitData = get_texture_data();
-    *texture = device->create_texture(m_textureCreateDesc, &InitData);
+    device->create_texture(m_textureCreateDesc, &InitData, texture);
 }
 
 const RenderObject::TextureCreateDesc& TextureLoaderImpl::get_texture_desc()

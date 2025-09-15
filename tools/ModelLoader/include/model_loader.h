@@ -417,7 +417,7 @@ private:
     float4x4 root_transform = float4x4::Identity();
     struct TextureInfo
     {
-        RenderObject::ITexture* texture = nullptr;
+        RefCntAutoPtr<RenderObject::ITexture> texture = nullptr;
 
         explicit operator bool() const
         {

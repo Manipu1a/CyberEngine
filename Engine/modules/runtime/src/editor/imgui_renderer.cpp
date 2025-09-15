@@ -69,7 +69,7 @@ namespace Cyber
                 buffer_desc.size = vertex_buffer_size * sizeof(ImDrawVert);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                vertex_buffer = render_device->create_buffer(buffer_desc);
+                render_device->create_buffer(buffer_desc, nullptr, &vertex_buffer);
             }
 
             if(!index_buffer || static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
@@ -88,7 +88,7 @@ namespace Cyber
                 buffer_desc.size = index_buffer_size * sizeof(ImDrawIdx);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                index_buffer = render_device->create_buffer(buffer_desc);
+                render_device->create_buffer(buffer_desc, nullptr, &index_buffer);
             }
             BufferRange range;
             range.offset = 0;
@@ -314,8 +314,7 @@ namespace Cyber
                 .entry_point_name = CYBER_UTF8("main")
             };
 
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
-            //RenderObject::IShaderLibrary* vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -324,7 +323,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("main")
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
             pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -383,7 +382,7 @@ namespace Cyber
 
             Renderer::Renderer* renderer = Core::Application::getApp()->get_renderer();
             auto device_context = renderer->get_device_context();
-            render_pass = device_context->create_render_pass(rp_desc1);
+            device_context->create_render_pass(rp_desc1, &render_pass);
 
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
@@ -430,7 +429,7 @@ namespace Cyber
                 .render_target_count = 1,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
-            render_pipeline = render_device->create_render_pipeline(rp_desc);
+            render_device->create_render_pipeline(rp_desc, &render_pipeline);
             vs_shader->free();
             ps_shader->free();
 
@@ -439,8 +438,8 @@ namespace Cyber
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_constant_buffer = render_device->create_buffer(buffer_desc);
-            
+            render_device->create_buffer(buffer_desc, nullptr, &vertex_constant_buffer);
+
             create_fonts_texture();
         }
 
@@ -478,8 +477,7 @@ namespace Cyber
             texture_data.numSubResources = 1;
             texture_data.pDevice = render_device;
             //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
-
-            font_texture = render_device->create_texture(texture_desc, &texture_data);
+            render_device->create_texture(texture_desc, &texture_data, &font_texture);
             font_srv = font_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;

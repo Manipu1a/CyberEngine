@@ -65,7 +65,7 @@ namespace Cyber
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) override;
             virtual void free_swap_chain(ISwapChain* swapchain) override;
             virtual uint32_t acquire_next_image(ISwapChain* swapchain, const AcquireNextDesc& acquireDesc) override;
-            virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) override;
+            virtual IFrameBuffer* create_frame_buffer(const FrameBufferDesc& frameBufferDesc) override;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) override;
 
             virtual void present(ISwapChain* swap_chain) override;
@@ -78,16 +78,16 @@ namespace Cyber
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) override;
             virtual void update_descriptor_set(IDescriptorSet* set, const DescriptorData* updateDesc, uint32_t count) override;
 
-            virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) override;
+            virtual void create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc, IRenderPipeline** render_pipeline) override;
             virtual void free_render_pipeline(IRenderPipeline* pipeline) override;
             virtual void free_instance(IInstance* instance) override;
 
             virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) override;
             virtual void bind_texture_view(ITexture_View* textureView) override;
             virtual void free_texture_view(ITexture_View* view) override;
-            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) override;
+            virtual void create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data, ITexture** texture) override;
             virtual void free_texture(ITexture* texture) override;
-            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) override;
+            virtual void create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data, IBuffer** buffer) override;
             virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) override;
 
             virtual void free_buffer(IBuffer* buffer) override;

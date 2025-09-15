@@ -69,7 +69,7 @@ namespace Cyber
             return true;
         }
 
-        CYBER_RUNTIME_API eastl::shared_ptr<RenderObject::IShaderLibrary> add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
+        CYBER_RUNTIME_API RefCntAutoPtr<RenderObject::IShaderLibrary> add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc)
         {
             RenderObject::ShaderLibraryCreateDesc libraryDesc;
             
@@ -103,11 +103,11 @@ namespace Cyber
                     
                     if(shaderLibrary)
                     {
-                        return shaderLibrary;
+                        return RefCntAutoPtr<RenderObject::IShaderLibrary>(shaderLibrary.get());
                     }
                 }
             }
-            return nullptr;
+            return RefCntAutoPtr<RenderObject::IShaderLibrary>();
         }
     }
 }

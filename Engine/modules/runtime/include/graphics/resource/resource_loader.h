@@ -2,6 +2,7 @@
 
 #include "interface/graphics_types.h"
 #include "eastl/shared_ptr.h"
+#include "common/smart_ptr.h"
 #include "cyber_runtime.config.h"
 #include <stdint.h>
 
@@ -40,6 +41,6 @@ namespace Cyber
             uint32_t constant_count;
         };
 
-        CYBER_RUNTIME_API eastl::shared_ptr<RenderObject::IShaderLibrary> add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc);
+        CYBER_RUNTIME_API RefCntAutoPtr<RenderObject::IShaderLibrary> add_shader(RenderObject::IRenderDevice* device, const ShaderLoadDesc& desc);
     }
 }

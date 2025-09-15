@@ -20,8 +20,8 @@ namespace Cyber
     {
         struct CYBER_RUNTIME_API SceneTarget
         {
-            RenderObject::ITexture* color_buffer = nullptr;
-            RenderObject::ITexture* depth_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::ITexture> color_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::ITexture> depth_buffer = nullptr;
         };
 
         class CYBER_RUNTIME_API Renderer

@@ -1,6 +1,7 @@
 #pragma once
 #include "gameruntime/sampleapp.h"
 #include "gameruntime/cyber_game.config.h"
+#include "common/smart_ptr.h"
 
 namespace Cyber
 {
@@ -41,10 +42,10 @@ namespace Cyber
 
             struct RenderItem
             {
-                RenderObject::IBuffer* vertex_buffer = nullptr;
-                RenderObject::IBuffer* index_buffer = nullptr;
-                RenderObject::IBuffer* constant_buffer = nullptr;
-                RenderObject::IBuffer* shadow_constant_buffer = nullptr;
+                Cyber::RefCntAutoPtr<RenderObject::IBuffer> vertex_buffer;
+                Cyber::RefCntAutoPtr<RenderObject::IBuffer> index_buffer = nullptr; 
+                Cyber::RefCntAutoPtr<RenderObject::IBuffer> constant_buffer = nullptr;
+                Cyber::RefCntAutoPtr<RenderObject::IBuffer> shadow_constant_buffer = nullptr;
                 uint32_t index_count = 0;
                 uint32_t vertex_stride = sizeof(CubeVertex);
                 float4x4 model_matrix = float4x4::Identity();
@@ -75,18 +76,15 @@ namespace Cyber
             void update_render_item_constants(const RenderItem& item, const float4x4& view_proj_matrix, const float4x4& shadow_view_proj_matrix);
 
         protected:
-            RenderObject::IRootSignature* root_signature = nullptr;
-            RenderObject::IDescriptorSet* descriptor_set = nullptr;
-            RenderObject::IRenderPipeline* pipeline = nullptr;
-            RenderObject::IRenderPipeline* shadow_pipeline = nullptr;
+            Cyber::RefCntAutoPtr<RenderObject::IRootSignature> root_signature;
+            Cyber::RefCntAutoPtr<RenderObject::IDescriptorSet> descriptor_set;
+            Cyber::RefCntAutoPtr<RenderObject::IRenderPipeline> pipeline;
+            Cyber::RefCntAutoPtr<RenderObject::IRenderPipeline> shadow_pipeline;
             RenderObject::RenderSubpassDesc subpass_desc[2];
-            //RenderObject::RenderPassAttachmentDesc attachment_desc;
-            //RenderObject::AttachmentReference attachment_ref[3];
-            RenderObject::IRenderPass* render_pass = nullptr;
-            RenderObject::ITexture* shadow_depth = nullptr;
-            
-            RenderObject::ITexture_View* test_texture_view = nullptr;
-            RenderObject::IBuffer* light_constant_buffer = nullptr;
+            Cyber::RefCntAutoPtr<RenderObject::IRenderPass> render_pass;
+            Cyber::RefCntAutoPtr<RenderObject::ITexture> shadow_depth;
+            Cyber::RefCntAutoPtr<RenderObject::ITexture_View> test_texture_view;
+            Cyber::RefCntAutoPtr<RenderObject::IBuffer> light_constant_buffer;
 
             RenderItem cube_item;
             RenderItem plane_item;

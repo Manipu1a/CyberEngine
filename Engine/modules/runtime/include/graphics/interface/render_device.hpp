@@ -54,7 +54,7 @@ namespace Cyber
             virtual ISwapChain* create_swap_chain(const SwapChainDesc& swapchainDesc) = 0;
             virtual void free_swap_chain(ISwapChain* swapChain) = 0;
             virtual uint32_t acquire_next_image(ISwapChain* swapChain, const AcquireNextDesc& acquireDesc) = 0;
-            virtual IFrameBuffer* create_frame_buffer(const FrameBuffserDesc& frameBufferDesc) = 0;
+            virtual IFrameBuffer* create_frame_buffer(const FrameBufferDesc& frameBufferDesc) = 0;
             
             // Queue APIs
             virtual void present(ISwapChain* swap_chain) = 0;
@@ -67,16 +67,16 @@ namespace Cyber
             virtual void free_root_signature(IRootSignature* rootSignature) = 0;
             virtual IDescriptorSet* create_descriptor_set(const DescriptorSetCreateDesc& dSetDesc) = 0;
             virtual void update_descriptor_set(IDescriptorSet* set, const DescriptorData* updateDesc, uint32_t count) = 0;
-            virtual IRenderPipeline* create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc) = 0;
+            virtual void create_render_pipeline(const RenderPipelineCreateDesc& pipelineDesc, IRenderPipeline** render_pipeline) = 0;
             virtual void free_render_pipeline(IRenderPipeline* pipeline) = 0;
             // Resource APIs
             virtual ITexture_View* create_texture_view(const RenderObject::TextureViewCreateDesc& viewDesc) = 0;
             virtual void free_texture_view(ITexture_View* view) = 0;
             virtual void bind_texture_view(ITexture_View* textureView) = 0;
 
-            virtual ITexture* create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data = nullptr) = 0;
+            virtual void create_texture(const RenderObject::TextureCreateDesc& textureDesc, TextureData* data, ITexture** texture) = 0;
             virtual void free_texture(ITexture* texture) = 0;
-            virtual IBuffer* create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data = nullptr) = 0;
+            virtual void create_buffer(const RenderObject::BufferCreateDesc& bufferDesc, BufferData* initial_data, IBuffer** buffer) = 0;
             virtual IBuffer_View* create_buffer_view(const RenderObject::BufferViewCreateDesc& viewDesc) = 0;
             
             virtual void free_buffer(IBuffer* buffer) = 0;

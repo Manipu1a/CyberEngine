@@ -247,7 +247,7 @@ namespace Cyber
             depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
             depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
             depth_buffer_desc.m_pNativeHandle = nullptr;
-            shadow_depth = render_device->create_texture(depth_buffer_desc);
+            render_device->create_texture(depth_buffer_desc, nullptr, &shadow_depth);
 
             RenderObject::RenderPassAttachmentDesc attachment_desc[3];
             // three attachments: color, depth, shadow depth
@@ -311,9 +311,8 @@ namespace Cyber
                 .m_subpassCount = 2,
                 .m_pSubpasses = subpass_desc
             };
-            
-            render_pass = device_context->create_render_pass(rp_desc1);
 
+            device_context->create_render_pass(rp_desc1, &render_pass);
         }
 
         void ShadowApp::create_resource()
@@ -344,7 +343,7 @@ namespace Cyber
             RenderObject::BufferData plane_vertex_data = {};
             plane_vertex_data.data = plane_verts;
             plane_vertex_data.data_size = 4 * sizeof(CubeVertex);
-            plane_item.vertex_buffer = render_device->create_buffer(plane_vb_desc, &plane_vertex_data);
+            render_device->create_buffer(plane_vb_desc, &plane_vertex_data, &plane_item.vertex_buffer);
             
             // Create plane index buffer
             RenderObject::BufferCreateDesc plane_ib_desc = {};
@@ -355,7 +354,7 @@ namespace Cyber
             RenderObject::BufferData plane_index_data = {};
             plane_index_data.data = plane_indices;
             plane_index_data.data_size = 6 * sizeof(uint32_t);
-            plane_item.index_buffer = render_device->create_buffer(plane_ib_desc, &plane_index_data);
+            render_device->create_buffer(plane_ib_desc, &plane_index_data, &plane_item.index_buffer);
             plane_item.index_count = 6;
             
             // load model
@@ -399,7 +398,7 @@ namespace Cyber
             RenderObject::BufferData vertex_buffer_data = {};
             vertex_buffer_data.data = cube_verts;
             vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
-            cube_item.vertex_buffer = render_device->create_buffer(buffer_desc, &vertex_buffer_data);
+            render_device->create_buffer(buffer_desc, &vertex_buffer_data, &cube_item.vertex_buffer);
             
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = index_count * sizeof(uint32_t);
@@ -408,26 +407,26 @@ namespace Cyber
             RenderObject::BufferData index_buffer_data = {};
             index_buffer_data.data = cube_indices;
             index_buffer_data.data_size = index_count * sizeof(uint32_t);
-            cube_item.index_buffer = render_device->create_buffer(buffer_desc, &index_buffer_data);
+            render_device->create_buffer(buffer_desc, &index_buffer_data, &cube_item.index_buffer);
             cube_item.index_count = index_count;
 
             buffer_desc.size = sizeof(ViewConstants);
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            cube_item.constant_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &cube_item.constant_buffer);
 
             buffer_desc.size = sizeof(float4x4);
-            cube_item.shadow_constant_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &cube_item.shadow_constant_buffer);
             
             // Create plane constant buffers
             buffer_desc.size = sizeof(ViewConstants);
-            plane_item.constant_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &plane_item.constant_buffer);
             buffer_desc.size = sizeof(float4x4);
-            plane_item.shadow_constant_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &plane_item.shadow_constant_buffer);
 
             buffer_desc.size = sizeof(LightConstants);
-            light_constant_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &light_constant_buffer);
 
             auto& materials = model_loader->get_materials();
             // create texture
@@ -490,7 +489,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -499,7 +498,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::SamplerCreateDesc sampler_create_desc = {};
             sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
@@ -572,10 +571,10 @@ namespace Cyber
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
-            pipeline = render_device->create_render_pipeline(rp_desc);
+            render_device->create_render_pipeline(rp_desc, &pipeline);
 
-            vs_shader->free();
-            ps_shader->free();
+            vs_shader.reset();
+            ps_shader.reset();
 
             create_shadow_pipeline();
         }
@@ -593,7 +592,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("main"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[1];
             pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
@@ -615,9 +614,9 @@ namespace Cyber
                 .depth_stencil_format = shadow_depth->get_create_desc().m_format,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
-            shadow_pipeline = render_device->create_render_pipeline(rp_desc);
+            render_device->create_render_pipeline(rp_desc, &shadow_pipeline);
 
-            vs_shader->free();
+            vs_shader.reset();
         }
 
         void ShadowApp::draw_render_item(RenderObject::IDeviceContext* device_context, const RenderItem& item, bool is_shadow_pass)

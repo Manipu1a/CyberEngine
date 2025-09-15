@@ -19,7 +19,7 @@ namespace Cyber
         public:
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
             
-            FrameBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device,  const FrameBuffserDesc& desc) : FrameBufferBase(device, desc)
+            FrameBuffer_D3D12_Impl(class RenderDevice_D3D12_Impl* device,  const FrameBufferDesc& desc) : FrameBufferBase(device, desc)
             {
             }
 
