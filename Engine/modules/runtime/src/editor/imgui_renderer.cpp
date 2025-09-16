@@ -430,8 +430,8 @@ namespace Cyber
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
             render_device->create_render_pipeline(rp_desc, &render_pipeline);
-            vs_shader->free();
-            ps_shader->free();
+            vs_shader.reset();
+            ps_shader.reset();
 
             RenderObject::BufferCreateDesc buffer_desc = {};
             buffer_desc.size = sizeof(float4x4);

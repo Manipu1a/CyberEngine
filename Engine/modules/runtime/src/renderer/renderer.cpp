@@ -2,6 +2,7 @@
 #include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/instance_d3d12.h"
 #include "application/application.h"
+#include "EASTL/vector.h"
 
 namespace Cyber
 {
@@ -72,9 +73,17 @@ namespace Cyber
             engine_desc.queue_type = COMMAND_QUEUE_TYPE_GRAPHICS;
             engine_desc.is_deferrd_context = false;
 
-            uint32_t num_immediate_contexts = engine_desc.num_immediate_contexts > 0 ? engine_desc.num_immediate_contexts : 1;
-            device_contexts.resize(num_immediate_contexts + engine_desc.num_deferred_contexts);
-            m_pInstance->create_device_and_context(m_pAdapter, engine_desc, &m_pRenderDevice, device_contexts.data());
+            const uint32_t num_immediate_contexts = engine_desc.num_immediate_contexts > 0 ? engine_desc.num_immediate_contexts : 1;
+            const uint32_t total_contexts = num_immediate_contexts + engine_desc.num_deferred_contexts;
+            eastl::vector<RenderObject::IDeviceContext*> raw_contexts;
+            raw_contexts.resize(total_contexts);
+            m_pInstance->create_device_and_context(m_pAdapter, engine_desc, &m_pRenderDevice, raw_contexts.data());
+
+            device_contexts.resize(total_contexts);
+            for(uint32_t ctx = 0; ctx < total_contexts; ++ctx)
+            {
+                device_contexts[ctx] = raw_contexts[ctx];
+            }
 
             // Create swapchain
         #if defined (_WIN32) || defined (_WIN64)

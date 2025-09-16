@@ -73,18 +73,18 @@ namespace Cyber
 
         protected:
             ///-------------------------------------
-            RenderObject::IRenderDevice* m_pRenderDevice = nullptr;
-            eastl::vector<RenderObject::IDeviceContext*> device_contexts;
-            RenderObject::IInstance* m_pInstance = nullptr;
-            RenderObject::IAdapter* m_pAdapter = nullptr;
-            RenderObject::ISwapChain* m_pSwapChain = nullptr;
+            RefCntAutoPtr<RenderObject::IRenderDevice> m_pRenderDevice = nullptr;
+            eastl::vector<RefCntAutoPtr<RenderObject::IDeviceContext>> device_contexts;
+            RefCntAutoPtr<RenderObject::IInstance> m_pInstance = nullptr;
+            RefCntAutoPtr<RenderObject::IAdapter> m_pAdapter = nullptr;
+            RefCntAutoPtr<RenderObject::ISwapChain> m_pSwapChain = nullptr;
 
             SceneTarget scene_target[MAX_FRAMES_IN_FLIGHT];
-            
-            RenderObject::IFrameBuffer* frame_buffer = nullptr;
-            RenderObject::IRenderPass* m_pRenderPass = nullptr;
+
+            RefCntAutoPtr<RenderObject::IFrameBuffer> frame_buffer = nullptr;
+            RefCntAutoPtr<RenderObject::IRenderPass> m_pRenderPass = nullptr;
             Surface* m_pSurface = nullptr;
-            RenderObject::IFence* m_pPresentSwmaphore = nullptr; 
+            RefCntAutoPtr<RenderObject::IFence> m_pPresentSwmaphore = nullptr;
             uint32_t m_backBufferIndex = 0;
         };
     }
