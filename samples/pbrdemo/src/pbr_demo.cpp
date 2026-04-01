@@ -181,13 +181,13 @@ namespace Cyber
 
             TextureBarrier draw_barrier = {
                 .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
                 .subresource_barrier = 0
             };
             TextureBarrier depth_barrier = {
                 .texture = back_depth_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
                 .subresource_barrier = 0
             };
@@ -257,7 +257,7 @@ namespace Cyber
 
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE
             };
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
@@ -318,8 +318,8 @@ namespace Cyber
             attachment_ref[3].m_sampleCount = SAMPLE_COUNT_1;
             attachment_ref[3].m_loadAction = LOAD_ACTION_LOAD;
             attachment_ref[3].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[3].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[3].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_ref[3].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_ref[3].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_ref[3].m_stencilLoadAction = LOAD_ACTION_DONT_CARE;
             attachment_ref[3].m_stencilStoreAction = STORE_ACTION_STORE;
             
@@ -403,6 +403,10 @@ namespace Cyber
                     model_indices_data[i] = model_indices[i];
                 }
                 
+                RefCntAutoPtr<Cyber::Mesh> mesh = make_ref_counted<Cyber::Mesh>(vertex_count, model_vertex, index_count, 
+                                                    model_indices_data, model_loader->get_root_transform());
+                get_world()->add_mesh(mesh);
+
                 RenderObject::BufferCreateDesc buffer_desc = {};
                 buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
                 buffer_desc.size = vertex_count * sizeof(ModelVertex);
@@ -450,6 +454,8 @@ namespace Cyber
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
                 cube_vertex_constant_buffer = render_device->create_buffer(buffer_desc);
 
+                get_world()->add_mesh({8, cube_verts, 36, cube_indices, float4x4::Identity()});
+                
                 // create texture
                 if(materials.size() > 0)
                 {
@@ -1063,7 +1069,7 @@ namespace Cyber
                         .macros = shader_macros,
                         .entry_point_name = CYBER_UTF8("VSMain"),
                     };
-                    eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+                    RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
                     ResourceLoader::ShaderLoadDesc ps_load_desc = {};
                     ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1073,7 +1079,7 @@ namespace Cyber
                         .macros = shader_macros,
                         .entry_point_name = CYBER_UTF8("PSMain"),
                     };
-                    eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+                    RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
                     reflect_material(material_binding, vs_shader.get());
                     reflect_material(material_binding, ps_shader.get());
@@ -1127,7 +1133,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> cube_vs_shader = ResourceLoader::add_shader(render_device, cube_vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> cube_vs_shader = ResourceLoader::add_shader(render_device, cube_vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc cube_ps_load_desc = {};
             cube_ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1136,7 +1142,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> cube_ps_shader = ResourceLoader::add_shader(render_device, cube_ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> cube_ps_shader = ResourceLoader::add_shader(render_device, cube_ps_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* cube_pipeline_shader_create_desc[2];
             cube_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
@@ -1184,7 +1190,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> env_vs_shader = ResourceLoader::add_shader(render_device, env_vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> env_vs_shader = ResourceLoader::add_shader(render_device, env_vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc env_ps_load_desc = {};
             env_ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1193,7 +1199,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> env_ps_shader = ResourceLoader::add_shader(render_device, env_ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> env_ps_shader = ResourceLoader::add_shader(render_device, env_ps_load_desc);
 
             RenderObject::PipelineShaderCreateDesc* env_pipeline_shader_create_desc[2];
             env_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
@@ -1229,7 +1235,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> irr_vs_shader = ResourceLoader::add_shader(render_device, irr_vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> irr_vs_shader = ResourceLoader::add_shader(render_device, irr_vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc irr_ps_load_desc = {};
             irr_ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1238,7 +1244,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> irr_ps_shader = ResourceLoader::add_shader(render_device, irr_ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> irr_ps_shader = ResourceLoader::add_shader(render_device, irr_ps_load_desc);
             RenderObject::PipelineShaderCreateDesc* irr_pipeline_shader_create_desc[2];
             irr_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
             irr_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
@@ -1274,7 +1280,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> prefilter_vs_shader = ResourceLoader::add_shader(render_device, prefilter_vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> prefilter_vs_shader = ResourceLoader::add_shader(render_device, prefilter_vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc prefilter_ps_load_desc = {};
             prefilter_ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1283,7 +1289,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> prefilter_ps_shader = ResourceLoader::add_shader(render_device, prefilter_ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> prefilter_ps_shader = ResourceLoader::add_shader(render_device, prefilter_ps_load_desc);
             RenderObject::PipelineShaderCreateDesc* prefilter_pipeline_shader_create_desc[2];
             prefilter_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
             prefilter_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();
@@ -1322,7 +1328,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> brdf_lut_vs_shader = ResourceLoader::add_shader(render_device, brdf_lut_vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> brdf_lut_vs_shader = ResourceLoader::add_shader(render_device, brdf_lut_vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc brdf_lut_ps_load_desc = {};
             brdf_lut_ps_load_desc.target = SHADER_TARGET_6_0;
@@ -1331,7 +1337,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> brdf_lut_ps_shader = ResourceLoader::add_shader(render_device, brdf_lut_ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> brdf_lut_ps_shader = ResourceLoader::add_shader(render_device, brdf_lut_ps_load_desc);
             RenderObject::PipelineShaderCreateDesc* brdf_lut_pipeline_shader_create_desc[2];
             brdf_lut_pipeline_shader_create_desc[0] = new RenderObject::PipelineShaderCreateDesc();
             brdf_lut_pipeline_shader_create_desc[1] = new RenderObject::PipelineShaderCreateDesc();

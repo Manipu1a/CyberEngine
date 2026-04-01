@@ -34,6 +34,9 @@ namespace Cyber
             void run();
             void update(float deltaTime);
             void finalize();
+
+            void begin_frame();
+            void end_frame();
             
             void create_render_device(GRAPHICS_BACKEND backend);
             void create_gfx_objects();
@@ -86,6 +89,9 @@ namespace Cyber
             Surface* m_pSurface = nullptr;
             RefCntAutoPtr<RenderObject::IFence> m_pPresentSwmaphore = nullptr;
             uint32_t m_backBufferIndex = 0;
+
+            uint64_t m_frameFenceValues[MAX_FRAMES_IN_FLIGHT] = {};
+            uint64_t m_currentFrame = 0;
         };
     }
 }

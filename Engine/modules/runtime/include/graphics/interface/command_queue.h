@@ -41,7 +41,7 @@ namespace Cyber
             using RenderDeviceImplType = typename EngineImplTraits::RenderDeviceImplType;
             using TCommandQueueBase = DeviceObjectBase<CommandQueueInterface, RenderDeviceImplType>;
 
-            CommandQueueBase(RenderDeviceImplType* device) : TCommandQueueBase(device) {  };
+            CommandQueueBase(RenderDeviceImplType* device) : TCommandQueueBase(device), queue_name(nullptr), m_type(), m_index(0) {  };
 
             virtual ~CommandQueueBase() = default;
 

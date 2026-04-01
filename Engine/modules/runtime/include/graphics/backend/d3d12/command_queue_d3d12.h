@@ -27,6 +27,7 @@ namespace Cyber
             using RenderDeviceImplType = EngineD3D12ImplTraits::RenderDeviceImplType;
 
             CommandQueue_D3D12_Impl(class RenderDevice_D3D12_Impl* device, ID3D12CommandQueue* native_queue, ID3D12Fence* d3d12_fence);
+            ~CommandQueue_D3D12_Impl();
 
             virtual void signal_fence(class IFence* fence, uint64_t value) override;
             virtual void wait_fence(class IFence* fence, uint64_t value) override;
@@ -37,6 +38,7 @@ namespace Cyber
 
             virtual uint64_t wait_for_idle() override;
             virtual uint64_t get_completed_fence_value() override;
+            void wait_for_fence_value(uint64_t target_value);
         protected:
             // A value that will be signaled by the command queue next
             eastl::atomic<uint64_t> next_fence_value{1};
@@ -44,6 +46,7 @@ namespace Cyber
             eastl::atomic<uint64_t> last_fence_value{0};
 
             std::mutex queue_mutex;
+            std::mutex fence_wait_mutex;
             ID3D12CommandQueue* command_queue;
             const D3D12_COMMAND_QUEUE_DESC command_queue_desc;
 

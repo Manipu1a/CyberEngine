@@ -26,7 +26,7 @@ namespace Cyber
         const static uint32_t indices[] = {
                 2, 1, 0 // Triangle made of the three vertices
             };
-        
+
         TrignaleApp::TrignaleApp()
         {
 
@@ -34,7 +34,7 @@ namespace Cyber
 
         TrignaleApp::~TrignaleApp()
         {
-            
+
         }
 
         void TrignaleApp::initialize()
@@ -59,7 +59,7 @@ namespace Cyber
         void TrignaleApp::update(float deltaTime)
         {
            // m_pApp->update(deltaTime);
-            
+
             raster_draw();
         }
 
@@ -97,22 +97,14 @@ namespace Cyber
                 .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             };
 
-            TextureBarrier draw_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
-                .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .subresource_barrier = 0
-            };
-            TextureBarrier depth_barrier = {
-                .texture = back_depth_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
-                .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
-                .subresource_barrier = 0
-            };
-            
-            ResourceBarrierDesc barrier_desc0 = { .texture_barriers = &draw_barrier, .texture_barrier_count = 1 };
+            TextureBarrier draw_barrier(back_buffer, GRAPHICS_RESOURCE_STATE_UNKNOWN, GRAPHICS_RESOURCE_STATE_RENDER_TARGET);
+            TextureBarrier depth_barrier(back_depth_buffer, GRAPHICS_RESOURCE_STATE_UNKNOWN, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE);
+
+            ResourceBarrierDesc barrier_desc0;
+            barrier_desc0.texture_barriers.push_back(draw_barrier);
             device_context->cmd_resource_barrier(barrier_desc0);
-            ResourceBarrierDesc barrier_desc1 = { .texture_barriers = &depth_barrier, .texture_barrier_count = 1 };
+            ResourceBarrierDesc barrier_desc1;
+            barrier_desc1.texture_barriers.push_back(depth_barrier);
             device_context->cmd_resource_barrier(barrier_desc1);
 
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
@@ -127,8 +119,8 @@ namespace Cyber
             device_context->render_encoder_set_viewport(1, &viewport);
             RenderObject::Rect scissor
             {
-                0, 0, 
-                (int32_t)back_buffer->get_create_desc().m_width, 
+                0, 0,
+                (int32_t)back_buffer->get_create_desc().m_width,
                 (int32_t)back_buffer->get_create_desc().m_height
             };
 
@@ -145,14 +137,11 @@ namespace Cyber
             //device_context->render_encoder_draw(3, 0);
             device_context->cmd_end_render_pass();
 
-            TextureBarrier present_barrier = {
-                .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
-                .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE
-            };
-            ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
+            TextureBarrier present_barrier(back_buffer, GRAPHICS_RESOURCE_STATE_UNKNOWN, GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE);
+            ResourceBarrierDesc barrier_desc2;
+            barrier_desc2.texture_barriers.push_back(present_barrier);
             device_context->cmd_resource_barrier(barrier_desc2);
-            //device_context->set_render_target( 1, &back_buffer_view, nullptr);     
+            //device_context->set_render_target( 1, &back_buffer_view, nullptr);
         }
 
         void TrignaleApp::present()
@@ -180,27 +169,15 @@ namespace Cyber
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
             //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
-            attachment_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
-            attachment_ref[0].m_attachmentIndex = 0;
-            attachment_ref[0].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[0].m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_ref[0].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[0].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[0].m_finalState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            
-            attachment_ref[1].m_attachmentIndex = 1;
-            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[1].m_loadAction = LOAD_ACTION_CLEAR;
-            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_desc.format = TEX_FORMAT_RGBA8_UNORM;
+            attachment_ref[0].attachment_index = 0;
+            attachment_ref[0].state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+
+            attachment_ref[1].attachment_index = 1;
+            attachment_ref[1].state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             /*
-            attachment_ref[1].m_attachmentIndex = 0;
-            attachment_ref[1].m_sampleCount = SAMPLE_COUNT_1;
-            attachment_ref[1].m_loadAction = LOAD_ACTION_LOAD;
-            attachment_ref[1].m_storeAction = STORE_ACTION_STORE;
-            attachment_ref[1].m_initialState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
-            attachment_ref[1].m_finalState = GRAPHICS_RESOURCE_STATE_PRESENT;
+            attachment_ref[1].attachment_index = 0;
+            attachment_ref[1].state = GRAPHICS_RESOURCE_STATE_PRESENT;
             */
             //RenderObject::RenderSubpassDesc subpass_desc[1] = {};
             //subpass_desc.m_sampleCount = SAMPLE_COUNT_1;
@@ -210,14 +187,14 @@ namespace Cyber
             subpass_desc[0].m_pDepthStencilAttachment = &attachment_ref[1];
             subpass_desc[0].m_renderTargetCount = 1;
             subpass_desc[0].m_pRenderTargetAttachments = &attachment_ref[0];
-            
+
             subpass_desc[1].m_name = u8"UI Subpass";
             subpass_desc[1].m_inputAttachmentCount = 0;
             subpass_desc[1].m_pInputAttachments = nullptr;
             subpass_desc[1].m_pDepthStencilAttachment = nullptr;
             subpass_desc[1].m_renderTargetCount = 1;
             subpass_desc[1].m_pRenderTargetAttachments = &attachment_ref[1];
-            
+
             RenderObject::RenderPassDesc rp_desc1 = {
                 .m_name = u8"Triangle RenderPass",
                 .m_attachmentCount = 1,
@@ -225,8 +202,8 @@ namespace Cyber
                 .m_subpassCount = 1,
                 .m_pSubpasses = subpass_desc
             };
-            
-            render_pass = device_context->create_render_pass(rp_desc1);
+
+            device_context->create_render_pass(rp_desc1, &render_pass);
             //renderer->set_render_pass(render_pass);
         }
 
@@ -239,13 +216,13 @@ namespace Cyber
             buffer_desc.size = 3 * sizeof(Vertex);
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            vertex_buffer = render_device->create_buffer(buffer_desc);
-            
+            render_device->create_buffer(buffer_desc, nullptr, &vertex_buffer);
+
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
             buffer_desc.size = 3 * sizeof(uint32_t);
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_STAGING;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            index_buffer = render_device->create_buffer(buffer_desc);
+            render_device->create_buffer(buffer_desc, nullptr, &index_buffer);
 
             // map vertex buffer
             void* vtx_resource = render_device->map_buffer(vertex_buffer,MAP_WRITE, MAP_FLAG_DISCARD);
@@ -264,7 +241,7 @@ namespace Cyber
             // create texture
             RenderObject::ITexture* test_texture = nullptr;
             TextureLoader::TextureLoadInfo texture_load_info{
-                "TEST",
+                CYBER_UTF8("TEST"),
                 GRAPHICS_RESOURCE_USAGE_IMMUTABLE,
                 GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE,
                 0,
@@ -272,7 +249,7 @@ namespace Cyber
                 true,
                 false,
                 TEXTURE_FORMAT::TEX_FORMAT_UNKNOWN,
-                false,
+                0.0f,
                 FILTER_TYPE::FILTER_TYPE_LINEAR
             };
 
@@ -299,79 +276,6 @@ namespace Cyber
         {
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
-            //render_graph::RenderGraph* graph = cyber_new<render_graph::RenderGraph>();
-            /*
-            namespace render_graph = Cyber::render_graph;
-            render_graph::RenderGraph* graph = render_graph::RenderGraph::create([=](render_graph::RenderGraphBuilder& builder)
-            {
-                builder.with_device(device)
-                .backend_api(ERHIBackend::RHI_BACKEND_D3D12);
-            });
-            
-            auto builder = graph->get_builder();
-            auto tex = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"tex");
-
-            auto backbuffer = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"color");
-
-            auto depth = builder->create_texture(
-                render_graph::RGTextureCreateDesc{ 
-                .mWidth = 1920, .mHeight = 1080 , .mFormat = RHI_FORMAT_R8G8B8A8_SRGB }
-                , u8"depth");
-
-            builder->add_render_pass(
-                u8"ShadowPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.set_pipeline(nullptr)
-                    .add_render_target(0, depth);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            builder->add_render_pass(
-                u8"ColorPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.add_input(u8"Tex", tex)
-                    .add_input(u8"Depth", depth)
-                    .set_pipeline(nullptr)
-                    .add_render_target(0, backbuffer);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            builder->add_render_pass(
-                u8"PostPass",
-                 [=](render_graph::RGRenderPass& pass)
-                {
-                    pass.add_input(u8"Color", backbuffer)
-                    .set_pipeline(nullptr)
-                    .add_render_target(0, backbuffer);
-                },
-                [=](render_graph::RenderGraph& rg, render_graph::RenderPassContext& context)
-                {
-                    // execute context
-                    CB_CORE_INFO("test render graph : execute context");
-                });
-
-            
-            //graph->add_custom_phase<render_graph::RenderGraphPhase_Prepare>();
-            //graph->add_custom_phase<render_graph::RenderGraphPhase_Render>();
-
-            graph->execute();
-            */
 
             // create shader
             ResourceLoader::ShaderLoadDesc vs_load_desc = {};
@@ -381,7 +285,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -390,7 +294,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::SamplerCreateDesc sampler_create_desc = {};
             sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
@@ -420,7 +324,7 @@ namespace Cyber
             pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
             pipeline_shader_create_desc[1]->m_library = ps_shader;
             pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-            
+
             // create descriptor set
             RenderObject::DescriptorSetCreateDesc desc_set_create_desc = {
                 .root_signature = root_signature,
@@ -433,7 +337,7 @@ namespace Cyber
                 {2, 0, 4, VALUE_TYPE_UINT8, true}
             };
             RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
-            
+
             BlendStateCreateDesc blend_state_desc = {};
             blend_state_desc.render_target_count = 1;
             blend_state_desc.src_factors[0] = BLEND_CONSTANT_SRC_ALPHA;
@@ -446,8 +350,8 @@ namespace Cyber
             blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
 
             auto& scene_target = renderer->get_scene_target(0);
-            
-            RenderObject::RenderPipelineCreateDesc rp_desc = 
+
+            RenderObject::RenderPipelineCreateDesc rp_desc =
             {
                 .vertex_shader = pipeline_shader_create_desc[0],
                 .pixel_shader = pipeline_shader_create_desc[1],
@@ -461,7 +365,7 @@ namespace Cyber
                 .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
             };
-            pipeline = render_device->create_render_pipeline(rp_desc);
+            render_device->create_render_pipeline(rp_desc, &pipeline);
 
             vs_shader->free();
             ps_shader->free();

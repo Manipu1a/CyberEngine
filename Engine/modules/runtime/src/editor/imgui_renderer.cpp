@@ -57,8 +57,7 @@ namespace Cyber
             {
                 if(vertex_buffer)
                 {
-                    vertex_buffer->free();
-                    vertex_buffer = nullptr;
+                    render_device->free_buffer(vertex_buffer.detach());
                 }
                 while(static_cast<int>(vertex_buffer_size) < draw_data->TotalVtxCount)
                 {
@@ -69,15 +68,16 @@ namespace Cyber
                 buffer_desc.size = vertex_buffer_size * sizeof(ImDrawVert);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                render_device->create_buffer(buffer_desc, nullptr, &vertex_buffer);
+                RenderObject::IBuffer* raw_vb = nullptr;
+                render_device->create_buffer(buffer_desc, nullptr, &raw_vb);
+                vertex_buffer.attach(raw_vb);
             }
 
             if(!index_buffer || static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
             {
                 if(index_buffer)
                 {
-                    index_buffer->free();
-                    index_buffer = nullptr;
+                    render_device->free_buffer(index_buffer.detach());
                 }
                 while(static_cast<int>(index_buffer_size) < draw_data->TotalIdxCount)
                 {
@@ -88,7 +88,9 @@ namespace Cyber
                 buffer_desc.size = index_buffer_size * sizeof(ImDrawIdx);
                 buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
                 buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-                render_device->create_buffer(buffer_desc, nullptr, &index_buffer);
+                RenderObject::IBuffer* raw_ib = nullptr;
+                render_device->create_buffer(buffer_desc, nullptr, &raw_ib);
+                index_buffer.attach(raw_ib);
             }
             BufferRange range;
             range.offset = 0;
@@ -382,7 +384,11 @@ namespace Cyber
 
             Renderer::Renderer* renderer = Core::Application::getApp()->get_renderer();
             auto device_context = renderer->get_device_context();
-            device_context->create_render_pass(rp_desc1, &render_pass);
+            {
+                RenderObject::IRenderPass* raw_rp = nullptr;
+                device_context->create_render_pass(rp_desc1, &raw_rp);
+                render_pass.attach(raw_rp);
+            }
 
             RenderObject::VertexAttribute attri = { 0, 0, 2, VALUE_TYPE_FLOAT32 };
 
@@ -429,7 +435,11 @@ namespace Cyber
                 .render_target_count = 1,
                 .prim_topology = PRIM_TOPO_TRIANGLE_LIST
             };
-            render_device->create_render_pipeline(rp_desc, &render_pipeline);
+            {
+                RenderObject::IRenderPipeline* raw_pipeline = nullptr;
+                render_device->create_render_pipeline(rp_desc, &raw_pipeline);
+                render_pipeline.attach(raw_pipeline);
+            }
             vs_shader.reset();
             ps_shader.reset();
 
@@ -438,7 +448,11 @@ namespace Cyber
             buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
             buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
             buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            render_device->create_buffer(buffer_desc, nullptr, &vertex_constant_buffer);
+            {
+                RenderObject::IBuffer* raw_cb = nullptr;
+                render_device->create_buffer(buffer_desc, nullptr, &raw_cb);
+                vertex_constant_buffer.attach(raw_cb);
+            }
 
             create_fonts_texture();
         }
@@ -477,7 +491,11 @@ namespace Cyber
             texture_data.numSubResources = 1;
             texture_data.pDevice = render_device;
             //texture_data.pCommandBuffer = Core::Application::getApp()->get_renderer()->get_command_buffer();
-            render_device->create_texture(texture_desc, &texture_data, &font_texture);
+            {
+                RenderObject::ITexture* raw_font_texture = nullptr;
+                render_device->create_texture(texture_desc, &texture_data, &raw_font_texture);
+                font_texture.attach(raw_font_texture);
+            }
             font_srv = font_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
             
             IO.Fonts->TexID = (ImTextureID)font_srv;

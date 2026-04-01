@@ -1,6 +1,8 @@
 #include "renderer/renderer.h"
 #include "graphics/interface/render_device.hpp"
 #include "graphics/backend/d3d12/instance_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
+#include "graphics/backend/d3d12/device_context_d3d12.h"
 #include "application/application.h"
 #include "EASTL/vector.h"
 
@@ -33,6 +35,38 @@ namespace Cyber
         void Renderer::finalize()
         {
 
+        }
+
+        void Renderer::begin_frame()
+        {
+            if(!m_pRenderDevice || device_contexts.empty())
+                return;
+
+            auto* render_device = static_cast<RenderObject::RenderDevice_D3D12_Impl*>(m_pRenderDevice.get());
+            auto* device_ctx = static_cast<RenderObject::DeviceContext_D3D12_Impl*>(device_contexts[0].get());
+            auto* queue = render_device->get_command_queue(0);
+
+            // Wait for the previous frame's GPU work to complete before
+            // resetting descriptor heaps. Since the heap reset invalidates
+            // ALL descriptors, we must wait for the last submitted fence,
+            // not just the one from MAX_FRAMES_IN_FLIGHT frames ago.
+            uint64_t last_fence = device_ctx->get_last_submitted_fence_value();
+            if(last_fence != 0 && queue->get_completed_fence_value() < last_fence)
+            {
+                queue->wait_for_fence_value(last_fence);
+            }
+
+            // Now safe to reset descriptor heaps
+            device_ctx->reset_descriptor_heaps();
+        }
+
+        void Renderer::end_frame()
+        {
+            // Record the last submitted fence value for this frame slot
+            uint32_t frame_slot = m_currentFrame % MAX_FRAMES_IN_FLIGHT;
+            auto* device_ctx = static_cast<RenderObject::DeviceContext_D3D12_Impl*>(device_contexts[0].get());
+            m_frameFenceValues[frame_slot] = device_ctx->get_last_submitted_fence_value();
+            m_currentFrame++;
         }
 
         void Renderer::create_render_device(GRAPHICS_BACKEND backend)
@@ -114,7 +148,11 @@ namespace Cyber
                 color_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_RENDER_TARGET | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
                 color_buffer_desc.m_pNativeHandle = nullptr;
                 color_buffer_desc.m_clearValue = fastclear_1111;
-                m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &scene_target[i].color_buffer);
+                {
+                    RenderObject::ITexture* raw_color = nullptr;
+                    m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &raw_color);
+                    scene_target[i].color_buffer.attach(raw_color);
+                }
 
                 RenderObject::TextureCreateDesc depth_buffer_desc;
                 depth_buffer_desc.m_name = u8"DepthBuffer";
@@ -128,7 +166,11 @@ namespace Cyber
                 depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
                 depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL;
                 depth_buffer_desc.m_pNativeHandle = nullptr;
-                m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &scene_target[i].depth_buffer);
+                {
+                    RenderObject::ITexture* raw_depth = nullptr;
+                    m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &raw_depth);
+                    scene_target[i].depth_buffer.attach(raw_depth);
+                }
             }
             auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
@@ -162,13 +204,15 @@ namespace Cyber
                 // Resize color and depth buffers
                 for(uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i)
                 {
-                    scene_target[i].color_buffer->free();
-                    scene_target[i].color_buffer = nullptr;
-                    scene_target[i].depth_buffer->free();
-                    scene_target[i].depth_buffer = nullptr;
+                    m_pRenderDevice->free_texture(scene_target[i].color_buffer.detach());
+                    m_pRenderDevice->free_texture(scene_target[i].depth_buffer.detach());
 
-                    m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &scene_target[i].color_buffer);
-                    m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &scene_target[i].depth_buffer);
+                    RenderObject::ITexture* new_color = nullptr;
+                    RenderObject::ITexture* new_depth = nullptr;
+                    m_pRenderDevice->create_texture(color_buffer_desc, nullptr, &new_color);
+                    m_pRenderDevice->create_texture(depth_buffer_desc, nullptr, &new_depth);
+                    scene_target[i].color_buffer.attach(new_color);
+                    scene_target[i].depth_buffer.attach(new_depth);
                 }
 
                 // Update frame buffer

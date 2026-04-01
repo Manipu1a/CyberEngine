@@ -84,7 +84,7 @@ namespace Cyber
             virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) = 0;
             virtual ISampler* create_sampler(const RenderObject::SamplerCreateDesc& samplerDesc) = 0;
             // Shader
-            virtual eastl::shared_ptr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
+            virtual RefCntAutoPtr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) = 0;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) = 0;
         };
 
@@ -117,6 +117,10 @@ namespace Cyber
 
             void set_device_context(size_t ctx_id, DeviceContextImplType* device_context)
             {
+                if(ctx_id >= m_deviceContexts.size())
+                {
+                    m_deviceContexts.resize(ctx_id + 1, nullptr);
+                }
                 m_deviceContexts[ctx_id] = device_context;
             }
 

@@ -126,13 +126,13 @@ namespace Cyber
 
             TextureBarrier draw_barrier = {
                 .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
                 .subresource_barrier = 0
             };
             TextureBarrier depth_barrier = {
                 .texture = back_depth_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_COMMON,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE,
                 .subresource_barrier = 0
             };
@@ -174,7 +174,7 @@ namespace Cyber
 
             TextureBarrier present_barrier = {
                 .texture = back_buffer,
-                .src_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET,
+                .src_state = GRAPHICS_RESOURCE_STATE_UNKNOWN,
                 .dst_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE
             };
             ResourceBarrierDesc barrier_desc2 = { .texture_barriers = &present_barrier, .texture_barrier_count = 1 };
@@ -373,7 +373,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_VERT,
                 .entry_point_name = CYBER_UTF8("VSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
 
             ResourceLoader::ShaderLoadDesc ps_load_desc = {};
             ps_load_desc.target = SHADER_TARGET_6_0;
@@ -382,7 +382,7 @@ namespace Cyber
                 .stage = SHADER_STAGE_FRAG,
                 .entry_point_name = CYBER_UTF8("PSMain"),
             };
-            eastl::shared_ptr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
+            RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
 
             RenderObject::SamplerCreateDesc sampler_create_desc = {};
             sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;

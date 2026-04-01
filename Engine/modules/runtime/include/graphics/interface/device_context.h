@@ -129,9 +129,12 @@ namespace Cyber
             virtual void set_root_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) = 0;
             
             virtual void prepare_for_rendering() = 0;
-            
+
             // Render Pass
             virtual void create_render_pass(const RenderPassDesc& renderPassDesc, IRenderPass** render_pass) = 0;
+
+            // Deferred Context
+            virtual void execute_deferred_context(IDeviceContext* deferred_ctx) = 0;
         };
 
         template<typename EngineImplTraits>
@@ -206,8 +209,10 @@ namespace Cyber
             }
 
             bool is_deferred_context() const { return desc.is_deferrd_context; }
-            
+
             DeviceContextIndex get_context_id() const { return desc.context_id; }
+
+            void set_immediate_context_id(DeviceContextIndex id) { immediate_context_id = id; }
 
             DeviceContextIndex get_execution_context_id() const
             {

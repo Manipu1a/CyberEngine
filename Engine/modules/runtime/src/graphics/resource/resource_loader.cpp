@@ -92,18 +92,18 @@ namespace Cyber
 
                     load_shader_stage_byte_code(desc.target, desc.stage_load_desc, macroCount, macros, &libraryDesc, &shaderByteCodeBuffer);
 
-                    eastl::shared_ptr<RenderObject::IShaderLibrary> shaderLibrary = device->create_shader_library(libraryDesc);
-                    
+                    RefCntAutoPtr<RenderObject::IShaderLibrary> shaderLibrary = device->create_shader_library(libraryDesc);
+
                     // Free the allocated macros memory after creating shader library
                     if(macros)
                     {
                         cyber_free(macros);
                         macros = nullptr;
                     }
-                    
+
                     if(shaderLibrary)
                     {
-                        return RefCntAutoPtr<RenderObject::IShaderLibrary>(shaderLibrary.get());
+                        return shaderLibrary;
                     }
                 }
             }

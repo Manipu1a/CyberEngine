@@ -5,7 +5,6 @@
 #include "graphics/backend/d3d12/texture_d3d12.h"
 #include "graphics/backend/d3d12/buffer_d3d12.h"
 #include "renderer/renderer.h"
-#include "eastl/atomic.h"
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
@@ -28,8 +27,9 @@ public:
 
     ~CommandContext();
 
-    ID3D12GraphicsCommandList* close(ID3D12CommandAllocator* out_command_allocator);
-    void reset(CommandListManager& command_list_manager);
+    ID3D12GraphicsCommandList* close();
+    void reset(CommandListManager& command_list_manager, class CommandQueue_D3D12_Impl& queue);
+    void set_current_fence_value(uint64_t value);
     
     ID3D12GraphicsCommandList* get_command_list() const { return command_list; }
     D3D12_COMMAND_LIST_TYPE get_command_list_type() const { return command_list->GetType(); }
@@ -75,15 +75,22 @@ public:
 
     uint64_t update_sub_resource(ID3D12Resource* pDestResource, ID3D12Resource* pIntermediate, uint32_t firstSubresource, uint32_t numSubresources, const D3D12_SUBRESOURCE_DATA* pSrcData);
     void update_buffer_resource(ID3D12Resource* dest_resource, uint64_t dest_offset, ID3D12Resource* intermediate_resource, uint64_t inter_offset, size_t dataSize);
+
+    // Barrier batching — queue barriers and flush them all at once
+    void queue_barrier(const D3D12_RESOURCE_BARRIER& barrier);
+    void flush_barriers();
+
 private:
     ID3D12GraphicsCommandList* command_list;
     ID3D12CommandAllocator* command_allocator;
-    
-    eastl::vector<FrameContext> frame_contexts;
-    uint32_t max_interface_version;
 
-    eastl::atomic<uint32_t> current_frame_index;
+    eastl::vector<FrameContext> frame_contexts;
+    uint32_t max_interface_version = 0;
+
+    uint32_t current_frame_index;
     uint32_t max_frame_inflight;
+
+    eastl::vector<D3D12_RESOURCE_BARRIER> pending_barriers;
 };
 
 CYBER_END_NAMESPACE

@@ -3,6 +3,7 @@
 #include "interface/render_device.hpp"
 #include "backend/d3d12/graphics_types_d3d12.h"
 #include "graphics/backend/d3d12/command_list_manager.h"
+#include "graphics/backend/d3d12/command_queue_d3d12.h"
 #include "state_cache_d3d12.h"
 #include "engine_impl_traits_d3d12.hpp"
 
@@ -95,7 +96,7 @@ namespace Cyber
             virtual void* map_buffer(IBuffer* buffer, MAP_TYPE map_type, MAP_FLAGS map_flags) override;
             virtual void unmap_buffer(IBuffer* buffer, MAP_TYPE map_type) override;
 
-            virtual eastl::shared_ptr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
+            virtual RefCntAutoPtr<RenderObject::IShaderLibrary> create_shader_library(const struct ShaderLibraryCreateDesc& desc) override;
             virtual void free_shader_library(IShaderLibrary* shaderLibrary) override;
             
             // create view
@@ -128,11 +129,16 @@ namespace Cyber
             using PooledCommandContext = eastl::unique_ptr<CommandContext>;
             PooledCommandContext allocate_command_context(SoftwareQueueIndex command_queue_id);
 
-            void close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
-            
-            void close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
+            uint64_t close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[]);
+
+            uint64_t close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context);
 
             void bind_descriptor_heap();
+
+            // Submit pre-closed command contexts and return fence value
+            uint64_t submit_command_contexts(SoftwareQueueIndex command_queue_id, eastl::vector<PooledCommandContext>& contexts);
+
+            CommandQueue_D3D12_Impl* get_command_queue(SoftwareQueueIndex index) { return static_cast<CommandQueue_D3D12_Impl*>(m_commandQueues[index]); }
 
         private:
             CYBER_FORCE_INLINE CommandListManager& get_command_list_manager(uint8_t index)

@@ -2,6 +2,7 @@
 #include "d3d12.config.h"
 #include "EASTL/vector.h"
 #include "interface/graphics_types.h"
+#include <mutex>
 
 namespace Cyber
 {
@@ -71,6 +72,7 @@ namespace Cyber
             }
             
         protected:
+            std::mutex m_allocationMutex;
             /// DX Heap
             ID3D12DescriptorHeap* m_pCurrentHeap;
             ID3D12Device* m_pDevice;

@@ -16,6 +16,7 @@ namespace Cyber
 
         uint32_t DescriptorHeap_D3D12::reserve_slots(uint32_t num_requested_slots)
         {
+            std::lock_guard<std::mutex> lock(m_allocationMutex);
             uint32_t first_requested_slot = m_usedDescriptors;
             uint32_t slot_after_request = m_usedDescriptors + num_requested_slots;
 
@@ -23,7 +24,7 @@ namespace Cyber
             {
                 first_requested_slot = 0;
                 slot_after_request = num_requested_slots;
-            }   
+            }
 
             m_usedDescriptors = slot_after_request;
 
@@ -32,10 +33,9 @@ namespace Cyber
 
         DescriptorHandle DescriptorHeap_D3D12::consume_descriptor_handles(uint32_t descriptorCount)
         {
+            std::lock_guard<std::mutex> lock(m_allocationMutex);
             if(m_usedDescriptors + descriptorCount > m_heapDesc.NumDescriptors)
             {
-            #ifdef CYBER_THREAD_SAFETY
-            #endif
                 if((m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE))
                 {
                     uint32_t currentOffset = m_usedDescriptors;
@@ -123,6 +123,7 @@ namespace Cyber
 
         void DescriptorHeap_D3D12::free_descriptor_handles(const DescriptorHandle& handle, uint32_t descriptorCount)
         {
+            std::lock_guard<std::mutex> lock(m_allocationMutex);
             cyber_assert((m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE) == 0, "Descriptor Handle flag should not be shader visible!");
 
             for(uint32_t i = 0; i < descriptorCount; ++i)
@@ -145,11 +146,11 @@ namespace Cyber
 
         void DescriptorHeap_D3D12::reset()
         {
+            std::lock_guard<std::mutex> lock(m_allocationMutex);
             // Only reset shader visible heaps, not CPU descriptor heaps
             if(m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
             {
                 m_usedDescriptors = 0;
-                // Note: We don't clear m_pHandles as they will be overwritten
             }
         }
 

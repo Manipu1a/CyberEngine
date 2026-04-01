@@ -197,11 +197,15 @@ public:
 
     RefCntAutoPtr& operator=(const RefCntAutoPtr& other) CYBER_NOEXCEPT
     {
-        *this = other.m_ptr;
-        m_ref_count = other.m_ref_count;
-        if (m_ref_count)
+        if (m_ptr != other.m_ptr)
         {
-            m_ref_count->add_strong_ref();
+            reset();
+            m_ptr = other.m_ptr;
+            m_ref_count = other.m_ref_count;
+            if (m_ref_count)
+            {
+                m_ref_count->add_strong_ref();
+            }
         }
         return *this;
     }
@@ -294,11 +298,7 @@ public:
     {
         T* ptr = m_ptr;
         m_ptr = nullptr;
-        if (m_ref_count)
-        {
-            m_ref_count->release_strong_ref();
-            m_ref_count = nullptr;
-        }
+        m_ref_count = nullptr;
         return ptr;
     }
 
@@ -332,17 +332,14 @@ private:
 
         ~AddressProxy()
         {
-            // 检查是否有新指针被赋值
             if (m_pAutoPtr && m_pAutoPtr->m_ptr != m_old_ptr)
             {
-                // 确保没有引用计数（意味着这是一个新的原始指针）
-                if (!m_pAutoPtr->m_ref_count)
+                // A new pointer was written via operator T**()
+                // m_old_ptr now holds the new value, m_pAutoPtr->m_ptr is stale
+                m_pAutoPtr->reset();
+                if (m_old_ptr)
                 {
-                    // 为新指针创建引用计数
-                    m_pAutoPtr->attach(m_old_ptr); // 释放旧指针
-                    m_pAutoPtr->m_ref_count = new RefCountObject<T>(m_pAutoPtr->m_ptr);
-                    m_pAutoPtr->m_ref_count->add_strong_ref();
-                    m_pAutoPtr->m_ref_count->add_weak_ref();
+                    m_pAutoPtr->attach(m_old_ptr);
                 }
             }
         }

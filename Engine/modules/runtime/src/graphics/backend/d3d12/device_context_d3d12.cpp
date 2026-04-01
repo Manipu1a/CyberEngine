@@ -624,7 +624,10 @@ void DeviceContext_D3D12_Impl::commit_subpass_rendertargets()
        }
        D3D12_RENDER_PASS_RENDER_TARGET_DESC* pRenderPassRenderTargetDesc = renderPassRenderTargetDescs;
 
-       curr_command_context->begin_render_pass( 
+       // Flush any pending barriers before starting the render pass
+       curr_command_context->flush_barriers();
+
+       curr_command_context->begin_render_pass(
            colorTargetCount, pRenderPassRenderTargetDesc, pRenderPassDepthStencilDesc, D3D12_RENDER_PASS_FLAG_NONE);
         ++state.num_command;
    #else
@@ -689,10 +692,11 @@ void DeviceContext_D3D12_Impl::flush()
 
 void DeviceContext_D3D12_Impl::finish_frame()
 {
-    m_pDynamicHeap->release_allocated_pages(0);
-    
-    // Reset shader visible descriptor heaps for next frame
-    // This prevents the D3D12 STATIC_DESCRIPTOR_INVALID_DESCRIPTOR_CHANGE error
+    m_pDynamicHeap->release_allocated_pages(state.last_submitted_fence_value);
+}
+
+void DeviceContext_D3D12_Impl::reset_descriptor_heaps()
+{
     for(uint32_t i = 0; i < GRAPHICS_SINGLE_GPU_NODE_COUNT; ++i)
     {
         if(render_device->GetCbvSrvUavHeaps(i))
@@ -708,8 +712,24 @@ void DeviceContext_D3D12_Impl::finish_frame()
 
 void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t num_command_lists, ICommandBuffer** command_lists)
 {
-    cyber_check_msg(!is_deferred_context() || num_command_lists == 0 && command_lists == nullptr, "Deferred contexts cannot execute command lists directly");
+    if(is_deferred_context())
+    {
+        // Deferred context: close command list and stash for later submission by immediate context
+        if(curr_command_context && state.num_command != 0)
+        {
+            curr_command_context->close();
+            std::lock_guard<std::mutex> lock(recorded_mutex);
+            recorded_contexts.emplace_back(eastl::move(curr_command_context));
+        }
+        if(request_new_command_context)
+        {
+            request_command_context();
+        }
+        state.num_command = 0;
+        return;
+    }
 
+    // Immediate context path
     eastl::vector<RenderDevice_D3D12_Impl::PooledCommandContext> contexts;
     contexts.reserve(num_command_lists + 1);
 
@@ -719,21 +739,11 @@ void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t 
         {
             contexts.emplace_back(eastl::move(curr_command_context));
         }
-        else if(!request_new_command_context)
-        {
-            render_device;
-        }
-    }
-
-    // for deferred context
-    for(uint32_t i = 0; i < num_command_lists; ++i)
-    {
-
     }
 
     if(!contexts.empty())
     {
-        render_device->close_and_execute_command_context(get_command_queue_id(), (uint32_t)contexts.size(), contexts.data());
+        state.last_submitted_fence_value = render_device->close_and_execute_command_context(get_command_queue_id(), (uint32_t)contexts.size(), contexts.data());
     }
 
     if(!curr_command_context && request_new_command_context)
@@ -741,6 +751,37 @@ void DeviceContext_D3D12_Impl::flush(bool request_new_command_context, uint32_t 
         request_command_context();
     }
 
+    state.num_command = 0;
+}
+
+eastl::vector<RenderDevice_D3D12_Impl::PooledCommandContext> DeviceContext_D3D12_Impl::take_recorded_contexts()
+{
+    std::lock_guard<std::mutex> lock(recorded_mutex);
+    return eastl::move(recorded_contexts);
+}
+
+void DeviceContext_D3D12_Impl::execute_deferred_context(IDeviceContext* deferred_ctx)
+{
+    cyber_check_msg(!is_deferred_context(), "Only immediate context can execute deferred contexts");
+
+    auto* deferred = static_cast<DeviceContext_D3D12_Impl*>(deferred_ctx);
+    auto contexts = deferred->take_recorded_contexts();
+
+    if(contexts.empty())
+        return;
+
+    // Close our own command list first if it has recorded commands
+    if(curr_command_context && state.num_command != 0)
+    {
+        curr_command_context->close();
+        contexts.insert(contexts.begin(), eastl::move(curr_command_context));
+    }
+
+    // Submit all pre-closed command lists in one batch
+    state.last_submitted_fence_value = render_device->submit_command_contexts(get_command_queue_id(), contexts);
+
+    // Get a new context for continued recording
+    request_command_context();
     state.num_command = 0;
 }
 

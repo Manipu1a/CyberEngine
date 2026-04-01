@@ -69,9 +69,26 @@ namespace Cyber
             {
                 context_desc.context_id = ctx_id;
                 context_desc.queue_id = ctx_id;
+                context_desc.is_deferrd_context = false;
                 auto d3d12_context = cyber_new<DeviceContext_D3D12_Impl>(render_device_impl, context_desc);
                 render_device_impl->set_device_context(ctx_id, d3d12_context);
                 device_context[ctx_id] = d3d12_context;
+            }
+
+            // Create deferred contexts
+            for(uint32_t i = 0; i < desc.num_deferred_contexts; ++i)
+            {
+                DeviceContextDesc deferred_desc = {};
+                deferred_desc.is_deferrd_context = true;
+                deferred_desc.queue_type = desc.queue_type;
+                deferred_desc.name = CYBER_UTF8("DeferredContext");
+                deferred_desc.context_id = (uint8_t)(num_immediate_contexts + i);
+                deferred_desc.queue_id = 0; // route to immediate context 0's queue
+
+                auto d3d12_deferred_ctx = cyber_new<DeviceContext_D3D12_Impl>(render_device_impl, deferred_desc);
+                d3d12_deferred_ctx->set_immediate_context_id(0);
+                render_device_impl->set_device_context(deferred_desc.context_id, d3d12_deferred_ctx);
+                device_context[deferred_desc.context_id] = d3d12_deferred_ctx;
             }
         }
 

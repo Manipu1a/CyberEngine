@@ -1,4 +1,5 @@
 #include "backend/d3d12/command_context.h"
+#include "backend/d3d12/command_queue_d3d12.h"
 #include "core/debug.h"
 #include "backend/d3d12/d3d12_utils.h"
 CYBER_BEGIN_NAMESPACE(Cyber)
@@ -23,39 +24,59 @@ CommandContext::CommandContext(CommandListManager& command_list_manager, uint32_
 
 CommandContext::~CommandContext()
 {
-    
+    if(command_list)
+    {
+        command_list->Release();
+        command_list = nullptr;
+    }
+    for(auto& frame_context : frame_contexts)
+    {
+        if(frame_context.command_allocator)
+        {
+            frame_context.command_allocator->Release();
+            frame_context.command_allocator = nullptr;
+        }
+    }
 }
 
-ID3D12GraphicsCommandList* CommandContext::close(ID3D12CommandAllocator* out_command_allocator)
+ID3D12GraphicsCommandList* CommandContext::close()
 {
-    auto curr = current_frame_index.load();
+    flush_barriers();
+
+    auto curr = current_frame_index;
     FrameContext& frame_context = frame_contexts[curr % max_frame_inflight];
     cyber_check(frame_context.command_allocator != nullptr);
-    
-    //cyber_assert(command_allocator != nullptr, "Command allocator is not initialized");
+
     auto hr = command_list->Close();
     cyber_assert(SUCCEEDED(hr), "Failed to close command list");
 
-    //out_command_allocator = eastl::move(command_allocator);
     return command_list;
 }
 
-void CommandContext::reset(CommandListManager& command_list_manager)
+void CommandContext::reset(CommandListManager& command_list_manager, CommandQueue_D3D12_Impl& queue)
 {
     cyber_check(command_list != nullptr);
     cyber_check(command_list->GetType() == command_list_manager.get_command_list_type());
 
+    auto curr = current_frame_index++;
+    FrameContext& frame_context = frame_contexts[curr % max_frame_inflight];
 
-    //if(command_allocator != nullptr)
+    // Wait only if GPU hasn't finished with this allocator yet
+    if(frame_context.fence_value != 0 && queue.get_completed_fence_value() < frame_context.fence_value)
     {
-        auto curr = current_frame_index.fetch_add(1);
-        FrameContext& frame_context = frame_contexts[curr % max_frame_inflight];
-        command_allocator = frame_context.command_allocator;
-        //command_list_manager.request_allocator(&command_allocator);
-        //todo : reuse allocators
-        CHECK_HRESULT(command_allocator->Reset());
-        command_list->Reset(command_allocator, nullptr);
+        queue.wait_for_fence_value(frame_context.fence_value);
     }
+
+    command_allocator = frame_context.command_allocator;
+    CHECK_HRESULT(command_allocator->Reset());
+    command_list->Reset(command_allocator, nullptr);
+}
+
+void CommandContext::set_current_fence_value(uint64_t value)
+{
+    // Record the fence value for the frame slot that was last used
+    auto idx = current_frame_index > 0 ? (current_frame_index - 1) : 0;
+    frame_contexts[idx % max_frame_inflight].fence_value = value;
 }
 
 void CommandContext::set_render_target(uint32_t num_render_targets, const D3D12_CPU_DESCRIPTOR_HANDLE *rt_descriptor,BOOL rt_single_handle_to_descriptor_range,
@@ -113,11 +134,13 @@ void CommandContext::set_index_buffer(const D3D12_INDEX_BUFFER_VIEW* view)
 
 void CommandContext::draw_instanced(uint32_t vertex_count_per_instance, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
+    flush_barriers();
     command_list->DrawInstanced((UINT)vertex_count_per_instance, (UINT)instance_count, (UINT)first_vertex, (UINT)first_instance);
 }
 
 void CommandContext::draw_indexed_instanced(uint32_t index_count_per_instance, uint32_t instance_count, uint32_t first_index, int32_t base_vertex, uint32_t first_instance)
 {
+    flush_barriers();
     command_list->DrawIndexedInstanced((UINT)index_count_per_instance, (UINT)instance_count, (UINT)first_index, (INT)base_vertex, (UINT)first_instance);
 }
 
@@ -144,9 +167,8 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, GRAPHICS_RES
 void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const TextureBarrier& transition_barrier)
 {
     DECLARE_ZERO(D3D12_RESOURCE_BARRIER, d3d_barrier);
-    GRAPHICS_RESOURCE_STATE Debug = texture.get_new_state();
 
-    GRAPHICS_RESOURCE_STATE current_state = transition_barrier.src_state != GRAPHICS_RESOURCE_STATE_UNKNOWN ? 
+    GRAPHICS_RESOURCE_STATE current_state = transition_barrier.src_state != GRAPHICS_RESOURCE_STATE_UNKNOWN ?
                                             transition_barrier.src_state : texture.get_new_state();
     GRAPHICS_RESOURCE_STATE expected_state = transition_barrier.dst_state;
 
@@ -211,7 +233,7 @@ void CommandContext::transition_resource(Texture_D3D12_Impl& texture, const Text
         }
     }
 
-    command_list->ResourceBarrier(1, &d3d_barrier);
+    queue_barrier(d3d_barrier);
 }
 
 void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const BufferBarrier& transition_barrier)
@@ -221,59 +243,60 @@ void CommandContext::transition_resource(Buffer_D3D12_Impl& buffer, const Buffer
     if(create_desc.usage == GRAPHICS_RESOURCE_USAGE_DEFAULT ||
         create_desc.usage == GRAPHICS_RESOURCE_USAGE_STAGING ||
         (create_desc.usage == GRAPHICS_RESOURCE_USAGE_DYNAMIC && create_desc.mode == BUFFER_MODE_RAW))
+    {
+        if(transition_barrier.src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
+            transition_barrier.dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
         {
-            if(transition_barrier.src_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS &&
-                transition_barrier.dst_state == GRAPHICS_RESOURCE_STATE_UNORDERED_ACCESS)
-            {
-                d3d_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
-                d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                d3d_barrier.UAV.pResource = buffer.get_dx_resource();
-            }
-            else 
-            {
-                cyber_assert(transition_barrier.src_state != transition_barrier.dst_state, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
-
-                d3d_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-                if(transition_barrier.d3d12.begin_only)
-                {
-                    d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
-                }
-                else if(transition_barrier.d3d12.end_only)
-                {
-                    d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
-                }
-                else
-                {
-                    d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-                }
-                d3d_barrier.Transition.pResource = buffer.get_dx_resource();
-                d3d_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-                if(transition_barrier.queue_acquire)
-                {
-                    d3d_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-                }
-                else 
-                {
-                    d3d_barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier.src_state);
-                }
-
-                if(transition_barrier.queue_release)
-                {
-                    d3d_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
-                }
-                else 
-                {
-                    d3d_barrier.Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier.dst_state);
-                }
-
-                cyber_assert(d3d_barrier.Transition.StateBefore != d3d_barrier.Transition.StateAfter, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
-            }
+            d3d_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+            d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+            d3d_barrier.UAV.pResource = buffer.get_dx_resource();
         }
-        command_list->ResourceBarrier(1, &d3d_barrier);
+        else
+        {
+            cyber_assert(transition_barrier.src_state != transition_barrier.dst_state, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
+
+            d3d_barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+            if(transition_barrier.d3d12.begin_only)
+            {
+                d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+            }
+            else if(transition_barrier.d3d12.end_only)
+            {
+                d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+            }
+            else
+            {
+                d3d_barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+            }
+            d3d_barrier.Transition.pResource = buffer.get_dx_resource();
+            d3d_barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+            if(transition_barrier.queue_acquire)
+            {
+                d3d_barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+            }
+            else
+            {
+                d3d_barrier.Transition.StateBefore = D3D12Util_TranslateResourceState(transition_barrier.src_state);
+            }
+
+            if(transition_barrier.queue_release)
+            {
+                d3d_barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+            }
+            else
+            {
+                d3d_barrier.Transition.StateAfter = D3D12Util_TranslateResourceState(transition_barrier.dst_state);
+            }
+
+            cyber_assert(d3d_barrier.Transition.StateBefore != d3d_barrier.Transition.StateAfter, "D3D12 ERROR: Buffer Barrier with same src and dst state!");
+        }
+        queue_barrier(d3d_barrier);
+    }
 }
 
 void CommandContext::clear_render_target(D3D12_CPU_DESCRIPTOR_HANDLE render_target_view, const FLOAT *color, UINT num_rect, const D3D12_RECT *rects)
 {
+    flush_barriers();
     command_list->ClearRenderTargetView(render_target_view, color, num_rect, rects);
 }
 
@@ -294,7 +317,11 @@ void CommandContext::set_viewport(uint32_t num_viewport, const D3D12_VIEWPORT* v
 
 void CommandContext::begin_render_pass(uint32_t num_render_targets, const D3D12_RENDER_PASS_RENDER_TARGET_DESC* render_targets, const D3D12_RENDER_PASS_DEPTH_STENCIL_DESC* depth_stencil, D3D12_RENDER_PASS_FLAGS flags)
 {
-    static_cast<ID3D12GraphicsCommandList4*>(command_list)->BeginRenderPass(num_render_targets, render_targets, depth_stencil, flags);
+    #ifdef __ID3D12GraphicsCommandList4_FWD_DEFINED__
+        static_cast<ID3D12GraphicsCommandList4*>(command_list)->BeginRenderPass(num_render_targets, render_targets, depth_stencil, flags);
+    #else
+        cyber_warn("ID3D12GraphicsCommandList4 is not defined!");
+    #endif
 }
 
 void CommandContext::end_render_pass()
@@ -374,6 +401,20 @@ uint64_t CommandContext::update_sub_resource(ID3D12Resource* pDestResource, ID3D
 void CommandContext::update_buffer_resource(ID3D12Resource* dest_resource, uint64_t dest_offset, ID3D12Resource* intermediate_resource, uint64_t inter_offset, size_t dataSize)
 {
     command_list->CopyBufferRegion(dest_resource, dest_offset, intermediate_resource, inter_offset, dataSize);
+}
+
+void CommandContext::queue_barrier(const D3D12_RESOURCE_BARRIER& barrier)
+{
+    pending_barriers.push_back(barrier);
+}
+
+void CommandContext::flush_barriers()
+{
+    if(!pending_barriers.empty())
+    {
+        command_list->ResourceBarrier((UINT)pending_barriers.size(), pending_barriers.data());
+        pending_barriers.clear();
+    }
 }
 
 CYBER_END_NAMESPACE

@@ -4,6 +4,7 @@
 #include "dynamic_heap_d3d12.hpp"
 #include "engine_impl_traits_d3d12.hpp"
 #include "state_cache_d3d12.h"
+#include <mutex>
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(RenderObject)
@@ -56,8 +57,13 @@ public:
     virtual void render_encoder_draw_indexed_instanced(uint32_t index_count, uint32_t first_index, uint32_t instance_count, uint32_t first_instance, uint32_t first_vertex) override;
 
     virtual void prepare_for_rendering() override;
-    
+
     virtual void create_render_pass(const RenderPassDesc& renderPassDesc, IRenderPass** render_pass) override;
+
+    virtual void execute_deferred_context(IDeviceContext* deferred_ctx) override;
+
+    // Deferred context: take all recorded command contexts
+    eastl::vector<RenderDevice_D3D12_Impl::PooledCommandContext> take_recorded_contexts();
     
     virtual void set_shader_resource_view(SHADER_STAGE stage, uint32_t binding, ITexture_View* textureView) override;
     virtual void set_constant_buffer_view(SHADER_STAGE stage, uint32_t binding, IBuffer* buffer) override;
@@ -79,6 +85,9 @@ public:
                 
     //struct DescriptorHeap_D3D12* get_bound_heap(uint32_t index) const { return m_pBoundHeaps[index]; }
     StateCache_D3D12& get_state_cache() { return state_cache; }
+    uint64_t get_last_submitted_fence_value() const { return state.last_submitted_fence_value; }
+
+    void reset_descriptor_heaps();
 
     void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap);
 
@@ -87,7 +96,7 @@ private:
     struct State
     {
         size_t num_command = 0;
-
+        uint64_t last_submitted_fence_value = 0;
     } state;
 
     void flush(bool request_new_command_context, uint32_t num_command_lists = 0, ICommandBuffer** command_lists = nullptr);
@@ -96,6 +105,10 @@ private:
     void reset_root_signature(PIPELINE_TYPE type, RootSignature_D3D12_Impl* rootSignature);
     
     eastl::unique_ptr<CommandContext> curr_command_context = nullptr;
+
+    // Deferred context: recorded command contexts awaiting submission by immediate context
+    eastl::vector<RenderDevice_D3D12_Impl::PooledCommandContext> recorded_contexts;
+    std::mutex recorded_mutex;
 
     Dynamic_Memory_Manager_D3D12 m_dynamic_mem_mgr;
     Dynamic_Heap_D3D12* m_pDynamicHeap;

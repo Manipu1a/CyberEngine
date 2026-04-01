@@ -761,6 +761,7 @@ namespace Cyber
                 if(InitializeTexture)
                 {
                     m_deviceContexts[0]->cmd_resource_barrier(pTexture, actualStartState, GRAPHICS_RESOURCE_STATE_COPY_DEST);
+                    m_deviceContexts[0]->get_command_context().flush_barriers();
 
                     uint64_t uploadBufferSize = 0;
                     m_pDxDevice->GetCopyableFootprints(&d3dTexDesc, 0, pInitData->numSubResources, 0, nullptr, nullptr, nullptr, &uploadBufferSize);
@@ -2042,6 +2043,7 @@ namespace Cyber
                 {
                     auto initial_state = d3d12_buffer->get_buffer_state();
                     m_deviceContexts[0]->cmd_resource_barrier(d3d12_buffer, initial_state, GRAPHICS_RESOURCE_STATE_COPY_DEST);
+                    m_deviceContexts[0]->get_command_context().flush_barriers();
 
                     D3D12_HEAP_PROPERTIES upload_heap_properties = {};
                     upload_heap_properties.Type = D3D12_HEAP_TYPE_UPLOAD;
@@ -2314,9 +2316,10 @@ namespace Cyber
         }
     }
     
-    eastl::shared_ptr<RenderObject::IShaderLibrary> RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
+    RefCntAutoPtr<RenderObject::IShaderLibrary> RenderDevice_D3D12_Impl::create_shader_library(const struct ShaderLibraryCreateDesc& desc)
     {
-        eastl::shared_ptr<ShaderLibrary_D3D12_Impl> pLibrary = eastl::make_shared<ShaderLibrary_D3D12_Impl>(this, desc);
+        ShaderLibrary_D3D12_Impl* pLibraryImpl = cyber_new<ShaderLibrary_D3D12_Impl>(this, desc);
+        RefCntAutoPtr<RenderObject::IShaderLibrary> pLibrary(pLibraryImpl);
 
         bool bUseDXC = false;
         switch(desc.shader_compiler)
@@ -2499,7 +2502,7 @@ namespace Cyber
             
             if(SUCCEEDED(hr) && pResult)
             {
-                pLibrary->m_pShaderResult = pResult;
+                pLibraryImpl->m_pShaderResult = pResult;
                 
                 // Check compilation status
                 pResult->GetStatus(&hr);
@@ -2523,7 +2526,7 @@ namespace Cyber
                 hr = pResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pShaderBlob), nullptr);
                 if(SUCCEEDED(hr) && pShaderBlob)
                 {
-                    pLibrary->m_pShaderBlobDXC = pShaderBlob;
+                    pLibraryImpl->m_pShaderBlobDXC = pShaderBlob;
                 }
                 else
                 {
@@ -2635,7 +2638,7 @@ namespace Cyber
             
             // Use custom include handler instead of D3D_COMPILE_STANDARD_FILE_INCLUDE
             ShaderIncludeHandler includeHandler;
-            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, &includeHandler, entry_point.c_str(), profile.c_str(), dwShaderFlags, 0, &pLibrary->m_pShaderBlob, &ppErrorMsgs);
+            hr = D3DCompile((LPCVOID)desc.code, desc.code_size, nullptr, Macros, &includeHandler, entry_point.c_str(), profile.c_str(), dwShaderFlags, 0, &pLibraryImpl->m_pShaderBlob, &ppErrorMsgs);
 
             if(hr != S_OK)
             {
@@ -2652,7 +2655,7 @@ namespace Cyber
             )";
 
         // Reflect shader
-        pLibrary->Initialize_shader_reflection(desc);
+        pLibraryImpl->Initialize_shader_reflection(desc);
         return pLibrary;
     }
 
@@ -2692,73 +2695,92 @@ namespace Cyber
     RenderDevice_D3D12_Impl::PooledCommandContext RenderDevice_D3D12_Impl::allocate_command_context(SoftwareQueueIndex command_queue_id)
     {
         auto& cmd_list_manager = get_command_list_manager(command_queue_id);
+        auto& queue = *static_cast<CommandQueue_D3D12_Impl*>(m_commandQueues[command_queue_id]);
         {
             std::lock_guard<std::mutex> lock_guard(command_pool_mutex);
             if(!command_pools.empty())
             {
                 PooledCommandContext command_context = eastl::move(command_pools.back());
                 command_pools.pop_back();
-                command_context->reset(cmd_list_manager);
+                command_context->reset(cmd_list_manager, queue);
                 return command_context;
-            }   
+            }
         }
 
         CommandContext* command_context = cyber_new<CommandContext>(cmd_list_manager);
         return PooledCommandContext{command_context};
     }
 
-    void RenderDevice_D3D12_Impl::close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[])
+    uint64_t RenderDevice_D3D12_Impl::close_and_execute_command_context(SoftwareQueueIndex command_queue_id, uint32_t num_contexts, PooledCommandContext command_contexts[])
     {
         cyber_check(num_contexts > 0 && command_contexts != nullptr);
 
         eastl::vector<ID3D12CommandList*> d3d12_command_lists;
-        eastl::vector<ID3D12CommandAllocator*> d3d12_command_allocators;
         d3d12_command_lists.reserve(num_contexts);
-        d3d12_command_allocators.reserve(num_contexts);
 
-        auto& cmd_list_manager = get_command_list_manager(command_queue_id);
         for(uint32_t i = 0; i < num_contexts; ++i)
         {
             auto& context = command_contexts[i];
-            ID3D12CommandAllocator* command_allocator;
-            d3d12_command_lists.emplace_back(context->close(command_allocator));
-            //d3d12_command_allocators.emplace_back(eastl::move(command_allocator));
+            d3d12_command_lists.emplace_back(context->close());
         }
 
         auto& command_queue = m_commandQueues[command_queue_id];
-        command_queue->submit( num_contexts, d3d12_command_lists.data());
+        uint64_t fence_val = command_queue->submit(num_contexts, d3d12_command_lists.data());
 
-        // wait for command queue to finish
-        wait_fences(command_queue_id);
-
+        // Record fence value on each context's current frame slot, then return to pool.
+        // No blocking wait here — the wait is deferred to allocator reuse in reset().
         for(uint32_t i = 0; i < num_contexts; ++i)
         {
-            cmd_list_manager;
+            command_contexts[i]->set_current_fence_value(fence_val);
             free_command_context(eastl::move(command_contexts[i]));
         }
+        return fence_val;
     }
 
-    void RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)
+    uint64_t RenderDevice_D3D12_Impl::close_and_execute_transient_command_context(SoftwareQueueIndex command_queue_id, PooledCommandContext&& command_context)
     {
         auto& cmd_list_manager = get_command_list_manager(command_queue_id);
         cyber_check(cmd_list_manager.get_command_list_type() == command_context->get_command_list_type());
-        
-        ID3D12CommandAllocator* command_allocator;
-        ID3D12CommandList* const cmd_list = command_context->close(command_allocator);
+
+        ID3D12CommandList* const cmd_list = command_context->close();
         cyber_check_msg(cmd_list != nullptr, "Command list is null");
-        
+
         auto& cmd = m_commandQueues[command_queue_id];
-        //todo 
-        cmd->submit(1, &cmd_list);
-        
-        cmd_list_manager;
+        uint64_t fence_val = cmd->submit(1, &cmd_list);
+
+        command_context->set_current_fence_value(fence_val);
         free_command_context(eastl::move(command_context));
+        return fence_val;
     }
 
     void RenderDevice_D3D12_Impl::bind_descriptor_heap()
     {
         m_deviceContexts[0]->set_bound_heap(0, m_cbvSrvUavHeaps[0]);
         m_deviceContexts[0]->set_bound_heap(1, m_samplerHeaps[0]);
+    }
+
+    uint64_t RenderDevice_D3D12_Impl::submit_command_contexts(SoftwareQueueIndex command_queue_id, eastl::vector<PooledCommandContext>& contexts)
+    {
+        if(contexts.empty())
+            return 0;
+
+        eastl::vector<ID3D12CommandList*> cmd_lists;
+        cmd_lists.reserve(contexts.size());
+        for(auto& ctx : contexts)
+        {
+            cmd_lists.push_back(ctx->get_command_list());
+        }
+
+        auto& command_queue = m_commandQueues[command_queue_id];
+        uint64_t fence_val = command_queue->submit((uint32_t)cmd_lists.size(), cmd_lists.data());
+
+        for(auto& ctx : contexts)
+        {
+            ctx->set_current_fence_value(fence_val);
+            free_command_context(eastl::move(ctx));
+        }
+        contexts.clear();
+        return fence_val;
     }
 
     void RenderDevice_D3D12_Impl::free_command_context(PooledCommandContext&& command_context)

@@ -16,6 +16,15 @@ namespace Cyber
             d3d12_fence->Signal(0);
         }
 
+        CommandQueue_D3D12_Impl::~CommandQueue_D3D12_Impl()
+        {
+            if(wait_for_gpu_event_handle)
+            {
+                CloseHandle(wait_for_gpu_event_handle);
+                wait_for_gpu_event_handle = nullptr;
+            }
+        }
+
         void CommandQueue_D3D12_Impl::signal_fence(class IFence* fence, uint64_t value)
         {
             Fence_D3D12_Impl* fenceD3D = static_cast<Fence_D3D12_Impl*>(fence);
@@ -48,17 +57,30 @@ namespace Cyber
         {
             std::lock_guard<std::mutex> lock(queue_mutex);
 
-            auto last_signal_fence_value = next_fence_value.fetch_add(1);
+            // The last submitted fence value is next_fence_value - 1
+            auto last_submitted_value = next_fence_value.load() - 1;
 
-            command_queue->Signal(d3d12_fence, last_signal_fence_value);
-
-            if(get_completed_fence_value() < last_signal_fence_value)
+            if(get_completed_fence_value() < last_submitted_value)
             {
-                d3d12_fence->SetEventOnCompletion(last_signal_fence_value, wait_for_gpu_event_handle);
+                d3d12_fence->SetEventOnCompletion(last_submitted_value, wait_for_gpu_event_handle);
                 WaitForSingleObject(wait_for_gpu_event_handle, INFINITE);
-                cyber_check(get_completed_fence_value() == last_signal_fence_value, "Unexpected signaled fence value");
+                cyber_check(get_completed_fence_value() == last_submitted_value, "Unexpected signaled fence value");
             }
-            return last_signal_fence_value;
+            return last_submitted_value;
+        }
+
+        void CommandQueue_D3D12_Impl::wait_for_fence_value(uint64_t target_value)
+        {
+            if(get_completed_fence_value() < target_value)
+            {
+                std::lock_guard<std::mutex> lock(fence_wait_mutex);
+                // Re-check after acquiring the lock
+                if(get_completed_fence_value() < target_value)
+                {
+                    d3d12_fence->SetEventOnCompletion(target_value, wait_for_gpu_event_handle);
+                    WaitForSingleObject(wait_for_gpu_event_handle, INFINITE);
+                }
+            }
         }
 
         uint64_t CommandQueue_D3D12_Impl::get_completed_fence_value()
