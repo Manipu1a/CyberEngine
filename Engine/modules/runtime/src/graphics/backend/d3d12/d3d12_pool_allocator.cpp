@@ -23,6 +23,7 @@ void D3D12PoolAllocator::create_pool(const PoolCreateAttribs& attribs, uint64_t 
       HRESULT hr = device->GetD3D12Device()->CreateHeap(
           &heap_desc, IID_PPV_ARGS(&resource_heap));
       cyber_assert(SUCCEEDED(hr), "Failed to create D3D12 heap for pool allocator");
+      D3D12_SET_RESOURCE_NAME(resource_heap, L"Pool Allocator Heap");
 }
 
 bool D3D12PoolAllocator::support_allocation(D3D12_HEAP_TYPE heap_type, D3D12_RESOURCE_FLAGS resource_flags) const
@@ -87,6 +88,7 @@ ID3D12Resource* D3D12PoolAllocator::create_placed_resouce(D3D12_RESOURCE_DESC re
                   allocation_data.heap, allocation_data.offset, &resource_desc, initial_state, nullptr,
                   IID_PPV_ARGS(&resource));
             cyber_assert(SUCCEEDED(hr), "Failed to create placed resource");
+            D3D12_SET_RESOURCE_NAME(resource, L"Pool Placed Resource");
             return resource;
       }
       

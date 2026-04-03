@@ -36,7 +36,7 @@ Dynamic_Page_D3D12::Dynamic_Page_D3D12(ID3D12Device* d3d12_device, uint64_t size
         return;
     }
 
-    d3d12_buffer->SetName(L"Dynamic Page");
+    D3D12_SET_RESOURCE_NAME(d3d12_buffer, L"Dynamic Page");
 
     gpu_virtual_address = d3d12_buffer->GetGPUVirtualAddress();
 

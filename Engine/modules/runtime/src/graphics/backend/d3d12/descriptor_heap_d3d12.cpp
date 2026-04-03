@@ -46,6 +46,7 @@ namespace Cyber
                     }
                     SAFE_RELEASE(m_pCurrentHeap);
                     m_pDevice->CreateDescriptorHeap(&desc, IID_ARGS(&m_pCurrentHeap));
+                    D3D12_SET_RESOURCE_NAME(m_pCurrentHeap, L"Descriptor Heap (Resized)");
                     m_heapDesc = desc;
                     m_startHandle.mCpu = m_pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
                     m_startHandle.mGpu = m_pCurrentHeap->GetGPUDescriptorHandleForHeapStart();
@@ -173,6 +174,7 @@ namespace Cyber
             {
                 cyber_assert(false, "DescriptorHeap Create Failed!");
             }
+            D3D12_SET_RESOURCE_NAME(heap->m_pCurrentHeap, L"Descriptor Heap");
             
             heap->m_startHandle.mCpu = heap->m_pCurrentHeap->GetCPUDescriptorHandleForHeapStart();
             if(heap->m_heapDesc.Flags & D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)

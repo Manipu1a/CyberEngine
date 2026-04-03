@@ -96,8 +96,10 @@ namespace Cyber
             {
                 cyber_assert(false, "[D3D12 Fatal]: Create CommandQueue Failed!");
             }
+            D3D12_SET_RESOURCE_NAME(dxCommandQueue, L"Command Queue");
             ID3D12Fence* dxFence = nullptr;
             CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence)));
+            D3D12_SET_RESOURCE_NAME(dxFence, L"Queue Fence");
             m_commandQueues[i] = cyber_new<CommandQueue_D3D12_Impl>(this, dxCommandQueue, dxFence);
         }
 
@@ -219,6 +221,7 @@ namespace Cyber
         // Create Fence
         fence = cyber_new<Fence_D3D12_Impl>(this);
         CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence->m_pDxFence)));
+        D3D12_SET_RESOURCE_NAME(fence->m_pDxFence, L"Device Fence");
         fence_value = 1;
     }
 
@@ -749,14 +752,7 @@ namespace Cyber
                                 (char*)Desc.m_name ? (char*)Desc.m_name : "", Desc.m_width, Desc.m_height,
                                 (uint32_t)Desc.m_format, (uint8_t)Desc.m_sampleCount);
 
-                if(Desc.m_name && Desc.m_name != u8"")
-                {
-                    pTexture->native_resource->SetName(u8_to_wstring(Desc.m_name).c_str());
-                }
-                else
-                {
-                    pTexture->native_resource->SetName(L"Debug Texture");
-                }
+                D3D12_SET_RESOURCE_NAME_U8(pTexture->native_resource, Desc.m_name, L"Unnamed Texture");
                 pTexture->m_pNativeHandle = pTexture->native_resource;
                 if(InitializeTexture)
                 {
@@ -793,6 +789,7 @@ namespace Cyber
                     {
                         CB_CORE_ERROR("[D3D12] Create Upload Buffer Failed With HRESULT {0}!", hRes);
                     }
+                    D3D12_SET_RESOURCE_NAME(uploadBuffer, L"Texture Upload Buffer");
 
                     // Update Sub Resource
                     D3D12_SUBRESOURCE_DATA* subResourceData = (D3D12_SUBRESOURCE_DATA*)cyber_malloc(sizeof(D3D12_SUBRESOURCE_DATA) * pInitData->numSubResources);
@@ -855,6 +852,7 @@ namespace Cyber
         Fence_D3D12_Impl* dxFence = cyber_new<Fence_D3D12_Impl>(this);
         cyber_assert(dxFence, "Fence create failed!");
         CHECK_HRESULT(m_pDxDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&dxFence->m_pDxFence)));
+        D3D12_SET_RESOURCE_NAME(dxFence->m_pDxFence, L"User Fence");
         return dxFence;
     }
 
@@ -1968,6 +1966,7 @@ namespace Cyber
                 {
                     cyber_error("Failed to create reserved resource");
                 }
+                D3D12_SET_RESOURCE_NAME_U8(d3d12_buffer->m_pDxResource, create_desc.Name, L"Unnamed Sparse Buffer");
 
                 d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
             }
@@ -2036,8 +2035,7 @@ namespace Cyber
                 }
 
 
-                if(create_desc.Name != nullptr)
-                    d3d12_buffer->m_pDxResource->SetName(u8_to_wstring(create_desc.Name).c_str());
+                D3D12_SET_RESOURCE_NAME_U8(d3d12_buffer->m_pDxResource, create_desc.Name, L"Unnamed Buffer");
                 
                 if(initial_data_size > 0)
                 {
@@ -2060,8 +2058,12 @@ namespace Cyber
                         cyber_error("Failed to create upload buffer");
                     }
                     
-                    const auto upload_buffer_name = eastl::wstring(L"Upload buffer for buffer '") + u8_to_wstring(create_desc.Name) + L"\'";
-                    upload_buffer->SetName(upload_buffer_name.c_str());
+#ifdef CYBER_D3D12_SET_RESOURCE_NAMES
+                    {
+                        const auto upload_buffer_name = eastl::wstring(L"Upload buffer for '") + u8_to_wstring(create_desc.Name) + L"\'";
+                        upload_buffer->SetName(upload_buffer_name.c_str());
+                    }
+#endif
 
                     void* dest_address = nullptr;
                     hr = upload_buffer->Map(0, nullptr, reinterpret_cast<void**>(&dest_address));

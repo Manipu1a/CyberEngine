@@ -45,7 +45,7 @@ void CommandListManager::create_new_command_list(ID3D12GraphicsCommandList** com
     }
 
     cyber_assert(SUCCEEDED(hr), "Failed to create command list");
-    (*command_list)->SetName(L"Command list");
+    D3D12_SET_RESOURCE_NAME(*command_list, L"Command list");
 }
 
 void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allocator)
@@ -64,8 +64,12 @@ void CommandListManager::request_allocator(ID3D12CommandAllocator** command_allo
     auto hr = d3d12_device->CreateCommandAllocator(command_list_type, IID_PPV_ARGS(command_allocator));
     cyber_assert(hr == S_OK, "Failed to create command allocator");
 
-    eastl::wstring allocator_name(eastl::wstring::CtorSprintf(), L"Cmd list allocator %d", num_allocators.fetch_add(1));
-    (*command_allocator)->SetName(allocator_name.c_str());
+#ifdef CYBER_D3D12_SET_RESOURCE_NAMES
+    {
+        eastl::wstring allocator_name(eastl::wstring::CtorSprintf(), L"Cmd list allocator %d", num_allocators.fetch_add(1));
+        (*command_allocator)->SetName(allocator_name.c_str());
+    }
+#endif
 }
 
 

@@ -13,6 +13,7 @@ void Resource_Manager_D3D12::initialize()
 {
     auto d3d12_device = render_device.GetD3D12Device();
     CHECK_HRESULT(d3d12_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+    D3D12_SET_RESOURCE_NAME(fence, L"Resource Manager Fence");
     current_fence_value = 0;
 }
 
