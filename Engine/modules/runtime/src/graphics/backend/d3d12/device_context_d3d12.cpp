@@ -690,6 +690,25 @@ void DeviceContext_D3D12_Impl::flush()
     //render_device->close_and_execute_command_context(COMMAND_QUEUE_TYPE_GRAPHICS, 1, &curr_command_context);
 }
 
+void DeviceContext_D3D12_Impl::release_stale_resource_references()
+{
+    // Deferred contexts don't own submission; nothing to do here.
+    if(is_deferred_context())
+        return;
+
+    // Directly Close + Reset the current command list. This drops every
+    // runtime-tracked resource reference the list was holding without
+    // requiring an empty submission. The caller must guarantee the GPU is
+    // idle with respect to this allocator (we rely on a preceding
+    // idle_command_queue()).
+    if(curr_command_context)
+    {
+        curr_command_context->force_reset_in_place();
+    }
+
+    state.num_command = 0;
+}
+
 void DeviceContext_D3D12_Impl::finish_frame()
 {
     m_pDynamicHeap->release_allocated_pages(state.last_submitted_fence_value);

@@ -8,7 +8,14 @@
 #include "log/Log.h"
 #include "editor/imgui_renderer.h"
 #include "editor/imgui_log_sink.h"
+#include "editor/resource_type_registry.h"
 #include "renderer/renderer.h"
+#include <filesystem>
+#include <string>
+#include <string_view>
+#include <cstring>
+#include <cctype>
+#include <algorithm>
 
 namespace Cyber
 {
@@ -44,7 +51,20 @@ namespace Cyber
 
             // Setup Dear ImGui style
             ImGui::StyleColorsDark();
-            
+
+            // Populate the content-browser resource-type whitelist and
+            // root the directory tree at the current working directory.
+            ResourceTypeRegistry::seed_defaults();
+            {
+                std::error_code ec;
+                auto cwd = std::filesystem::current_path(ec);
+                if (!ec)
+                {
+                    m_tree_root     = cwd.string();
+                    m_current_folder = m_tree_root;
+                }
+            }
+
             // Setup Platform/Renderer backends
             m_imguiRenderer->initialize();
         }
@@ -117,9 +137,39 @@ namespace Cyber
 
             // Submit the DockSpace
             ImGuiIO& io = ImGui::GetIO();
+            ImGuiID dockspace_id = 0;
             if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
             {
-                ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+                dockspace_id = ImGui::GetID("MyDockSpace");
+
+                // Build default layout on first run, before DockSpace() creates an empty node:
+                //   +-------------------------------+---------+
+                //   |                               |         |
+                //   |           Viewport            | Details |
+                //   |                               |         |
+                //   +-------------------------------+---------+
+                //   |   Content Browser  |   Log              |
+                //   +--------------------+--------------------+
+                if (!m_dock_layout_built && ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
+                {
+                    ImGui::DockBuilderRemoveNode(dockspace_id);
+                    ImGui::DockBuilderAddNode(dockspace_id, dockspace_flags | ImGuiDockNodeFlags_DockSpace);
+                    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->WorkSize);
+
+                    ImGuiID dock_main = dockspace_id;
+                    ImGuiID dock_right = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Right, 0.22f, nullptr, &dock_main);
+                    ImGuiID dock_bottom = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Down, 0.28f, nullptr, &dock_main);
+                    ImGuiID dock_bottom_right = ImGui::DockBuilderSplitNode(dock_bottom, ImGuiDir_Right, 0.5f, nullptr, &dock_bottom);
+
+                    ImGui::DockBuilderDockWindow("Viewport", dock_main);
+                    ImGui::DockBuilderDockWindow("Details", dock_right);
+                    ImGui::DockBuilderDockWindow("Content Browser", dock_bottom);
+                    ImGui::DockBuilderDockWindow("Log", dock_bottom_right);
+
+                    ImGui::DockBuilderFinish(dockspace_id);
+                    m_dock_layout_built = true;
+                }
+
                 ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
             }
             
@@ -141,6 +191,13 @@ namespace Cyber
                     if (ImGui::MenuItem("Flag: PassthruCentralNode",    "", (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode) != 0, opt_fullscreen)) { dockspace_flags ^= ImGuiDockNodeFlags_PassthruCentralNode; }
                     ImGui::Separator();
 
+                    ImGui::EndMenu();
+                }
+
+                if (ImGui::BeginMenu("View"))
+                {
+                    ImGui::MenuItem("Content Browser", NULL, &m_show_content_browser);
+                    ImGui::MenuItem("Details",         NULL, &m_show_details_panel);
                     ImGui::EndMenu();
                 }
 
@@ -297,7 +354,317 @@ namespace Cyber
             // Actually call in the regular Log helper (which will Begin() into the same window as we just did)
             log.Draw("Log");
 
+            // Bottom: resource browser; Right: details panel
+            if (m_show_content_browser)
+                draw_content_browser();
+            if (m_show_details_panel)
+                draw_details_panel();
+
             //ImGui::ShowDemoWindow(&show_demo_window);
+        }
+
+        namespace
+        {
+            // Directories we never surface in the content browser tree.
+            bool is_hidden_directory(const std::string& name)
+            {
+                static const char* kBlacklist[] = {
+                    ".git", ".vs", ".vscode", ".xmake", ".idea",
+                    "build", "node_modules", "__pycache__"
+                };
+                for (const char* entry : kBlacklist)
+                {
+                    if (name == entry)
+                        return true;
+                }
+                // Also hide any dot-prefixed directory (e.g. `.cache`).
+                return !name.empty() && name.front() == '.';
+            }
+
+            std::string lowercase(std::string_view s)
+            {
+                std::string out(s);
+                std::transform(out.begin(), out.end(), out.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                return out;
+            }
+        }
+
+        void Editor::draw_directory_tree(const std::filesystem::path& dir, int depth)
+        {
+            namespace fs = std::filesystem;
+            std::error_code ec;
+
+            std::string label = (depth == 0)
+                ? dir.filename().string().empty() ? dir.string() : dir.filename().string()
+                : dir.filename().string();
+            if (label.empty())
+                label = dir.string();
+
+            const std::string dir_str = dir.string();
+            const bool selected = (dir_str == m_current_folder);
+
+            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
+                                     | ImGuiTreeNodeFlags_OpenOnDoubleClick
+                                     | ImGuiTreeNodeFlags_SpanFullWidth;
+            if (selected)
+                flags |= ImGuiTreeNodeFlags_Selected;
+            if (depth == 0)
+                flags |= ImGuiTreeNodeFlags_DefaultOpen;
+
+            // Force this node open if a pending "expand-to" target is under it.
+            if (!m_tree_pending_expand.empty())
+            {
+                if (m_tree_pending_expand.rfind(dir_str, 0) == 0)
+                    ImGui::SetNextItemOpen(true, ImGuiCond_Always);
+            }
+
+            ImGui::PushID(dir_str.c_str());
+            const bool open = ImGui::TreeNodeEx("##node", flags, "%s", label.c_str());
+
+            if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+            {
+                m_current_folder = dir_str;
+            }
+
+            if (open)
+            {
+                for (const auto& entry : fs::directory_iterator(dir, fs::directory_options::skip_permission_denied, ec))
+                {
+                    std::error_code is_dir_ec;
+                    if (!entry.is_directory(is_dir_ec))
+                        continue;
+                    const std::string name = entry.path().filename().string();
+                    if (is_hidden_directory(name))
+                        continue;
+                    draw_directory_tree(entry.path(), depth + 1);
+                }
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+        }
+
+        void Editor::draw_content_browser()
+        {
+            if (!ImGui::Begin("Content Browser", &m_show_content_browser))
+            {
+                ImGui::End();
+                return;
+            }
+
+            namespace fs = std::filesystem;
+            std::error_code ec;
+
+            // Make sure the tree root + current folder are valid.
+            if (m_tree_root.empty() || !fs::exists(m_tree_root, ec) || !fs::is_directory(m_tree_root, ec))
+            {
+                auto cwd = fs::current_path(ec);
+                if (!ec)
+                    m_tree_root = cwd.string();
+            }
+            if (m_current_folder.empty() || !fs::exists(m_current_folder, ec) || !fs::is_directory(m_current_folder, ec))
+            {
+                m_current_folder = m_tree_root;
+            }
+
+            if (ImGui::BeginTable("##cb_split", 2,
+                ImGuiTableFlags_Resizable | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_NoSavedSettings))
+            {
+                ImGui::TableSetupColumn("##tree", ImGuiTableColumnFlags_WidthFixed, m_tree_pane_width);
+                ImGui::TableSetupColumn("##grid", ImGuiTableColumnFlags_WidthStretch);
+                ImGui::TableNextRow();
+
+                // ---- Left pane: directory tree ----
+                ImGui::TableSetColumnIndex(0);
+                if (ImGui::BeginChild("##cb_tree", ImVec2(0, 0), ImGuiChildFlags_None))
+                {
+                    if (!m_tree_root.empty())
+                        draw_directory_tree(fs::path(m_tree_root), 0);
+                }
+                ImGui::EndChild();
+
+                // Consume the pending-expand target after the tree has been drawn.
+                m_tree_pending_expand.clear();
+
+                // ---- Right pane: filtered tile grid ----
+                ImGui::TableSetColumnIndex(1);
+                ImGui::TextUnformatted(m_current_folder.c_str());
+                ImGui::Separator();
+
+                const float thumb_size = 72.0f;
+                const float cell_padding = 16.0f;
+                const float cell_size = thumb_size + cell_padding;
+                float panel_width = ImGui::GetContentRegionAvail().x;
+                int columns = (int)(panel_width / cell_size);
+                if (columns < 1) columns = 1;
+
+                ImGui::BeginChild("##cb_grid", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar);
+                ImGui::Columns(columns, nullptr, false);
+
+                const auto& registry = ResourceTypeRegistry::get();
+
+                auto draw_tile = [&](const fs::directory_entry& entry, bool is_dir, const ResourceTypeInfo* type_info)
+                {
+                    const std::string name = entry.path().filename().string();
+                    const std::string full = entry.path().string();
+
+                    ImGui::PushID(full.c_str());
+                    const bool selected = (m_selected_asset == full);
+
+                    ImVec2 cursor_before = ImGui::GetCursorScreenPos();
+                    if (ImGui::Selectable("##tile", selected,
+                        ImGuiSelectableFlags_AllowDoubleClick, ImVec2(thumb_size, thumb_size)))
+                    {
+                        m_selected_asset = full;
+                        if (is_dir && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                        {
+                            m_current_folder = full;
+                            m_tree_pending_expand = full;
+                        }
+                    }
+
+                    // Category tint bar under the tile.
+                    ImU32 bar_color = IM_COL32(120, 120, 120, 255);
+                    const char* glyph = is_dir ? "[DIR]" : "[FILE]";
+                    if (is_dir)
+                    {
+                        bar_color = IM_COL32(230, 200, 120, 255);
+                    }
+                    else if (type_info)
+                    {
+                        bar_color = type_info->tint_color;
+                        switch (type_info->category)
+                        {
+                            case ResourceCategory::Model:   glyph = "MDL"; break;
+                            case ResourceCategory::Texture: glyph = "TEX"; break;
+                            case ResourceCategory::Shader:  glyph = "SHD"; break;
+                            default: break;
+                        }
+                    }
+
+                    ImDrawList* dl = ImGui::GetWindowDrawList();
+                    ImVec2 bar_min = ImVec2(cursor_before.x, cursor_before.y + thumb_size - 6.0f);
+                    ImVec2 bar_max = ImVec2(cursor_before.x + thumb_size, cursor_before.y + thumb_size);
+                    dl->AddRectFilled(bar_min, bar_max, bar_color);
+
+                    // Category glyph centered on the tile.
+                    ImVec2 text_size = ImGui::CalcTextSize(glyph);
+                    ImVec2 text_pos = ImVec2(
+                        cursor_before.x + (thumb_size - text_size.x) * 0.5f,
+                        cursor_before.y + (thumb_size - text_size.y) * 0.5f - 4.0f);
+                    dl->AddText(text_pos, IM_COL32(230, 230, 230, 255), glyph);
+
+                    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + thumb_size);
+                    ImGui::TextWrapped("%s", name.c_str());
+                    ImGui::PopTextWrapPos();
+
+                    ImGui::NextColumn();
+                    ImGui::PopID();
+                };
+
+                // Directories first.
+                for (const auto& entry : fs::directory_iterator(m_current_folder,
+                    fs::directory_options::skip_permission_denied, ec))
+                {
+                    std::error_code is_dir_ec;
+                    if (!entry.is_directory(is_dir_ec))
+                        continue;
+                    if (is_hidden_directory(entry.path().filename().string()))
+                        continue;
+                    draw_tile(entry, true, nullptr);
+                }
+
+                // Then registered-type files only.
+                for (const auto& entry : fs::directory_iterator(m_current_folder,
+                    fs::directory_options::skip_permission_denied, ec))
+                {
+                    std::error_code is_dir_ec;
+                    if (entry.is_directory(is_dir_ec))
+                        continue;
+                    const std::string ext = lowercase(entry.path().extension().string());
+                    const ResourceTypeInfo* info = registry.find(ext);
+                    if (!info)
+                        continue;
+                    draw_tile(entry, false, info);
+                }
+
+                ImGui::Columns(1);
+                ImGui::EndChild();
+
+                ImGui::EndTable();
+            }
+
+            ImGui::End();
+        }
+
+        void Editor::draw_details_panel()
+        {
+            if (!ImGui::Begin("Details", &m_show_details_panel))
+            {
+                ImGui::End();
+                return;
+            }
+
+            if (m_selected_asset.empty())
+            {
+                ImGui::TextDisabled("No asset selected");
+                ImGui::Separator();
+                ImGui::TextWrapped("Select an item in the Content Browser to see its details here.");
+                ImGui::End();
+                return;
+            }
+
+            namespace fs = std::filesystem;
+            fs::path p(m_selected_asset);
+            std::error_code ec;
+
+            ImGui::TextUnformatted("Name:");
+            ImGui::SameLine();
+            ImGui::TextUnformatted(p.filename().string().c_str());
+
+            ImGui::TextUnformatted("Path:");
+            ImGui::SameLine();
+            ImGui::PushTextWrapPos();
+            ImGui::TextUnformatted(p.string().c_str());
+            ImGui::PopTextWrapPos();
+
+            const auto& registry = ResourceTypeRegistry::get();
+            const bool exists = fs::exists(p, ec);
+            const bool is_dir = exists && fs::is_directory(p, ec);
+
+            if (!exists)
+            {
+                ImGui::TextDisabled("(not found on disk)");
+            }
+            else if (is_dir)
+            {
+                ImGui::TextUnformatted("Type: Folder");
+            }
+            else
+            {
+                const std::string ext = lowercase(p.extension().string());
+                const ResourceTypeInfo* info = registry.find(ext);
+                if (info)
+                {
+                    ImGui::Text("Type: %s", info->display_name.c_str());
+                    ImGui::Text("Category: %s", registry.category_label(info->category));
+                }
+                else
+                {
+                    ImGui::Text("Type: %s", ext.empty() ? "(unknown)" : ext.c_str());
+                    ImGui::TextDisabled("(not a registered resource type)");
+                }
+
+                auto size = fs::file_size(p, ec);
+                if (!ec)
+                    ImGui::Text("Size: %llu bytes", (unsigned long long)size);
+            }
+
+            ImGui::Separator();
+            ImGui::TextDisabled("Properties");
+            ImGui::BulletText("Inspector stub - extend per asset type");
+
+            ImGui::End();
         }
         
         void Editor::finalize()

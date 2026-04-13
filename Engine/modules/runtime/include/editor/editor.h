@@ -14,6 +14,9 @@
 #include "imGuIZMO.quat/imGuIZMO.h"
 #include "cyber_runtime.config.h"
 
+#include <string>
+#include <filesystem>
+
 namespace Cyber
 {
     namespace RenderObject
@@ -254,7 +257,7 @@ namespace Cyber
             class ImGuiRenderer* m_imguiRenderer;
             ImGuiContext* imgui_context = nullptr;
             std::shared_ptr<class ImGuiLogSink> m_imgui_log_sink;
-            
+
             // View matrix for the orientation gizmo
             float m_view_matrix[16] = {
                 1, 0, 0, 0,
@@ -262,6 +265,23 @@ namespace Cyber
                 0, 0, 1, 0,
                 0, 0, 0, 1
             };
+
+            // Editor layout / panel state
+            bool m_dock_layout_built = false;
+            bool m_show_content_browser = true;
+            bool m_show_details_panel = true;
+
+            // Content-browser navigation state
+            std::string m_tree_root;            // absolute path the directory tree is rooted at
+            std::string m_current_folder;       // folder shown in the right-hand grid
+            std::string m_selected_asset;       // absolute path of the currently selected file (drives Details)
+            std::string m_tree_pending_expand;  // if non-empty, tree nodes along this path are force-expanded next frame
+            float       m_tree_pane_width = 220.0f;
+
+            // Panel draw helpers
+            void draw_content_browser();
+            void draw_directory_tree(const std::filesystem::path& dir, int depth);
+            void draw_details_panel();
         };
     }
 }

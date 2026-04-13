@@ -1,6 +1,8 @@
 #include "graphics/backend/d3d12/swap_chain_d3d12.h"
 #include "platform/memory.h"
 #include "graphics/backend/d3d12/d3d12_utils.h"
+#include "graphics/backend/d3d12/device_context_d3d12.h"
+#include "graphics/backend/d3d12/render_device_d3d12.h"
 namespace Cyber
 {
     namespace RenderObject
@@ -27,25 +29,25 @@ namespace Cyber
                 // No need to resize
                 return;
             }
-            //device_context->flush();
+
+            // Wait for the GPU to finish any work that may reference the
+            // current backbuffers.
+            render_device->idle_command_queue();
+
+            // Close + Reset the current command list. This drops the runtime's
+            // internal tracking of resources referenced by previously recorded
+            // commands — DXGI's ResizeBuffers requires all outstanding
+            // references to the backbuffers to be gone, including the ones
+            // held by the command list itself.
+            if(auto* dx_device_context = static_cast<DeviceContext_D3D12_Impl*>(device_context))
+            {
+                dx_device_context->release_stale_resource_references();
+            }
+
             TSwapChainBase::resize(width, height);
-            // Clear old buffers
-            if(m_ppBackBufferSRVs.size() > 0)
-            {
-                for(uint32_t i = 0; i < m_bufferSRVCount; ++i)
-                {
-                    m_ppBackBufferSRVs[i].reset();
-                }
-                m_ppBackBufferSRVs.clear();
-            }
-            if(m_ppBackBuffers.size() > 0)
-            {
-                for(uint32_t i = 0; i < m_bufferSRVCount; ++i)
-                {
-                    m_ppBackBuffers[i].reset();
-                }
-                m_ppBackBuffers.clear();
-            }
+
+            // Release our own backbuffer wrappers first, then explicitly
+            // release the raw COM pointers from GetBuffer().
             if(m_pBackBufferDSV)
             {
                 m_pBackBufferDSV.reset();
@@ -54,10 +56,37 @@ namespace Cyber
             {
                 m_pBackBufferDepth.reset();
             }
+            if(m_ppBackBufferSRVs.size() > 0)
+            {
+                for(uint32_t i = 0; i < m_ppBackBufferSRVs.size(); ++i)
+                {
+                    m_ppBackBufferSRVs[i].reset();
+                }
+                m_ppBackBufferSRVs.clear();
+            }
+            if(m_ppBackBuffers.size() > 0)
+            {
+                for(uint32_t i = 0; i < m_ppBackBuffers.size(); ++i)
+                {
+                    m_ppBackBuffers[i].reset();
+                }
+                m_ppBackBuffers.clear();
+            }
 
-            //todo idle the GPU
-            render_device->idle_command_queue();
+            // Explicitly release the COM references obtained from GetBuffer().
+            // The Texture wrappers do NOT own these (owns_native_resource=false),
+            // so we must release them here to satisfy ResizeBuffers.
+            for(uint32_t i = 0; i < m_dxBackBufferResources.size(); ++i)
+            {
+                if(m_dxBackBufferResources[i])
+                {
+                    m_dxBackBufferResources[i]->Release();
+                    m_dxBackBufferResources[i] = nullptr;
+                }
+            }
+            m_dxBackBufferResources.clear();
 
+            // Resize the swap chain now that all references are released.
             DXGI_SWAP_CHAIN_DESC SCDes;
             memset(&SCDes, 0, sizeof(SCDes));
             m_pDxSwapChain->GetDesc(&SCDes);
@@ -68,6 +97,15 @@ namespace Cyber
 
         void SwapChain_D3D12_Impl::free()
         {
+            for(uint32_t i = 0; i < m_dxBackBufferResources.size(); ++i)
+            {
+                if(m_dxBackBufferResources[i])
+                {
+                    m_dxBackBufferResources[i]->Release();
+                    m_dxBackBufferResources[i] = nullptr;
+                }
+            }
+            m_dxBackBufferResources.clear();
             SAFE_RELEASE(m_pDxSwapChain);
         }
 
@@ -77,12 +115,12 @@ namespace Cyber
             // Get swapchain images
             m_ppBackBufferSRVs.resize(buffer_count);
             m_ppBackBuffers.resize(buffer_count);
+            m_dxBackBufferResources.resize(buffer_count);
 
-            ID3D12Resource** backbuffers = (ID3D12Resource**)alloca(buffer_count * sizeof(ID3D12Resource*));
             TextureCreateDesc textureDesc = {};
             for(uint32_t i = 0; i < buffer_count; ++i)
             {
-                CHECK_HRESULT(m_pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&backbuffers[i])));
+                CHECK_HRESULT(m_pDxSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_dxBackBufferResources[i])));
                 textureDesc.m_width = swap_chain_desc.m_width;
                 textureDesc.m_height = swap_chain_desc.m_height;
                 textureDesc.m_depth = 1;
@@ -93,7 +131,7 @@ namespace Cyber
                 textureDesc.m_bindFlags = GRAPHICS_RESOURCE_BIND_RENDER_TARGET;
                 textureDesc.m_initializeState = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
                 textureDesc.m_name = u8"SwapChain Back Buffer";
-                textureDesc.m_pNativeHandle = backbuffers[i];
+                textureDesc.m_pNativeHandle = m_dxBackBufferResources[i];
                 textureDesc.m_clearValue = fastclear_1111;
                 RefCntAutoPtr<RenderObject::ITexture> Ts;
                 render_device->create_texture(textureDesc, nullptr, &Ts);

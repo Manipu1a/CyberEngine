@@ -70,6 +70,38 @@ void CommandContext::reset(CommandListManager& command_list_manager, CommandQueu
     command_allocator = frame_context.command_allocator;
     CHECK_HRESULT(command_allocator->Reset());
     command_list->Reset(command_allocator, nullptr);
+    pending_barriers.clear();
+}
+
+void CommandContext::force_reset_in_place()
+{
+    if(!command_list)
+        return;
+
+    // Drop any queued-but-not-yet-flushed barriers — they may reference
+    // resources we're about to tear down.
+    pending_barriers.clear();
+
+    // If the list is still in the recording state, we need to Close it
+    // before we can Reset it. Ignore the HRESULT: if Close fails because
+    // the list was already closed, Reset below still works.
+    command_list->Close();
+
+    // Reset the allocator and the list. Caller must have ensured the GPU
+    // is idle wrt this allocator. This releases every runtime-tracked
+    // resource reference that was recorded in the list.
+    if(command_allocator)
+    {
+        command_allocator->Reset();
+        command_list->Reset(command_allocator, nullptr);
+    }
+    else if(!frame_contexts.empty() && frame_contexts[0].command_allocator)
+    {
+        // First use before any reset(): fall back to the initial allocator.
+        command_allocator = frame_contexts[0].command_allocator;
+        command_allocator->Reset();
+        command_list->Reset(command_allocator, nullptr);
+    }
 }
 
 void CommandContext::set_current_fence_value(uint64_t value)

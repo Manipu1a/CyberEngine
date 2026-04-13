@@ -813,6 +813,7 @@ namespace Cyber
         else {
             pTexture->native_resource = (ID3D12Resource*)Desc.m_pNativeHandle;
             pTexture->allocation = nullptr;
+            pTexture->owns_native_resource = false;
             pTexture->set_old_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
             pTexture->set_new_state(GRAPHICS_RESOURCE_STATE_UNDEFINED);
         }
@@ -912,7 +913,8 @@ namespace Cyber
 
     void RenderDevice_D3D12_Impl::wait_queue_idle(ICommandQueue* queue)
     {
-
+        auto* queue_impl = static_cast<CommandQueue_D3D12_Impl*>(queue);
+        queue_impl->wait_for_idle();
     }
 
     void RenderDevice_D3D12_Impl::free_queue(ICommandQueue* queue)

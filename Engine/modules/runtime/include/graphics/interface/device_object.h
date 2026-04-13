@@ -11,6 +11,7 @@ namespace Cyber
         class CYBER_GRAPHICS_API IDeviceObject
         {
         public:
+            virtual ~IDeviceObject() = default;
             virtual void free() = 0;
         };
 

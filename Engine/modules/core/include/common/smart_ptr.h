@@ -1,6 +1,7 @@
 #pragma once
 #include "cyber_core.config.h"
 #include "platform/configure.h"
+#include "platform/memory.h"
 #include <atomic>
 #include <utility>
 
@@ -120,8 +121,17 @@ public:
 protected:
     virtual void destroy_object() override
     {
-        delete m_ptr;
-        m_ptr = nullptr;
+        // Objects tracked by RefCntAutoPtr are expected to be allocated with
+        // cyber_new (mimalloc). Plain `delete` would resolve to the global
+        // operator delete, which in this build is defined by EASTLTestAllocator
+        // and routes to _aligned_free (UCRT heap) — freeing a mimalloc pointer
+        // there crashes. Route through mimalloc explicitly instead.
+        if (m_ptr)
+        {
+            m_ptr->~T();
+            _cyber_free(m_ptr);
+            m_ptr = nullptr;
+        }
     }
 
 private:
@@ -137,8 +147,15 @@ public:
 protected:
     virtual void destroy_object() override
     {
-        delete[] m_ptr;
-        m_ptr = nullptr;
+        // See RefCountObject::destroy_object for why we bypass global operator delete[].
+        // Note: this assumes array elements were allocated with cyber_new_n, which
+        // does not invoke per-element destructors — callers are responsible for
+        // destroying elements before releasing the array.
+        if (m_ptr)
+        {
+            _cyber_free(m_ptr);
+            m_ptr = nullptr;
+        }
     }
 
 private:

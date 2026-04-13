@@ -92,6 +92,13 @@ public:
     void set_bound_heap(uint32_t index, struct DescriptorHeap_D3D12* heap);
 
     void commit_bound_heaps();
+
+    // Force-cycle the current command context so the underlying
+    // ID3D12GraphicsCommandList is Closed + Reset, which releases any
+    // internal resource references the runtime is tracking. This is
+    // required before operations like swap chain resize that demand all
+    // outstanding references to be dropped.
+    void release_stale_resource_references();
 private:
     struct State
     {

@@ -30,8 +30,15 @@ public:
     ID3D12GraphicsCommandList* close();
     void reset(CommandListManager& command_list_manager, class CommandQueue_D3D12_Impl& queue);
     void set_current_fence_value(uint64_t value);
-    
+
+    // Force the underlying command list back to an empty recording state
+    // without going through submission. Releases all runtime-tracked resource
+    // references. Caller must guarantee the GPU is idle with respect to the
+    // current command allocator.
+    void force_reset_in_place();
+
     ID3D12GraphicsCommandList* get_command_list() const { return command_list; }
+    ID3D12CommandAllocator* get_command_allocator() const { return command_allocator; }
     D3D12_COMMAND_LIST_TYPE get_command_list_type() const { return command_list->GetType(); }
 
 public:

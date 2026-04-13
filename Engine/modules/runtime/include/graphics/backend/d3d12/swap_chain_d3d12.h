@@ -53,6 +53,11 @@ namespace Cyber
             uint32_t m_imageCount : 3;
             uint32_t m_enableVsync : 1;
 
+            // Raw COM pointers from GetBuffer(). We manage their lifetime
+            // explicitly rather than relying on the Texture wrapper destructor,
+            // because ResizeBuffers requires ALL GetBuffer refs to be released.
+            eastl::vector<ID3D12Resource*> m_dxBackBufferResources;
+
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
     }

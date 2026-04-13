@@ -23,10 +23,14 @@ namespace Cyber
             using TTextureBase = Texture<EngineD3D12ImplTraits>;
             
             Texture_D3D12_Impl(RenderDeviceImplType* device, TextureCreateDesc desc);
-            
+
             virtual ~Texture_D3D12_Impl()
             {
-                native_resource->Release();
+                if(native_resource && owns_native_resource)
+                {
+                    native_resource->Release();
+                    native_resource = nullptr;
+                }
             }
             
             virtual ID3D12Resource* get_d3d12_resource() const override
@@ -40,6 +44,7 @@ namespace Cyber
         protected:
             ID3D12Resource* native_resource;
             D3D12MA::Allocation* allocation;
+            bool owns_native_resource = true;
 
             friend class RenderObject::RenderDevice_D3D12_Impl;
         };
