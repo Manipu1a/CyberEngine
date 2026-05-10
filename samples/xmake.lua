@@ -22,3 +22,7 @@ if has_config("build_shadow") then
     includes("shadow/xmake.lua")
 end
 
+if has_config("build_sponza") then
+    includes("sponza/xmake.lua")
+end
+

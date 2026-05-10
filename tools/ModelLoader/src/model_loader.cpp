@@ -61,7 +61,7 @@ Model::Model(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceCo
     load_from_file(render_device, context, create_info);
 }
 
-void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info)
+void Model::load_data(const ModelCreateInfo& create_info)
 {
     if(create_info.file_path == nullptr)
     {
@@ -73,12 +73,12 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
 
     std::string input_file_path = create_info.file_path;
     std::string file_extension = get_file_extension(input_file_path);
-    std::string base_dir = "";
+    m_base_dir = "";
     if(input_file_path.find_last_of("/\\") != std::string::npos)
     {
-        base_dir = input_file_path.substr(0, input_file_path.find_last_of("/\\"));
+        m_base_dir = input_file_path.substr(0, input_file_path.find_last_of("/\\"));
     }
-    base_dir += "/";
+    m_base_dir += "/";
 
     std::string error;
     std::string warning;
@@ -139,7 +139,17 @@ void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObj
     }
 
     load_materials(model);
-    load_textures(render_device, model, base_dir);
+}
+
+void Model::create_gpu_textures(RenderObject::IRenderDevice* render_device)
+{
+    load_textures(render_device, model, m_base_dir);
+}
+
+void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info)
+{
+    load_data(create_info);
+    create_gpu_textures(render_device);
 }
 
 BoundBox Model::compute_bounding_box(const float4x4& model_transform) const

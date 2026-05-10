@@ -7,9 +7,21 @@
 #include "application/application.h"
 #include "texture_utils.h"
 #include "resource/vertex.h"
+#include "gameruntime/pipeline_builder.h"
 
 namespace Cyber
 {
+    // Helper: row-vector * matrix multiplication (float4 * float4x4)
+    static float4 mul_vec_mat(const float4& v, const float4x4& m)
+    {
+        return float4(
+            v.x * m.m00 + v.y * m.m10 + v.z * m.m20 + v.w * m.m30,
+            v.x * m.m01 + v.y * m.m11 + v.z * m.m21 + v.w * m.m31,
+            v.x * m.m02 + v.y * m.m12 + v.z * m.m22 + v.w * m.m32,
+            v.x * m.m03 + v.y * m.m13 + v.z * m.m23 + v.w * m.m33
+        );
+    }
+
     namespace Samples
     {
         Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
@@ -19,116 +31,189 @@ namespace Cyber
 
         ShadowApp::ShadowApp()
         {
-
         }
 
         ShadowApp::~ShadowApp()
         {
-            
         }
 
-        void ShadowApp::initialize()
+        void ShadowApp::calculate_cascade_splits(float near_plane, float far_plane, float splits[MAX_CASCADE_COUNT])
         {
-            SampleApp::initialize();
-            m_pApp = Cyber::Core::Application::getApp();
-            cyber_check(m_pApp);
-            create_gfx_objects();
-
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-
-            create_render_pipeline();
-            create_resource();
+            for (uint32_t i = 0; i < cascade_count; ++i)
+            {
+                float p = (float)(i + 1) / (float)cascade_count;
+                float log_split = near_plane * std::pow(far_plane / near_plane, p);
+                float linear_split = near_plane + (far_plane - near_plane) * p;
+                splits[i] = split_lambda * log_split + (1.0f - split_lambda) * linear_split;
+            }
         }
 
-        void ShadowApp::run()
+        void ShadowApp::calculate_cascade_matrix(const float4x4& camera_view, const float4x4& camera_proj,
+                                                   float near_split, float far_split,
+                                                   const float3& light_dir,
+                                                   float4x4& out_light_vp)
         {
-            //m_pApp->run();
+            float4x4 inv_view_proj = (camera_view * camera_proj).inverse();
+
+            float3 ndc_corners[8] = {
+                {-1, -1, 0}, { 1, -1, 0}, { 1,  1, 0}, {-1,  1, 0},
+                {-1, -1, 1}, { 1, -1, 1}, { 1,  1, 1}, {-1,  1, 1},
+            };
+
+            float3 world_corners[8];
+            for (int i = 0; i < 8; ++i)
+            {
+                float4 corner = float4(ndc_corners[i], 1.0f);
+                float4 world = mul_vec_mat(corner, inv_view_proj);
+                world_corners[i] = float3(world.x / world.w, world.y / world.w, world.z / world.w);
+            }
+
+            float3 cascade_corners[8];
+            for (int i = 0; i < 4; ++i)
+            {
+                float3 near_corner = world_corners[i];
+                float3 far_corner = world_corners[i + 4];
+                float3 dir = far_corner - near_corner;
+                cascade_corners[i] = near_corner + dir * near_split;
+                cascade_corners[i + 4] = near_corner + dir * far_split;
+            }
+
+            float3 frustum_center = float3(0, 0, 0);
+            for (int i = 0; i < 8; ++i)
+                frustum_center = frustum_center + cascade_corners[i];
+            frustum_center = frustum_center * (1.0f / 8.0f);
+
+            float3 normalized_light_dir = normalize(light_dir);
+            float3 light_space_x, light_space_y;
+            float min_cmp = std::min(std::min(std::abs(light_dir.x), std::abs(light_dir.y)), std::abs(light_dir.z));
+            if (min_cmp == std::abs(light_dir.x))
+                light_space_x = float3(1.0f, 0.0f, 0.0f);
+            else if (min_cmp == std::abs(light_dir.y))
+                light_space_x = float3(0.0f, 1.0f, 0.0f);
+            else
+                light_space_x = float3(0.0f, 0.0f, 1.0f);
+            light_space_y = normalize(cross(normalized_light_dir, light_space_x));
+            light_space_x = normalize(cross(light_space_y, normalized_light_dir));
+            float4x4 light_view = float4x4::view_from_basis(light_space_x, light_space_y, normalized_light_dir);
+
+            float min_x = FLT_MAX, min_y = FLT_MAX, min_z = FLT_MAX;
+            float max_x = -FLT_MAX, max_y = -FLT_MAX, max_z = -FLT_MAX;
+            for (int i = 0; i < 8; ++i)
+            {
+                float4 ls = mul_vec_mat(float4(cascade_corners[i], 1.0f), light_view);
+                min_x = std::min(min_x, ls.x); max_x = std::max(max_x, ls.x);
+                min_y = std::min(min_y, ls.y); max_y = std::max(max_y, ls.y);
+                min_z = std::min(min_z, ls.z); max_z = std::max(max_z, ls.z);
+            }
+
+            float z_margin = (max_z - min_z) * 2.0f;
+            min_z -= z_margin;
+
+            float extent_x = max_x - min_x;
+            float extent_y = max_y - min_y;
+
+            float texels_per_unit_x = (float)shadow_resolution / extent_x;
+            float texels_per_unit_y = (float)shadow_resolution / extent_y;
+
+            min_x = std::floor(min_x * texels_per_unit_x) / texels_per_unit_x;
+            max_x = min_x + extent_x;
+            min_y = std::floor(min_y * texels_per_unit_y) / texels_per_unit_y;
+            max_y = min_y + extent_y;
+
+            float4 light_space_scale;
+            light_space_scale.x = 2.0f / (max_x - min_x);
+            light_space_scale.y = 2.0f / (max_y - min_y);
+            light_space_scale.z = 1.0f / (max_z - min_z);
+
+            float4 light_space_scale_bias;
+            light_space_scale_bias.x = -min_x * light_space_scale.x - 1.0f;
+            light_space_scale_bias.y = -min_y * light_space_scale.y - 1.0f;
+            light_space_scale_bias.z = -min_z * light_space_scale.z;
+
+            float4x4 scale_matrix = float4x4::scale(light_space_scale);
+            float4x4 scale_bias_matrix = float4x4::translation(light_space_scale_bias.x, light_space_scale_bias.y, light_space_scale_bias.z);
+
+            out_light_vp = light_view * scale_matrix * scale_bias_matrix;
         }
 
         void ShadowApp::update(float deltaTime)
         {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
+            if (needs_rebuild)
+            {
+                rebuild_shadow_resources();
+                needs_rebuild = false;
+            }
+
+            auto render_device = get_render_device();
 
             static float time = 0.0f;
             time += deltaTime;
             float3 camera_pos = float3(0.0f, 5.0f, -10.0f);
             float3 camera_target = float3(0.0f, 0.0f, 0.0f);
             float3 camera_up = { 0.0f, 1.0f, 0.0f };
-            //float4x4 view_matrix = float4x4::translation(-camera_pos.x, -camera_pos.y, -camera_pos.z);
             float4x4 view_matrix = float4x4::look_at(camera_pos, camera_target, camera_up);
 
             float4x4 model_matrix = float4x4::RotationY(static_cast<float>(time) * 1.0f);
-            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
+            float4x4 projection_matrix = get_renderer()->get_adjusted_projection_matrix(PI_ / 4.0f, camera_near, camera_far);
             float4x4 view_proj_matrix = model_matrix * view_matrix * projection_matrix;
 
-            // Calculate shadow projection matrix from directional light
-            float3 normalized_light_dir = normalize(light_direction);
-            float3 light_space_x, light_space_y;
-            float min_cmp = std::min(std::min(std::abs(light_direction.x), std::abs(light_direction.y)), std::abs(light_direction.z));
-            if(min_cmp == std::abs(light_direction.x))
+            // Calculate cascade splits
+            float splits[MAX_CASCADE_COUNT] = {};
+            calculate_cascade_splits(camera_near, camera_far, splits);
+
+            // Calculate per-cascade light view-projection matrices
+            float4x4 cascade_vp[MAX_CASCADE_COUNT] = {};
+            for (uint32_t i = 0; i < cascade_count; ++i)
             {
-                light_space_x = float3(1.0f, 0.0f, 0.0f);
+                float near_frac = (i == 0) ? 0.0f : (splits[i - 1] - camera_near) / (camera_far - camera_near);
+                float far_frac = (splits[i] - camera_near) / (camera_far - camera_near);
+                calculate_cascade_matrix(view_matrix, projection_matrix, near_frac, far_frac, light_direction, cascade_vp[i]);
             }
-            else if(min_cmp == std::abs(light_direction.y))
-            {
-                light_space_x = float3(0.0f, 1.0f, 0.0f);
-            }
-            else
-            {
-                light_space_x = float3(0.0f, 0.0f, 1.0f);
-            }
-            light_space_y = normalize(cross(normalized_light_dir, light_space_x));
-            light_space_x = normalize(cross(light_space_y, normalized_light_dir));
-            float4x4 light_view_matrix = float4x4::view_from_basis(light_space_x, light_space_y, normalized_light_dir);
 
-            float3 scene_center = float3(0.0f, 0.0f, 0.0f);
-            float scene_radius = 5.0f;
-            float3 min_xyz = scene_center - float3(scene_radius);
-            float3 max_xyz = scene_center + float3(scene_radius, scene_radius, scene_radius * 5);
-            float3 scene_extent = max_xyz - min_xyz;
-            float4 light_space_scale;
-            light_space_scale.x = 2.0f / scene_extent.x;
-            light_space_scale.y = 2.0f / scene_extent.y;
-            light_space_scale.z = 1.0f / scene_extent.z;
-            float4 light_space_scale_bias;
-            light_space_scale_bias.x = -min_xyz.x * light_space_scale.x - 1.f;
-            light_space_scale_bias.y = -min_xyz.y * light_space_scale.y - 1.f;
-            light_space_scale_bias.z = -min_xyz.z * light_space_scale.z;
-
-            float4x4 scale_matrix = float4x4::scale(light_space_scale);
-            float4x4 scale_bias_matrix = float4x4::translation(light_space_scale_bias.x, light_space_scale_bias.y, light_space_scale_bias.z);
-
-            float4x4 shadow_projection_matrix = scale_matrix * scale_bias_matrix;
-
-            // Shadow MVP matrix for cube: transforms from world space to light's clip space
-            float4x4 shadow_mvp_matrix = model_matrix * light_view_matrix * shadow_projection_matrix;
-            float4x4 shadow_view_proj_matrix = light_view_matrix * shadow_projection_matrix;
-            
-            // Update cube transform
             cube_item.model_matrix = model_matrix;
-            
+
             // Update light constants
-            void* light_resource = render_device->map_buffer(light_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            LightConstants* light_ptr = (LightConstants*)light_resource;
-            light_ptr->light_direction = float4(-light_direction, 0.0f);
-            light_ptr->light_color = float4(light_color, 1.0f);
-            render_device->unmap_buffer(light_constant_buffer, MAP_WRITE);
-            light_constant_buffer->set_buffer_size(sizeof(LightConstants));
-            
+            LightConstants light_data;
+            light_data.light_direction = float4(-light_direction, 0.0f);
+            light_data.light_color = float4(light_color, 1.0f);
+            update_buffer(light_constant_buffer, light_data);
+
+            // Update CSM constants
+            CSMConstants csm_data = {};
+            for (uint32_t i = 0; i < MAX_CASCADE_COUNT; ++i)
+            {
+                if (i < cascade_count)
+                    csm_data.cascade_view_proj_matrices[i] = cascade_vp[i].transpose();
+                else
+                    csm_data.cascade_view_proj_matrices[i] = float4x4::Identity();
+            }
+            csm_data.cascade_splits = float4(
+                cascade_count > 0 ? splits[0] : camera_far,
+                cascade_count > 1 ? splits[1] : camera_far,
+                cascade_count > 2 ? splits[2] : camera_far,
+                cascade_count > 3 ? splits[3] : camera_far
+            );
+            csm_data.shadow_params = float4(
+                (float)shadow_resolution,
+                1.0f / (float)shadow_resolution,
+                (float)cascade_count,
+                depth_bias
+            );
+            csm_data.debug_params = float4(show_cascade_debug ? 1.0f : 0.0f, 0, 0, 0);
+            update_buffer(csm_constant_buffer, csm_data);
+
             // Update render items' constants
-            update_render_item_constants(cube_item, view_matrix * projection_matrix, shadow_view_proj_matrix);
-            update_render_item_constants(plane_item, view_matrix * projection_matrix, shadow_view_proj_matrix);
+            update_render_item_constants(cube_item, view_matrix, view_matrix * projection_matrix, cascade_vp);
+            update_render_item_constants(plane_item, view_matrix, view_matrix * projection_matrix, cascade_vp);
 
             raster_draw();
         }
 
         void ShadowApp::raster_draw()
         {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            auto device_context = renderer->get_device_context();
+            auto renderer = get_renderer();
+            auto render_device = get_render_device();
+            auto device_context = get_device_context();
             auto swap_chain = renderer->get_swap_chain();
             auto frame_buffer = renderer->get_frame_buffer();
 
@@ -140,15 +225,19 @@ namespace Cyber
             auto back_depth_buffer = scene_target.depth_buffer;
             auto back_buffer_view = scene_target.color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
             auto back_depth_buffer_view = scene_target.depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
-            auto shadow_buffer_view = shadow_depth->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
-            
-            // record
+
+            // Build attachment list: [color, scene_depth, cascade0_dsv, cascade1_dsv, ...]
+            uint32_t total_attachments = 2 + cascade_count;
+            eastl::vector<RenderObject::ITexture_View*> attachment_resources(total_attachments);
+            attachment_resources[0] = back_buffer_view;
+            attachment_resources[1] = back_depth_buffer_view;
+            for (uint32_t i = 0; i < cascade_count; ++i)
+                attachment_resources[2 + i] = cascade_dsv_views[i];
+
             device_context->cmd_begin();
 
-            auto clear_value =  GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f};
-            GRAPHICS_CLEAR_VALUE* clear_values = { &clear_value };
-            RenderObject::ITexture_View* attachment_resources[3] = { back_buffer_view, back_depth_buffer_view, shadow_buffer_view };
-            frame_buffer->update_attachments(attachment_resources, 3);
+            auto clear_value = GRAPHICS_CLEAR_VALUE{ 0.690196097f, 0.768627524f, 0.870588303f, 1.000000000f };
+            frame_buffer->update_attachments(attachment_resources.data(), total_attachments);
             RenderObject::BeginRenderPassAttribs RenderPassBeginInfo
             {
                 .pFramebuffer = frame_buffer,
@@ -159,98 +248,105 @@ namespace Cyber
                 .TransitionMode = RenderObject::RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             };
 
-            // BeginRenderPass will handle transitions automatically with RESOURCE_STATE_TRANSITION_MODE_TRANSITION
             device_context->set_frame_buffer(frame_buffer);
-            // Shadow Pass
             device_context->cmd_begin_render_pass(RenderPassBeginInfo);
-            RenderObject::Viewport viewport;
-            viewport.top_left_x = 0.0f;
-            viewport.top_left_y = 0.0f;
-            viewport.width = shadow_depth->get_create_desc().m_width;
-            viewport.height = shadow_depth->get_create_desc().m_height;
-            viewport.min_depth = 0.0f;
-            viewport.max_depth = 1.0f;
-            device_context->render_encoder_set_viewport(1, &viewport);
-            RenderObject::Rect scissor
+
+            // Shadow passes for each cascade
+            for (uint32_t cascade = 0; cascade < cascade_count; ++cascade)
             {
-                0, 0, 
-                (int32_t)shadow_depth->get_create_desc().m_width, 
-                (int32_t)shadow_depth->get_create_desc().m_height
-            };
-            
-            device_context->render_encoder_set_scissor( 1, &scissor);
-            device_context->render_encoder_bind_pipeline(shadow_pipeline);
-            
-            // Draw shadows for all render items
-            draw_render_item(device_context, cube_item, true);
-            
-            // Base Pass
+                if (cascade > 0)
+                    device_context->cmd_next_sub_pass();
+
+                // Update cascade index buffer
+                uint32_t cascade_data[4] = { cascade, 0, 0, 0 };
+                update_buffer(cascade_index_buffer, cascade_data, sizeof(cascade_data));
+
+                RenderObject::Viewport viewport;
+                viewport.top_left_x = 0.0f;
+                viewport.top_left_y = 0.0f;
+                viewport.width = (float)shadow_resolution;
+                viewport.height = (float)shadow_resolution;
+                viewport.min_depth = 0.0f;
+                viewport.max_depth = 1.0f;
+                device_context->render_encoder_set_viewport(1, &viewport);
+                RenderObject::Rect scissor{ 0, 0, (int32_t)shadow_resolution, (int32_t)shadow_resolution };
+                device_context->render_encoder_set_scissor(1, &scissor);
+                device_context->render_encoder_bind_pipeline(shadow_pipeline);
+
+                draw_render_item(device_context, cube_item, true, cascade);
+                draw_render_item(device_context, plane_item, true, cascade);
+            }
+
+            // Main Pass
             device_context->cmd_next_sub_pass();
-            viewport.width = back_buffer->get_create_desc().m_width;
-            viewport.height = back_buffer->get_create_desc().m_height;
-            device_context->render_encoder_set_viewport(1, &viewport);
+            RenderObject::Viewport main_viewport;
+            main_viewport.top_left_x = 0.0f;
+            main_viewport.top_left_y = 0.0f;
+            main_viewport.width = (float)back_buffer->get_create_desc().m_width;
+            main_viewport.height = (float)back_buffer->get_create_desc().m_height;
+            main_viewport.min_depth = 0.0f;
+            main_viewport.max_depth = 1.0f;
+            device_context->render_encoder_set_viewport(1, &main_viewport);
             RenderObject::Rect scene_scissor
             {
-                0, 0, 
-                (int32_t)back_buffer->get_create_desc().m_width, 
+                0, 0,
+                (int32_t)back_buffer->get_create_desc().m_width,
                 (int32_t)back_buffer->get_create_desc().m_height
             };
-            device_context->render_encoder_set_scissor( 1, &scene_scissor);
-            // Resources are already in correct states within render pass - no barriers needed
-            device_context->render_encoder_bind_pipeline( pipeline);
-            
-            // Draw all render items
+            device_context->render_encoder_set_scissor(1, &scene_scissor);
+            device_context->render_encoder_bind_pipeline(pipeline);
+
             draw_render_item(device_context, cube_item, false);
             draw_render_item(device_context, plane_item, false);
-            
+
             device_context->cmd_end_render_pass();
-            // EndRenderPass will handle transitions back to final state automatically
         }
 
-        void ShadowApp::present()
+        void ShadowApp::on_create_gfx_objects()
         {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            auto device_context = renderer->get_device_context();
-            auto swap_chain = renderer->get_swap_chain();
-            auto back_buffer = swap_chain->get_back_buffer(m_backBufferIndex);
-
-            //device_context->cmd_end_render_pass();
-            device_context->cmd_end();
-
-            // submit
-            device_context->flush();
-
-            // present
-            render_device->present(swap_chain);
-        }
-
-        void ShadowApp::create_gfx_objects()
-        {
-            //m_pApp->get_renderer()->create_gfx_objects();
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            auto device_context = renderer->get_device_context();
-            auto& scene_target = renderer->get_scene_target(m_backBufferIndex);
+            auto render_device = get_render_device();
+            auto device_context = get_device_context();
+            auto& scene_target = get_renderer()->get_scene_target(m_backBufferIndex);
             auto back_buffer = scene_target.color_buffer;
             auto back_depth_buffer = scene_target.depth_buffer;
 
+            // Create shadow depth texture array
             RenderObject::TextureCreateDesc depth_buffer_desc;
-            depth_buffer_desc.m_name = u8"ShadowDepthBuffer";
+            depth_buffer_desc.m_name = u8"CSMShadowDepthArray";
             depth_buffer_desc.m_format = TEX_FORMAT_D32_FLOAT;
-            depth_buffer_desc.m_width = 512;
-            depth_buffer_desc.m_height = 512;
+            depth_buffer_desc.m_width = shadow_resolution;
+            depth_buffer_desc.m_height = shadow_resolution;
             depth_buffer_desc.m_depth = 1;
-            depth_buffer_desc.m_arraySize = 1;
+            depth_buffer_desc.m_arraySize = cascade_count;
             depth_buffer_desc.m_mipLevels = 1;
-            depth_buffer_desc.m_dimension = TEX_DIMENSION_2D;
+            depth_buffer_desc.m_dimension = TEX_DIMENSION_2D_ARRAY;
             depth_buffer_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
             depth_buffer_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_DEPTH_STENCIL | GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
             depth_buffer_desc.m_pNativeHandle = nullptr;
             render_device->create_texture(depth_buffer_desc, nullptr, &shadow_depth);
 
-            RenderObject::RenderPassAttachmentDesc attachment_desc[3];
-            // three attachments: color, depth, shadow depth
+            // Create per-cascade DSV views
+            for (uint32_t i = 0; i < cascade_count; ++i)
+            {
+                RenderObject::TextureViewCreateDesc dsv_desc = {};
+                dsv_desc.name = u8"CascadeDSV";
+                dsv_desc.p_texture = shadow_depth;
+                dsv_desc.format = TEX_FORMAT_D32_FLOAT;
+                dsv_desc.view_type = TEXTURE_VIEW_DEPTH_STENCIL;
+                dsv_desc.dimension = TEX_DIMENSION_2D_ARRAY;
+                dsv_desc.baseArrayLayer = i;
+                dsv_desc.arrayLayerCount = 1;
+                dsv_desc.baseMipLevel = 0;
+                dsv_desc.mipLevelCount = 1;
+                cascade_dsv_views[i] = render_device->create_texture_view(dsv_desc);
+            }
+
+            shadow_array_srv = shadow_depth->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+
+            // Build render pass with cascade_count + 1 subpasses
+            uint32_t total_attachments = 2 + cascade_count;
+            eastl::vector<RenderObject::RenderPassAttachmentDesc> attachment_desc(total_attachments);
+
             attachment_desc[0].format = back_buffer->get_create_desc().m_format;
             attachment_desc[0].sample_count = SAMPLE_COUNT_1;
             attachment_desc[0].load_action = LOAD_ACTION_CLEAR;
@@ -265,111 +361,83 @@ namespace Cyber
             attachment_desc[1].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
             attachment_desc[1].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
 
-            attachment_desc[2].format = shadow_depth->get_create_desc().m_format;
-            attachment_desc[2].sample_count = SAMPLE_COUNT_1;
-            attachment_desc[2].load_action = LOAD_ACTION_CLEAR;
-            attachment_desc[2].store_action = STORE_ACTION_STORE;
-            attachment_desc[2].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
-            attachment_desc[2].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
-
-            RenderObject::AttachmentReference depth_attachment_ref0
+            for (uint32_t i = 0; i < cascade_count; ++i)
             {
-                2, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
-            };
+                attachment_desc[2 + i].format = TEX_FORMAT_D32_FLOAT;
+                attachment_desc[2 + i].sample_count = SAMPLE_COUNT_1;
+                attachment_desc[2 + i].load_action = LOAD_ACTION_CLEAR;
+                attachment_desc[2 + i].store_action = STORE_ACTION_STORE;
+                attachment_desc[2 + i].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+                attachment_desc[2 + i].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+            }
 
-            RenderObject::AttachmentReference color_attachment_ref1[]
+            uint32_t total_subpasses = cascade_count + 1;
+
+            eastl::vector<RenderObject::AttachmentReference> cascade_depth_refs(cascade_count);
+            for (uint32_t i = 0; i < cascade_count; ++i)
+                cascade_depth_refs[i] = { 2 + i, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE };
+
+            RenderObject::AttachmentReference main_color_ref = { 0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET };
+            RenderObject::AttachmentReference main_depth_ref = { 1, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE };
+
+            eastl::vector<RenderObject::AttachmentReference> main_input_refs(cascade_count);
+            for (uint32_t i = 0; i < cascade_count; ++i)
+                main_input_refs[i] = { 2 + i, GRAPHICS_RESOURCE_STATE_INPUT_ATTACHMENT };
+
+            eastl::vector<RenderObject::RenderSubpassDesc> subpass_descs(total_subpasses);
+
+            for (uint32_t i = 0; i < cascade_count; ++i)
             {
-                {0, GRAPHICS_RESOURCE_STATE_RENDER_TARGET}
-            };
-            RenderObject::AttachmentReference depth_attachment_ref1
-            {
-                1, GRAPHICS_RESOURCE_STATE_DEPTH_WRITE
-            };
-            RenderObject::AttachmentReference input_attachment_ref1
-            {
-                2, GRAPHICS_RESOURCE_STATE_INPUT_ATTACHMENT
+                subpass_descs[i].m_name = u8"Shadow Cascade Subpass";
+                subpass_descs[i].m_inputAttachmentCount = 0;
+                subpass_descs[i].m_pInputAttachments = nullptr;
+                subpass_descs[i].m_pDepthStencilAttachment = &cascade_depth_refs[i];
+                subpass_descs[i].m_renderTargetCount = 0;
+                subpass_descs[i].m_pRenderTargetAttachments = nullptr;
+            }
+
+            subpass_descs[cascade_count].m_name = u8"Main Subpass";
+            subpass_descs[cascade_count].m_inputAttachmentCount = cascade_count;
+            subpass_descs[cascade_count].m_pInputAttachments = main_input_refs.data();
+            subpass_descs[cascade_count].m_pDepthStencilAttachment = &main_depth_ref;
+            subpass_descs[cascade_count].m_renderTargetCount = 1;
+            subpass_descs[cascade_count].m_pRenderTargetAttachments = &main_color_ref;
+
+            RenderObject::RenderPassDesc rp_desc = {
+                .m_name = u8"CSM RenderPass",
+                .m_attachmentCount = total_attachments,
+                .m_pAttachments = attachment_desc.data(),
+                .m_subpassCount = total_subpasses,
+                .m_pSubpasses = subpass_descs.data()
             };
 
-            subpass_desc[0].m_name = u8"Shadow Subpass";
-            subpass_desc[0].m_inputAttachmentCount = 0;
-            subpass_desc[0].m_pInputAttachments = nullptr;
-            subpass_desc[0].m_pDepthStencilAttachment = &depth_attachment_ref0;
-            subpass_desc[0].m_renderTargetCount = 0;
-            subpass_desc[0].m_pRenderTargetAttachments = nullptr;
-            
-            subpass_desc[1].m_name = u8"Main Subpass";
-            subpass_desc[1].m_inputAttachmentCount = 1;
-            subpass_desc[1].m_pInputAttachments = &input_attachment_ref1;
-            subpass_desc[1].m_pDepthStencilAttachment = &depth_attachment_ref1;
-            subpass_desc[1].m_renderTargetCount = 1;
-            subpass_desc[1].m_pRenderTargetAttachments = color_attachment_ref1;
-
-            RenderObject::RenderPassDesc rp_desc1 = {
-                .m_name = u8"Triangle RenderPass",
-                .m_attachmentCount = 3,
-                .m_pAttachments = attachment_desc,
-                .m_subpassCount = 2,
-                .m_pSubpasses = subpass_desc
-            };
-
-            device_context->create_render_pass(rp_desc1, &render_pass);
+            device_context->create_render_pass(rp_desc, &render_pass);
         }
 
-        void ShadowApp::create_resource()
+        void ShadowApp::on_create_resources()
         {
-            auto render_device = m_pApp->get_renderer()->get_render_device();
-            auto renderer = m_pApp->get_renderer();
-            auto device_context = renderer->get_device_context();
-            
-            // Create plane vertices and indices
+            auto render_device = get_render_device();
+            auto device_context = get_device_context();
+
+            // Create plane geometry
             CubeVertex plane_verts[4] = {
                 { {-5.0f, -2.0f, -5.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f} },
                 { { 5.0f, -2.0f, -5.0f}, {0.0f, 1.0f, 0.0f}, {5.0f, 0.0f} },
                 { { 5.0f, -2.0f,  5.0f}, {0.0f, 1.0f, 0.0f}, {5.0f, 5.0f} },
                 { {-5.0f, -2.0f,  5.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 5.0f} }
             };
-            
-            uint32_t plane_indices[6] = {
-                1, 0, 2,
-                2, 0, 3
-            };
-            
-            // Create plane vertex buffer
-            RenderObject::BufferCreateDesc plane_vb_desc = {};
-            plane_vb_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
-            plane_vb_desc.size = 4 * sizeof(CubeVertex);
-            plane_vb_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            plane_vb_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData plane_vertex_data = {};
-            plane_vertex_data.data = plane_verts;
-            plane_vertex_data.data_size = 4 * sizeof(CubeVertex);
-            render_device->create_buffer(plane_vb_desc, &plane_vertex_data, &plane_item.vertex_buffer);
-            
-            // Create plane index buffer
-            RenderObject::BufferCreateDesc plane_ib_desc = {};
-            plane_ib_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
-            plane_ib_desc.size = 6 * sizeof(uint32_t);
-            plane_ib_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            plane_ib_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData plane_index_data = {};
-            plane_index_data.data = plane_indices;
-            plane_index_data.data_size = 6 * sizeof(uint32_t);
-            render_device->create_buffer(plane_ib_desc, &plane_index_data, &plane_item.index_buffer);
+            uint32_t plane_indices[6] = { 1, 0, 2, 2, 0, 3 };
+
+            create_vertex_buffer(plane_verts, sizeof(plane_verts), plane_item.vertex_buffer);
+            create_index_buffer(plane_indices, sizeof(plane_indices), plane_item.index_buffer);
             plane_item.index_count = 6;
-            
-            // load model
+
+            // Load cube model
             ModelLoader::ModelCreateInfo create_info;
             create_info.file_path = "../../../../samples/shadow/assets/Cube/Cube.gltf";
             ModelLoader::Model* model_loader = cyber_new<ModelLoader::Model>(render_device, device_context, create_info);
             if (!model_loader->is_valid())
-            {
                 cyber_error("Failed to load model: {0}", create_info.file_path);
-            }
-            auto& meshes = model_loader->get_meshes();
-            if (meshes.empty())
-            {
-                cyber_error("No meshes found in the model: {0}", create_info.file_path);
-            }
 
             auto vertex_count = model_loader->get_vertex_count();
             auto index_count = model_loader->get_index_count();
@@ -379,57 +447,29 @@ namespace Cyber
             CubeVertex* cube_verts = cyber_new_n<CubeVertex>(vertex_count);
             for(size_t i = 0; i < vertex_count; ++i)
             {
-                cube_verts[i].position = model_verts[i].pos; // Assuming position is in float3, adding w component
-                cube_verts[i].normal = model_verts[i].normal; // Default normal, can be adjusted based on model data
+                cube_verts[i].position = model_verts[i].pos;
+                cube_verts[i].normal = model_verts[i].normal;
                 cube_verts[i].uv = model_verts[i].uv0;
             }
-
             uint32_t* cube_indices = cyber_new_n<uint32_t>(index_count);
             for(size_t i = 0; i < index_count; ++i)
-            {
                 cube_indices[i] = model_indices[i];
-            }
-            
-            RenderObject::BufferCreateDesc buffer_desc = {};
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER;
-            buffer_desc.size = vertex_count * sizeof(CubeVertex);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData vertex_buffer_data = {};
-            vertex_buffer_data.data = cube_verts;
-            vertex_buffer_data.data_size = vertex_count * sizeof(CubeVertex);
-            render_device->create_buffer(buffer_desc, &vertex_buffer_data, &cube_item.vertex_buffer);
-            
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_INDEX_BUFFER;
-            buffer_desc.size = index_count * sizeof(uint32_t);
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            RenderObject::BufferData index_buffer_data = {};
-            index_buffer_data.data = cube_indices;
-            index_buffer_data.data_size = index_count * sizeof(uint32_t);
-            render_device->create_buffer(buffer_desc, &index_buffer_data, &cube_item.index_buffer);
+
+            create_vertex_buffer(cube_verts, vertex_count * sizeof(CubeVertex), cube_item.vertex_buffer);
+            create_index_buffer(cube_indices, index_count * sizeof(uint32_t), cube_item.index_buffer);
             cube_item.index_count = index_count;
 
-            buffer_desc.size = sizeof(ViewConstants);
-            buffer_desc.bind_flags = GRAPHICS_RESOURCE_BIND_UNIFORM_BUFFER;
-            buffer_desc.usage = GRAPHICS_RESOURCE_USAGE_DYNAMIC;
-            buffer_desc.cpu_access_flags = CPU_ACCESS_WRITE;
-            render_device->create_buffer(buffer_desc, nullptr, &cube_item.constant_buffer);
+            // Constant buffers
+            create_constant_buffer(sizeof(ViewConstants), cube_item.constant_buffer);
+            create_constant_buffer(sizeof(ShadowMVPConstants), cube_item.shadow_constant_buffer);
+            create_constant_buffer(sizeof(ViewConstants), plane_item.constant_buffer);
+            create_constant_buffer(sizeof(ShadowMVPConstants), plane_item.shadow_constant_buffer);
+            create_constant_buffer(sizeof(LightConstants), light_constant_buffer);
+            create_constant_buffer(sizeof(CSMConstants), csm_constant_buffer);
+            create_constant_buffer(sizeof(uint32_t) * 4, cascade_index_buffer);
 
-            buffer_desc.size = sizeof(float4x4);
-            render_device->create_buffer(buffer_desc, nullptr, &cube_item.shadow_constant_buffer);
-            
-            // Create plane constant buffers
-            buffer_desc.size = sizeof(ViewConstants);
-            render_device->create_buffer(buffer_desc, nullptr, &plane_item.constant_buffer);
-            buffer_desc.size = sizeof(float4x4);
-            render_device->create_buffer(buffer_desc, nullptr, &plane_item.shadow_constant_buffer);
-
-            buffer_desc.size = sizeof(LightConstants);
-            render_device->create_buffer(buffer_desc, nullptr, &light_constant_buffer);
-
+            // Load texture from model materials
             auto& materials = model_loader->get_materials();
-            // create texture
             if(materials.size() > 0)
             {
                 for(size_t i = 0; i < materials.size(); ++i)
@@ -441,12 +481,111 @@ namespace Cyber
                     }
                 }
             }
-
         }
 
-        void ShadowApp::create_ui()
+        void ShadowApp::on_create_pipelines()
         {
+            auto render_device = get_render_device();
+            auto& scene_target = get_renderer()->get_scene_target(0);
+            auto sampler = create_default_sampler();
 
+            RenderObject::VertexAttribute vertex_attributes[] = {
+                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
+                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
+                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+            };
+
+            pipeline = PipelineBuilder(render_device)
+                .vertex_shader(CYBER_UTF8("samples/shadow/assets/shaders/cube_vs.hlsl"))
+                .pixel_shader(CYBER_UTF8("samples/shadow/assets/shaders/cube_ps.hlsl"))
+                .vertex_layout(vertex_attributes, 3)
+                .static_sampler(CYBER_UTF8("Texture_sampler"), sampler)
+                .blend_opaque()
+                .depth_test()
+                .render_target_format(scene_target.color_buffer->get_create_desc().m_format)
+                .depth_format(scene_target.depth_buffer->get_create_desc().m_format)
+                .build();
+
+            create_shadow_pipeline();
+        }
+
+        void ShadowApp::create_shadow_pipeline()
+        {
+            auto render_device = get_render_device();
+
+            RenderObject::VertexAttribute vertex_attributes[] = {
+                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
+                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
+                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
+            };
+
+            shadow_pipeline = PipelineBuilder(render_device)
+                .vertex_shader(CYBER_UTF8("samples/shadow/assets/shaders/shadow.hlsl"), CYBER_UTF8("main"))
+                .vertex_layout(vertex_attributes, 3)
+                .depth_test()
+                .depth_format(shadow_depth->get_create_desc().m_format)
+                .build();
+        }
+
+        void ShadowApp::draw_render_item(RenderObject::IDeviceContext* device_context, const RenderItem& item, bool is_shadow_pass, uint32_t cascade_index)
+        {
+            RenderObject::IBuffer* vertex_buffers[] = { item.vertex_buffer };
+            uint32_t strides[] = { item.vertex_stride };
+            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
+            device_context->render_encoder_bind_index_buffer(item.index_buffer, sizeof(uint32_t), 0);
+
+            if (is_shadow_pass)
+            {
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.shadow_constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 1, cascade_index_buffer);
+            }
+            else
+            {
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
+                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 1, csm_constant_buffer);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
+                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_array_srv);
+            }
+
+            device_context->prepare_for_rendering();
+            device_context->render_encoder_draw_indexed(item.index_count, 0, 0);
+        }
+
+        void ShadowApp::update_render_item_constants(const RenderItem& item, const float4x4& view_matrix, const float4x4& view_proj_matrix, const float4x4 cascade_shadow_vp[MAX_CASCADE_COUNT])
+        {
+            // Update main constants
+            ViewConstants view_data;
+            view_data.model_matrix = item.model_matrix.transpose();
+            view_data.view_projection_matrix = (item.model_matrix * view_proj_matrix).transpose();
+            view_data.view_matrix = view_matrix.transpose();
+            update_buffer(item.constant_buffer, view_data);
+
+            // Update shadow MVP constants
+            ShadowMVPConstants shadow_data = {};
+            for (uint32_t i = 0; i < MAX_CASCADE_COUNT; ++i)
+            {
+                if (i < cascade_count)
+                    shadow_data.shadow_mvps[i] = item.model_matrix * cascade_shadow_vp[i];
+                else
+                    shadow_data.shadow_mvps[i] = float4x4::Identity();
+            }
+            update_buffer(item.shadow_constant_buffer, shadow_data);
+        }
+
+        void ShadowApp::rebuild_shadow_resources()
+        {
+            auto device_context = get_device_context();
+            device_context->flush();
+
+            for (uint32_t i = 0; i < MAX_CASCADE_COUNT; ++i)
+                cascade_dsv_views[i].reset();
+            shadow_array_srv.reset();
+            shadow_depth.reset();
+            render_pass.reset();
+
+            on_create_gfx_objects();
+            create_shadow_pipeline();
         }
 
         void ShadowApp::draw_ui(ImGuiContext* in_imgui_context)
@@ -454,7 +593,6 @@ namespace Cyber
             if(in_imgui_context)
             {
                 ImGui::SetCurrentContext(in_imgui_context);
-
                 ImGuizmo::SetOrthographic(false);
                 ImGuizmo::BeginFrame();
 
@@ -465,235 +603,51 @@ namespace Cyber
                         ImGui::ColorEdit3("Light Color", light_color.data());
                         float3 transform = light_direction;
                         if(ImGui::gizmo3D("Gizmo", transform))
-                        {
                             light_direction = transform;
+                        ImGui::TreePop();
+                    }
+
+                    if(ImGui::TreeNode("CSM Settings"))
+                    {
+                        int count = (int)cascade_count;
+                        if (ImGui::SliderInt("Cascade Count", &count, 1, (int)MAX_CASCADE_COUNT))
+                        {
+                            cascade_count = (uint32_t)count;
+                            needs_rebuild = true;
                         }
 
+                        ImGui::SliderFloat("Split Lambda", &split_lambda, 0.0f, 1.0f, "%.2f");
+
+                        const char* res_items[] = { "256", "512", "1024", "2048" };
+                        uint32_t res_values[] = { 256, 512, 1024, 2048 };
+                        int current_res = 2;
+                        for (int i = 0; i < 4; ++i)
+                            if (res_values[i] == shadow_resolution) current_res = i;
+                        if (ImGui::Combo("Resolution", &current_res, res_items, 4))
+                        {
+                            shadow_resolution = res_values[current_res];
+                            needs_rebuild = true;
+                        }
+
+                        ImGui::SliderFloat("Depth Bias", &depth_bias, 0.0f, 0.01f, "%.4f");
+                        ImGui::SliderFloat("Near Plane", &camera_near, 0.01f, 1.0f, "%.2f");
+                        ImGui::SliderFloat("Far Plane", &camera_far, 10.0f, 500.0f, "%.1f");
+                        ImGui::Checkbox("Debug Cascade Colors", &show_cascade_debug);
+
+                        float splits[MAX_CASCADE_COUNT] = {};
+                        calculate_cascade_splits(camera_near, camera_far, splits);
+                        ImGui::Separator();
+                        ImGui::Text("Cascade Splits:");
+                        for (uint32_t i = 0; i < cascade_count; ++i)
+                        {
+                            float near_dist = (i == 0) ? camera_near : splits[i - 1];
+                            ImGui::Text("  Cascade %d: %.2f - %.2f", i, near_dist, splits[i]);
+                        }
                         ImGui::TreePop();
                     }
                 }
                 ImGui::End();
             }
-        }
-
-        void ShadowApp::create_render_pipeline()
-        {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-
-            // create shader
-            ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-            vs_load_desc.target = SHADER_TARGET_6_0;
-            vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/cube_vs.hlsl"),
-                .stage = SHADER_STAGE_VERT,
-                .entry_point_name = CYBER_UTF8("VSMain"),
-            };
-            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
-
-            ResourceLoader::ShaderLoadDesc ps_load_desc = {};
-            ps_load_desc.target = SHADER_TARGET_6_0;
-            ps_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/cube_ps.hlsl"),
-                .stage = SHADER_STAGE_FRAG,
-                .entry_point_name = CYBER_UTF8("PSMain"),
-            };
-            RefCntAutoPtr<RenderObject::IShaderLibrary> ps_shader = ResourceLoader::add_shader(render_device, ps_load_desc);
-
-            RenderObject::SamplerCreateDesc sampler_create_desc = {};
-            sampler_create_desc.min_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.mag_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.mip_filter = FILTER_TYPE_LINEAR;
-            sampler_create_desc.address_u = ADDRESS_MODE_WRAP;
-            sampler_create_desc.address_v = ADDRESS_MODE_WRAP;
-            sampler_create_desc.address_w = ADDRESS_MODE_WRAP;
-            sampler_create_desc.flags = SAMPLER_FLAG_NONE;
-            sampler_create_desc.unnormalized_coordinates = false;
-            sampler_create_desc.mip_lod_bias = 0.0f;
-            sampler_create_desc.max_anisotropy = 0;
-            sampler_create_desc.compare_mode = CMP_NEVER;
-            sampler_create_desc.border_color = { 0.0f, 0.0f, 0.0f, 0.0f };
-            sampler_create_desc.min_lod = 0.0f;
-            sampler_create_desc.max_lod = 0.0f;
-            auto sampler = render_device->create_sampler(sampler_create_desc);
-            const char8_t* sampler_names[] = { CYBER_UTF8("Texture_sampler") };
-
-            // create root signature
-            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[2];
-            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
-            pipeline_shader_create_desc[0]->m_library = vs_shader;
-            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
-            pipeline_shader_create_desc[1] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[1]->m_stage = SHADER_STAGE_FRAG;
-            pipeline_shader_create_desc[1]->m_library = ps_shader;
-            pipeline_shader_create_desc[1]->m_entry = CYBER_UTF8("PSMain");
-            
-            RenderObject::VertexAttribute vertex_attributes[] = {
-                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
-                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
-            };
-
-            RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
-            
-            BlendStateCreateDesc blend_state_desc = {};
-            blend_state_desc.render_target_count = 1;
-            blend_state_desc.src_factors[0] = BLEND_CONSTANT_ONE;
-            blend_state_desc.dst_factors[0] = BLEND_CONSTANT_ZERO;
-            blend_state_desc.blend_modes[0] = BLEND_MODE_ADD;
-            blend_state_desc.src_alpha_factors[0] = BLEND_CONSTANT_ONE;
-            blend_state_desc.dst_alpha_factors[0] = BLEND_CONSTANT_ZERO;
-            blend_state_desc.blend_alpha_modes[0] = BLEND_MODE_ADD;
-            blend_state_desc.alpha_to_coverage = false;
-            blend_state_desc.masks[0] = COLOR_WRITE_MASK_ALL;
-
-            DepthStateCreateDesc depth_stencil_state_desc = {};
-            depth_stencil_state_desc.depth_test = true;
-            depth_stencil_state_desc.depth_write = true;
-            depth_stencil_state_desc.depth_func = CMP_LESS_EQUAL;
-            depth_stencil_state_desc.stencil_test = false;
-
-            auto& scene_target = renderer->get_scene_target(0);
-            
-            RenderObject::RenderPipelineCreateDesc rp_desc = 
-            {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .pixel_shader = pipeline_shader_create_desc[1],
-                .vertex_layout = &vertex_layout_desc,
-                .blend_state = &blend_state_desc,
-                .depth_stencil_state = &depth_stencil_state_desc,
-                .m_staticSamplers = &sampler,
-                .m_staticSamplerNames = sampler_names,
-                .m_staticSamplerCount = 1,
-                .color_formats = &scene_target.color_buffer->get_create_desc().m_format,
-                .render_target_count = 1,
-                .depth_stencil_format = scene_target.depth_buffer->get_create_desc().m_format,
-                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
-            };
-            render_device->create_render_pipeline(rp_desc, &pipeline);
-
-            vs_shader.reset();
-            ps_shader.reset();
-
-            create_shadow_pipeline();
-        }
-
-        void ShadowApp::create_shadow_pipeline()
-        {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-
-            // create shader
-            ResourceLoader::ShaderLoadDesc vs_load_desc = {};
-            vs_load_desc.target = SHADER_TARGET_6_0;
-            vs_load_desc.stage_load_desc = ResourceLoader::ShaderStageLoadDesc{
-                .file_name = CYBER_UTF8("samples/shadow/assets/shaders/shadow.hlsl"),
-                .stage = SHADER_STAGE_VERT,
-                .entry_point_name = CYBER_UTF8("main"),
-            };
-            RefCntAutoPtr<RenderObject::IShaderLibrary> vs_shader = ResourceLoader::add_shader(render_device, vs_load_desc);
-
-            RenderObject::PipelineShaderCreateDesc* pipeline_shader_create_desc[1];
-            pipeline_shader_create_desc[0] = cyber_new<RenderObject::PipelineShaderCreateDesc>();
-            pipeline_shader_create_desc[0]->m_stage = SHADER_STAGE_VERT;
-            pipeline_shader_create_desc[0]->m_library = vs_shader;
-            pipeline_shader_create_desc[0]->m_entry = CYBER_UTF8("VSMain");
-
-            RenderObject::VertexAttribute vertex_attributes[] = {
-                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, position)},
-                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, normal)},
-                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(CubeVertex, uv)},
-            };
-            RenderObject::VertexLayoutDesc vertex_layout_desc = {3, vertex_attributes};
-
-            RenderObject::RenderPipelineCreateDesc rp_desc = 
-            {
-                .vertex_shader = pipeline_shader_create_desc[0],
-                .vertex_layout = &vertex_layout_desc,
-                .depth_stencil_format = shadow_depth->get_create_desc().m_format,
-                .prim_topology = PRIM_TOPO_TRIANGLE_LIST,
-            };
-            render_device->create_render_pipeline(rp_desc, &shadow_pipeline);
-
-            vs_shader.reset();
-        }
-
-        void ShadowApp::draw_render_item(RenderObject::IDeviceContext* device_context, const RenderItem& item, bool is_shadow_pass)
-        {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            
-            // Bind vertex and index buffers
-            RenderObject::IBuffer* vertex_buffers[] = { item.vertex_buffer };
-            uint32_t strides[] = { item.vertex_stride };
-            device_context->render_encoder_bind_vertex_buffer(1, vertex_buffers, strides, nullptr);
-            device_context->render_encoder_bind_index_buffer(item.index_buffer, sizeof(uint32_t), 0);
-            
-            if (is_shadow_pass)
-            {
-                // Shadow pass only needs shadow matrix
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.shadow_constant_buffer);
-            }
-            else
-            {
-                // Main render pass needs full constants
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, item.constant_buffer);
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, light_constant_buffer);
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 1, item.constant_buffer);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, test_texture_view);
-                auto shadow_depth_srv = shadow_depth->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
-                device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 1, shadow_depth_srv);
-            }
-            
-            device_context->prepare_for_rendering();
-            device_context->render_encoder_draw_indexed(item.index_count, 0, 0);
-        }
-        
-        void ShadowApp::update_render_item_constants(const RenderItem& item, const float4x4& view_proj_matrix, const float4x4& shadow_view_proj_matrix)
-        {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            
-            // Update main constants
-            float4x4 mvp_matrix = item.model_matrix * view_proj_matrix;
-            
-            void* const_resource = render_device->map_buffer(item.constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            ViewConstants* const_ptr = (ViewConstants*)const_resource;
-            const_ptr->model_matrix = item.model_matrix.transpose();
-            const_ptr->view_projection_matrix = mvp_matrix.transpose();
-            const_ptr->shadow_matrix = shadow_view_proj_matrix.transpose();
-            render_device->unmap_buffer(item.constant_buffer, MAP_WRITE);
-            item.constant_buffer->set_buffer_size(sizeof(ViewConstants));
-            
-            // Update shadow constants
-            float4x4 shadow_mvp_matrix = item.model_matrix * shadow_view_proj_matrix;
-            
-            void* shadow_resource = render_device->map_buffer(item.shadow_constant_buffer, MAP_WRITE, MAP_FLAG_DISCARD);
-            float4x4* shadow_ptr = (float4x4*)shadow_resource;
-            *shadow_ptr = shadow_mvp_matrix;
-            render_device->unmap_buffer(item.shadow_constant_buffer, MAP_WRITE);
-            item.shadow_constant_buffer->set_buffer_size(sizeof(float4x4));
-        }
-
-        void ShadowApp::finalize()
-        {
-            auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            auto swap_chain = renderer->get_swap_chain();
-            auto renderpass = renderer->get_render_pass();
-            auto surface = renderer->get_surface();
-            auto instance = renderer->get_instance();
-            for(uint32_t i = 0;i < swap_chain->get_buffer_srv_count(); ++i)
-            {
-                render_device->free_texture_view(swap_chain->get_back_buffer_srv_view(i));
-            }
-            render_device->free_swap_chain(swap_chain);
-            render_device->free_surface(surface);
-            render_device->free_render_pipeline(pipeline);
-            render_device->free_root_signature(root_signature);
-            render_device->free_device();
-            render_device->free_instance(instance);
         }
     }
 }

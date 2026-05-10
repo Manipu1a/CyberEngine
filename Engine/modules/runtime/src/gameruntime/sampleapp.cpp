@@ -1,4 +1,5 @@
 #include "gameruntime/sampleapp.h"
+#include "gameruntime/async_loader.h"
 #include "platform/memory.h"
 #include "application/application.h"
 #include "renderer/renderer.h"
@@ -23,15 +24,101 @@ namespace Cyber
 
         SampleApp::~SampleApp()
         {
+            if (m_asyncLoader)
+            {
+                m_asyncLoader->wait();
+                cyber_delete(m_asyncLoader);
+                m_asyncLoader = nullptr;
+            }
         }
 
         void SampleApp::initialize()
         {
             m_pApp = Core::Application::getApp();
             cyber_check(m_pApp);
-            on_create_gfx_objects();
-            on_create_pipelines();
-            on_create_resources();
+            m_loadingStage = LoadingStage::INIT;
+            m_loadingProgress = 0.0f;
+            m_loadingMessage = "Initializing...";
+        }
+
+        void SampleApp::tick_loading()
+        {
+            switch (m_loadingStage)
+            {
+            case LoadingStage::INIT:
+                m_loadingStage = LoadingStage::GFX_OBJECTS;
+                m_loadingMessage = "Creating graphics objects...";
+                m_loadingProgress = 0.1f;
+                break;
+            case LoadingStage::GFX_OBJECTS:
+                on_create_gfx_objects();
+                m_loadingStage = LoadingStage::PIPELINES;
+                m_loadingMessage = "Creating pipelines...";
+                m_loadingProgress = 0.3f;
+                break;
+            case LoadingStage::PIPELINES:
+                on_create_pipelines();
+                m_loadingStage = LoadingStage::LOAD_DATA;
+                m_loadingMessage = "Loading data...";
+                m_loadingProgress = 0.4f;
+                break;
+            case LoadingStage::LOAD_DATA:
+                m_asyncLoader = cyber_new<GameRuntime::AsyncLoader>();
+                m_asyncLoader->set_progress(0.4f, "Loading data...");
+                m_asyncLoader->start([this]() { on_load_data(); });
+                m_loadingStage = LoadingStage::ASYNC_LOADING;
+                break;
+            case LoadingStage::ASYNC_LOADING:
+            {
+                auto state = m_asyncLoader->get_state();
+                if (state == GameRuntime::AsyncLoader::State::COMPLETE)
+                {
+                    m_asyncLoader->wait();
+                    cyber_delete(m_asyncLoader);
+                    m_asyncLoader = nullptr;
+                    m_loadingStage = LoadingStage::RESOURCES;
+                    m_loadingMessage = "Creating GPU resources...";
+                    m_loadingProgress = 0.9f;
+                }
+                else if (state == GameRuntime::AsyncLoader::State::FAILED)
+                {
+                    m_asyncLoader->wait();
+                    cyber_delete(m_asyncLoader);
+                    m_asyncLoader = nullptr;
+                    m_loadingMessage = "Loading failed!";
+                    m_loadingProgress = 0.0f;
+                    CB_CORE_ERROR("AsyncLoader: data loading failed");
+                }
+                else
+                {
+                    m_loadingProgress = m_asyncLoader->get_progress();
+                    m_loadingMessage = m_asyncLoader->get_message();
+                }
+                break;
+            }
+            case LoadingStage::RESOURCES:
+                on_create_resources();
+                m_loadingStage = LoadingStage::COMPLETE;
+                m_loadingMessage = "Complete";
+                m_loadingProgress = 1.0f;
+                break;
+            default:
+                break;
+            }
+        }
+
+        float SampleApp::get_loading_progress() const
+        {
+            if (m_asyncLoader && m_loadingStage == LoadingStage::ASYNC_LOADING)
+                return m_asyncLoader->get_progress();
+            return m_loadingProgress;
+        }
+
+        const char* SampleApp::get_loading_message() const
+        {
+            if (m_asyncLoader && m_loadingStage == LoadingStage::ASYNC_LOADING)
+                return m_asyncLoader->get_message();
+            return m_loadingMessage;
         }
 
         void SampleApp::run()

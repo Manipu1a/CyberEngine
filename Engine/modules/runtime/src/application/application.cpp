@@ -100,13 +100,96 @@ namespace Cyber
             m_pRenderer->begin_frame();
 
             m_pRenderer->update(deltaTime);
-            m_pSampleApp->update(deltaTime);
 
-            m_pEditor->update(deltaTime);
-            m_pSampleApp->draw_ui(m_pEditor->get_imgui_context());
-            m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
+            if (m_pSampleApp->is_loading())
+            {
+                // Advance one loading stage per frame
+                m_pSampleApp->tick_loading();
 
-            m_pSampleApp->present();
+                // Acquire swap chain image and start command recording for the editor render pass
+                auto* render_device = m_pRenderer->get_render_device();
+                auto* swap_chain = m_pRenderer->get_swap_chain();
+                AcquireNextDesc acquire_desc = {};
+                uint32_t back_buffer_index = render_device->acquire_next_image(swap_chain, acquire_desc);
+                m_pRenderer->set_back_buffer_index(back_buffer_index);
+
+                m_pRenderer->get_device_context()->cmd_begin();
+
+                // Draw loading overlay via ImGui
+                m_pEditor->update(deltaTime);
+
+                auto* imgui_ctx = m_pEditor->get_imgui_context();
+                if (imgui_ctx)
+                {
+                    ImGui::SetCurrentContext(imgui_ctx);
+
+                    ImGuiViewport* viewport = ImGui::GetMainViewport();
+                    ImVec2 center = ImVec2(
+                        viewport->Pos.x + viewport->Size.x * 0.5f,
+                        viewport->Pos.y + viewport->Size.y * 0.5f
+                    );
+
+                    float bar_width = 400.0f;
+                    float bar_height = 24.0f;
+                    float window_width = bar_width + 40.0f;
+                    float window_height = 100.0f;
+
+                    ImGui::SetNextWindowPos(ImVec2(center.x - window_width * 0.5f, center.y - window_height * 0.5f));
+                    ImGui::SetNextWindowSize(ImVec2(window_width, window_height));
+                    ImGui::SetNextWindowBgAlpha(0.85f);
+
+                    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar
+                        | ImGuiWindowFlags_NoResize
+                        | ImGuiWindowFlags_NoMove
+                        | ImGuiWindowFlags_NoScrollbar
+                        | ImGuiWindowFlags_NoCollapse
+                        | ImGuiWindowFlags_NoDocking;
+
+                    if (ImGui::Begin("##Loading", nullptr, flags))
+                    {
+                        const char* title = "Loading Scene";
+                        float title_width = ImGui::CalcTextSize(title).x;
+                        ImGui::SetCursorPosX((window_width - title_width) * 0.5f);
+                        ImGui::Text("%s", title);
+
+                        ImGui::Spacing();
+
+                        ImGui::SetCursorPosX(20.0f);
+                        ImGui::ProgressBar(m_pSampleApp->get_loading_progress(), ImVec2(bar_width, bar_height));
+
+                        ImGui::Spacing();
+
+                        char status[128];
+                        snprintf(status, sizeof(status), "%s (%.0f%%)",
+                            m_pSampleApp->get_loading_message(),
+                            m_pSampleApp->get_loading_progress() * 100.0f);
+                        float status_width = ImGui::CalcTextSize(status).x;
+                        ImGui::SetCursorPosX((window_width - status_width) * 0.5f);
+                        ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "%s", status);
+                    }
+                    ImGui::End();
+                }
+
+                m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
+                m_pSampleApp->present();
+            }
+            else
+            {
+                // Finalize loading: run on_create_resources() in the normal frame path
+                // so GPU commands are properly recorded in the same command list lifecycle
+                if (m_pSampleApp->get_loading_stage() == Samples::SampleApp::LoadingStage::RESOURCES)
+                {
+                    m_pSampleApp->tick_loading();
+                }
+
+                m_pSampleApp->update(deltaTime);
+
+                m_pEditor->update(deltaTime);
+                m_pSampleApp->draw_ui(m_pEditor->get_imgui_context());
+                m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
+
+                m_pSampleApp->present();
+            }
 
             m_pRenderer->end_frame();
         }

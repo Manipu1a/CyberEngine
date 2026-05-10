@@ -4,12 +4,18 @@
 #include "gameruntime/world.h"
 #include "graphics/interface/graphics_types.h"
 #include "resource/resource_loader.h"
+#include <atomic>
 
 namespace Cyber
 {
     namespace Renderer
     {
         class Renderer;
+    }
+
+    namespace GameRuntime
+    {
+        class AsyncLoader;
     }
 
     namespace RenderObject
@@ -54,6 +60,17 @@ namespace Cyber
         class CYBER_GAME_API SampleApp
         {
         public:
+            enum class LoadingStage
+            {
+                INIT,
+                GFX_OBJECTS,
+                PIPELINES,
+                LOAD_DATA,       // Launches AsyncLoader for on_load_data()
+                ASYNC_LOADING,   // Polling AsyncLoader (non-blocking)
+                RESOURCES,       // on_create_resources() on main thread
+                COMPLETE
+            };
+
             SampleApp();
             virtual ~SampleApp();
 
@@ -67,7 +84,18 @@ namespace Cyber
             // --- Initialization hooks (override in subclass) ---
             virtual void on_create_gfx_objects() {}
             virtual void on_create_pipelines() {}
+            // CPU-heavy loading (file parsing, vertex conversion) - runs on loading thread
+            virtual void on_load_data() {}
+            // GPU resource creation (buffers, textures) - runs on main thread
             virtual void on_create_resources() {}
+
+            // --- Loading state ---
+            // Returns true while async loading or setup is in progress (excludes RESOURCES stage which runs in the normal frame path)
+            bool is_loading() const { return m_loadingStage != LoadingStage::COMPLETE && m_loadingStage != LoadingStage::RESOURCES; }
+            LoadingStage get_loading_stage() const { return m_loadingStage; }
+            void tick_loading();
+            float get_loading_progress() const;
+            const char* get_loading_message() const;
 
             // --- Accessors ---
             uint32_t get_back_buffer_index() const { return m_backBufferIndex; }
@@ -124,6 +152,11 @@ namespace Cyber
             uint32_t m_backBufferIndex = 0;
             Core::Application* m_pApp = nullptr;
             RefCntAutoPtr<World> m_world;
+
+            LoadingStage m_loadingStage = LoadingStage::INIT;
+            float m_loadingProgress = 0.0f;
+            const char* m_loadingMessage = "Initializing...";
+            GameRuntime::AsyncLoader* m_asyncLoader = nullptr;
         };
     }
 }

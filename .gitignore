@@ -38,3 +38,11 @@ build/*
 .vscode/compile_commands.json
 thirdparty/IMGUI/imgui/examples/*
 thirdparty/IMGUI/imgui/examples
+
+# Large sponza source assets (exceed GitHub 100MB limit)
+samples/sponza/assets/main_sponza.zip
+samples/sponza/assets/pkg_a_curtains.zip
+samples/sponza/assets/main_sponza/*.fbx
+samples/sponza/assets/main_sponza/*.max
+samples/sponza/assets/main_sponza/*.usda
+samples/sponza/assets/main_sponza/*.bin

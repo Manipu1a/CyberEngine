@@ -183,6 +183,12 @@ public:
 
     void load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info);
 
+    // Two-phase loading for async support:
+    // Phase 1 (CPU, thread-safe): parse file, load meshes/materials
+    void load_data(const ModelCreateInfo& create_info);
+    // Phase 2 (GPU, main thread only): create texture resources
+    void create_gpu_textures(RenderObject::IRenderDevice* render_device);
+
     BoundBox compute_bounding_box(const float4x4& model_transform) const;
 
     const tinygltf::Model& get_model() const
@@ -282,6 +288,7 @@ private:
     std::vector<uint32_t> indices_data; // Indices for indexed drawing
 
     float4x4 root_transform = float4x4::Identity();
+    std::string m_base_dir; // Stored by load_data() for deferred create_gpu_textures()
     struct TextureInfo
     {
         RefCntAutoPtr<RenderObject::ITexture> texture = nullptr;

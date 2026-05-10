@@ -6,13 +6,14 @@ struct PSInput
     float3 Normal : NORMAL;
     float2 UV : TEXCOORD;
     float3 WorldPos : TEXCOORD1;
+    float ViewDepth : TEXCOORD2;
 };
 
 cbuffer ViewConstants
 {
     float4x4 ModelMatrix;
     float4x4 ViewProjectionMatrix;
-    float4x4 ShadowMatrix;
+    float4x4 ViewMatrix;
 };
 
 void VSMain(in VSInput VSIn,
@@ -23,4 +24,7 @@ void VSMain(in VSInput VSIn,
     PSIn.WorldPos = worldPos.xyz / worldPos.w;
     PSIn.Normal = normalize(mul(float4(VSIn.normal, 0.0), ModelMatrix).xyz);
     PSIn.UV = VSIn.uv;
+
+    float4 viewPos = mul(worldPos, ViewMatrix);
+    PSIn.ViewDepth = viewPos.z;
 }

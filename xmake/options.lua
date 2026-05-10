@@ -22,3 +22,8 @@ option("build_shadow")
     set_default(false)
     set_description("Toggle to build samples of shadow")
 option_end()
+
+option("build_sponza")
+    set_default(false)
+    set_description("Toggle to build samples of sponza")
+option_end()

@@ -33,6 +33,11 @@ target("Main")
         sample_count = sample_count + 1
         active_sample = "shadow_sample"
     end
+
+    if has_config("build_sponza") then
+        sample_count = sample_count + 1
+        active_sample = "sponza_sample"
+    end
     
     -- 确保只有一个示例被启用
     if sample_count > 1 then

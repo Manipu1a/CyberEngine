@@ -1,1 +1,1 @@
-xmake f -p windows -a x64 -m debug --build_shadow=true
+xmake f -p windows -a x64 -m debug --build_sponza=true
