@@ -101,8 +101,6 @@ namespace Cyber
             uint32_t get_back_buffer_index() const { return m_backBufferIndex; }
             RefCntAutoPtr<World> get_world() const { return m_world; }
 
-            static SampleApp* create_sample_app();
-
         protected:
             // --- Convenience accessors ---
             Renderer::Renderer* get_renderer() const;

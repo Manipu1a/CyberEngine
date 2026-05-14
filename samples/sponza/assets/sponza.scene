@@ -1,0 +1,105 @@
+{
+  "name": "samples/sponza/assets/sponza.scene",
+  "nodes": [
+    {
+      "components": [
+        {
+          "enabled": true,
+          "model_resource": "samples/sponza/assets/main_sponza/NewSponza_Main_glTF_003.gltf",
+          "transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ],
+            "scale": [
+              5.0,
+              5.0,
+              5.0
+            ]
+          },
+          "type": "MeshComponent"
+        }
+      ],
+      "id": 1,
+      "name": "SponzaMain",
+      "parent_id": 0
+    },
+    {
+      "components": [
+        {
+          "enabled": true,
+          "far": 1000.0,
+          "fov": 45.0,
+          "near": 0.10000000149011612,
+          "pitch": -0.1450003683567047,
+          "transform": {
+            "position": [
+              -3.4568614959716797,
+              10.842253684997559,
+              0.8248712420463562
+            ],
+            "rotation": [
+              0.0004852504644077271,
+              -0.9973506331443787,
+              -0.07243506610393524,
+              -0.006681361235678196
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "type": "CameraComponent",
+          "yaw": -3.1549906730651855
+        }
+      ],
+      "id": 2,
+      "name": "MainCamera",
+      "parent_id": 0
+    },
+    {
+      "components": [
+        {
+          "color": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "enabled": true,
+          "intensity": 1.0,
+          "transform": {
+            "position": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "rotation": [
+              -0.32505759596824646,
+              0.0,
+              0.32505759596824646,
+              0.8880738615989685
+            ],
+            "scale": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          },
+          "type": "DirectionalLightComponent"
+        }
+      ],
+      "id": 3,
+      "name": "Sun",
+      "parent_id": 0
+    }
+  ],
+  "version": 2
+}

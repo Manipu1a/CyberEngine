@@ -39,6 +39,15 @@ public:
         return project_root.c_str();
     }
 
+    // Resolve a project-relative, cwd-relative, or absolute path to an
+    // absolute filesystem path. Returns the project-rooted path when the
+    // input doesn't match any existing file (useful for "where would this
+    // new file go").
+    static eastl::string resolve_path_public(const char* filePath)
+    {
+        return resolve_path(filePath);
+    }
+
     operator BasicFile*() {return file;}
     BasicFile* operator->() {return file;}
 

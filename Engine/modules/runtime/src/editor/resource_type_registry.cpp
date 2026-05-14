@@ -65,6 +65,7 @@ namespace Cyber
                 case ResourceCategory::Model:   return "Model";
                 case ResourceCategory::Texture: return "Texture";
                 case ResourceCategory::Shader:  return "Shader";
+                case ResourceCategory::Scene:   return "Scene";
                 case ResourceCategory::Unknown:
                 default:                        return "Unknown";
             }
@@ -81,9 +82,14 @@ namespace Cyber
             const ImU32 model_tint   = IM_COL32(255, 180,  80, 255);
             const ImU32 texture_tint = IM_COL32( 80, 180, 255, 255);
             const ImU32 shader_tint  = IM_COL32(180, 255, 120, 255);
+            const ImU32 scene_tint   = IM_COL32(180, 120, 255, 255);
 
             // Models — see tools/ModelLoader (tinygltf)
             registry.register_type({ ".gltf", "glTF Model", ResourceCategory::Model, model_tint });
+            registry.register_type({ ".glb",  "glTF Binary", ResourceCategory::Model, model_tint });
+
+            // Scenes — CyberEngine scene serialization (JSON)
+            registry.register_type({ ".scene", "Cyber Scene", ResourceCategory::Scene, scene_tint });
 
             // Textures — see tools/TextureLoader IMAGE_FILE_FORMAT + HDR fallback
             registry.register_type({ ".png",  "PNG Texture",  ResourceCategory::Texture, texture_tint });

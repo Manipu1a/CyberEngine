@@ -10,17 +10,149 @@
 #include "editor/imgui_log_sink.h"
 #include "editor/resource_type_registry.h"
 #include "renderer/renderer.h"
+#include "gameruntime/sampleapp.h"
+#include "gameruntime/world.h"
+#include "gameruntime/mesh.h"
+#include "gameruntime/scene_node.h"
+#include "gameruntime/scene_serializer.h"
+#include "component/primitive.h"
+#include "component/mesh_component.h"
+#include "component/camera_component.h"
+#include "component/directional_light_component.h"
+#include "core/file_helper.hpp"
+#include <array>
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <string_view>
+#include <vector>
 #include <cstring>
 #include <cctype>
 #include <algorithm>
+
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+#include <objbase.h>
+#include <wincodec.h>
+#include <wrl/client.h>
+#endif
 
 namespace Cyber
 {
     namespace Editor
     {
+        namespace
+        {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            bool load_png_rgba_with_wic(const std::filesystem::path& path,
+                                        std::vector<uint8_t>& pixels,
+                                        uint32_t& width,
+                                        uint32_t& height)
+            {
+                pixels.clear();
+                width = 0;
+                height = 0;
+
+                const HRESULT init_hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+                const bool should_uninitialize = SUCCEEDED(init_hr);
+                if (FAILED(init_hr) && init_hr != RPC_E_CHANGED_MODE)
+                {
+                    CB_WARN("Failed to initialize COM while loading editor icon: {}", path.string().c_str());
+                    return false;
+                }
+
+                auto uninitialize_com = [&]()
+                {
+                    if (should_uninitialize)
+                        CoUninitialize();
+                };
+
+                Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
+                HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                              IID_PPV_ARGS(factory.GetAddressOf()));
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to create WIC factory while loading editor icon: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
+                hr = factory->CreateDecoderFromFilename(path.c_str(), nullptr, GENERIC_READ,
+                                                        WICDecodeMetadataCacheOnLoad,
+                                                        decoder.GetAddressOf());
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to open editor icon: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame;
+                hr = decoder->GetFrame(0, frame.GetAddressOf());
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to decode editor icon frame: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                Microsoft::WRL::ComPtr<IWICFormatConverter> converter;
+                hr = factory->CreateFormatConverter(converter.GetAddressOf());
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to create WIC format converter: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                hr = converter->Initialize(frame.Get(), GUID_WICPixelFormat32bppRGBA,
+                                           WICBitmapDitherTypeNone, nullptr, 0.0,
+                                           WICBitmapPaletteTypeCustom);
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to convert editor icon to RGBA: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                UINT w = 0;
+                UINT h = 0;
+                hr = converter->GetSize(&w, &h);
+                if (FAILED(hr) || w == 0 || h == 0)
+                {
+                    CB_WARN("Invalid editor icon size: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                const uint64_t stride = static_cast<uint64_t>(w) * 4ull;
+                const uint64_t total_size = stride * static_cast<uint64_t>(h);
+                if (total_size > static_cast<uint64_t>(std::numeric_limits<UINT>::max()))
+                {
+                    CB_WARN("Editor icon is too large: {}", path.string().c_str());
+                    uninitialize_com();
+                    return false;
+                }
+
+                pixels.resize(static_cast<size_t>(total_size));
+                hr = converter->CopyPixels(nullptr, static_cast<UINT>(stride),
+                                           static_cast<UINT>(pixels.size()), pixels.data());
+                if (FAILED(hr))
+                {
+                    CB_WARN("Failed to copy editor icon pixels: {}", path.string().c_str());
+                    pixels.clear();
+                    uninitialize_com();
+                    return false;
+                }
+
+                width = w;
+                height = h;
+                uninitialize_com();
+                return true;
+            }
+#endif
+        }
+
         Editor::Editor(const EditorCreateInfo& createInfo)
         {
             m_imguiRenderer = cyber_new<ImGuiRenderer>(createInfo);
@@ -67,6 +199,7 @@ namespace Cyber
 
             // Setup Platform/Renderer backends
             m_imguiRenderer->initialize();
+            load_content_browser_icons(device);
         }
         /*
         void Editor::run()
@@ -160,9 +293,11 @@ namespace Cyber
                     ImGuiID dock_right = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Right, 0.22f, nullptr, &dock_main);
                     ImGuiID dock_bottom = ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Down, 0.28f, nullptr, &dock_main);
                     ImGuiID dock_bottom_right = ImGui::DockBuilderSplitNode(dock_bottom, ImGuiDir_Right, 0.5f, nullptr, &dock_bottom);
+                    ImGuiID dock_right_bottom = ImGui::DockBuilderSplitNode(dock_right, ImGuiDir_Down, 0.5f, nullptr, &dock_right);
 
                     ImGui::DockBuilderDockWindow("Viewport", dock_main);
-                    ImGui::DockBuilderDockWindow("Details", dock_right);
+                    ImGui::DockBuilderDockWindow("Scene Hierarchy", dock_right);
+                    ImGui::DockBuilderDockWindow("Details", dock_right_bottom);
                     ImGui::DockBuilderDockWindow("Content Browser", dock_bottom);
                     ImGui::DockBuilderDockWindow("Log", dock_bottom_right);
 
@@ -175,6 +310,41 @@ namespace Cyber
             
             if (ImGui::BeginMenuBar())
             {
+                if (ImGui::BeginMenu("File"))
+                {
+                    // Open is enabled whenever the currently-selected Content
+                    // Browser file looks like a .scene. We reuse that
+                    // selection rather than pop a native file dialog.
+                    bool can_open = false;
+                    if (!m_selected_asset.empty())
+                    {
+                        std::string ext = std::filesystem::path(m_selected_asset).extension().string();
+                        std::transform(ext.begin(), ext.end(), ext.begin(),
+                            [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+                        can_open = (ext == ".scene");
+                    }
+                    if (ImGui::MenuItem("Open Scene", nullptr, false, can_open))
+                        handle_open_scene();
+
+                    Core::Application* app_fm = m_pApp ? m_pApp : Core::Application::getApp();
+                    Samples::SampleApp* sample_fm = app_fm ? app_fm->get_sample_app() : nullptr;
+                    RefCntAutoPtr<World> world_fm = sample_fm ? sample_fm->get_world() : RefCntAutoPtr<World>{};
+                    const bool has_source = world_fm && !world_fm->source_path().empty();
+
+                    if (ImGui::MenuItem("Save Scene", nullptr, false, (bool)world_fm && has_source))
+                        handle_save_scene();
+
+                    if (ImGui::MenuItem("Save Scene As...", nullptr, false, (bool)world_fm))
+                    {
+                        if (world_fm && !world_fm->source_path().empty())
+                            std::snprintf(m_save_as_buffer, sizeof(m_save_as_buffer), "%s", world_fm->source_path().c_str());
+                        else
+                            m_save_as_buffer[0] = '\0';
+                        m_show_save_as_popup = true;
+                    }
+                    ImGui::EndMenu();
+                }
+
                 if (ImGui::BeginMenu("Options"))
                 {
                     // Disabling fullscreen would allow the window to be moved to the front of other windows,
@@ -196,6 +366,7 @@ namespace Cyber
 
                 if (ImGui::BeginMenu("View"))
                 {
+                    ImGui::MenuItem("Scene Hierarchy", NULL, &m_show_scene_hierarchy);
                     ImGui::MenuItem("Content Browser", NULL, &m_show_content_browser);
                     ImGui::MenuItem("Details",         NULL, &m_show_details_panel);
                     ImGui::EndMenu();
@@ -223,7 +394,73 @@ namespace Cyber
                     //renderer->resize_swap_chain(viewport_size.x, viewport_size.y);
                     //render_device->bind_texture_view(color_buffer);
                     ImGui::Image((ImTextureID)color_buffer, ImVec2(viewport_size.x, viewport_size.y), ImVec2(0, 0), ImVec2(1, 1), tint_col, border_col);
-                    
+
+                    // Viewport is also a drag-drop target for asset files.
+                    if (ImGui::BeginDragDropTarget())
+                    {
+                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CYBER_ASSET"))
+                        {
+                            const char* path = static_cast<const char*>(payload->Data);
+                            try_accept_asset_drop(path, float3{0.0f, 0.0f, 0.0f});
+                        }
+                        ImGui::EndDragDropTarget();
+                    }
+
+                    // Object manipulation gizmo for the Scene Hierarchy selection.
+                    // Gizmo operates on the currently selected component — if the
+                    // user has only highlighted a node (no component), no gizmo is
+                    // shown (a node without a Primitive doesn't have a transform).
+                    if (m_projection_matrix_set && m_selected_node_id != 0 && m_selected_component_index >= 0)
+                    {
+                        Core::Application* app_for_gizmo = m_pApp ? m_pApp : Core::Application::getApp();
+                        Samples::SampleApp* sample_app = app_for_gizmo ? app_for_gizmo->get_sample_app() : nullptr;
+                        RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+                        if (world)
+                        {
+                            SceneNode* node = world->find_node(m_selected_node_id);
+                            Component::Primitive* prim = nullptr;
+                            if (node && (size_t)m_selected_component_index < node->components.size())
+                                prim = node->components[m_selected_component_index].get();
+
+                            if (prim)
+                            {
+                                ImVec2 image_min = ImGui::GetItemRectMin();
+                                ImVec2 image_size = ImGui::GetItemRectSize();
+
+                                ImGuizmo::SetOrthographic(false);
+                                ImGuizmo::SetDrawlist();
+                                ImGuizmo::SetRect(image_min.x, image_min.y, image_size.x, image_size.y);
+
+                                float4x4 matrix = prim->local_matrix();
+
+                                ImGuizmo::Manipulate(
+                                    m_view_matrix,
+                                    m_projection_matrix,
+                                    m_gizmo_op,
+                                    (m_gizmo_op == ImGuizmo::SCALE) ? ImGuizmo::LOCAL : m_gizmo_mode,
+                                    matrix.Data());
+
+                                if (ImGuizmo::IsUsing())
+                                {
+                                    float translation[3] = {};
+                                    float rotation_euler[3] = {};
+                                    float scale[3] = {};
+                                    ImGuizmo::DecomposeMatrixToComponents(matrix.Data(),
+                                                                          translation, rotation_euler, scale);
+                                    prim->position = float3(translation[0], translation[1], translation[2]);
+                                    prim->scale    = float3(scale[0],       scale[1],       scale[2]);
+
+                                    const float deg2rad = 3.14159265358979323846f / 180.0f;
+                                    quaternion_f qx = quaternion_f::rotation_from_axis_angle(float3(1,0,0), rotation_euler[0] * deg2rad);
+                                    quaternion_f qy = quaternion_f::rotation_from_axis_angle(float3(0,1,0), rotation_euler[1] * deg2rad);
+                                    quaternion_f qz = quaternion_f::rotation_from_axis_angle(float3(0,0,1), rotation_euler[2] * deg2rad);
+                                    prim->rotation = quaternion_f::mul(quaternion_f::mul(qz, qy), qx);
+                                    world->set_dirty(true);
+                                }
+                            }
+                        }
+                    }
+
                     // Draw world coordinate arrow gizmo in bottom-left corner
                     ImVec2 window_pos = ImGui::GetWindowPos();
                     ImVec2 window_size = ImGui::GetWindowSize();
@@ -359,6 +596,10 @@ namespace Cyber
                 draw_content_browser();
             if (m_show_details_panel)
                 draw_details_panel();
+            if (m_show_scene_hierarchy)
+                draw_scene_hierarchy();
+
+            draw_save_as_popup();
 
             //ImGui::ShowDemoWindow(&show_demo_window);
         }
@@ -388,6 +629,96 @@ namespace Cyber
                     [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 return out;
             }
+        }
+
+        void Editor::load_content_browser_icons(RenderObject::IRenderDevice* device)
+        {
+            if (m_content_browser_icons_loaded || !device)
+                return;
+
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            const std::filesystem::path icon_root =
+                std::filesystem::path(Core::FileHelper::get_project_root()) /
+                "Engine/Resources/Editor/Icons/individual";
+
+            auto load_icon = [&](ContentBrowserIcon icon, const char* filename)
+            {
+                std::vector<uint8_t> pixels;
+                uint32_t width = 0;
+                uint32_t height = 0;
+                const std::filesystem::path path = icon_root / filename;
+                if (!load_png_rgba_with_wic(path, pixels, width, height))
+                    return;
+
+                RenderObject::TextureCreateDesc texture_desc = {};
+                texture_desc.m_name = CYBER_UTF8("EditorContentBrowserIcon");
+                texture_desc.m_width = width;
+                texture_desc.m_height = height;
+                texture_desc.m_depth = 1;
+                texture_desc.m_arraySize = 1;
+                texture_desc.m_mipLevels = 1;
+                texture_desc.m_dimension = TEX_DIMENSION_2D;
+                texture_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+                texture_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
+                texture_desc.m_initializeState = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+                texture_desc.m_sampleCount = SAMPLE_COUNT_1;
+                texture_desc.m_sampleQuality = 1;
+
+                RenderObject::TextureSubResData sub_res_data = {};
+                sub_res_data.pData = pixels.data();
+                sub_res_data.stride = static_cast<uint64_t>(width) * 4ull;
+                sub_res_data.depthStride = static_cast<uint64_t>(width) * static_cast<uint64_t>(height) * 4ull;
+                sub_res_data.srcOffset = 0;
+
+                RenderObject::TextureData texture_data = {};
+                texture_data.pSubResources = &sub_res_data;
+                texture_data.numSubResources = 1;
+                texture_data.pDevice = device;
+
+                RenderObject::ITexture* texture = nullptr;
+                device->create_texture(texture_desc, &texture_data, &texture);
+                if (!texture)
+                {
+                    CB_WARN("Failed to create editor icon texture: {}", path.string().c_str());
+                    return;
+                }
+
+                auto& slot = m_content_browser_icons[static_cast<size_t>(icon)];
+                slot.texture.attach(texture);
+                slot.view = texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+            };
+
+            load_icon(ContentBrowserIcon::Folder,  "asset_icon_01_folder.png");
+            load_icon(ContentBrowserIcon::Scene,   "asset_icon_02_scene.png");
+            load_icon(ContentBrowserIcon::Model,   "asset_icon_03_mesh.png");
+            load_icon(ContentBrowserIcon::Texture, "asset_icon_05_texture.png");
+            load_icon(ContentBrowserIcon::Shader,  "asset_icon_06_shader.png");
+            load_icon(ContentBrowserIcon::File,    "asset_icon_07_script.png");
+#endif
+
+            m_content_browser_icons_loaded = true;
+        }
+
+        RenderObject::ITexture_View* Editor::content_browser_icon_view(bool is_dir, const ResourceTypeInfo* type_info) const
+        {
+            ContentBrowserIcon icon = ContentBrowserIcon::File;
+            if (is_dir)
+            {
+                icon = ContentBrowserIcon::Folder;
+            }
+            else if (type_info)
+            {
+                switch (type_info->category)
+                {
+                    case ResourceCategory::Model:   icon = ContentBrowserIcon::Model; break;
+                    case ResourceCategory::Texture: icon = ContentBrowserIcon::Texture; break;
+                    case ResourceCategory::Shader:  icon = ContentBrowserIcon::Shader; break;
+                    case ResourceCategory::Scene:   icon = ContentBrowserIcon::Scene; break;
+                    default:                        icon = ContentBrowserIcon::File; break;
+                }
+            }
+
+            return m_content_browser_icons[static_cast<size_t>(icon)].view;
         }
 
         void Editor::draw_directory_tree(const std::filesystem::path& dir, int depth)
@@ -523,6 +854,14 @@ namespace Cyber
                         }
                     }
 
+                    // Allow dragging files (not directories) onto other panels.
+                    if (!is_dir && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+                    {
+                        ImGui::SetDragDropPayload("CYBER_ASSET", full.c_str(), full.size() + 1);
+                        ImGui::TextUnformatted(name.c_str());
+                        ImGui::EndDragDropSource();
+                    }
+
                     // Category tint bar under the tile.
                     ImU32 bar_color = IM_COL32(120, 120, 120, 255);
                     const char* glyph = is_dir ? "[DIR]" : "[FILE]";
@@ -538,21 +877,34 @@ namespace Cyber
                             case ResourceCategory::Model:   glyph = "MDL"; break;
                             case ResourceCategory::Texture: glyph = "TEX"; break;
                             case ResourceCategory::Shader:  glyph = "SHD"; break;
+                            case ResourceCategory::Scene:   glyph = "SCN"; break;
                             default: break;
                         }
                     }
 
                     ImDrawList* dl = ImGui::GetWindowDrawList();
+                    RenderObject::ITexture_View* icon_view = content_browser_icon_view(is_dir, type_info);
+                    if (icon_view)
+                    {
+                        const float icon_padding = 7.0f;
+                        ImVec2 icon_min = ImVec2(cursor_before.x + icon_padding, cursor_before.y + icon_padding);
+                        ImVec2 icon_max = ImVec2(cursor_before.x + thumb_size - icon_padding,
+                                                 cursor_before.y + thumb_size - icon_padding);
+                        dl->AddImage((ImTextureID)icon_view, icon_min, icon_max);
+                    }
+                    else
+                    {
+                        // Fallback for missing icon assets or failed texture creation.
+                        ImVec2 text_size = ImGui::CalcTextSize(glyph);
+                        ImVec2 text_pos = ImVec2(
+                            cursor_before.x + (thumb_size - text_size.x) * 0.5f,
+                            cursor_before.y + (thumb_size - text_size.y) * 0.5f - 4.0f);
+                        dl->AddText(text_pos, IM_COL32(230, 230, 230, 255), glyph);
+                    }
+
                     ImVec2 bar_min = ImVec2(cursor_before.x, cursor_before.y + thumb_size - 6.0f);
                     ImVec2 bar_max = ImVec2(cursor_before.x + thumb_size, cursor_before.y + thumb_size);
                     dl->AddRectFilled(bar_min, bar_max, bar_color);
-
-                    // Category glyph centered on the tile.
-                    ImVec2 text_size = ImGui::CalcTextSize(glyph);
-                    ImVec2 text_pos = ImVec2(
-                        cursor_before.x + (thumb_size - text_size.x) * 0.5f,
-                        cursor_before.y + (thumb_size - text_size.y) * 0.5f - 4.0f);
-                    dl->AddText(text_pos, IM_COL32(230, 230, 230, 255), glyph);
 
                     ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + thumb_size);
                     ImGui::TextWrapped("%s", name.c_str());
@@ -605,11 +957,91 @@ namespace Cyber
                 return;
             }
 
+            // Scene selection takes precedence over Content Browser selection.
+            if (m_selected_node_id != 0)
+            {
+                Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+                Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+                RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+                SceneNode* node = world ? world->find_node(m_selected_node_id) : nullptr;
+
+                if (!node)
+                {
+                    ImGui::TextDisabled("(selected node no longer exists)");
+                    ImGui::End();
+                    return;
+                }
+
+                // Node-level (SceneNode fields aren't driven by the property
+                // registry — only Primitive-derived components are).
+                {
+                    char name_buf[128];
+                    std::snprintf(name_buf, sizeof(name_buf), "%s", node->name.c_str());
+                    if (ImGui::InputText("Node Name", name_buf, sizeof(name_buf)))
+                    {
+                        node->name = name_buf;
+                        world->set_dirty(true);
+                    }
+                }
+                ImGui::Text("ID: %u", node->id);
+                ImGui::Text("Components: %zu", (size_t)node->components.size());
+                ImGui::Separator();
+
+                Component::Primitive* comp = nullptr;
+                if (m_selected_component_index >= 0 &&
+                    (size_t)m_selected_component_index < node->components.size())
+                {
+                    comp = node->components[(size_t)m_selected_component_index].get();
+                }
+
+                if (!comp)
+                {
+                    ImGui::TextWrapped("Select a component in the hierarchy to see its properties.");
+                    ImGui::End();
+                    return;
+                }
+
+                ImGui::Text("Type: %s", comp->type_name());
+                if (draw_component_properties(comp, comp->type_name(), m_property_draw_ctx))
+                    world->set_dirty(true);
+
+                // Runtime / derived-value panels — these aren't simple
+                // editable fields so they stay hand-written.
+                if (auto* mc = dynamic_cast<Component::MeshComponent*>(comp))
+                {
+                    ImGui::Separator();
+                    ImGui::TextDisabled("Mesh Runtime");
+                    if (mc->mesh)
+                        ImGui::Text("Vertices / Indices: %u / %u",
+                                    mc->mesh->vertex_count, mc->mesh->index_count);
+                    else if (!mc->model_resource.empty())
+                        ImGui::TextDisabled("(mesh loading...)");
+                    ImGui::Text("GPU ready: %s", mc->gpu_ready ? "true" : "false");
+                }
+                else if (auto* cc = dynamic_cast<Component::CameraComponent*>(comp))
+                {
+                    ImGui::Separator();
+                    ImGui::TextDisabled("Camera Runtime");
+                    ImGui::Text("Yaw  : %.3f", cc->get_yaw());
+                    ImGui::Text("Pitch: %.3f", cc->get_pitch());
+                }
+                else if (auto* dl = dynamic_cast<Component::DirectionalLightComponent*>(comp))
+                {
+                    ImGui::Separator();
+                    ImGui::TextDisabled("Light Runtime");
+                    float3 dir = dl->get_direction();
+                    ImGui::Text("Direction: %.3f, %.3f, %.3f", dir.x, dir.y, dir.z);
+                }
+
+                ImGui::End();
+                return;
+            }
+
             if (m_selected_asset.empty())
             {
-                ImGui::TextDisabled("No asset selected");
+                ImGui::TextDisabled("No selection");
                 ImGui::Separator();
-                ImGui::TextWrapped("Select an item in the Content Browser to see its details here.");
+                ImGui::TextWrapped("Select an item in the Scene Hierarchy or Content Browser to see its details here.");
                 ImGui::End();
                 return;
             }
@@ -666,9 +1098,309 @@ namespace Cyber
 
             ImGui::End();
         }
-        
+
+        void Editor::draw_scene_hierarchy()
+        {
+            if (!ImGui::Begin("Scene Hierarchy", &m_show_scene_hierarchy))
+            {
+                ImGui::End();
+                return;
+            }
+
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+
+            if (!world)
+            {
+                ImGui::TextDisabled("No active world");
+                ImGui::End();
+                return;
+            }
+
+            if (!world->source_path().empty())
+                ImGui::Text("Scene: %s%s", world->source_path().c_str(), world->is_dirty() ? " *" : "");
+            else
+                ImGui::TextDisabled("Scene: (unsaved)%s", world->is_dirty() ? " *" : "");
+
+            const auto& nodes = world->get_nodes();
+            ImGui::Text("Objects: %zu", (size_t)nodes.size());
+            ImGui::Separator();
+
+            ImGui::BeginChild("##hierarchy_list", ImVec2(0, 0), ImGuiChildFlags_None);
+
+            if (ImGui::BeginDragDropTarget())
+            {
+                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CYBER_ASSET"))
+                {
+                    const char* path = static_cast<const char*>(payload->Data);
+                    try_accept_asset_drop(path, float3{0.0f, 0.0f, 0.0f});
+                }
+                ImGui::EndDragDropTarget();
+            }
+
+            uint32_t node_to_delete = 0;
+            uint32_t node_to_duplicate = 0;
+            uint32_t comp_delete_node = 0;
+            int      comp_delete_index = -1;
+
+            for (size_t i = 0; i < nodes.size(); ++i)
+            {
+                const SceneNode& node = nodes[i];
+                ImGui::PushID((int)node.id);
+
+                const char* display_name = node.name.empty() ? "(unnamed)" : node.name.c_str();
+
+                ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow
+                                              | ImGuiTreeNodeFlags_OpenOnDoubleClick
+                                              | ImGuiTreeNodeFlags_SpanFullWidth
+                                              | ImGuiTreeNodeFlags_DefaultOpen;
+                const bool node_selected = (node.id == m_selected_node_id && m_selected_component_index < 0);
+                if (node_selected)
+                    node_flags |= ImGuiTreeNodeFlags_Selected;
+
+                bool node_open = ImGui::TreeNodeEx(display_name, node_flags);
+
+                if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+                {
+                    m_selected_node_id = node.id;
+                    m_selected_component_index = -1;
+                }
+
+                if (ImGui::BeginPopupContextItem())
+                {
+                    m_selected_node_id = node.id;
+                    m_selected_component_index = -1;
+                    if (ImGui::MenuItem("Duplicate"))
+                        node_to_duplicate = node.id;
+                    if (ImGui::MenuItem("Delete"))
+                        node_to_delete = node.id;
+                    ImGui::EndPopup();
+                }
+
+                if (node_open)
+                {
+                    for (size_t c = 0; c < node.components.size(); ++c)
+                    {
+                        const auto* comp = node.components[c].get();
+                        if (!comp)
+                            continue;
+
+                        ImGui::PushID((int)(c + 1));
+
+                        const char* cname = comp->name.empty() ? comp->type_name() : comp->name.c_str();
+                        const bool comp_selected = (node.id == m_selected_node_id &&
+                                                    (int)c == m_selected_component_index);
+                        if (ImGui::Selectable(cname, comp_selected))
+                        {
+                            m_selected_node_id = node.id;
+                            m_selected_component_index = (int)c;
+                        }
+
+                        if (ImGui::BeginPopupContextItem())
+                        {
+                            m_selected_node_id = node.id;
+                            m_selected_component_index = (int)c;
+                            if (ImGui::MenuItem("Delete Component"))
+                            {
+                                comp_delete_node = node.id;
+                                comp_delete_index = (int)c;
+                            }
+                            ImGui::EndPopup();
+                        }
+
+                        ImGui::PopID();
+                    }
+                    ImGui::TreePop();
+                }
+                ImGui::PopID();
+            }
+
+            ImGui::EndChild();
+
+            // Deferred mutations.
+            if (node_to_delete != 0)
+            {
+                world->remove_node(node_to_delete);
+                if (m_selected_node_id == node_to_delete)
+                {
+                    m_selected_node_id = 0;
+                    m_selected_component_index = -1;
+                }
+            }
+            if (node_to_duplicate != 0)
+            {
+                if (const SceneNode* src = world->find_node(node_to_duplicate))
+                {
+                    SceneNode copy = src->deep_clone();
+                    // Nudge every Primitive in the clone so it's visually offset.
+                    for (auto& comp : copy.components)
+                        if (comp) comp->position.x += 1.0f;
+
+                    uint32_t new_id = world->add_node(std::move(copy));
+
+                    // Re-enqueue any MeshComponent reloads — GPU state was reset
+                    // by the clone pass.
+                    if (SceneNode* added = world->find_node(new_id))
+                    {
+                        for (uint32_t idx = 0; idx < added->components.size(); ++idx)
+                        {
+                            auto* mc = dynamic_cast<Component::MeshComponent*>(added->components[idx].get());
+                            if (mc && !mc->model_resource.empty())
+                                world->enqueue_pending_load(new_id, idx, mc->model_resource);
+                        }
+                    }
+                    m_selected_node_id = new_id;
+                    m_selected_component_index = -1;
+                }
+            }
+            if (comp_delete_node != 0 && comp_delete_index >= 0)
+            {
+                if (SceneNode* n = world->find_node(comp_delete_node))
+                {
+                    if ((size_t)comp_delete_index < n->components.size())
+                    {
+                        n->components.erase(n->components.begin() + comp_delete_index);
+                        world->set_dirty(true);
+                        if (m_selected_node_id == comp_delete_node &&
+                            m_selected_component_index == comp_delete_index)
+                        {
+                            m_selected_component_index = -1;
+                        }
+                    }
+                }
+            }
+
+            ImGui::End();
+        }
+
+        void Editor::handle_open_scene()
+        {
+            if (m_selected_asset.empty())
+                return;
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            if (!world)
+                return;
+            if (!SceneSerializer::load(*world, m_selected_asset.c_str()))
+                return;
+            // MeshComponents listed in the file need the sample to pump pending
+            // loads; queue each one now so the sample will process them on its
+            // next tick.
+            world->for_each_component_of<Component::MeshComponent>(
+                [&world](SceneNode& n, Component::MeshComponent& mc, uint32_t idx)
+                {
+                    if (!mc.model_resource.empty() && !mc.gpu_ready)
+                        world->enqueue_pending_load(n.id, idx, mc.model_resource);
+                });
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+        }
+
+        void Editor::handle_save_scene()
+        {
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            if (!world || world->source_path().empty())
+                return;
+            SceneSerializer::save(*world, world->source_path().c_str());
+        }
+
+        void Editor::draw_save_as_popup()
+        {
+            if (m_show_save_as_popup)
+            {
+                ImGui::OpenPopup("Save Scene As");
+                m_show_save_as_popup = false;
+            }
+
+            ImGui::SetNextWindowSize(ImVec2(480, 0), ImGuiCond_Appearing);
+            if (ImGui::BeginPopupModal("Save Scene As", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                ImGui::TextUnformatted("Project-relative or absolute path:");
+                ImGui::InputText("##save_as_path", m_save_as_buffer, sizeof(m_save_as_buffer));
+
+                if (ImGui::Button("Save", ImVec2(120, 0)))
+                {
+                    Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+                    Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+                    RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+                    if (world && m_save_as_buffer[0] != '\0')
+                        SceneSerializer::save(*world, m_save_as_buffer);
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                    ImGui::CloseCurrentPopup();
+                ImGui::EndPopup();
+            }
+        }
+
+        bool Editor::try_accept_asset_drop(const char* utf8_path, const float3& drop_position)
+        {
+            if (!utf8_path || !*utf8_path)
+                return false;
+
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            if (!world)
+                return false;
+
+            std::string ext = std::filesystem::path(utf8_path).extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(),
+                [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
+
+            const ResourceTypeInfo* info = ResourceTypeRegistry::get().find(ext);
+            if (!info)
+            {
+                CB_WARN("Dropped unknown file type: %s", utf8_path);
+                return false;
+            }
+
+            if (info->category != ResourceCategory::Model)
+            {
+                CB_INFO("Drag-drop ignored (%s): only Model assets are accepted for now",
+                    info->display_name.c_str());
+                return false;
+            }
+
+            // Convert to project-relative path for storage in the node.
+            std::filesystem::path p(utf8_path);
+            std::error_code ec;
+            std::filesystem::path rel = std::filesystem::relative(
+                p, std::filesystem::path(Core::FileHelper::get_project_root()), ec);
+            eastl::string rel_str;
+            if (!ec && !rel.empty() && rel.native().front() != '.')
+                rel_str = rel.generic_string().c_str();
+            else
+                rel_str = utf8_path;
+
+            SceneNode node;
+            node.name = p.stem().string().c_str();
+            auto mc = Scope<Component::MeshComponent>(new Component::MeshComponent());
+            mc->model_resource = rel_str;
+            mc->position = drop_position;
+            node.components.push_back(Scope<Component::Primitive>(mc.release()));
+            uint32_t new_id = world->add_node(std::move(node));
+            world->enqueue_pending_load(new_id, 0, rel_str);
+            m_selected_node_id = new_id;
+            m_selected_component_index = 0;
+            CB_INFO("Added node %u from %s", new_id, rel_str.c_str());
+            return true;
+        }
+
         void Editor::finalize()
         {
+            for (auto& icon : m_content_browser_icons)
+            {
+                icon.view = nullptr;
+                icon.texture.reset();
+            }
+            m_content_browser_icons_loaded = false;
+
             // Cleanup
             ImGui_ImplDX12_Shutdown();
             //ImGui_ImplWin32_Shutdown();

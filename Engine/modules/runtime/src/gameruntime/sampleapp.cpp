@@ -1,5 +1,6 @@
 #include "gameruntime/sampleapp.h"
 #include "gameruntime/async_loader.h"
+#include "gameruntime/world.h"
 #include "platform/memory.h"
 #include "application/application.h"
 #include "renderer/renderer.h"
@@ -36,6 +37,8 @@ namespace Cyber
         {
             m_pApp = Core::Application::getApp();
             cyber_check(m_pApp);
+            if (!m_world)
+                m_world = make_ref_counted<World>();
             m_loadingStage = LoadingStage::INIT;
             m_loadingProgress = 0.0f;
             m_loadingMessage = "Initializing...";

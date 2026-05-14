@@ -29,6 +29,10 @@ target("CyberRuntime")
     add_deps("IMGUI", {public=true})
     add_deps("stb", {public=true})
     add_deps("d3dx12", {public = true})
+    add_deps("nlohmann_json")
+    if (is_os("windows")) then
+        add_links("windowscodecs", "ole32")
+    end
     set_configdir("$(projectdir)/Engine/modules/core/include/core")
     add_configfiles("$(projectdir)/Engine/modules/core/include/core/config.h.in")
 

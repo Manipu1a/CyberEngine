@@ -271,8 +271,8 @@ public:
         return nullptr;
     }
 private:
-    void load_node(const tinygltf::Model& gltf_model, uint32_t node_index);
-    void load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index);
+    void load_node(const tinygltf::Model& gltf_model, uint32_t node_index, const float4x4& parent_transform);
+    void load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index, const float4x4& world_transform);
     void load_materials(const tinygltf::Model& gltf_model);
     void load_textures(RenderObject::IRenderDevice* render_device, const tinygltf::Model& gltf_model, const std::string& base_dir);
 

@@ -34,7 +34,7 @@ namespace Cyber
         3,6,7, 3,2,6
         };
 
-        Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
+        CYBER_GAME_API SampleApp* create_pbrdemo_app()
         {
             return Cyber::cyber_new<Cyber::Samples::PBRApp>();
         }
@@ -97,13 +97,15 @@ namespace Cyber
             float4x4 camera_world = view_matrix.inverse();
             float3 camera_world_pos = float3::make_vector(camera_world[3]);
             
-            // Update editor gizmo with current view matrix
+            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
+
+            // Update editor gizmo with current view/projection matrices
             if (m_pApp->get_editor())
             {
                 m_pApp->get_editor()->set_view_matrix(view_matrix.Data());
+                m_pApp->get_editor()->set_projection_matrix(projection_matrix.Data());
             }
 
-            float4x4 projection_matrix = renderer->get_adjusted_projection_matrix(PI_ / 4.0f, 0.1f, 100.0f);
             float4x4 view_projection_matrix = view_matrix * projection_matrix;
             //float4x4 world_view_proj_matrix = model_matrix * view_matrix * projection_matrix;
             camera_component->set_view_matrix(view_matrix);

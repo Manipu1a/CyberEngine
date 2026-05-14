@@ -13,7 +13,10 @@
 #include "imgui/ImGuizmo.h"
 #include "imGuIZMO.quat/imGuIZMO.h"
 #include "cyber_runtime.config.h"
+#include "editor/property_registry.h"
 
+#include <array>
+#include <cstddef>
 #include <string>
 #include <filesystem>
 
@@ -23,10 +26,14 @@ namespace Cyber
     {
         class IRenderDevice;
         class IDeviceContext;
+        class ITexture;
+        class ITexture_View;
     }
 
     namespace Editor
     {
+        struct ResourceTypeInfo;
+
         // Usage:
         //  static ExampleAppLog my_log;
         //  my_log.AddLog("Hello %d world\n", 123);
@@ -247,12 +254,45 @@ namespace Cyber
                     memcpy(m_view_matrix, view_matrix, sizeof(float) * 16);
                 }
             }
-            
+
             const float* get_view_matrix() const
             {
                 return m_view_matrix;
             }
+
+            void set_projection_matrix(const float* projection_matrix)
+            {
+                if (projection_matrix)
+                {
+                    memcpy(m_projection_matrix, projection_matrix, sizeof(float) * 16);
+                    m_projection_matrix_set = true;
+                }
+            }
+
+            const float* get_projection_matrix() const
+            {
+                return m_projection_matrix;
+            }
+
+            bool has_projection_matrix() const { return m_projection_matrix_set; }
         protected:
+            enum class ContentBrowserIcon : size_t
+            {
+                Folder = 0,
+                File,
+                Model,
+                Texture,
+                Shader,
+                Scene,
+                Count
+            };
+
+            struct IconTexture
+            {
+                RefCntAutoPtr<RenderObject::ITexture> texture;
+                RenderObject::ITexture_View* view = nullptr;
+            };
+
             Core::Application* m_pApp = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
             ImGuiContext* imgui_context = nullptr;
@@ -266,10 +306,39 @@ namespace Cyber
                 0, 0, 0, 1
             };
 
+            // Projection matrix, pushed by the active sample each frame
+            float m_projection_matrix[16] = {
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            };
+            bool m_projection_matrix_set = false;
+
+            // Scene Hierarchy selection. (selected node id; 0 = nothing)
+            // m_selected_component_index: -1 = node itself selected; >= 0 = a
+            // Primitive-derived component in that node.
+            uint32_t m_selected_node_id = 0;
+            int      m_selected_component_index = -1;
+            ImGuizmo::OPERATION m_gizmo_op = ImGuizmo::TRANSLATE;
+            ImGuizmo::MODE m_gizmo_mode = ImGuizmo::WORLD;
+
+            // Details-panel drawing state. Owns caches (e.g. quaternion
+            // -> euler) that must persist across frames so single-axis
+            // drags don't round-trip through a matrix each frame.
+            PropertyDrawContext m_property_draw_ctx;
+
+            // Save Scene As dialog state
+            bool m_show_save_as_popup = false;
+            char m_save_as_buffer[512] = {};
+            // Context menu target while editing the Scene Hierarchy
+            uint32_t m_context_menu_node_id = 0;
+
             // Editor layout / panel state
             bool m_dock_layout_built = false;
             bool m_show_content_browser = true;
             bool m_show_details_panel = true;
+            bool m_show_scene_hierarchy = true;
 
             // Content-browser navigation state
             std::string m_tree_root;            // absolute path the directory tree is rooted at
@@ -277,11 +346,23 @@ namespace Cyber
             std::string m_selected_asset;       // absolute path of the currently selected file (drives Details)
             std::string m_tree_pending_expand;  // if non-empty, tree nodes along this path are force-expanded next frame
             float       m_tree_pane_width = 220.0f;
+            std::array<IconTexture, static_cast<size_t>(ContentBrowserIcon::Count)> m_content_browser_icons = {};
+            bool        m_content_browser_icons_loaded = false;
 
             // Panel draw helpers
+            void load_content_browser_icons(RenderObject::IRenderDevice* device);
+            RenderObject::ITexture_View* content_browser_icon_view(bool is_dir, const ResourceTypeInfo* type_info) const;
             void draw_content_browser();
             void draw_directory_tree(const std::filesystem::path& dir, int depth);
             void draw_details_panel();
+            void draw_scene_hierarchy();
+
+            // Scene file menu actions
+            void handle_open_scene();
+            void handle_save_scene();
+            void draw_save_as_popup();
+            // Accept a dropped asset path. Returns true if it was consumed.
+            bool try_accept_asset_drop(const char* utf8_path, const float3& drop_position);
         };
     }
 }

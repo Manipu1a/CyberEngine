@@ -12,7 +12,7 @@ namespace Cyber
 {
     namespace Samples
     {
-        Cyber::Samples::SampleApp* Cyber::Samples::SampleApp::create_sample_app()
+        CYBER_GAME_API SampleApp* create_cube_app()
         {
             return Cyber::cyber_new<Cyber::Samples::CubeApp>();
         }

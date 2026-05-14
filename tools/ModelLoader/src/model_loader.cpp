@@ -115,30 +115,44 @@ void Model::load_data(const ModelCreateInfo& create_info)
     {
         for(size_t i = 0; i < scene.nodes.size(); ++i)
         {
-            const tinygltf::Node& root_node = model.nodes[scene.nodes[i]];
-            if(root_node.matrix.size() == 16)
-            {
-                root_transform = float4x4{
-                    (float)root_node.matrix[0], (float)root_node.matrix[1], (float)root_node.matrix[2], (float)root_node.matrix[3],
-                    (float)root_node.matrix[4], (float)root_node.matrix[5], (float)root_node.matrix[6], (float)root_node.matrix[7],
-                    (float)root_node.matrix[8], (float)root_node.matrix[9], (float)root_node.matrix[10], (float)root_node.matrix[11],
-                    (float)root_node.matrix[12], (float)root_node.matrix[13], (float)root_node.matrix[14], (float)root_node.matrix[15]
-                };
-            }
-
-            if(root_node.mesh >= 0 && root_node.mesh < static_cast<int>(model.meshes.size()))
-            {
-                load_mesh(model, root_node.mesh);
-            }
-
-            for(const auto& child_id : root_node.children)
-            {
-                load_node(model, child_id);
-            }
+            load_node(model, static_cast<uint32_t>(scene.nodes[i]), float4x4::Identity());
         }
     }
 
     load_materials(model);
+}
+
+// Build the row-major local transform for a glTF node. Row-vector convention:
+// world = local * parent, so local = Scale * Rotation * Translation.
+static float4x4 gltf_node_local_transform(const tinygltf::Node& node)
+{
+    if (node.matrix.size() == 16)
+    {
+        return float4x4{
+            (float)node.matrix[0],  (float)node.matrix[1],  (float)node.matrix[2],  (float)node.matrix[3],
+            (float)node.matrix[4],  (float)node.matrix[5],  (float)node.matrix[6],  (float)node.matrix[7],
+            (float)node.matrix[8],  (float)node.matrix[9],  (float)node.matrix[10], (float)node.matrix[11],
+            (float)node.matrix[12], (float)node.matrix[13], (float)node.matrix[14], (float)node.matrix[15]
+        };
+    }
+
+    float4x4 s = float4x4::Identity();
+    if (node.scale.size() == 3)
+        s = float4x4::scale((float)node.scale[0], (float)node.scale[1], (float)node.scale[2]);
+
+    float4x4 r = float4x4::Identity();
+    if (node.rotation.size() == 4)
+    {
+        Math::Quaternion<float> q((float)node.rotation[0], (float)node.rotation[1],
+                                  (float)node.rotation[2], (float)node.rotation[3]);
+        r = q.to_matrix();
+    }
+
+    float4x4 t = float4x4::Identity();
+    if (node.translation.size() == 3)
+        t = float4x4::translation((float)node.translation[0], (float)node.translation[1], (float)node.translation[2]);
+
+    return s * r * t;
 }
 
 void Model::create_gpu_textures(RenderObject::IRenderDevice* render_device)
@@ -168,23 +182,26 @@ BoundBox Model::compute_bounding_box(const float4x4& model_transform) const
     return model_bound_box;
 }
 
-void Model::load_node(const tinygltf::Model& gltf_model, uint32_t node_index)
+void Model::load_node(const tinygltf::Model& gltf_model, uint32_t node_index, const float4x4& parent_transform)
 {
-    if(node_index < gltf_model.nodes.size())
+    if(node_index >= gltf_model.nodes.size())
+        return;
+
+    const tinygltf::Node& node = gltf_model.nodes[node_index];
+    const float4x4 world_transform = gltf_node_local_transform(node) * parent_transform;
+
+    if (node.mesh >= 0 && node.mesh < static_cast<int>(gltf_model.meshes.size()))
     {
-        const tinygltf::Node& node = gltf_model.nodes[node_index];
-        for(const auto& child_id : node.children)
-        {
-            load_node(gltf_model, child_id);
-        }
-        if (node.mesh >= 0 && node.mesh < static_cast<int>(gltf_model.meshes.size()))
-        {
-            load_mesh(gltf_model, node.mesh);
-        }
+        load_mesh(gltf_model, node.mesh, world_transform);
+    }
+
+    for(const auto& child_id : node.children)
+    {
+        load_node(gltf_model, child_id, world_transform);
     }
 }
 
-void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
+void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index, const float4x4& world_transform)
 {
     if(mesh_index >= gltf_model.meshes.size())
         return;
@@ -317,6 +334,40 @@ void Model::load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index)
                         cyber_assert(false, "Unsupported index component type");
                         break;
                 }
+            }
+        }
+
+        // Bake the node's accumulated world transform into the vertex data.
+        // Row-vector convention: p' = [p 1] * M.
+        const bool is_identity = (world_transform == float4x4::Identity());
+        if (!is_identity && vertex_count > 0)
+        {
+            const float4x4& M = world_transform;
+            auto mul_point = [&](const float3& p) {
+                return float3(
+                    p.x * M.m00 + p.y * M.m10 + p.z * M.m20 + M.m30,
+                    p.x * M.m01 + p.y * M.m11 + p.z * M.m21 + M.m31,
+                    p.x * M.m02 + p.y * M.m12 + p.z * M.m22 + M.m32);
+            };
+            auto mul_dir = [&](const float3& d) {
+                return float3(
+                    d.x * M.m00 + d.y * M.m10 + d.z * M.m20,
+                    d.x * M.m01 + d.y * M.m11 + d.z * M.m21,
+                    d.x * M.m02 + d.y * M.m12 + d.z * M.m22);
+            };
+
+            pos_min = float3(FLT_MAX, FLT_MAX, FLT_MAX);
+            pos_max = float3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+            for (uint32_t j = 0; j < vertex_count; ++j)
+            {
+                auto& v = model_data[vertex_start + j];
+
+                v.pos = mul_point(v.pos);
+                pos_min = Math::min(pos_min, v.pos);
+                pos_max = Math::max(pos_max, v.pos);
+
+                v.normal  = normalize(mul_dir(v.normal));
+                v.tangent = mul_dir(v.tangent);
             }
         }
 

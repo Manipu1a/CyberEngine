@@ -17,6 +17,7 @@ namespace Cyber
             Model,
             Texture,
             Shader,
+            Scene,
         };
 
         struct ResourceTypeInfo

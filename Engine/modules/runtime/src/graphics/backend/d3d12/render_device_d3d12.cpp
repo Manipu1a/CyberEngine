@@ -1986,8 +1986,7 @@ namespace Cyber
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_COPY_DEST);
                 else if(heap_properties.Type == D3D12_HEAP_TYPE_UPLOAD)
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_GENERIC_READ);
-
-                if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER)
+                else if(create_desc.bind_flags & GRAPHICS_RESOURCE_BIND_VERTEX_BUFFER)
                 {
                     d3d12_buffer->set_buffer_state(GRAPHICS_RESOURCE_STATE_VERTEX_BUFFER);
                 }
