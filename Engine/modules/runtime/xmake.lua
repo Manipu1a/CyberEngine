@@ -11,6 +11,7 @@ target("CyberRuntime")
     add_files("src/application/*.cpp")
     add_files("src/application/platform/windows/*.cpp")
     add_files("src/editor/*.cpp")
+    add_files("src/asset/*.cpp")
     add_files("src/component/*.cpp")
     add_files("src/gameruntime/*.cpp")
     add_files("src/renderer/*.cpp")
@@ -35,4 +36,10 @@ target("CyberRuntime")
     end
     set_configdir("$(projectdir)/Engine/modules/core/include/core")
     add_configfiles("$(projectdir)/Engine/modules/core/include/core/config.h.in")
+
+target("AssetFoundationTests")
+    set_kind("binary")
+    set_default(false)
+    add_files("tests/asset/asset_foundation_tests.cpp")
+    add_deps("CyberRuntime", {public = true})
 

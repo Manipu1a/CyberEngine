@@ -43,6 +43,34 @@ namespace Cyber
         namespace
         {
 #ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            class ScopedComApartment
+            {
+            public:
+                ScopedComApartment()
+                    : m_hr(CoInitializeEx(nullptr, COINIT_MULTITHREADED))
+                    , m_should_uninitialize(SUCCEEDED(m_hr))
+                {
+                }
+
+                ~ScopedComApartment()
+                {
+                    if (m_should_uninitialize)
+                        CoUninitialize();
+                }
+
+                ScopedComApartment(const ScopedComApartment&) = delete;
+                ScopedComApartment& operator=(const ScopedComApartment&) = delete;
+
+                bool is_available() const
+                {
+                    return SUCCEEDED(m_hr) || m_hr == RPC_E_CHANGED_MODE;
+                }
+
+            private:
+                HRESULT m_hr = E_FAIL;
+                bool m_should_uninitialize = false;
+            };
+
             bool load_png_rgba_with_wic(const std::filesystem::path& path,
                                         std::vector<uint8_t>& pixels,
                                         uint32_t& width,
@@ -52,19 +80,12 @@ namespace Cyber
                 width = 0;
                 height = 0;
 
-                const HRESULT init_hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-                const bool should_uninitialize = SUCCEEDED(init_hr);
-                if (FAILED(init_hr) && init_hr != RPC_E_CHANGED_MODE)
+                ScopedComApartment com;
+                if (!com.is_available())
                 {
                     CB_WARN("Failed to initialize COM while loading editor icon: {}", path.string().c_str());
                     return false;
                 }
-
-                auto uninitialize_com = [&]()
-                {
-                    if (should_uninitialize)
-                        CoUninitialize();
-                };
 
                 Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
                 HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
@@ -72,7 +93,6 @@ namespace Cyber
                 if (FAILED(hr))
                 {
                     CB_WARN("Failed to create WIC factory while loading editor icon: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -83,7 +103,6 @@ namespace Cyber
                 if (FAILED(hr))
                 {
                     CB_WARN("Failed to open editor icon: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -92,7 +111,6 @@ namespace Cyber
                 if (FAILED(hr))
                 {
                     CB_WARN("Failed to decode editor icon frame: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -101,7 +119,6 @@ namespace Cyber
                 if (FAILED(hr))
                 {
                     CB_WARN("Failed to create WIC format converter: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -111,7 +128,6 @@ namespace Cyber
                 if (FAILED(hr))
                 {
                     CB_WARN("Failed to convert editor icon to RGBA: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -121,7 +137,6 @@ namespace Cyber
                 if (FAILED(hr) || w == 0 || h == 0)
                 {
                     CB_WARN("Invalid editor icon size: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -130,7 +145,6 @@ namespace Cyber
                 if (total_size > static_cast<uint64_t>(std::numeric_limits<UINT>::max()))
                 {
                     CB_WARN("Editor icon is too large: {}", path.string().c_str());
-                    uninitialize_com();
                     return false;
                 }
 
@@ -141,13 +155,11 @@ namespace Cyber
                 {
                     CB_WARN("Failed to copy editor icon pixels: {}", path.string().c_str());
                     pixels.clear();
-                    uninitialize_com();
                     return false;
                 }
 
                 width = w;
                 height = h;
-                uninitialize_com();
                 return true;
             }
 #endif
