@@ -1036,6 +1036,65 @@ namespace Cyber
 #endif
         }
 
+        void Editor::create_content_browser_folder()
+        {
+            namespace fs = std::filesystem;
+
+            refresh_content_browser_root(false);
+
+            std::error_code ec;
+            fs::path root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
+            if (root.empty())
+            {
+                CB_WARN("Content Browser has no root folder for folder creation");
+                return;
+            }
+
+            root = root.lexically_normal();
+            fs::create_directories(root, ec);
+            if (ec)
+            {
+                CB_WARN("Failed to create content root: {} ({})",
+                        root.string().c_str(),
+                        ec.message().c_str());
+                return;
+            }
+
+            fs::path destination_dir = m_current_folder.empty() ? root : fs::path(m_current_folder);
+            if (!destination_dir.is_absolute())
+                destination_dir = root / destination_dir;
+            destination_dir = destination_dir.lexically_normal();
+
+            ec.clear();
+            const bool valid_destination =
+                fs::exists(destination_dir, ec) &&
+                fs::is_directory(destination_dir, ec) &&
+                path_is_inside_or_equal(destination_dir, root);
+            if (!valid_destination)
+                destination_dir = root;
+
+            const fs::path folder_path = make_unique_child_path(destination_dir / "New Folder");
+            ec.clear();
+            const bool created = fs::create_directory(folder_path, ec);
+            if (ec || !created)
+            {
+                CB_WARN("Failed to create folder: {} ({})",
+                        folder_path.string().c_str(),
+                        ec ? ec.message().c_str() : "already exists");
+                return;
+            }
+
+            m_current_folder = destination_dir.string();
+            m_tree_pending_expand = m_current_folder;
+            m_selected_asset = folder_path.string();
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            m_show_content_browser = true;
+            m_show_details_panel = true;
+
+            CB_INFO("Created folder: {}", folder_path.string().c_str());
+        }
+
         void Editor::load_content_browser_icons(RenderObject::IRenderDevice* device)
         {
             if (m_content_browser_icons_loaded || !device)
@@ -1361,6 +1420,18 @@ namespace Cyber
                 }
 
                 ImGui::Columns(1);
+                if (ImGui::BeginPopupContextWindow(
+                    "##cb_grid_context",
+                    ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+                {
+                    if (ImGui::BeginMenu("Create"))
+                    {
+                        if (ImGui::MenuItem("Folder"))
+                            create_content_browser_folder();
+                        ImGui::EndMenu();
+                    }
+                    ImGui::EndPopup();
+                }
                 ImGui::EndChild();
 
                 ImGui::EndTable();

@@ -364,6 +364,7 @@ namespace Cyber
             std::filesystem::path resolve_content_browser_root() const;
             void refresh_content_browser_root(bool force = false);
             void open_content_browser_item_location(const std::filesystem::path& path) const;
+            void create_content_browser_folder();
             void load_content_browser_icons(RenderObject::IRenderDevice* device);
             RenderObject::ITexture_View* content_browser_icon_view(bool is_dir, const ResourceTypeInfo* type_info) const;
             void draw_content_browser();
