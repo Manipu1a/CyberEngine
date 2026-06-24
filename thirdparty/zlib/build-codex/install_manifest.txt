@@ -1,0 +1,7 @@
+E:/CyberEngine/thirdparty/zlib/build-codex/install/lib/zlib.lib
+E:/CyberEngine/thirdparty/zlib/build-codex/install/bin/zlib.dll
+E:/CyberEngine/thirdparty/zlib/build-codex/install/lib/zlibstatic.lib
+E:/CyberEngine/thirdparty/zlib/build-codex/install/include/zconf.h
+E:/CyberEngine/thirdparty/zlib/build-codex/install/include/zlib.h
+E:/CyberEngine/thirdparty/zlib/build-codex/install/share/man/man3/zlib.3
+E:/CyberEngine/thirdparty/zlib/build-codex/install/share/pkgconfig/zlib.pc

@@ -1,0 +1,10 @@
+^D:\PROJECT\LIBPNG\BUILD\CMAKEFILES\2C6838517B86D23C5378F89A697C716D\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SD:/Project/libpng -BD:/Project/libpng/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/Project/libpng/build/libpng.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
