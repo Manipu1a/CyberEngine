@@ -294,6 +294,7 @@ namespace Cyber
             };
 
             Core::Application* m_pApp = nullptr;
+            HWND m_hwnd = nullptr;
             class ImGuiRenderer* m_imguiRenderer;
             ImGuiContext* imgui_context = nullptr;
             std::shared_ptr<class ImGuiLogSink> m_imgui_log_sink;
@@ -345,11 +346,24 @@ namespace Cyber
             std::string m_current_folder;       // folder shown in the right-hand grid
             std::string m_selected_asset;       // absolute path of the currently selected file (drives Details)
             std::string m_tree_pending_expand;  // if non-empty, tree nodes along this path are force-expanded next frame
+            std::string m_content_browser_scene_source;
             float       m_tree_pane_width = 220.0f;
             std::array<IconTexture, static_cast<size_t>(ContentBrowserIcon::Count)> m_content_browser_icons = {};
             bool        m_content_browser_icons_loaded = false;
+            std::string m_texture_info_asset;
+            uint32_t    m_texture_info_width = 0;
+            uint32_t    m_texture_info_height = 0;
+            bool        m_texture_info_valid = false;
+            bool        m_texture_info_is_editor_asset = false;
+            std::string m_texture_info_source_format;
+            std::string m_texture_info_guid;
+            uint64_t    m_texture_info_content_hash = 0;
+            uint64_t    m_texture_info_payload_size = 0;
 
             // Panel draw helpers
+            std::filesystem::path resolve_content_browser_root() const;
+            void refresh_content_browser_root(bool force = false);
+            void open_content_browser_item_location(const std::filesystem::path& path) const;
             void load_content_browser_icons(RenderObject::IRenderDevice* device);
             RenderObject::ITexture_View* content_browser_icon_view(bool is_dir, const ResourceTypeInfo* type_info) const;
             void draw_content_browser();
@@ -358,6 +372,7 @@ namespace Cyber
             void draw_scene_hierarchy();
 
             // Scene file menu actions
+            void handle_import_image();
             void handle_open_scene();
             void handle_save_scene();
             void draw_save_as_popup();

@@ -92,6 +92,7 @@ namespace Cyber
             registry.register_type({ ".scene", "Cyber Scene", ResourceCategory::Scene, scene_tint });
 
             // Textures — see tools/TextureLoader IMAGE_FILE_FORMAT + HDR fallback
+            registry.register_type({ ".textureasset", "Texture Asset", ResourceCategory::Texture, texture_tint });
             registry.register_type({ ".png",  "PNG Texture",  ResourceCategory::Texture, texture_tint });
             registry.register_type({ ".jpg",  "JPEG Texture", ResourceCategory::Texture, texture_tint });
             registry.register_type({ ".jpeg", "JPEG Texture", ResourceCategory::Texture, texture_tint });

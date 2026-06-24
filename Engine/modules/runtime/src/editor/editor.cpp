@@ -9,6 +9,7 @@
 #include "editor/imgui_renderer.h"
 #include "editor/imgui_log_sink.h"
 #include "editor/resource_type_registry.h"
+#include "asset/asset.h"
 #include "renderer/renderer.h"
 #include "gameruntime/sampleapp.h"
 #include "gameruntime/world.h"
@@ -29,9 +30,12 @@
 #include <cstring>
 #include <cctype>
 #include <algorithm>
+#include <fstream>
 
 #ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+#include <commdlg.h>
 #include <objbase.h>
+#include <shellapi.h>
 #include <wincodec.h>
 #include <wrl/client.h>
 #endif
@@ -162,6 +166,75 @@ namespace Cyber
                 height = h;
                 return true;
             }
+
+            bool query_image_size_with_wic(const std::filesystem::path& path,
+                                           uint32_t& width,
+                                           uint32_t& height)
+            {
+                width = 0;
+                height = 0;
+
+                ScopedComApartment com;
+                if (!com.is_available())
+                    return false;
+
+                Microsoft::WRL::ComPtr<IWICImagingFactory> factory;
+                HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                              IID_PPV_ARGS(factory.GetAddressOf()));
+                if (FAILED(hr))
+                    return false;
+
+                Microsoft::WRL::ComPtr<IWICBitmapDecoder> decoder;
+                hr = factory->CreateDecoderFromFilename(path.c_str(), nullptr, GENERIC_READ,
+                                                        WICDecodeMetadataCacheOnDemand,
+                                                        decoder.GetAddressOf());
+                if (FAILED(hr))
+                    return false;
+
+                Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> frame;
+                hr = decoder->GetFrame(0, frame.GetAddressOf());
+                if (FAILED(hr))
+                    return false;
+
+                UINT w = 0;
+                UINT h = 0;
+                hr = frame->GetSize(&w, &h);
+                if (FAILED(hr) || w == 0 || h == 0)
+                    return false;
+
+                width = w;
+                height = h;
+                return true;
+            }
+
+            bool open_image_import_dialog(HWND owner, std::filesystem::path& out_path)
+            {
+                std::array<wchar_t, 4096> file_name = {};
+                static constexpr wchar_t kImageFilter[] =
+                    L"Image Files (*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.sgi;*.dds;*.ktx;*.hdr)\0"
+                    L"*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.sgi;*.dds;*.ktx;*.hdr\0"
+                    L"All Files (*.*)\0*.*\0";
+
+                OPENFILENAMEW ofn = {};
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = owner;
+                ofn.lpstrTitle = L"Import Image";
+                ofn.lpstrFilter = kImageFilter;
+                ofn.lpstrFile = file_name.data();
+                ofn.nMaxFile = static_cast<DWORD>(file_name.size());
+                ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+
+                if (!GetOpenFileNameW(&ofn))
+                {
+                    DWORD error = CommDlgExtendedError();
+                    if (error != 0)
+                        CB_WARN("Image import dialog failed: 0x{:08x}", error);
+                    return false;
+                }
+
+                out_path = file_name.data();
+                return true;
+            }
 #endif
         }
 
@@ -184,6 +257,8 @@ namespace Cyber
 
         void Editor::initialize(RenderObject::IRenderDevice* device, HWND hwnd)
         {
+            m_hwnd = hwnd;
+
             // Setup Dear ImGui context
             IMGUI_CHECKVERSION();
             imgui_context = ImGui::CreateContext();
@@ -196,18 +271,10 @@ namespace Cyber
             // Setup Dear ImGui style
             ImGui::StyleColorsDark();
 
-            // Populate the content-browser resource-type whitelist and
-            // root the directory tree at the current working directory.
+            // Populate the content-browser resource-type whitelist and root
+            // the directory tree at the active sample/project content folder.
             ResourceTypeRegistry::seed_defaults();
-            {
-                std::error_code ec;
-                auto cwd = std::filesystem::current_path(ec);
-                if (!ec)
-                {
-                    m_tree_root     = cwd.string();
-                    m_current_folder = m_tree_root;
-                }
-            }
+            refresh_content_browser_root(true);
 
             // Setup Platform/Renderer backends
             m_imguiRenderer->initialize();
@@ -354,6 +421,11 @@ namespace Cyber
                             m_save_as_buffer[0] = '\0';
                         m_show_save_as_popup = true;
                     }
+
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Import Image..."))
+                        handle_import_image();
+
                     ImGui::EndMenu();
                 }
 
@@ -641,6 +713,327 @@ namespace Cyber
                     [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
                 return out;
             }
+
+            bool path_is_inside_or_equal(const std::filesystem::path& child,
+                                         const std::filesystem::path& parent)
+            {
+                std::filesystem::path rel = child.lexically_normal().lexically_relative(parent.lexically_normal());
+                if (rel.empty())
+                    return child.lexically_normal() == parent.lexically_normal();
+
+                for (const auto& part : rel)
+                {
+                    if (part == "..")
+                        return false;
+                }
+                return true;
+            }
+
+            bool first_relative_path_component(const std::filesystem::path& rel,
+                                               std::filesystem::path& out_component)
+            {
+                for (const auto& part : rel)
+                {
+                    if (part == ".")
+                        continue;
+                    if (part == "..")
+                        return false;
+                    out_component = part;
+                    return !out_component.empty();
+                }
+                return false;
+            }
+
+            std::filesystem::path make_unique_child_path(const std::filesystem::path& desired)
+            {
+                namespace fs = std::filesystem;
+
+                std::error_code ec;
+                if (!fs::exists(desired, ec))
+                    return desired;
+
+                const fs::path parent = desired.parent_path();
+                const std::string stem = desired.stem().string();
+                const std::string extension = desired.extension().string();
+                for (uint32_t index = 1; index < 10000; ++index)
+                {
+                    fs::path candidate = parent / (stem + "_" + std::to_string(index) + extension);
+                    ec.clear();
+                    if (!fs::exists(candidate, ec))
+                        return candidate;
+                }
+
+                return desired;
+            }
+
+            inline constexpr uint32_t kTextureAssetPayloadMagic = MakeAssetFourCC('C', 'T', 'E', 'X');
+            inline constexpr uint32_t kTextureAssetPayloadVersion = 1;
+
+            struct TextureAssetPayloadHeader
+            {
+                uint32_t magic = kTextureAssetPayloadMagic;
+                uint32_t version = kTextureAssetPayloadVersion;
+                uint32_t width = 0;
+                uint32_t height = 0;
+                uint32_t sourceExtensionSize = 0;
+                uint32_t reserved = 0;
+                uint64_t sourceDataOffset = 0;
+                uint64_t sourceDataSize = 0;
+            };
+
+            struct TextureEditorAssetInfo
+            {
+                AssetFileHeader fileHeader {};
+                TextureAssetPayloadHeader payloadHeader {};
+                std::string sourceExtension;
+            };
+
+            bool read_binary_file(const std::filesystem::path& path, std::vector<uint8_t>& out_bytes)
+            {
+                out_bytes.clear();
+
+                std::ifstream file(path, std::ios::binary | std::ios::ate);
+                if (!file)
+                    return false;
+
+                const std::streamoff size = file.tellg();
+                if (size < 0)
+                    return false;
+
+                out_bytes.resize(static_cast<size_t>(size));
+                file.seekg(0, std::ios::beg);
+                if (!out_bytes.empty())
+                    file.read(reinterpret_cast<char*>(out_bytes.data()), static_cast<std::streamsize>(out_bytes.size()));
+                return file.good() || file.eof();
+            }
+
+            bool write_texture_editor_asset(const std::filesystem::path& destination_path,
+                                            const std::filesystem::path& source_path,
+                                            const std::vector<uint8_t>& source_bytes,
+                                            uint32_t width,
+                                            uint32_t height)
+            {
+                const std::string source_extension = lowercase(source_path.extension().string());
+
+                TextureAssetPayloadHeader payload_header;
+                payload_header.width = width;
+                payload_header.height = height;
+                payload_header.sourceExtensionSize = static_cast<uint32_t>(source_extension.size());
+                payload_header.sourceDataOffset = sizeof(TextureAssetPayloadHeader) + source_extension.size();
+                payload_header.sourceDataSize = source_bytes.size();
+
+                AssetFileHeader file_header;
+                file_header.assetType = AssetType::Texture;
+                file_header.assetGuid = AssetGuid::Create();
+                file_header.contentHash = AssetHash::HashBytes(source_bytes.data(), source_bytes.size());
+                file_header.dependencyHash = AssetHash::HashString(source_path.generic_string());
+                file_header.cookerVersion = 1;
+                file_header.platformTag = kAnyAssetPlatform;
+                file_header.payloadOffset = sizeof(AssetFileHeader);
+                file_header.payloadSize = payload_header.sourceDataOffset + payload_header.sourceDataSize;
+
+                std::ofstream file(destination_path, std::ios::binary | std::ios::trunc);
+                if (!file)
+                    return false;
+
+                file.write(reinterpret_cast<const char*>(&file_header), sizeof(file_header));
+                file.write(reinterpret_cast<const char*>(&payload_header), sizeof(payload_header));
+                file.write(source_extension.data(), static_cast<std::streamsize>(source_extension.size()));
+                if (!source_bytes.empty())
+                {
+                    file.write(reinterpret_cast<const char*>(source_bytes.data()),
+                               static_cast<std::streamsize>(source_bytes.size()));
+                }
+
+                return file.good();
+            }
+
+            bool read_texture_editor_asset_info(const std::filesystem::path& path,
+                                                TextureEditorAssetInfo& out_info)
+            {
+                out_info = {};
+
+                std::ifstream file(path, std::ios::binary);
+                if (!file)
+                    return false;
+
+                AssetFileHeader file_header;
+                file.read(reinterpret_cast<char*>(&file_header), sizeof(file_header));
+                if (!file || !file_header.IsCompatible(AssetType::Texture, kAssetFileFormatVersion))
+                    return false;
+
+                if (file_header.payloadOffset < sizeof(AssetFileHeader) ||
+                    file_header.payloadSize < sizeof(TextureAssetPayloadHeader))
+                {
+                    return false;
+                }
+
+                file.seekg(static_cast<std::streamoff>(file_header.payloadOffset), std::ios::beg);
+                TextureAssetPayloadHeader payload_header;
+                file.read(reinterpret_cast<char*>(&payload_header), sizeof(payload_header));
+                if (!file ||
+                    payload_header.magic != kTextureAssetPayloadMagic ||
+                    payload_header.version != kTextureAssetPayloadVersion ||
+                    payload_header.sourceExtensionSize > 64)
+                {
+                    return false;
+                }
+
+                const uint64_t min_source_offset =
+                    sizeof(TextureAssetPayloadHeader) + payload_header.sourceExtensionSize;
+                if (payload_header.sourceDataOffset < min_source_offset ||
+                    payload_header.sourceDataOffset > file_header.payloadSize)
+                {
+                    return false;
+                }
+
+                std::string source_extension;
+                source_extension.resize(payload_header.sourceExtensionSize);
+                if (!source_extension.empty())
+                    file.read(source_extension.data(), static_cast<std::streamsize>(source_extension.size()));
+                if (!file)
+                    return false;
+
+                out_info.fileHeader = file_header;
+                out_info.payloadHeader = payload_header;
+                out_info.sourceExtension = std::move(source_extension);
+                return true;
+            }
+        }
+
+        std::filesystem::path Editor::resolve_content_browser_root() const
+        {
+            namespace fs = std::filesystem;
+
+            fs::path project_root = fs::path(Core::FileHelper::get_project_root()).lexically_normal();
+            if (project_root.empty())
+                return {};
+
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+
+            if (world && !world->source_path().empty())
+            {
+                fs::path scene_path(world->source_path().c_str());
+                if (!scene_path.is_absolute())
+                    scene_path = project_root / scene_path;
+                scene_path = scene_path.lexically_normal();
+
+                const fs::path samples_root = (project_root / "samples").lexically_normal();
+                if (path_is_inside_or_equal(scene_path, samples_root))
+                {
+                    fs::path rel = scene_path.lexically_relative(samples_root);
+                    fs::path sample_name;
+                    if (first_relative_path_component(rel, sample_name))
+                        return (samples_root / sample_name / "content").lexically_normal();
+                }
+
+                const fs::path scene_dir = scene_path.parent_path();
+                const std::string scene_dir_name = lowercase(scene_dir.filename().string());
+                if (scene_dir_name == "content")
+                    return scene_dir.lexically_normal();
+                if (scene_dir_name == "assets" && !scene_dir.parent_path().empty())
+                    return (scene_dir.parent_path() / "content").lexically_normal();
+                if (!scene_dir.empty())
+                    return (scene_dir / "content").lexically_normal();
+            }
+
+            const fs::path samples_root = (project_root / "samples").lexically_normal();
+            std::error_code ec;
+            if (fs::exists(samples_root, ec) && fs::is_directory(samples_root, ec))
+                return samples_root;
+            return project_root;
+        }
+
+        void Editor::refresh_content_browser_root(bool force)
+        {
+            namespace fs = std::filesystem;
+
+            fs::path desired_root = resolve_content_browser_root();
+            if (desired_root.empty())
+                return;
+
+            std::error_code ec;
+            fs::create_directories(desired_root, ec);
+            if (ec)
+            {
+                CB_WARN("Failed to create content folder: {} ({})",
+                        desired_root.string().c_str(),
+                        ec.message().c_str());
+                return;
+            }
+
+            desired_root = desired_root.lexically_normal();
+            const std::string desired_root_string = desired_root.string();
+
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            const std::string scene_source = (world && !world->source_path().empty())
+                ? std::string(world->source_path().c_str())
+                : std::string();
+
+            const bool root_changed = m_tree_root != desired_root_string;
+            const bool scene_changed = m_content_browser_scene_source != scene_source;
+            if (!force && !root_changed && !scene_changed)
+                return;
+
+            const fs::path old_root = m_tree_root.empty() ? fs::path{} : fs::path(m_tree_root).lexically_normal();
+            const fs::path current = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder).lexically_normal();
+            const bool keep_current_folder =
+                !force &&
+                !root_changed &&
+                !current.empty() &&
+                path_is_inside_or_equal(current, desired_root);
+
+            m_tree_root = desired_root_string;
+            m_content_browser_scene_source = scene_source;
+
+            if (!keep_current_folder)
+            {
+                m_current_folder = desired_root_string;
+                m_tree_pending_expand = desired_root_string;
+            }
+
+            if (!m_selected_asset.empty())
+            {
+                fs::path selected(m_selected_asset);
+                if (!selected.is_absolute() && !old_root.empty())
+                    selected = old_root / selected;
+                selected = selected.lexically_normal();
+                if (!path_is_inside_or_equal(selected, desired_root))
+                    m_selected_asset.clear();
+            }
+        }
+
+        void Editor::open_content_browser_item_location(const std::filesystem::path& path) const
+        {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            namespace fs = std::filesystem;
+
+            std::error_code ec;
+            fs::path target = path.is_absolute() ? path : fs::absolute(path, ec);
+            if (ec)
+                target = path;
+            target = target.lexically_normal();
+
+            const std::wstring parameters = L"/select,\"" + target.wstring() + L"\"";
+            HINSTANCE result = ShellExecuteW(
+                m_hwnd,
+                L"open",
+                L"explorer.exe",
+                parameters.c_str(),
+                nullptr,
+                SW_SHOWNORMAL);
+
+            if (reinterpret_cast<INT_PTR>(result) <= 32)
+            {
+                CB_WARN("Failed to open file location: {}", target.string().c_str());
+            }
+#else
+            CB_WARN("Open file location is only implemented on Windows for now");
+#endif
         }
 
         void Editor::load_content_browser_icons(RenderObject::IRenderDevice* device)
@@ -798,12 +1191,12 @@ namespace Cyber
             namespace fs = std::filesystem;
             std::error_code ec;
 
+            refresh_content_browser_root(false);
+
             // Make sure the tree root + current folder are valid.
             if (m_tree_root.empty() || !fs::exists(m_tree_root, ec) || !fs::is_directory(m_tree_root, ec))
             {
-                auto cwd = fs::current_path(ec);
-                if (!ec)
-                    m_tree_root = cwd.string();
+                refresh_content_browser_root(true);
             }
             if (m_current_folder.empty() || !fs::exists(m_current_folder, ec) || !fs::is_directory(m_current_folder, ec))
             {
@@ -859,11 +1252,26 @@ namespace Cyber
                         ImGuiSelectableFlags_AllowDoubleClick, ImVec2(thumb_size, thumb_size)))
                     {
                         m_selected_asset = full;
+                        m_selected_node_id = 0;
+                        m_selected_component_index = -1;
                         if (is_dir && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         {
                             m_current_folder = full;
                             m_tree_pending_expand = full;
                         }
+                    }
+
+                    if (ImGui::BeginPopupContextItem("##tile_context"))
+                    {
+                        m_selected_asset = full;
+                        m_selected_node_id = 0;
+                        m_selected_component_index = -1;
+
+                        ImGui::TextUnformatted(name.c_str());
+                        ImGui::Separator();
+                        if (ImGui::MenuItem("Open File Location"))
+                            open_content_browser_item_location(entry.path());
+                        ImGui::EndPopup();
                     }
 
                     // Allow dragging files (not directories) onto other panels.
@@ -1102,6 +1510,68 @@ namespace Cyber
                 auto size = fs::file_size(p, ec);
                 if (!ec)
                     ImGui::Text("Size: %llu bytes", (unsigned long long)size);
+
+                if (info && info->category == ResourceCategory::Texture)
+                {
+                    const std::string asset_path = p.string();
+                    if (m_texture_info_asset != asset_path)
+                    {
+                        m_texture_info_asset = asset_path;
+                        m_texture_info_width = 0;
+                        m_texture_info_height = 0;
+                        m_texture_info_valid = false;
+                        m_texture_info_is_editor_asset = false;
+                        m_texture_info_source_format.clear();
+                        m_texture_info_guid.clear();
+                        m_texture_info_content_hash = 0;
+                        m_texture_info_payload_size = 0;
+
+                        if (ext == ".textureasset")
+                        {
+                            TextureEditorAssetInfo texture_asset_info;
+                            if (read_texture_editor_asset_info(p, texture_asset_info))
+                            {
+                                m_texture_info_valid = true;
+                                m_texture_info_is_editor_asset = true;
+                                m_texture_info_width = texture_asset_info.payloadHeader.width;
+                                m_texture_info_height = texture_asset_info.payloadHeader.height;
+                                m_texture_info_source_format = texture_asset_info.sourceExtension;
+                                m_texture_info_guid = texture_asset_info.fileHeader.assetGuid.ToString();
+                                m_texture_info_content_hash = texture_asset_info.fileHeader.contentHash;
+                                m_texture_info_payload_size = texture_asset_info.fileHeader.payloadSize;
+                            }
+                        }
+                        else
+                        {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+                            m_texture_info_valid = query_image_size_with_wic(
+                                p, m_texture_info_width, m_texture_info_height);
+#endif
+                        }
+                    }
+
+                    if (m_texture_info_is_editor_asset)
+                    {
+                        ImGui::TextUnformatted("Asset:");
+                        ImGui::SameLine();
+                        ImGui::TextUnformatted(m_texture_info_guid.c_str());
+                        ImGui::Text("Payload: %llu bytes", (unsigned long long)m_texture_info_payload_size);
+                        ImGui::Text("Content Hash: 0x%016llx", (unsigned long long)m_texture_info_content_hash);
+                        ImGui::Text("Source Format: %s",
+                                    m_texture_info_source_format.empty() ? "(unknown)" : m_texture_info_source_format.c_str());
+                    }
+
+                    if (m_texture_info_valid)
+                    {
+                        ImGui::Text("Dimensions: %u x %u",
+                                    m_texture_info_width,
+                                    m_texture_info_height);
+                    }
+                    else
+                    {
+                        ImGui::TextDisabled("Dimensions: (unreadable)");
+                    }
+                }
             }
 
             ImGui::Separator();
@@ -1284,6 +1754,100 @@ namespace Cyber
             }
 
             ImGui::End();
+        }
+
+        void Editor::handle_import_image()
+        {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            namespace fs = std::filesystem;
+
+            refresh_content_browser_root(false);
+
+            fs::path source_path;
+            if (!open_image_import_dialog(m_hwnd, source_path))
+                return;
+
+            std::error_code ec;
+            if (!fs::exists(source_path, ec) || fs::is_directory(source_path, ec))
+            {
+                CB_WARN("Image import source is not a file: {}", source_path.string().c_str());
+                return;
+            }
+
+            const std::string ext = lowercase(source_path.extension().string());
+            if (ext == ".textureasset")
+            {
+                CB_WARN("Image import source is already a texture asset: {}", source_path.string().c_str());
+                return;
+            }
+
+            const ResourceTypeInfo* info = ResourceTypeRegistry::get().find(ext);
+            if (!info || info->category != ResourceCategory::Texture)
+            {
+                CB_WARN("Image import rejected unsupported type: {}", source_path.string().c_str());
+                return;
+            }
+
+            fs::path destination_dir = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder);
+            ec.clear();
+            if (destination_dir.empty() || !fs::exists(destination_dir, ec) || !fs::is_directory(destination_dir, ec))
+                destination_dir = m_tree_root.empty() ? fs::path{} : fs::path(m_tree_root);
+            ec.clear();
+            if (destination_dir.empty() || !fs::exists(destination_dir, ec) || !fs::is_directory(destination_dir, ec))
+            {
+                destination_dir = resolve_content_browser_root();
+                fs::create_directories(destination_dir, ec);
+            }
+            if (ec || destination_dir.empty())
+            {
+                CB_WARN("Image import has no valid destination folder");
+                return;
+            }
+
+            uint32_t width = 0;
+            uint32_t height = 0;
+            const bool has_dimensions = query_image_size_with_wic(source_path, width, height);
+
+            std::vector<uint8_t> source_bytes;
+            if (!read_binary_file(source_path, source_bytes))
+            {
+                CB_ERROR("Failed to read image import source: {}", source_path.string().c_str());
+                return;
+            }
+
+            const fs::path destination_path = make_unique_child_path(
+                destination_dir / (source_path.stem().string() + ".textureasset"));
+            if (!write_texture_editor_asset(destination_path, source_path, source_bytes, width, height))
+            {
+                CB_ERROR("Failed to write texture asset: {} -> {}",
+                         source_path.string().c_str(),
+                         destination_path.string().c_str());
+                return;
+            }
+
+            m_current_folder = destination_dir.string();
+            m_tree_pending_expand = m_current_folder;
+            m_selected_asset = destination_path.string();
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            m_show_content_browser = true;
+            m_show_details_panel = true;
+
+            if (has_dimensions)
+            {
+                CB_INFO("Imported image asset: {} ({}x{})",
+                        destination_path.string().c_str(),
+                        width,
+                        height);
+            }
+            else
+            {
+                CB_INFO("Imported image asset: {} (metadata unreadable by WIC)",
+                        destination_path.string().c_str());
+            }
+#else
+            CB_WARN("Image import is only implemented on Windows for now");
+#endif
         }
 
         void Editor::handle_open_scene()
