@@ -43,7 +43,7 @@ namespace Cyber
             RenderObject::IDescriptorSet* descriptor_set = nullptr;
             RenderObject::IRenderPipeline* pipeline = nullptr;
             RenderObject::RenderSubpassDesc subpass_desc[2];
-            RenderObject::RenderPassAttachmentDesc attachment_desc;
+            RenderObject::RenderPassAttachmentDesc attachment_desc[2] = {};
             RenderObject::AttachmentReference attachment_ref[2];
             RenderObject::IRenderPass* render_pass = nullptr;
             

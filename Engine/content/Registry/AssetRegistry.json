@@ -1,0 +1,21 @@
+{
+    "assets": [
+        {
+            "assetFormatVersion": 1,
+            "assetPath": "New Folder/Cube.meshasset",
+            "chunkId": 0,
+            "cookedAssetHash": 0,
+            "dependencies": [],
+            "displayName": "Cube",
+            "editorAssetHash": 5060959370533753036,
+            "guid": "930eb866-ae32-43ec-a60f-19739c3cea60",
+            "importerVersion": 1,
+            "packageName": "",
+            "sourceHash": 12754043563731086967,
+            "sourcePath": "C:/Users/zhouhaoran01/Documents/Cube.FBX",
+            "thumbnailPath": "",
+            "type": "Mesh"
+        }
+    ],
+    "version": 1
+}

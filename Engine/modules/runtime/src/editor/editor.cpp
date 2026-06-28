@@ -235,6 +235,35 @@ namespace Cyber
                 out_path = file_name.data();
                 return true;
             }
+
+            bool open_mesh_import_dialog(HWND owner, std::filesystem::path& out_path)
+            {
+                std::array<wchar_t, 4096> file_name = {};
+                static constexpr wchar_t kMeshFilter[] =
+                    L"Mesh Files (*.fbx;*.gltf;*.glb)\0"
+                    L"*.fbx;*.gltf;*.glb\0"
+                    L"All Files (*.*)\0*.*\0";
+
+                OPENFILENAMEW ofn = {};
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = owner;
+                ofn.lpstrTitle = L"Import Mesh";
+                ofn.lpstrFilter = kMeshFilter;
+                ofn.lpstrFile = file_name.data();
+                ofn.nMaxFile = static_cast<DWORD>(file_name.size());
+                ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+
+                if (!GetOpenFileNameW(&ofn))
+                {
+                    DWORD error = CommDlgExtendedError();
+                    if (error != 0)
+                        CB_WARN("Mesh import dialog failed: 0x{:08x}", error);
+                    return false;
+                }
+
+                out_path = file_name.data();
+                return true;
+            }
 #endif
         }
 
@@ -425,6 +454,8 @@ namespace Cyber
                     ImGui::Separator();
                     if (ImGui::MenuItem("Import Image..."))
                         handle_import_image();
+                    if (ImGui::MenuItem("Import Mesh..."))
+                        handle_import_mesh();
 
                     ImGui::EndMenu();
                 }
@@ -684,6 +715,7 @@ namespace Cyber
                 draw_scene_hierarchy();
 
             draw_save_as_popup();
+            draw_content_browser_rename_popup();
 
             //ImGui::ShowDemoWindow(&show_demo_window);
         }
@@ -744,6 +776,14 @@ namespace Cyber
                 return false;
             }
 
+            bool is_invalid_rename_name(std::string_view name)
+            {
+                if (name.empty() || name == "." || name == "..")
+                    return true;
+                return name.find('/') != std::string_view::npos ||
+                       name.find('\\') != std::string_view::npos;
+            }
+
             std::filesystem::path make_unique_child_path(const std::filesystem::path& desired)
             {
                 namespace fs = std::filesystem;
@@ -766,139 +806,6 @@ namespace Cyber
                 return desired;
             }
 
-            inline constexpr uint32_t kTextureAssetPayloadMagic = MakeAssetFourCC('C', 'T', 'E', 'X');
-            inline constexpr uint32_t kTextureAssetPayloadVersion = 1;
-
-            struct TextureAssetPayloadHeader
-            {
-                uint32_t magic = kTextureAssetPayloadMagic;
-                uint32_t version = kTextureAssetPayloadVersion;
-                uint32_t width = 0;
-                uint32_t height = 0;
-                uint32_t sourceExtensionSize = 0;
-                uint32_t reserved = 0;
-                uint64_t sourceDataOffset = 0;
-                uint64_t sourceDataSize = 0;
-            };
-
-            struct TextureEditorAssetInfo
-            {
-                AssetFileHeader fileHeader {};
-                TextureAssetPayloadHeader payloadHeader {};
-                std::string sourceExtension;
-            };
-
-            bool read_binary_file(const std::filesystem::path& path, std::vector<uint8_t>& out_bytes)
-            {
-                out_bytes.clear();
-
-                std::ifstream file(path, std::ios::binary | std::ios::ate);
-                if (!file)
-                    return false;
-
-                const std::streamoff size = file.tellg();
-                if (size < 0)
-                    return false;
-
-                out_bytes.resize(static_cast<size_t>(size));
-                file.seekg(0, std::ios::beg);
-                if (!out_bytes.empty())
-                    file.read(reinterpret_cast<char*>(out_bytes.data()), static_cast<std::streamsize>(out_bytes.size()));
-                return file.good() || file.eof();
-            }
-
-            bool write_texture_editor_asset(const std::filesystem::path& destination_path,
-                                            const std::filesystem::path& source_path,
-                                            const std::vector<uint8_t>& source_bytes,
-                                            uint32_t width,
-                                            uint32_t height)
-            {
-                const std::string source_extension = lowercase(source_path.extension().string());
-
-                TextureAssetPayloadHeader payload_header;
-                payload_header.width = width;
-                payload_header.height = height;
-                payload_header.sourceExtensionSize = static_cast<uint32_t>(source_extension.size());
-                payload_header.sourceDataOffset = sizeof(TextureAssetPayloadHeader) + source_extension.size();
-                payload_header.sourceDataSize = source_bytes.size();
-
-                AssetFileHeader file_header;
-                file_header.assetType = AssetType::Texture;
-                file_header.assetGuid = AssetGuid::Create();
-                file_header.contentHash = AssetHash::HashBytes(source_bytes.data(), source_bytes.size());
-                file_header.dependencyHash = AssetHash::HashString(source_path.generic_string());
-                file_header.cookerVersion = 1;
-                file_header.platformTag = kAnyAssetPlatform;
-                file_header.payloadOffset = sizeof(AssetFileHeader);
-                file_header.payloadSize = payload_header.sourceDataOffset + payload_header.sourceDataSize;
-
-                std::ofstream file(destination_path, std::ios::binary | std::ios::trunc);
-                if (!file)
-                    return false;
-
-                file.write(reinterpret_cast<const char*>(&file_header), sizeof(file_header));
-                file.write(reinterpret_cast<const char*>(&payload_header), sizeof(payload_header));
-                file.write(source_extension.data(), static_cast<std::streamsize>(source_extension.size()));
-                if (!source_bytes.empty())
-                {
-                    file.write(reinterpret_cast<const char*>(source_bytes.data()),
-                               static_cast<std::streamsize>(source_bytes.size()));
-                }
-
-                return file.good();
-            }
-
-            bool read_texture_editor_asset_info(const std::filesystem::path& path,
-                                                TextureEditorAssetInfo& out_info)
-            {
-                out_info = {};
-
-                std::ifstream file(path, std::ios::binary);
-                if (!file)
-                    return false;
-
-                AssetFileHeader file_header;
-                file.read(reinterpret_cast<char*>(&file_header), sizeof(file_header));
-                if (!file || !file_header.IsCompatible(AssetType::Texture, kAssetFileFormatVersion))
-                    return false;
-
-                if (file_header.payloadOffset < sizeof(AssetFileHeader) ||
-                    file_header.payloadSize < sizeof(TextureAssetPayloadHeader))
-                {
-                    return false;
-                }
-
-                file.seekg(static_cast<std::streamoff>(file_header.payloadOffset), std::ios::beg);
-                TextureAssetPayloadHeader payload_header;
-                file.read(reinterpret_cast<char*>(&payload_header), sizeof(payload_header));
-                if (!file ||
-                    payload_header.magic != kTextureAssetPayloadMagic ||
-                    payload_header.version != kTextureAssetPayloadVersion ||
-                    payload_header.sourceExtensionSize > 64)
-                {
-                    return false;
-                }
-
-                const uint64_t min_source_offset =
-                    sizeof(TextureAssetPayloadHeader) + payload_header.sourceExtensionSize;
-                if (payload_header.sourceDataOffset < min_source_offset ||
-                    payload_header.sourceDataOffset > file_header.payloadSize)
-                {
-                    return false;
-                }
-
-                std::string source_extension;
-                source_extension.resize(payload_header.sourceExtensionSize);
-                if (!source_extension.empty())
-                    file.read(source_extension.data(), static_cast<std::streamsize>(source_extension.size()));
-                if (!file)
-                    return false;
-
-                out_info.fileHeader = file_header;
-                out_info.payloadHeader = payload_header;
-                out_info.sourceExtension = std::move(source_extension);
-                return true;
-            }
         }
 
         std::filesystem::path Editor::resolve_content_browser_root() const
@@ -946,6 +853,42 @@ namespace Cyber
             return project_root;
         }
 
+        std::filesystem::path Editor::resolve_engine_content_root() const
+        {
+            namespace fs = std::filesystem;
+
+            fs::path project_root = fs::path(Core::FileHelper::get_project_root()).lexically_normal();
+            if (project_root.empty())
+                return {};
+
+            fs::path engine_content = (project_root / "Engine" / "content").lexically_normal();
+            std::error_code ec;
+            if (fs::exists(engine_content, ec) && fs::is_directory(engine_content, ec))
+                return engine_content;
+            return {};
+        }
+
+        bool Editor::is_content_browser_path_visible(const std::filesystem::path& path) const
+        {
+            if (path.empty())
+                return false;
+
+            std::filesystem::path normalized = path.lexically_normal();
+            if (!m_tree_root.empty() &&
+                path_is_inside_or_equal(normalized, std::filesystem::path(m_tree_root).lexically_normal()))
+            {
+                return true;
+            }
+
+            if (!m_engine_content_root.empty() &&
+                path_is_inside_or_equal(normalized, std::filesystem::path(m_engine_content_root).lexically_normal()))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         void Editor::refresh_content_browser_root(bool force)
         {
             namespace fs = std::filesystem;
@@ -966,6 +909,8 @@ namespace Cyber
 
             desired_root = desired_root.lexically_normal();
             const std::string desired_root_string = desired_root.string();
+            const fs::path engine_root = resolve_engine_content_root();
+            const std::string engine_root_string = engine_root.empty() ? std::string() : engine_root.string();
 
             Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
             Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
@@ -975,19 +920,23 @@ namespace Cyber
                 : std::string();
 
             const bool root_changed = m_tree_root != desired_root_string;
+            const bool engine_root_changed = m_engine_content_root != engine_root_string;
             const bool scene_changed = m_content_browser_scene_source != scene_source;
-            if (!force && !root_changed && !scene_changed)
+            if (!force && !root_changed && !engine_root_changed && !scene_changed)
                 return;
 
             const fs::path old_root = m_tree_root.empty() ? fs::path{} : fs::path(m_tree_root).lexically_normal();
             const fs::path current = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder).lexically_normal();
+            const bool current_is_visible =
+                !current.empty() &&
+                (path_is_inside_or_equal(current, desired_root) ||
+                 (!engine_root.empty() && path_is_inside_or_equal(current, engine_root)));
             const bool keep_current_folder =
                 !force &&
-                !root_changed &&
-                !current.empty() &&
-                path_is_inside_or_equal(current, desired_root);
+                current_is_visible;
 
             m_tree_root = desired_root_string;
+            m_engine_content_root = engine_root_string;
             m_content_browser_scene_source = scene_source;
 
             if (!keep_current_folder)
@@ -1002,7 +951,7 @@ namespace Cyber
                 if (!selected.is_absolute() && !old_root.empty())
                     selected = old_root / selected;
                 selected = selected.lexically_normal();
-                if (!path_is_inside_or_equal(selected, desired_root))
+                if (!is_content_browser_path_visible(selected))
                     m_selected_asset.clear();
             }
         }
@@ -1036,6 +985,40 @@ namespace Cyber
 #endif
         }
 
+        void Editor::draw_content_browser_item_context_menu(const std::filesystem::path& path,
+                                                            const char* label,
+                                                            bool allow_rename,
+                                                            bool focus_folder)
+        {
+            if (!ImGui::BeginPopupContextItem("##content_browser_item_context"))
+                return;
+
+            const std::string full = path.string();
+            const std::string fallback_label =
+                path.filename().string().empty() ? full : path.filename().string();
+
+            m_selected_asset = full;
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            if (focus_folder)
+                m_current_folder = full;
+
+            ImGui::TextUnformatted((label && label[0] != '\0') ? label : fallback_label.c_str());
+            ImGui::Separator();
+            if (allow_rename)
+            {
+                if (ImGui::MenuItem("Rename..."))
+                    begin_content_browser_rename(path);
+            }
+            else
+            {
+                ImGui::MenuItem("Rename...", nullptr, false, false);
+            }
+            if (ImGui::MenuItem("Open File Location"))
+                open_content_browser_item_location(path);
+            ImGui::EndPopup();
+        }
+
         void Editor::create_content_browser_folder()
         {
             namespace fs = std::filesystem;
@@ -1043,7 +1026,12 @@ namespace Cyber
             refresh_content_browser_root(false);
 
             std::error_code ec;
-            fs::path root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
+            fs::path project_root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
+            fs::path engine_root = m_engine_content_root.empty() ? resolve_engine_content_root() : fs::path(m_engine_content_root);
+            fs::path destination_dir = m_current_folder.empty() ? project_root : fs::path(m_current_folder);
+            fs::path root = project_root;
+            if (!engine_root.empty() && path_is_inside_or_equal(destination_dir.lexically_normal(), engine_root.lexically_normal()))
+                root = engine_root;
             if (root.empty())
             {
                 CB_WARN("Content Browser has no root folder for folder creation");
@@ -1060,7 +1048,6 @@ namespace Cyber
                 return;
             }
 
-            fs::path destination_dir = m_current_folder.empty() ? root : fs::path(m_current_folder);
             if (!destination_dir.is_absolute())
                 destination_dir = root / destination_dir;
             destination_dir = destination_dir.lexically_normal();
@@ -1093,6 +1080,116 @@ namespace Cyber
             m_show_details_panel = true;
 
             CB_INFO("Created folder: {}", folder_path.string().c_str());
+        }
+
+        void Editor::begin_content_browser_rename(const std::filesystem::path& path)
+        {
+            m_rename_target_path = path.string();
+            std::snprintf(m_rename_buffer, sizeof(m_rename_buffer), "%s",
+                          path.filename().string().c_str());
+            m_show_rename_popup = true;
+
+            m_selected_asset = m_rename_target_path;
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+        }
+
+        void Editor::draw_content_browser_rename_popup()
+        {
+            namespace fs = std::filesystem;
+
+            if (m_show_rename_popup)
+            {
+                ImGui::OpenPopup("Rename");
+                m_show_rename_popup = false;
+            }
+
+            ImGui::SetNextWindowSize(ImVec2(420, 0), ImGuiCond_Appearing);
+            if (ImGui::BeginPopupModal("Rename", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+            {
+                fs::path old_path(m_rename_target_path);
+                ImGui::TextUnformatted("New name:");
+                ImGui::SetNextItemWidth(360.0f);
+                if (ImGui::IsWindowAppearing())
+                    ImGui::SetKeyboardFocusHere();
+                const bool submit_from_input = ImGui::InputText(
+                    "##rename_name",
+                    m_rename_buffer,
+                    sizeof(m_rename_buffer),
+                    ImGuiInputTextFlags_EnterReturnsTrue);
+
+                bool should_submit = submit_from_input;
+                if (ImGui::Button("Rename", ImVec2(120, 0)))
+                    should_submit = true;
+                ImGui::SameLine();
+                if (ImGui::Button("Cancel", ImVec2(120, 0)))
+                    ImGui::CloseCurrentPopup();
+
+                if (should_submit)
+                {
+                    const std::string new_name = m_rename_buffer;
+                    if (is_invalid_rename_name(new_name))
+                    {
+                        CB_WARN("Invalid rename target: {}", new_name.c_str());
+                    }
+                    else
+                    {
+                        std::error_code ec;
+                        fs::path normalized_old = old_path.lexically_normal();
+                        fs::path new_path = (normalized_old.parent_path() / new_name).lexically_normal();
+
+                        if (normalized_old == new_path)
+                        {
+                            ImGui::CloseCurrentPopup();
+                        }
+                        else if (fs::exists(new_path, ec))
+                        {
+                            CB_WARN("Rename target already exists: {}", new_path.string().c_str());
+                        }
+                        else
+                        {
+                            ec.clear();
+                            fs::rename(normalized_old, new_path, ec);
+                            if (ec)
+                            {
+                                CB_WARN("Failed to rename: {} -> {} ({})",
+                                        normalized_old.string().c_str(),
+                                        new_path.string().c_str(),
+                                        ec.message().c_str());
+                            }
+                            else
+                            {
+                                auto rewrite_if_inside = [&](std::string& stored_path)
+                                {
+                                    if (stored_path.empty())
+                                        return;
+                                    fs::path current(stored_path);
+                                    if (!current.is_absolute())
+                                        return;
+                                    current = current.lexically_normal();
+                                    if (!path_is_inside_or_equal(current, normalized_old))
+                                        return;
+
+                                    fs::path rel = current.lexically_relative(normalized_old);
+                                    stored_path = (new_path / rel).lexically_normal().string();
+                                };
+
+                                rewrite_if_inside(m_current_folder);
+                                rewrite_if_inside(m_selected_asset);
+                                m_selected_asset = new_path.string();
+                                m_tree_pending_expand = new_path.parent_path().string();
+                                m_texture_info_asset.clear();
+                                CB_INFO("Renamed: {} -> {}",
+                                        normalized_old.string().c_str(),
+                                        new_path.string().c_str());
+                                ImGui::CloseCurrentPopup();
+                            }
+                        }
+                    }
+                }
+
+                ImGui::EndPopup();
+            }
         }
 
         void Editor::load_content_browser_icons(RenderObject::IRenderDevice* device)
@@ -1197,6 +1294,21 @@ namespace Cyber
                 label = dir.string();
 
             const std::string dir_str = dir.string();
+            if (depth == 0)
+            {
+                const fs::path normalized_dir = dir.lexically_normal();
+                if (!m_engine_content_root.empty() &&
+                    normalized_dir == fs::path(m_engine_content_root).lexically_normal())
+                {
+                    label = "Engine Content";
+                }
+                else if (!m_tree_root.empty() &&
+                         normalized_dir == fs::path(m_tree_root).lexically_normal())
+                {
+                    label = "Project Content";
+                }
+            }
+
             const bool selected = (dir_str == m_current_folder);
 
             ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
@@ -1221,6 +1333,7 @@ namespace Cyber
             {
                 m_current_folder = dir_str;
             }
+            draw_content_browser_item_context_menu(dir, label.c_str(), depth > 0, true);
 
             if (open)
             {
@@ -1257,7 +1370,11 @@ namespace Cyber
             {
                 refresh_content_browser_root(true);
             }
-            if (m_current_folder.empty() || !fs::exists(m_current_folder, ec) || !fs::is_directory(m_current_folder, ec))
+            fs::path current_folder_path = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder).lexically_normal();
+            if (m_current_folder.empty() ||
+                !fs::exists(m_current_folder, ec) ||
+                !fs::is_directory(m_current_folder, ec) ||
+                !is_content_browser_path_visible(current_folder_path))
             {
                 m_current_folder = m_tree_root;
             }
@@ -1275,6 +1392,8 @@ namespace Cyber
                 {
                     if (!m_tree_root.empty())
                         draw_directory_tree(fs::path(m_tree_root), 0);
+                    if (!m_engine_content_root.empty() && m_engine_content_root != m_tree_root)
+                        draw_directory_tree(fs::path(m_engine_content_root), 0);
                 }
                 ImGui::EndChild();
 
@@ -1320,18 +1439,7 @@ namespace Cyber
                         }
                     }
 
-                    if (ImGui::BeginPopupContextItem("##tile_context"))
-                    {
-                        m_selected_asset = full;
-                        m_selected_node_id = 0;
-                        m_selected_component_index = -1;
-
-                        ImGui::TextUnformatted(name.c_str());
-                        ImGui::Separator();
-                        if (ImGui::MenuItem("Open File Location"))
-                            open_content_browser_item_location(entry.path());
-                        ImGui::EndPopup();
-                    }
+                    draw_content_browser_item_context_menu(entry.path(), name.c_str(), true, false);
 
                     // Allow dragging files (not directories) onto other panels.
                     if (!is_dir && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
@@ -1600,7 +1708,7 @@ namespace Cyber
                         if (ext == ".textureasset")
                         {
                             TextureEditorAssetInfo texture_asset_info;
-                            if (read_texture_editor_asset_info(p, texture_asset_info))
+                            if (TextureImporter::ReadInfo(p, texture_asset_info))
                             {
                                 m_texture_info_valid = true;
                                 m_texture_info_is_editor_asset = true;
@@ -1853,7 +1961,8 @@ namespace Cyber
             }
 
             const ResourceTypeInfo* info = ResourceTypeRegistry::get().find(ext);
-            if (!info || info->category != ResourceCategory::Texture)
+            if (!info || info->category != ResourceCategory::Texture ||
+                !TextureImporter::IsSupportedSourceExtension(ext))
             {
                 CB_WARN("Image import rejected unsupported type: {}", source_path.string().c_str());
                 return;
@@ -1879,20 +1988,53 @@ namespace Cyber
             uint32_t height = 0;
             const bool has_dimensions = query_image_size_with_wic(source_path, width, height);
 
-            std::vector<uint8_t> source_bytes;
-            if (!read_binary_file(source_path, source_bytes))
+            fs::path content_root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
+            fs::path engine_root = m_engine_content_root.empty() ? resolve_engine_content_root() : fs::path(m_engine_content_root);
+            if (!engine_root.empty() &&
+                path_is_inside_or_equal(destination_dir.lexically_normal(), engine_root.lexically_normal()))
             {
-                CB_ERROR("Failed to read image import source: {}", source_path.string().c_str());
+                content_root = engine_root;
+            }
+            if (content_root.empty())
+                content_root = destination_dir;
+            content_root = content_root.lexically_normal();
+
+            AssetDatabase asset_database(content_root);
+            if (!asset_database.Load())
+            {
+                CB_ERROR("Failed to load asset registry: {}", asset_database.RegistryPath().string().c_str());
                 return;
             }
 
             const fs::path destination_path = make_unique_child_path(
                 destination_dir / (source_path.stem().string() + ".textureasset"));
-            if (!write_texture_editor_asset(destination_path, source_path, source_bytes, width, height))
+
+            AssetImportRequest import_request;
+            import_request.sourcePath = source_path;
+            import_request.destinationPath = destination_path;
+            import_request.contentRoot = content_root;
+            import_request.width = width;
+            import_request.height = height;
+
+            const std::string stored_asset_path = asset_database.MakeStoredPath(destination_path);
+            if (const AssetRegistryRecord* existing = asset_database.Registry().FindByAssetPath(stored_asset_path))
+                import_request.existingGuid = existing->guid;
+
+            TextureImporter importer;
+            AssetImportResult import_result;
+            if (!importer.Import(import_request, import_result))
             {
-                CB_ERROR("Failed to write texture asset: {} -> {}",
+                CB_ERROR("Failed to import texture asset: {} -> {} ({})",
                          source_path.string().c_str(),
-                         destination_path.string().c_str());
+                         destination_path.string().c_str(),
+                         import_result.error.c_str());
+                return;
+            }
+
+            asset_database.Registry().Upsert(import_result.registryRecord);
+            if (!asset_database.Save())
+            {
+                CB_ERROR("Failed to save asset registry: {}", asset_database.RegistryPath().string().c_str());
                 return;
             }
 
@@ -1916,8 +2058,121 @@ namespace Cyber
                 CB_INFO("Imported image asset: {} (metadata unreadable by WIC)",
                         destination_path.string().c_str());
             }
+            CB_INFO("Updated asset registry: {}", asset_database.RegistryPath().string().c_str());
 #else
             CB_WARN("Image import is only implemented on Windows for now");
+#endif
+        }
+
+        void Editor::handle_import_mesh()
+        {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            namespace fs = std::filesystem;
+
+            refresh_content_browser_root(false);
+
+            fs::path source_path;
+            if (!open_mesh_import_dialog(m_hwnd, source_path))
+                return;
+
+            std::error_code ec;
+            if (!fs::exists(source_path, ec) || fs::is_directory(source_path, ec))
+            {
+                CB_WARN("Mesh import source is not a file: {}", source_path.string().c_str());
+                return;
+            }
+
+            const std::string ext = lowercase(source_path.extension().string());
+            if (ext == ".meshasset")
+            {
+                CB_WARN("Mesh import source is already a mesh asset: {}", source_path.string().c_str());
+                return;
+            }
+
+            const ResourceTypeInfo* info = ResourceTypeRegistry::get().find(ext);
+            if (!info || info->category != ResourceCategory::Model ||
+                !MeshImporter::IsSupportedSourceExtension(ext))
+            {
+                CB_WARN("Mesh import rejected unsupported type: {}", source_path.string().c_str());
+                return;
+            }
+
+            fs::path destination_dir = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder);
+            ec.clear();
+            if (destination_dir.empty() || !fs::exists(destination_dir, ec) || !fs::is_directory(destination_dir, ec))
+                destination_dir = m_tree_root.empty() ? fs::path{} : fs::path(m_tree_root);
+            ec.clear();
+            if (destination_dir.empty() || !fs::exists(destination_dir, ec) || !fs::is_directory(destination_dir, ec))
+            {
+                destination_dir = resolve_content_browser_root();
+                fs::create_directories(destination_dir, ec);
+            }
+            if (ec || destination_dir.empty())
+            {
+                CB_WARN("Mesh import has no valid destination folder");
+                return;
+            }
+
+            fs::path content_root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
+            fs::path engine_root = m_engine_content_root.empty() ? resolve_engine_content_root() : fs::path(m_engine_content_root);
+            if (!engine_root.empty() &&
+                path_is_inside_or_equal(destination_dir.lexically_normal(), engine_root.lexically_normal()))
+            {
+                content_root = engine_root;
+            }
+            if (content_root.empty())
+                content_root = destination_dir;
+            content_root = content_root.lexically_normal();
+
+            AssetDatabase asset_database(content_root);
+            if (!asset_database.Load())
+            {
+                CB_ERROR("Failed to load asset registry: {}", asset_database.RegistryPath().string().c_str());
+                return;
+            }
+
+            const fs::path destination_path = make_unique_child_path(
+                destination_dir / (source_path.stem().string() + ".meshasset"));
+
+            AssetImportRequest import_request;
+            import_request.sourcePath = source_path;
+            import_request.destinationPath = destination_path;
+            import_request.contentRoot = content_root;
+
+            const std::string stored_asset_path = asset_database.MakeStoredPath(destination_path);
+            if (const AssetRegistryRecord* existing = asset_database.Registry().FindByAssetPath(stored_asset_path))
+                import_request.existingGuid = existing->guid;
+
+            MeshImporter importer;
+            AssetImportResult import_result;
+            if (!importer.Import(import_request, import_result))
+            {
+                CB_ERROR("Failed to import mesh asset: {} -> {} ({})",
+                         source_path.string().c_str(),
+                         destination_path.string().c_str(),
+                         import_result.error.c_str());
+                return;
+            }
+
+            asset_database.Registry().Upsert(import_result.registryRecord);
+            if (!asset_database.Save())
+            {
+                CB_ERROR("Failed to save asset registry: {}", asset_database.RegistryPath().string().c_str());
+                return;
+            }
+
+            m_current_folder = destination_dir.string();
+            m_tree_pending_expand = m_current_folder;
+            m_selected_asset = destination_path.string();
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            m_show_content_browser = true;
+            m_show_details_panel = true;
+
+            CB_INFO("Imported mesh asset: {}", destination_path.string().c_str());
+            CB_INFO("Updated asset registry: {}", asset_database.RegistryPath().string().c_str());
+#else
+            CB_WARN("Mesh import is only implemented on Windows for now");
 #endif
         }
 
@@ -2010,6 +2265,12 @@ namespace Cyber
             if (info->category != ResourceCategory::Model)
             {
                 CB_INFO("Drag-drop ignored (%s): only Model assets are accepted for now",
+                    info->display_name.c_str());
+                return false;
+            }
+            if (ext == ".meshasset")
+            {
+                CB_INFO("Drag-drop ignored (%s): .meshasset runtime loading is not implemented yet",
                     info->display_name.c_str());
                 return false;
             }

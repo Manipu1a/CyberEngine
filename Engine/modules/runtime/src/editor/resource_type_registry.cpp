@@ -85,6 +85,8 @@ namespace Cyber
             const ImU32 scene_tint   = IM_COL32(180, 120, 255, 255);
 
             // Models — see tools/ModelLoader (tinygltf)
+            registry.register_type({ ".meshasset", "Mesh Asset", ResourceCategory::Model, model_tint });
+            registry.register_type({ ".fbx",  "FBX Model", ResourceCategory::Model, model_tint });
             registry.register_type({ ".gltf", "glTF Model", ResourceCategory::Model, model_tint });
             registry.register_type({ ".glb",  "glTF Binary", ResourceCategory::Model, model_tint });
 

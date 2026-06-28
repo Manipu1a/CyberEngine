@@ -168,8 +168,28 @@ namespace Cyber
             auto renderer = m_pApp->get_renderer();
             auto render_device = renderer->get_render_device();
             auto device_context = renderer->get_device_context();
-            //RenderObject::RenderPassAttachmentDesc attachments[1] = {};
-            attachment_desc.format = TEX_FORMAT_RGBA8_UNORM;
+            auto& scene_target = renderer->get_scene_target(0);
+
+            attachment_desc[0] = {};
+            attachment_desc[0].format = scene_target.color_buffer->get_create_desc().m_format;
+            attachment_desc[0].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[0].load_action = LOAD_ACTION_CLEAR;
+            attachment_desc[0].store_action = STORE_ACTION_STORE;
+            attachment_desc[0].stencil_load_action = LOAD_ACTION_DONT_CARE;
+            attachment_desc[0].stencil_store_action = STORE_ACTION_DISCARD;
+            attachment_desc[0].initial_state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
+            attachment_desc[0].final_state = GRAPHICS_RESOURCE_STATE_SHADER_RESOURCE;
+
+            attachment_desc[1] = {};
+            attachment_desc[1].format = scene_target.depth_buffer->get_create_desc().m_format;
+            attachment_desc[1].sample_count = SAMPLE_COUNT_1;
+            attachment_desc[1].load_action = LOAD_ACTION_CLEAR;
+            attachment_desc[1].store_action = STORE_ACTION_STORE;
+            attachment_desc[1].stencil_load_action = LOAD_ACTION_DONT_CARE;
+            attachment_desc[1].stencil_store_action = STORE_ACTION_DISCARD;
+            attachment_desc[1].initial_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+            attachment_desc[1].final_state = GRAPHICS_RESOURCE_STATE_DEPTH_WRITE;
+
             attachment_ref[0].attachment_index = 0;
             attachment_ref[0].state = GRAPHICS_RESOURCE_STATE_RENDER_TARGET;
 
@@ -197,8 +217,8 @@ namespace Cyber
 
             RenderObject::RenderPassDesc rp_desc1 = {
                 .m_name = u8"Triangle RenderPass",
-                .m_attachmentCount = 1,
-                .m_pAttachments = &attachment_desc,
+                .m_attachmentCount = 2,
+                .m_pAttachments = attachment_desc,
                 .m_subpassCount = 1,
                 .m_pSubpasses = subpass_desc
             };
