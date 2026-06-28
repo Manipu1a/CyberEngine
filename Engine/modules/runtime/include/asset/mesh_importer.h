@@ -41,9 +41,15 @@ namespace Cyber
         [[nodiscard]] static bool IsSupportedSourceExtension(std::string_view extension);
         [[nodiscard]] static bool ReadInfo(const std::filesystem::path& path,
                                            MeshEditorAssetInfo& outInfo);
+        [[nodiscard]] static bool ReadEmbeddedSource(const std::filesystem::path& path,
+                                                     MeshEditorAssetInfo& outInfo,
+                                                     std::vector<uint8_t>& outBytes);
+        [[nodiscard]] static bool WriteEmbeddedSourceToCache(const std::filesystem::path& path,
+                                                             const std::filesystem::path& cacheRoot,
+                                                             std::filesystem::path& outPath);
 
     private:
-        [[nodiscard]] static bool ReadSourceBytes(const std::filesystem::path& path,
-                                                  std::vector<uint8_t>& outBytes);
+        [[nodiscard]] static bool ReadFileBytes(const std::filesystem::path& path,
+                                                std::vector<uint8_t>& outBytes);
     };
 }

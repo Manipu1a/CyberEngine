@@ -5,9 +5,9 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class IRenderPipeline;
-        class IDescriptorSet;
-        class IDeviceContext;
+        struct IRenderPipeline;
+        struct IDescriptorSet;
+        struct IDeviceContext;
 
     }
     namespace Editor

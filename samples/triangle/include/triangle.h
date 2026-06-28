@@ -11,9 +11,9 @@ namespace Cyber
     
     namespace RenderObject
     {
-        class IRootSignature;
-        class IDescriptorSet;
-        class IRenderPipeline;
+        struct IRootSignature;
+        struct IDescriptorSet;
+        struct IRenderPipeline;
     }
 
     namespace Samples
@@ -28,6 +28,7 @@ namespace Cyber
             virtual void run() override;
             virtual void update(float deltaTime) override;
             virtual void present() override;
+            virtual bool use_engine_forward_pipeline() const override { return false; }
 
         public:
             void raster_draw();

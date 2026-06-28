@@ -90,7 +90,7 @@ namespace Cyber
         }
 
         std::vector<uint8_t> sourceBytes;
-        if (!ReadSourceBytes(request.sourcePath, sourceBytes))
+        if (!ReadFileBytes(request.sourcePath, sourceBytes))
         {
             outResult.error = "Failed to read mesh source file.";
             return false;
@@ -181,8 +181,71 @@ namespace Cyber
         return true;
     }
 
-    bool MeshImporter::ReadSourceBytes(const std::filesystem::path& path,
-                                       std::vector<uint8_t>& outBytes)
+    bool MeshImporter::ReadEmbeddedSource(const std::filesystem::path& path,
+                                          MeshEditorAssetInfo& outInfo,
+                                          std::vector<uint8_t>& outBytes)
+    {
+        outBytes.clear();
+        if (!ReadInfo(path, outInfo))
+            return false;
+
+        std::ifstream file(path, std::ios::binary);
+        if (!file)
+            return false;
+
+        const uint64_t sourceOffset =
+            outInfo.fileHeader.payloadOffset + outInfo.payloadHeader.sourceDataOffset;
+        file.seekg(static_cast<std::streamoff>(sourceOffset), std::ios::beg);
+        if (!file)
+            return false;
+
+        outBytes.resize(static_cast<size_t>(outInfo.payloadHeader.sourceDataSize));
+        if (!outBytes.empty())
+        {
+            file.read(reinterpret_cast<char*>(outBytes.data()),
+                      static_cast<std::streamsize>(outBytes.size()));
+        }
+
+        return file.good() || file.eof();
+    }
+
+    bool MeshImporter::WriteEmbeddedSourceToCache(const std::filesystem::path& path,
+                                                  const std::filesystem::path& cacheRoot,
+                                                  std::filesystem::path& outPath)
+    {
+        outPath.clear();
+
+        MeshEditorAssetInfo info;
+        std::vector<uint8_t> sourceBytes;
+        if (!ReadEmbeddedSource(path, info, sourceBytes))
+            return false;
+
+        std::string extension = lowercase(info.sourceExtension);
+        if (extension.empty() || extension.front() != '.')
+            return false;
+
+        std::error_code ec;
+        std::filesystem::create_directories(cacheRoot, ec);
+        if (ec)
+            return false;
+
+        outPath = cacheRoot / (info.fileHeader.assetGuid.ToString() + extension);
+
+        std::ofstream file(outPath, std::ios::binary | std::ios::trunc);
+        if (!file)
+            return false;
+
+        if (!sourceBytes.empty())
+        {
+            file.write(reinterpret_cast<const char*>(sourceBytes.data()),
+                       static_cast<std::streamsize>(sourceBytes.size()));
+        }
+
+        return file.good();
+    }
+
+    bool MeshImporter::ReadFileBytes(const std::filesystem::path& path,
+                                     std::vector<uint8_t>& outBytes)
     {
         outBytes.clear();
 

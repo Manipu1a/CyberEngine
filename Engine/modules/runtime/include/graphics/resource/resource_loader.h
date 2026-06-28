@@ -10,7 +10,7 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class IRenderDevice;
+        struct IRenderDevice;
         class IShaderLibrary;
     }
     

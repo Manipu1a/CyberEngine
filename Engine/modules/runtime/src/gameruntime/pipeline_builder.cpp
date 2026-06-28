@@ -109,6 +109,12 @@ namespace Cyber
         return *this;
     }
 
+    PipelineBuilder& PipelineBuilder::render_target_count(uint32_t count)
+    {
+        m_render_target_count = count;
+        return *this;
+    }
+
     PipelineBuilder& PipelineBuilder::depth_format(TEXTURE_FORMAT format)
     {
         m_depth_stencil_format = format;
@@ -139,8 +145,7 @@ namespace Cyber
         return *this;
     }
 
-    RefCntAutoPtr<RenderObject::IRenderPipeline> PipelineBuilder::build(
-        RefCntAutoPtr<RenderObject::IRootSignature>* out_root_sig)
+    RefCntAutoPtr<RenderObject::IRenderPipeline> PipelineBuilder::build()
     {
         // Create root signature if not provided externally
         RenderObject::IRootSignature* root_sig = m_external_root_sig;
@@ -161,11 +166,6 @@ namespace Cyber
             root_sig = m_device->create_root_signature(rs_desc);
         }
 
-        if (out_root_sig)
-        {
-            *out_root_sig = RefCntAutoPtr<RenderObject::IRootSignature>(root_sig);
-        }
-
         // Default blend if not set
         if (!m_has_blend)
         {
@@ -177,6 +177,7 @@ namespace Cyber
         {
             depth_test(true, true, CMP_LESS_EQUAL);
         }
+        m_blend_state.render_target_count = m_render_target_count;
 
         RenderObject::RenderPipelineCreateDesc rp_desc = {};
         rp_desc.vertex_shader = m_vs_shader ? &m_vs_desc : nullptr;

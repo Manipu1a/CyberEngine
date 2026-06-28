@@ -13,21 +13,22 @@ namespace Cyber
     
     namespace RenderObject
     {
-        class IRenderDevice;
-        class ITexture;
-        class ITexture_View;
-        class IBuffer;
-        class IBuffer_View;
-        class IFrameBuffer;
-        class ISwapChain;
-        class ISemaphore;
-        class IFence;
-        class ICommandPool;
-        class ICommandBuffer;
-        class IShaderResource;
+        struct IRenderDevice;
+        struct ITexture;
+        struct ITexture_View;
+        struct IBuffer;
+        struct IBuffer_View;
+        struct IFrameBuffer;
+        struct ISwapChain;
+        struct ISemaphore;
+        struct IFence;
+        struct ICommandPool;
+        struct ICommandBuffer;
+        struct IShaderResource;
         class IShaderLibrary;
-        class IRootSignature;
-        class IRenderPass;
+        struct IRootSignature;
+        struct IRenderPass;
+        struct IRenderPipeline;
         class IRootSignaturePool;
     }
 

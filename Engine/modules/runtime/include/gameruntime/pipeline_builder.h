@@ -12,10 +12,10 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class IRenderDevice;
-        class IRenderPipeline;
-        class IRootSignature;
-        class ISampler;
+        struct IRenderDevice;
+        struct IRenderPipeline;
+        struct IRootSignature;
+        struct ISampler;
         class IShaderLibrary;
     }
 
@@ -48,6 +48,7 @@ namespace Cyber
 
         // Render target info
         PipelineBuilder& render_target_format(TEXTURE_FORMAT format);
+        PipelineBuilder& render_target_count(uint32_t count);
         PipelineBuilder& depth_format(TEXTURE_FORMAT format);
         PipelineBuilder& topology(PRIMITIVE_TOPOLOGY topo);
 
@@ -60,9 +61,8 @@ namespace Cyber
         // Root descriptor names
         PipelineBuilder& root_descriptor(const char8_t* name);
 
-        // Build pipeline; optionally outputs root signature for descriptor set creation
-        RefCntAutoPtr<RenderObject::IRenderPipeline> build(
-            RefCntAutoPtr<RenderObject::IRootSignature>* out_root_sig = nullptr);
+        // Build pipeline.
+        RefCntAutoPtr<RenderObject::IRenderPipeline> build();
 
     private:
         RenderObject::IRenderDevice* m_device = nullptr;

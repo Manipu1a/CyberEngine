@@ -12,9 +12,9 @@ namespace Cyber
 
     namespace RenderObject
     {
-        class IRootSignature;
-        class IDescriptorSet;
-        class IRenderPipeline;
+        struct IRootSignature;
+        struct IDescriptorSet;
+        struct IRenderPipeline;
     }
 
     namespace Samples
@@ -72,6 +72,7 @@ namespace Cyber
             ~ShadowApp();
 
             virtual void update(float deltaTime) override;
+            virtual bool use_engine_forward_pipeline() const override { return false; }
 
             // Use initialization hooks
             virtual void on_create_gfx_objects() override;

@@ -127,6 +127,19 @@ int main()
     assert(meshInfo.payloadHeader.sourceDataSize == fakeFbx.size());
     assert(meshInfo.sourceExtension == ".fbx");
 
+    MeshEditorAssetInfo embeddedMeshInfo;
+    std::vector<uint8_t> embeddedMeshBytes;
+    assert(MeshImporter::ReadEmbeddedSource(meshAssetPath, embeddedMeshInfo, embeddedMeshBytes));
+    assert(embeddedMeshInfo.fileHeader.assetGuid == meshImportResult.registryRecord.guid);
+    assert(embeddedMeshBytes.size() == fakeFbx.size());
+    assert(std::string(reinterpret_cast<const char*>(embeddedMeshBytes.data()), embeddedMeshBytes.size()) == fakeFbx);
+
+    fs::path extractedMeshSourcePath;
+    assert(MeshImporter::WriteEmbeddedSourceToCache(
+        meshAssetPath, testRoot / "Saved" / "EditorAssetCache" / "MeshSources", extractedMeshSourcePath));
+    assert(fs::exists(extractedMeshSourcePath));
+    assert(extractedMeshSourcePath.extension() == ".fbx");
+
     database.Registry().Upsert(meshImportResult.registryRecord);
     assert(database.Save());
 

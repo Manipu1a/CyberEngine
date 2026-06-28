@@ -2270,9 +2270,21 @@ namespace Cyber
             }
             if (ext == ".meshasset")
             {
-                CB_INFO("Drag-drop ignored (%s): .meshasset runtime loading is not implemented yet",
-                    info->display_name.c_str());
-                return false;
+                MeshEditorAssetInfo mesh_info;
+                if (!MeshImporter::ReadInfo(utf8_path, mesh_info))
+                {
+                    CB_WARN("Drag-drop rejected invalid mesh asset: %s", utf8_path);
+                    return false;
+                }
+
+                const std::string source_ext = lowercase(mesh_info.sourceExtension);
+                if (source_ext != ".gltf" && source_ext != ".glb")
+                {
+                    CB_WARN("Drag-drop rejected mesh asset %s: source format %s is not displayable yet",
+                            utf8_path,
+                            source_ext.c_str());
+                    return false;
+                }
             }
 
             // Convert to project-relative path for storage in the node.

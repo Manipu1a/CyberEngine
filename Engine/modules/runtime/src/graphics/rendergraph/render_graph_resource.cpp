@@ -87,7 +87,7 @@ namespace Cyber
             return *this;
         }
 
-        RGRenderPass& RGRenderPass::set_pipeline(IRenderPipeline* pipeline) CYBER_NOEXCEPT
+        RGRenderPass& RGRenderPass::set_pipeline(RenderObject::IRenderPipeline* pipeline) CYBER_NOEXCEPT
         {
             this->pipeline = pipeline;
             return *this;

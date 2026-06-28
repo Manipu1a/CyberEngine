@@ -4,6 +4,7 @@
 #include "graphics/backend/d3d12/render_device_d3d12.h"
 #include "graphics/backend/d3d12/device_context_d3d12.h"
 #include "application/application.h"
+#include "renderer/forward_pipeline.h"
 #include "EASTL/vector.h"
 
 namespace Cyber
@@ -17,7 +18,11 @@ namespace Cyber
         
         Renderer::~Renderer()
         {
-
+            if(m_forwardPipeline)
+            {
+                cyber_delete(m_forwardPipeline);
+                m_forwardPipeline = nullptr;
+            }
         }
         void Renderer::initialize()
         {
@@ -67,6 +72,23 @@ namespace Cyber
             auto* device_ctx = static_cast<RenderObject::DeviceContext_D3D12_Impl*>(device_contexts[0].get());
             m_frameFenceValues[frame_slot] = device_ctx->get_last_submitted_fence_value();
             m_currentFrame++;
+        }
+
+        void Renderer::present()
+        {
+            if(!m_pRenderDevice || !m_pSwapChain || device_contexts.empty())
+                return;
+
+            auto* device_context = device_contexts[0].get();
+            device_context->cmd_end();
+            device_context->flush();
+            m_pRenderDevice->present(m_pSwapChain);
+        }
+
+        void Renderer::render_world(World* world, float deltaTime)
+        {
+            if(m_forwardPipeline)
+                m_forwardPipeline->render(world, deltaTime);
         }
 
         void Renderer::create_render_device(GRAPHICS_BACKEND backend)
@@ -173,12 +195,16 @@ namespace Cyber
                 }
             }
             auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
-            RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view  };
+            auto back_depth_buffer_view = scene_target[0].depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
+            RenderObject::ITexture_View* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view };
             RenderObject::FrameBufferDesc frame_buffer_desc;
             frame_buffer_desc.m_name = u8"FrameBuffer";
-            frame_buffer_desc.m_attachmentCount = 1;
+            frame_buffer_desc.m_attachmentCount = 2;
             frame_buffer_desc.m_ppAttachments = attachment_resources;
             frame_buffer = m_pRenderDevice->create_frame_buffer(frame_buffer_desc);
+
+            m_forwardPipeline = cyber_new<ForwardPipeline>(this);
+            m_forwardPipeline->initialize();
         }
 
         void Renderer::resize_swap_chain(uint32_t width, uint32_t height)
@@ -217,8 +243,11 @@ namespace Cyber
 
                 // Update frame buffer
                 auto back_buffer_view = scene_target[0].color_buffer->get_default_texture_view(TEXTURE_VIEW_RENDER_TARGET);
-                RenderObject::ITexture_View* attachment_resources[1] = { back_buffer_view };
-                frame_buffer->update_attachments(attachment_resources, 1);
+                auto back_depth_buffer_view = scene_target[0].depth_buffer->get_default_texture_view(TEXTURE_VIEW_DEPTH_STENCIL);
+                RenderObject::ITexture_View* attachment_resources[2] = { back_buffer_view, back_depth_buffer_view };
+                frame_buffer->update_attachments(attachment_resources, 2);
+                if(m_forwardPipeline)
+                    m_forwardPipeline->resize(width, height);
             }
         }
 

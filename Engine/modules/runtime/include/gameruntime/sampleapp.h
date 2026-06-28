@@ -20,19 +20,19 @@ namespace Cyber
 
     namespace RenderObject
     {
-        class IRenderDevice;
-        class IDeviceContext;
-        class ISwapChain;
-        class IFrameBuffer;
-        class IRenderPass;
-        class IRenderPipeline;
-        class IRootSignature;
-        class IDescriptorSet;
+        struct IRenderDevice;
+        struct IDeviceContext;
+        struct ISwapChain;
+        struct IFrameBuffer;
+        struct IRenderPass;
+        struct IRenderPipeline;
+        struct IRootSignature;
+        struct IDescriptorSet;
         class IShaderLibrary;
-        class ISampler;
-        class IBuffer;
-        class ITexture;
-        class ITexture_View;
+        struct ISampler;
+        struct IBuffer;
+        struct ITexture;
+        struct ITexture_View;
     }
 
     namespace Samples
@@ -80,6 +80,7 @@ namespace Cyber
             virtual void update(float deltaTime);
             virtual void present();
             virtual void draw_ui(ImGuiContext* in_imgui_context) {}
+            virtual bool use_engine_forward_pipeline() const { return true; }
 
             // --- Initialization hooks (override in subclass) ---
             virtual void on_create_gfx_objects() {}

@@ -11,10 +11,10 @@ namespace Cyber
 
     namespace RenderObject
     {
-        class ITexture;
+        struct ITexture;
         class CERenderPass;
         class CEFrameBuffer;
-        class IDescriptorSet;
+        struct IDescriptorSet;
     };
 
     namespace Samples

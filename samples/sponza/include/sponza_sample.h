@@ -7,13 +7,6 @@
 
 namespace Cyber
 {
-    namespace RenderObject
-    {
-        class IRootSignature;
-        class IDescriptorSet;
-        class IRenderPipeline;
-    }
-
     namespace ModelLoader
     {
         class Model;
@@ -84,11 +77,6 @@ namespace Cyber
             // defaults during on_load_data when the scene file didn't include
             // one (pre-v2 scene without a camera/sun node, etc.).
             void ensure_camera_and_sun();
-
-            Cyber::RefCntAutoPtr<RenderObject::IRenderPass> render_pass;
-            Cyber::RefCntAutoPtr<RenderObject::IRenderPipeline> pipeline;
-            Cyber::RefCntAutoPtr<RenderObject::IRootSignature> root_signature;
-            Cyber::RefCntAutoPtr<RenderObject::IBuffer> scene_cbuffer;
 
             eastl::vector<RenderMesh> render_meshes;
 

@@ -135,13 +135,7 @@ namespace Cyber
         void SampleApp::present()
         {
             auto renderer = m_pApp->get_renderer();
-            auto render_device = renderer->get_render_device();
-            auto device_context = renderer->get_device_context();
-            auto swap_chain = renderer->get_swap_chain();
-
-            device_context->cmd_end();
-            device_context->flush();
-            render_device->present(swap_chain);
+            renderer->present();
         }
 
         // --- Convenience accessors ---

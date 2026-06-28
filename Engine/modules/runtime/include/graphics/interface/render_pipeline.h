@@ -116,8 +116,8 @@ namespace Cyber
                             attributes[i].is_normalized = false;
                         }
                     }
-
-                    graphics_pipeline.vertex_layout->attributes = attributes;
+                    input_layout->attributes = attributes;
+                    graphics_pipeline.vertex_layout = input_layout;
                 }
 
 

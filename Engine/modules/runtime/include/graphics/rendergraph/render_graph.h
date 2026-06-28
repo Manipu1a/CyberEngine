@@ -19,7 +19,7 @@ namespace Cyber
     namespace RenderObject
     {
         class IQueue;
-        class IRenderDevice;
+        struct IRenderDevice;
     }
     namespace render_graph
     {

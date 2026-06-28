@@ -182,13 +182,22 @@ namespace Cyber
                     m_pSampleApp->tick_loading();
                 }
 
+                const bool use_engine_forward_pipeline = m_pSampleApp->use_engine_forward_pipeline();
                 m_pSampleApp->update(deltaTime);
+                if (use_engine_forward_pipeline)
+                {
+                    auto world = m_pSampleApp->get_world();
+                    m_pRenderer->render_world(world.get(), deltaTime);
+                }
 
                 m_pEditor->update(deltaTime);
                 m_pSampleApp->draw_ui(m_pEditor->get_imgui_context());
                 m_pEditor->render(m_pRenderer->get_device_context(), m_pRenderer->get_render_device());
 
-                m_pSampleApp->present();
+                if (use_engine_forward_pipeline)
+                    m_pRenderer->present();
+                else
+                    m_pSampleApp->present();
             }
 
             m_pRenderer->end_frame();

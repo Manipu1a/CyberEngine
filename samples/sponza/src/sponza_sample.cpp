@@ -2,9 +2,10 @@
 #include "platform/memory.h"
 #include "model_loader.h"
 #include "texture_utils.h"
-#include "gameruntime/pipeline_builder.h"
 #include "gameruntime/scene_serializer.h"
 #include "gameruntime/world.h"
+#include "asset/asset_database.h"
+#include "asset/mesh_importer.h"
 #include "graphics/interface/device_context.h"
 #include "core/file_helper.hpp"
 #include "log/Log.h"
@@ -13,6 +14,10 @@
 #include "component/camera_component.h"
 #include "component/directional_light_component.h"
 
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
+
 namespace Cyber
 {
     namespace Samples
@@ -20,6 +25,133 @@ namespace Cyber
         using Component::MeshComponent;
         using Component::CameraComponent;
         using Component::DirectionalLightComponent;
+
+        namespace
+        {
+            namespace fs = std::filesystem;
+
+            std::string lowercase_extension(const fs::path& path)
+            {
+                std::string ext = path.extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                return ext;
+            }
+
+            bool is_displayable_model_extension(const fs::path& path)
+            {
+                const std::string ext = lowercase_extension(path);
+                return ext == ".gltf" || ext == ".glb";
+            }
+
+            fs::path resolve_stored_path(const fs::path& content_root, const std::string& stored_path)
+            {
+                fs::path path(AssetRegistry::NormalizePath(stored_path));
+                if (path.is_absolute())
+                    return path.lexically_normal();
+                return (content_root / path).lexically_normal();
+            }
+
+            fs::path find_content_root_for_asset(const fs::path& asset_path)
+            {
+                fs::path dir = asset_path.parent_path();
+                while (!dir.empty())
+                {
+                    std::error_code ec;
+                    const fs::path registry_path = dir / "Registry" / "AssetRegistry.json";
+                    if (fs::exists(registry_path, ec) && fs::is_regular_file(registry_path, ec))
+                        return dir.lexically_normal();
+
+                    const fs::path parent = dir.parent_path();
+                    if (parent == dir)
+                        break;
+                    dir = parent;
+                }
+
+                return {};
+            }
+
+            bool try_resolve_meshasset_source_from_registry(const fs::path& mesh_asset_path,
+                                                            fs::path& out_source_path)
+            {
+                out_source_path.clear();
+
+                const fs::path content_root = find_content_root_for_asset(mesh_asset_path);
+                if (content_root.empty())
+                    return false;
+
+                AssetDatabase database(content_root);
+                if (!database.Load())
+                    return false;
+
+                const std::string stored_asset_path = database.MakeStoredPath(mesh_asset_path);
+                const AssetRegistryRecord* record = database.Registry().FindByAssetPath(stored_asset_path);
+                if (!record || record->sourcePath.empty())
+                    return false;
+
+                fs::path source_path = resolve_stored_path(content_root, record->sourcePath);
+                std::error_code ec;
+                if (!fs::exists(source_path, ec) || fs::is_directory(source_path, ec))
+                    return false;
+
+                if (!is_displayable_model_extension(source_path))
+                    return false;
+
+                out_source_path = source_path.lexically_normal();
+                return true;
+            }
+
+            eastl::string resolve_model_resource_for_display(const eastl::string& model_resource)
+            {
+                if (model_resource.empty())
+                    return {};
+
+                fs::path resolved_path(Core::FileHelper::resolve_path_public(model_resource.c_str()).c_str());
+                resolved_path = resolved_path.lexically_normal();
+
+                if (lowercase_extension(resolved_path) != ".meshasset")
+                    return eastl::string(resolved_path.string().c_str());
+
+                MeshEditorAssetInfo mesh_info;
+                if (!MeshImporter::ReadInfo(resolved_path, mesh_info))
+                {
+                    CB_ERROR("Mesh asset is invalid: %s", resolved_path.string().c_str());
+                    return {};
+                }
+
+                std::string source_ext = mesh_info.sourceExtension;
+                std::transform(source_ext.begin(), source_ext.end(), source_ext.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                if (source_ext != ".gltf" && source_ext != ".glb")
+                {
+                    CB_ERROR("Mesh asset source format is not displayable yet: %s (%s)",
+                             resolved_path.string().c_str(),
+                             source_ext.c_str());
+                    return {};
+                }
+
+                fs::path source_path;
+                if (try_resolve_meshasset_source_from_registry(resolved_path, source_path))
+                    return eastl::string(source_path.string().c_str());
+
+                const fs::path project_root = fs::path(Core::FileHelper::get_project_root()).lexically_normal();
+                const fs::path cache_root = project_root / "Saved" / "EditorAssetCache" / "MeshSources";
+                fs::path extracted_path;
+                if (!MeshImporter::WriteEmbeddedSourceToCache(resolved_path, cache_root, extracted_path))
+                {
+                    CB_ERROR("Failed to extract mesh asset source for display: %s",
+                             resolved_path.string().c_str());
+                    return {};
+                }
+
+                if (source_ext == ".gltf")
+                {
+                    CB_WARN("Using extracted glTF from mesh asset; external .bin/textures still require the original source directory.");
+                }
+
+                return eastl::string(extracted_path.lexically_normal().string().c_str());
+            }
+        }
 
         CYBER_GAME_API SampleApp* create_sponza_app()
         {
@@ -48,31 +180,10 @@ namespace Cyber
 
         void SponzaApp::on_create_gfx_objects()
         {
-            create_default_render_pass(u8"Sponza RenderPass", render_pass);
         }
 
         void SponzaApp::on_create_pipelines()
         {
-            auto render_device = get_render_device();
-            auto& scene_target = get_renderer()->get_scene_target(0);
-            auto sampler = create_default_sampler();
-
-            RenderObject::VertexAttribute vertex_attributes[] = {
-                {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(SponzaVertex, position)},
-                {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(SponzaVertex, normal)},
-                {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(SponzaVertex, uv)},
-            };
-
-            pipeline = PipelineBuilder(render_device)
-                .vertex_shader(CYBER_UTF8("samples/sponza/assets/shaders/sponza_vs.hlsl"))
-                .pixel_shader(CYBER_UTF8("samples/sponza/assets/shaders/sponza_ps.hlsl"))
-                .vertex_layout(vertex_attributes, 3)
-                .static_sampler(CYBER_UTF8("Texture_sampler"), sampler)
-                .blend_opaque()
-                .depth_test()
-                .render_target_format(scene_target.color_buffer->get_create_desc().m_format)
-                .depth_format(scene_target.depth_buffer->get_create_desc().m_format)
-                .build();
         }
 
         void SponzaApp::ensure_camera_and_sun()
@@ -123,7 +234,10 @@ namespace Cyber
                     if (mc.model_resource.empty())
                         return;
 
-                    eastl::string resolved = Core::FileHelper::resolve_path_public(mc.model_resource.c_str());
+                    eastl::string resolved = resolve_model_resource_for_display(mc.model_resource);
+                    if (resolved.empty())
+                        return;
+
                     ModelLoader::ModelCreateInfo ci;
                     ci.file_path = resolved.c_str();
                     mc.model = cyber_new<ModelLoader::Model>(ci);
@@ -163,6 +277,10 @@ namespace Cyber
 
             create_vertex_buffer(vertices.data(), vertex_count * sizeof(SponzaVertex), out.vertex_buffer);
             create_index_buffer(indices.data(), index_count * sizeof(uint32_t), out.index_buffer);
+            mc.vertex_buffer = out.vertex_buffer;
+            mc.index_buffer = out.index_buffer;
+            mc.vertex_stride = sizeof(SponzaVertex);
+            mc.draw_primitives.clear();
 
             const auto& meshes    = mc.model->get_meshes();
             const auto& materials = mc.model->get_materials();
@@ -188,6 +306,12 @@ namespace Cyber
                         }
                     }
                     out.primitives.push_back(dp);
+
+                    Component::MeshDrawPrimitive engine_dp;
+                    engine_dp.first_index = dp.first_index;
+                    engine_dp.index_count = dp.index_count;
+                    engine_dp.base_color_view = dp.base_color_view;
+                    mc.draw_primitives.push_back(engine_dp);
                 }
             }
 
@@ -199,8 +323,6 @@ namespace Cyber
 
         void SponzaApp::on_create_resources()
         {
-            create_constant_buffer(sizeof(SceneConstants), scene_cbuffer);
-
             render_meshes.clear();
             m_world->for_each_component_of<MeshComponent>(
                 [this](SceneNode& node, MeshComponent& mc, uint32_t idx)
@@ -240,7 +362,10 @@ namespace Cyber
 
                 if (!mc->model)
                 {
-                    eastl::string resolved = Core::FileHelper::resolve_path_public(p.model_resource.c_str());
+                    eastl::string resolved = resolve_model_resource_for_display(p.model_resource);
+                    if (resolved.empty())
+                        continue;
+
                     ModelLoader::ModelCreateInfo ci;
                     ci.file_path = resolved.c_str();
                     mc->model = cyber_new<ModelLoader::Model>(ci);
@@ -265,13 +390,6 @@ namespace Cyber
                     if (!camera && cc.enabled) camera = &cc;
                 });
 
-            DirectionalLightComponent* sun = nullptr;
-            m_world->for_each_component_of<DirectionalLightComponent>(
-                [&](SceneNode&, DirectionalLightComponent& dl, uint32_t)
-                {
-                    if (!sun && dl.enabled) sun = &dl;
-                });
-
             if (!camera)
                 return;   // nothing sensible to render without a camera
 
@@ -284,60 +402,6 @@ namespace Cyber
             // Drive yaw/pitch + WASD translation from user input, and refresh
             // the camera's view matrix for this frame.
             camera->update(deltaTime);
-
-            const float3 eye = camera->get_camera_position();
-            float4x4 view_matrix = camera->get_view_matrix();
-            float4x4 projection_matrix =
-                get_renderer()->get_adjusted_projection_matrix(camera->fov_deg * (3.14159265f / 180.0f),
-                                                               camera->near_z, camera->far_z);
-
-            float3 light_dir = sun ? sun->get_direction() : float3(-0.3f, -1.0f, -0.2f);
-            float3 light_col = sun ? sun->color     : float3(1.0f, 1.0f, 1.0f);
-            float  light_int = sun ? sun->intensity : 1.0f;
-
-            auto ctx = begin_frame(render_pass);
-            auto device_context = ctx.device_context;
-
-            device_context->render_encoder_bind_pipeline(pipeline);
-
-            for (auto& rm : render_meshes)
-            {
-                const SceneNode* node = m_world->find_node(rm.node_id);
-                if (!node || rm.component_index >= node->components.size())
-                    continue;
-                const auto* comp = node->components[rm.component_index].get();
-                if (!comp)
-                    continue;
-
-                float4x4 model_matrix = comp->local_matrix();
-
-                SceneConstants scene_data;
-                scene_data.view_proj_matrix = (view_matrix * projection_matrix).transpose();
-                scene_data.model_matrix     = model_matrix.transpose();
-                scene_data.camera_pos       = float4(eye, 1.0f);
-                scene_data.light_direction  = float4(light_dir, 0.0f);
-                scene_data.light_color      = float4(light_col * light_int, 1.0f);
-                update_buffer(scene_cbuffer, scene_data);
-
-                RenderObject::IBuffer* vb[] = { rm.vertex_buffer };
-                uint32_t strides[] = { sizeof(SponzaVertex) };
-                device_context->render_encoder_bind_vertex_buffer(1, vb, strides, nullptr);
-                device_context->render_encoder_bind_index_buffer(rm.index_buffer, sizeof(uint32_t), 0);
-
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, scene_cbuffer);
-                device_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, scene_cbuffer);
-
-                for (auto& dp : rm.primitives)
-                {
-                    if (dp.base_color_view)
-                        device_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, dp.base_color_view);
-
-                    device_context->prepare_for_rendering();
-                    device_context->render_encoder_draw_indexed(dp.index_count, dp.first_index, 0);
-                }
-            }
-
-            end_frame();
         }
 
         void SponzaApp::draw_ui(ImGuiContext* in_imgui_context)

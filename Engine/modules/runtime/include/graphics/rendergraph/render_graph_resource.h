@@ -131,11 +131,11 @@ namespace Cyber
             LOAD_ACTION stencil_load_action = LOAD_ACTION_CLEAR, 
             STORE_ACTION stencil_store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
-            RGRenderPass& set_pipeline(class IRenderPipeline* pipeline) CYBER_NOEXCEPT;
+            RGRenderPass& set_pipeline(RenderObject::IRenderPipeline* pipeline) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGTextureRef texture) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGBufferRef buffer) CYBER_NOEXCEPT;
 
-            class IRenderPipeline* pipeline;
+            RenderObject::IRenderPipeline* pipeline;
             eastl::map<uint32_t, RGTextureRef> render_targets;
             eastl::map<const char8_t*, RGTextureRef> input_textures;
             eastl::map<const char8_t*, RGBufferRef> input_buffers;

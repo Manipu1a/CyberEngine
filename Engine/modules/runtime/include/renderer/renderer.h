@@ -7,9 +7,11 @@
 
 namespace Cyber
 {
+    class World;
+
     namespace RenderObject
     {
-        class IDeviceContext;
+        struct IDeviceContext;
     }
 
     namespace Core
@@ -18,6 +20,8 @@ namespace Cyber
     }
     namespace Renderer
     {
+        class ForwardPipeline;
+
         struct CYBER_RUNTIME_API SceneTarget
         {
             RefCntAutoPtr<RenderObject::ITexture> color_buffer = nullptr;
@@ -37,6 +41,8 @@ namespace Cyber
 
             void begin_frame();
             void end_frame();
+            void present();
+            void render_world(World* world, float deltaTime);
             
             void create_render_device(GRAPHICS_BACKEND backend);
             void create_gfx_objects();
@@ -89,6 +95,7 @@ namespace Cyber
             Surface* m_pSurface = nullptr;
             RefCntAutoPtr<RenderObject::IFence> m_pPresentSwmaphore = nullptr;
             uint32_t m_backBufferIndex = 0;
+            ForwardPipeline* m_forwardPipeline = nullptr;
 
             uint64_t m_frameFenceValues[MAX_FRAMES_IN_FLIGHT] = {};
             uint64_t m_currentFrame = 0;

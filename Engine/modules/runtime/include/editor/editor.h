@@ -24,10 +24,10 @@ namespace Cyber
 {
     namespace RenderObject
     {
-        class IRenderDevice;
-        class IDeviceContext;
-        class ITexture;
-        class ITexture_View;
+        struct IRenderDevice;
+        struct IDeviceContext;
+        struct ITexture;
+        struct ITexture_View;
     }
 
     namespace Editor
