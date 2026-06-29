@@ -284,7 +284,6 @@ namespace Cyber
         {
             case VALUE_TYPE_FLOAT16:
             {
-                cyber_assert(!is_normalized, "Floating point formats cannot be normalized");
                 switch(num_components)
                 {
                     case 1: return DXGI_FORMAT_R16_FLOAT;
@@ -296,7 +295,6 @@ namespace Cyber
 
             case VALUE_TYPE_FLOAT32:
             {
-                cyber_assert(!is_normalized, "Floating point formats cannot be normalized");
                 switch(num_components)
                 {
                     case 1: return DXGI_FORMAT_R32_FLOAT;

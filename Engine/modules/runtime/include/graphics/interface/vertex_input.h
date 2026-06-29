@@ -53,7 +53,7 @@ struct CYBER_GRAPHICS_API VertexAttribute
     /// indicates if the value should be normalized to [-1,+1] or
     /// [0, 1] range respectively. For floating point types
     /// (VT_FLOAT16 and VT_FLOAT32), this member is ignored.
-    bool is_normalized = true;
+    bool is_normalized = false;
 
     /// Relative offset, in bytes, to the element bits.
     /// If this value is set to LAYOUT_ELEMENT_AUTO_OFFSET (default value), the offset will

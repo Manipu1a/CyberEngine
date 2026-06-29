@@ -30,6 +30,11 @@ namespace Cyber
         {
             namespace fs = std::filesystem;
 
+            void destroy_model_loader_model(ModelLoader::Model* model)
+            {
+                cyber_delete(model);
+            }
+
             std::string lowercase_extension(const fs::path& path)
             {
                 std::string ext = path.extension().string();
@@ -159,24 +164,7 @@ namespace Cyber
         }
 
         SponzaApp::SponzaApp() {}
-        SponzaApp::~SponzaApp()
-        {
-            // MeshComponent doesn't own ModelLoader::Model (dep cycle — see
-            // mesh_component.h). Walk components and free the raw pointer
-            // here before the world/nodes are destroyed.
-            if (m_world)
-            {
-                m_world->for_each_component_of<MeshComponent>(
-                    [](SceneNode&, MeshComponent& mc, uint32_t /*idx*/)
-                    {
-                        if (mc.model)
-                        {
-                            cyber_delete(mc.model);
-                            mc.model = nullptr;
-                        }
-                    });
-            }
-        }
+        SponzaApp::~SponzaApp() = default;
 
         void SponzaApp::on_create_gfx_objects()
         {
@@ -240,13 +228,12 @@ namespace Cyber
 
                     ModelLoader::ModelCreateInfo ci;
                     ci.file_path = resolved.c_str();
-                    mc.model = cyber_new<ModelLoader::Model>(ci);
+                    mc.set_runtime_model(cyber_new<ModelLoader::Model>(ci), destroy_model_loader_model);
                     mc.model->load_data(ci);
                 });
         }
 
-        bool SponzaApp::build_render_mesh_for_component(SceneNode& node, uint32_t component_index,
-                                                       MeshComponent& mc, RenderMesh& out)
+        bool SponzaApp::build_render_mesh_for_component(SceneNode& node, MeshComponent& mc)
         {
             if (!mc.model || !mc.model->is_valid())
             {
@@ -275,10 +262,8 @@ namespace Cyber
             for (size_t i = 0; i < index_count; ++i)
                 indices[i] = model_idx[i];
 
-            create_vertex_buffer(vertices.data(), vertex_count * sizeof(SponzaVertex), out.vertex_buffer);
-            create_index_buffer(indices.data(), index_count * sizeof(uint32_t), out.index_buffer);
-            mc.vertex_buffer = out.vertex_buffer;
-            mc.index_buffer = out.index_buffer;
+            create_vertex_buffer(vertices.data(), vertex_count * sizeof(SponzaVertex), mc.vertex_buffer);
+            create_index_buffer(indices.data(), index_count * sizeof(uint32_t), mc.index_buffer);
             mc.vertex_stride = sizeof(SponzaVertex);
             mc.draw_primitives.clear();
 
@@ -289,10 +274,7 @@ namespace Cyber
             {
                 for (auto& prim : mesh.primitives)
                 {
-                    DrawPrimitive dp;
-                    dp.first_index = prim.first_index;
-                    dp.index_count = prim.index_count;
-                    dp.base_color_view = nullptr;
+                    Cyber::RefCntAutoPtr<RenderObject::ITexture_View> base_color_view = nullptr;
 
                     if (prim.material_id < materials.size())
                     {
@@ -302,37 +284,31 @@ namespace Cyber
                         {
                             auto* tex = mc.model->get_texture(tex_id);
                             if (tex)
-                                dp.base_color_view = tex->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
+                                base_color_view = tex->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE);
                         }
                     }
-                    out.primitives.push_back(dp);
 
                     Component::MeshDrawPrimitive engine_dp;
-                    engine_dp.first_index = dp.first_index;
-                    engine_dp.index_count = dp.index_count;
-                    engine_dp.base_color_view = dp.base_color_view;
+                    engine_dp.first_index = prim.first_index;
+                    engine_dp.index_count = prim.index_count;
+                    engine_dp.base_color_view = base_color_view;
                     mc.draw_primitives.push_back(engine_dp);
                 }
             }
 
-            out.node_id = node.id;
-            out.component_index = component_index;
             mc.gpu_ready = true;
             return true;
         }
 
         void SponzaApp::on_create_resources()
         {
-            render_meshes.clear();
             m_world->for_each_component_of<MeshComponent>(
-                [this](SceneNode& node, MeshComponent& mc, uint32_t idx)
+                [this](SceneNode& node, MeshComponent& mc, uint32_t)
                 {
                     if (mc.model_resource.empty() || !mc.model)
                         return;
 
-                    RenderMesh rm;
-                    if (build_render_mesh_for_component(node, idx, mc, rm))
-                        render_meshes.push_back(std::move(rm));
+                    build_render_mesh_for_component(node, mc);
                 });
 
             m_world->pending_loads().clear();
@@ -368,13 +344,11 @@ namespace Cyber
 
                     ModelLoader::ModelCreateInfo ci;
                     ci.file_path = resolved.c_str();
-                    mc->model = cyber_new<ModelLoader::Model>(ci);
+                    mc->set_runtime_model(cyber_new<ModelLoader::Model>(ci), destroy_model_loader_model);
                     mc->model->load_data(ci);
                 }
 
-                RenderMesh rm;
-                if (build_render_mesh_for_component(*node, p.component_index, *mc, rm))
-                    render_meshes.push_back(std::move(rm));
+                build_render_mesh_for_component(*node, *mc);
             }
             pending.clear();
         }
@@ -464,7 +438,6 @@ namespace Cyber
                     ImGui::Text("Source: %s",
                         m_world->source_path().empty() ? "(unsaved)" : m_world->source_path().c_str());
                     ImGui::Text("Nodes     : %zu", (size_t)m_world->get_nodes().size());
-                    ImGui::Text("Render meshes: %zu", (size_t)render_meshes.size());
                     ImGui::TreePop();
                 }
             }

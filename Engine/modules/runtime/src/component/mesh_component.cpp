@@ -8,10 +8,26 @@ CYBER_REGISTER_COMPONENT(Cyber::Component::MeshComponent, "MeshComponent")
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)
 
-    // Model ownership sits with the sample (see mesh_component.h). We leave
-    // the raw pointer untouched so a separate cleanup pass can free it —
-    // breaking the CyberRuntime <-> ModelLoader dep cycle.
-    MeshComponent::~MeshComponent() = default;
+    // Model ownership is type-erased to keep CyberRuntime independent of ModelLoader.
+    MeshComponent::~MeshComponent()
+    {
+        release_runtime_model();
+    }
+
+    void MeshComponent::set_runtime_model(ModelLoader::Model* in_model, ModelDeleter deleter)
+    {
+        release_runtime_model();
+        model = in_model;
+        model_deleter = deleter;
+    }
+
+    void MeshComponent::release_runtime_model()
+    {
+        if (model && model_deleter)
+            model_deleter(model);
+        model = nullptr;
+        model_deleter = nullptr;
+    }
 
     Scope<Primitive> MeshComponent::clone() const
     {
@@ -22,7 +38,7 @@ CYBER_BEGIN_NAMESPACE(Component)
         copy->enabled        = enabled;
         copy->name           = name;
         copy->model_resource = model_resource;
-        // GPU-side state (mesh / model / gpu_ready) is intentionally left empty —
+        // GPU-side state (mesh / model / gpu_ready) is intentionally left empty;
         // the caller enqueues a reload.
         return Scope<Primitive>(copy.release());
     }

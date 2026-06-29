@@ -27,11 +27,15 @@ CYBER_BEGIN_NAMESPACE(Component)
     class CYBER_RUNTIME_API MeshComponent : public Primitive
     {
     public:
+        using ModelDeleter = void (*)(ModelLoader::Model*);
+
         MeshComponent() : Primitive(ComponentType::Mesh) {}
         ~MeshComponent() override;
 
         const char*      type_name() const override { return "MeshComponent"; }
         Scope<Primitive> clone() const override;
+        void set_runtime_model(ModelLoader::Model* in_model, ModelDeleter deleter);
+        void release_runtime_model();
 
         // Project-relative path to a model asset (.gltf/.glb). Serialized.
         eastl::string               model_resource;
@@ -39,11 +43,10 @@ CYBER_BEGIN_NAMESPACE(Component)
         // Runtime state — populated by the sample once GPU resources exist.
         // Not serialized.
         RefCntAutoPtr<Mesh>         mesh;
-        // ModelLoader::Model is owned by the sample (ModelLoader lives in a
-        // module that depends on CyberRuntime — we can't call its destructor
-        // from here without a dep cycle). The sample cleans up in its own
-        // dtor by walking components.
+        // ModelLoader::Model is released through model_deleter to avoid a
+        // CyberRuntime -> ModelLoader dependency.
         ModelLoader::Model*         model = nullptr;
+        ModelDeleter                model_deleter = nullptr;
         RefCntAutoPtr<RenderObject::IBuffer> vertex_buffer = nullptr;
         RefCntAutoPtr<RenderObject::IBuffer> index_buffer = nullptr;
         uint32_t                    vertex_stride = 0;

@@ -37,25 +37,6 @@ namespace Cyber
                 float4 light_color;
             };
 
-            struct DrawPrimitive
-            {
-                uint32_t first_index;
-                uint32_t index_count;
-                Cyber::RefCntAutoPtr<RenderObject::ITexture_View> base_color_view;
-            };
-
-            // Per-MeshComponent GPU bundle. The (node_id, component_index)
-            // pair resolves back to the owning MeshComponent each frame so
-            // we can fetch its transform.
-            struct RenderMesh
-            {
-                uint32_t node_id = 0;
-                uint32_t component_index = 0;
-                Cyber::RefCntAutoPtr<RenderObject::IBuffer> vertex_buffer;
-                Cyber::RefCntAutoPtr<RenderObject::IBuffer> index_buffer;
-                eastl::vector<DrawPrimitive> primitives;
-            };
-
         public:
             SponzaApp();
             ~SponzaApp();
@@ -69,16 +50,13 @@ namespace Cyber
             virtual void on_create_resources() override;
 
         protected:
-            bool build_render_mesh_for_component(SceneNode& node, uint32_t component_index,
-                                                 Component::MeshComponent& mc, RenderMesh& out);
+            bool build_render_mesh_for_component(SceneNode& node, Component::MeshComponent& mc);
             void process_pending_loads();
 
             // Ensure there's always a camera + sun we can drive. Creates
             // defaults during on_load_data when the scene file didn't include
             // one (pre-v2 scene without a camera/sun node, etc.).
             void ensure_camera_and_sun();
-
-            eastl::vector<RenderMesh> render_meshes;
 
             float camera_orbit_speed = 0.0f;
         };

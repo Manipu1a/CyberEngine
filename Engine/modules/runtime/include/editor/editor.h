@@ -374,7 +374,9 @@ namespace Cyber
                                                         const char* label,
                                                         bool allow_rename,
                                                         bool focus_folder);
+            std::filesystem::path resolve_content_browser_creation_directory();
             void create_content_browser_folder();
+            void create_content_browser_scene();
             void begin_content_browser_rename(const std::filesystem::path& path);
             void draw_content_browser_rename_popup();
             void load_content_browser_icons(RenderObject::IRenderDevice* device);
@@ -385,6 +387,7 @@ namespace Cyber
             void draw_scene_hierarchy();
 
             // Scene file menu actions
+            void handle_new_scene();
             void handle_import_image();
             void handle_import_mesh();
             void handle_open_scene();

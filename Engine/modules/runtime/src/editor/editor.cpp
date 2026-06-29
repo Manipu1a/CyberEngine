@@ -264,6 +264,35 @@ namespace Cyber
                 out_path = file_name.data();
                 return true;
             }
+
+            bool open_scene_dialog(HWND owner, std::filesystem::path& out_path)
+            {
+                std::array<wchar_t, 4096> file_name = {};
+                static constexpr wchar_t kSceneFilter[] =
+                    L"Scene Files (*.scene)\0"
+                    L"*.scene\0"
+                    L"All Files (*.*)\0*.*\0";
+
+                OPENFILENAMEW ofn = {};
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = owner;
+                ofn.lpstrTitle = L"Open Scene";
+                ofn.lpstrFilter = kSceneFilter;
+                ofn.lpstrFile = file_name.data();
+                ofn.nMaxFile = static_cast<DWORD>(file_name.size());
+                ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_NOCHANGEDIR;
+
+                if (!GetOpenFileNameW(&ofn))
+                {
+                    DWORD error = CommDlgExtendedError();
+                    if (error != 0)
+                        CB_WARN("Open scene dialog failed: 0x{:08x}", error);
+                    return false;
+                }
+
+                out_path = file_name.data();
+                return true;
+            }
 #endif
         }
 
@@ -420,23 +449,16 @@ namespace Cyber
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    // Open is enabled whenever the currently-selected Content
-                    // Browser file looks like a .scene. We reuse that
-                    // selection rather than pop a native file dialog.
-                    bool can_open = false;
-                    if (!m_selected_asset.empty())
-                    {
-                        std::string ext = std::filesystem::path(m_selected_asset).extension().string();
-                        std::transform(ext.begin(), ext.end(), ext.begin(),
-                            [](unsigned char c){ return static_cast<char>(std::tolower(c)); });
-                        can_open = (ext == ".scene");
-                    }
-                    if (ImGui::MenuItem("Open Scene", nullptr, false, can_open))
-                        handle_open_scene();
-
                     Core::Application* app_fm = m_pApp ? m_pApp : Core::Application::getApp();
                     Samples::SampleApp* sample_fm = app_fm ? app_fm->get_sample_app() : nullptr;
                     RefCntAutoPtr<World> world_fm = sample_fm ? sample_fm->get_world() : RefCntAutoPtr<World>{};
+
+                    if (ImGui::MenuItem("New Scene", nullptr, false, sample_fm != nullptr))
+                        handle_new_scene();
+
+                    if (ImGui::MenuItem("Open Scene"))
+                        handle_open_scene();
+
                     const bool has_source = world_fm && !world_fm->source_path().empty();
 
                     if (ImGui::MenuItem("Save Scene", nullptr, false, (bool)world_fm && has_source))
@@ -1019,7 +1041,7 @@ namespace Cyber
             ImGui::EndPopup();
         }
 
-        void Editor::create_content_browser_folder()
+        std::filesystem::path Editor::resolve_content_browser_creation_directory()
         {
             namespace fs = std::filesystem;
 
@@ -1034,8 +1056,8 @@ namespace Cyber
                 root = engine_root;
             if (root.empty())
             {
-                CB_WARN("Content Browser has no root folder for folder creation");
-                return;
+                CB_WARN("Content Browser has no root folder for asset creation");
+                return {};
             }
 
             root = root.lexically_normal();
@@ -1045,7 +1067,7 @@ namespace Cyber
                 CB_WARN("Failed to create content root: {} ({})",
                         root.string().c_str(),
                         ec.message().c_str());
-                return;
+                return {};
             }
 
             if (!destination_dir.is_absolute())
@@ -1060,6 +1082,18 @@ namespace Cyber
             if (!valid_destination)
                 destination_dir = root;
 
+            return destination_dir;
+        }
+
+        void Editor::create_content_browser_folder()
+        {
+            namespace fs = std::filesystem;
+
+            fs::path destination_dir = resolve_content_browser_creation_directory();
+            if (destination_dir.empty())
+                return;
+
+            std::error_code ec;
             const fs::path folder_path = make_unique_child_path(destination_dir / "New Folder");
             ec.clear();
             const bool created = fs::create_directory(folder_path, ec);
@@ -1080,6 +1114,30 @@ namespace Cyber
             m_show_details_panel = true;
 
             CB_INFO("Created folder: {}", folder_path.string().c_str());
+        }
+
+        void Editor::create_content_browser_scene()
+        {
+            namespace fs = std::filesystem;
+
+            fs::path destination_dir = resolve_content_browser_creation_directory();
+            if (destination_dir.empty())
+                return;
+
+            const fs::path scene_path = make_unique_child_path(destination_dir / "New Scene.scene");
+            World scene;
+            if (!SceneSerializer::save(scene, scene_path.string().c_str()))
+                return;
+
+            m_current_folder = destination_dir.string();
+            m_tree_pending_expand = m_current_folder;
+            m_selected_asset = scene_path.string();
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            m_show_content_browser = true;
+            m_show_details_panel = true;
+
+            CB_INFO("Created scene: {}", scene_path.string().c_str());
         }
 
         void Editor::begin_content_browser_rename(const std::filesystem::path& path)
@@ -1536,6 +1594,8 @@ namespace Cyber
                     {
                         if (ImGui::MenuItem("Folder"))
                             create_content_browser_folder();
+                        if (ImGui::MenuItem("Scene"))
+                            create_content_browser_scene();
                         ImGui::EndMenu();
                     }
                     ImGui::EndPopup();
@@ -1935,6 +1995,22 @@ namespace Cyber
             ImGui::End();
         }
 
+        void Editor::handle_new_scene()
+        {
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            if (!world)
+                return;
+
+            world->clear();
+            m_selected_node_id = 0;
+            m_selected_component_index = -1;
+            m_selected_asset.clear();
+            refresh_content_browser_root(true);
+            CB_INFO("Created new scene");
+        }
+
         void Editor::handle_import_image()
         {
 #ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
@@ -2178,14 +2254,19 @@ namespace Cyber
 
         void Editor::handle_open_scene()
         {
-            if (m_selected_asset.empty())
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+            std::filesystem::path scene_path;
+            if (!open_scene_dialog(m_hwnd, scene_path))
                 return;
+
             Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
             Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
             RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
             if (!world)
                 return;
-            if (!SceneSerializer::load(*world, m_selected_asset.c_str()))
+
+            const std::string scene_path_string = scene_path.string();
+            if (!SceneSerializer::load(*world, scene_path_string.c_str()))
                 return;
             // MeshComponents listed in the file need the sample to pump pending
             // loads; queue each one now so the sample will process them on its
@@ -2198,6 +2279,11 @@ namespace Cyber
                 });
             m_selected_node_id = 0;
             m_selected_component_index = -1;
+            m_selected_asset = scene_path.lexically_normal().string();
+            refresh_content_browser_root(true);
+#else
+            CB_WARN("Open Scene is only implemented on Windows for now");
+#endif
         }
 
         void Editor::handle_save_scene()
