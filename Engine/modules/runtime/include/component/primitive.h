@@ -3,6 +3,7 @@
 #include "math/basic_math.hpp"
 #include "cyber_runtime.config.h"
 #include "core/Core.h"
+#include "reflection/reflection_annotations.h"
 #include <EASTL/string.h>
 
 CYBER_BEGIN_NAMESPACE(Cyber)
@@ -22,6 +23,7 @@ CYBER_BEGIN_NAMESPACE(Component)
     // virtual clone() to support Duplicate in the scene hierarchy.
     class CYBER_RUNTIME_API Primitive
     {
+        CYBER_REFLECT_COMPONENT(Primitive, None, Abstract, Display="Primitive")
     public:
         Primitive() = default;
         explicit Primitive(ComponentType t) : m_type(t) {}
@@ -35,10 +37,15 @@ CYBER_BEGIN_NAMESPACE(Component)
         // the caller re-enqueues a load.
         virtual Scope<Primitive> clone() const = 0;
 
+        CYBER_PROPERTY(Serializable, Speed=0.05)
         float3       position{0.0f, 0.0f, 0.0f};
+        CYBER_PROPERTY(Serializable, Euler, Speed=0.5)
         quaternion_f rotation{0.0f, 0.0f, 0.0f, 1.0f};
+        CYBER_PROPERTY(Serializable, UniformScale, Min=0.0001, Speed=0.01)
         float3       scale{1.0f, 1.0f, 1.0f};
+        CYBER_PROPERTY(Serializable)
         bool         enabled = true;
+        CYBER_PROPERTY(Serializable)
         eastl::string name;
 
         float4x4 local_matrix() const

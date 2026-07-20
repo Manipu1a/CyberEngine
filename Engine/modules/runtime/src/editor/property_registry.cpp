@@ -1,7 +1,15 @@
 #include "editor/property_registry.h"
+#include "editor/resource_type_registry.h"
+#include "asset/mesh_importer.h"
+#include "core/file_helper.hpp"
+#include "log/Log.h"
 #include "imgui/imgui.h"
 #include "imgui/ImGuizmo.h"
+#include <algorithm>
+#include <cctype>
 #include <cstdio>
+#include <filesystem>
+#include <string>
 
 namespace Cyber
 {
@@ -51,7 +59,21 @@ namespace Cyber
 
         PropertyRegistry::Builder PropertyRegistry::register_component(const char* type_name)
         {
-            ComponentProps& props = m_components[eastl::string(type_name)];
+            const eastl::string key(type_name);
+            bool known = false;
+            for (const auto& existing : m_component_order)
+            {
+                if (existing == key)
+                {
+                    known = true;
+                    break;
+                }
+            }
+            if (!known)
+                m_component_order.push_back(key);
+
+            ComponentProps& props = m_components[key];
+            props = ComponentProps{};
             props.type_name = type_name;
             return Builder(&props);
         }
@@ -70,6 +92,23 @@ namespace Cyber
             return *this;
         }
 
+        PropertyRegistry::Builder& PropertyRegistry::Builder::display(const char* display_name)
+        {
+            if (m_current)
+                m_current->display_name = display_name;
+            else if (m_current_function)
+                m_current_function->display_name = display_name;
+            else if (m_props)
+                m_props->display_name = display_name;
+            return *this;
+        }
+
+        PropertyRegistry::Builder& PropertyRegistry::Builder::abstract()
+        {
+            if (m_props) m_props->is_abstract = true;
+            return *this;
+        }
+
         PropertyRegistry::Builder& PropertyRegistry::Builder::add_field(
             const char* name, PropertyType type, std::size_t offset)
         {
@@ -80,6 +119,7 @@ namespace Cyber
             p.offset = offset;
             m_props->fields.push_back(p);
             m_current = &m_props->fields.back();
+            m_current_function = nullptr;
             return *this;
         }
 
@@ -105,7 +145,21 @@ namespace Cyber
         }
         PropertyRegistry::Builder& PropertyRegistry::Builder::readonly()
         {
-            if (m_current) m_current->readonly = true;
+            if (m_current)
+            {
+                m_current->readonly = true;
+                m_current->flags |= PropertyFlag_ReadOnly;
+            }
+            return *this;
+        }
+        PropertyRegistry::Builder& PropertyRegistry::Builder::serializable()
+        {
+            if (m_current) m_current->flags |= PropertyFlag_Serializable;
+            return *this;
+        }
+        PropertyRegistry::Builder& PropertyRegistry::Builder::asset(PropertyAssetKind kind)
+        {
+            if (m_current) m_current->asset_kind = kind;
             return *this;
         }
         PropertyRegistry::Builder& PropertyRegistry::Builder::uniform_scale()
@@ -128,9 +182,112 @@ namespace Cyber
             if (m_current) m_current->on_changed = cb;
             return *this;
         }
+        PropertyRegistry::Builder& PropertyRegistry::Builder::function(const char* name, const char* signature)
+        {
+            if (!m_props) return *this;
+            FunctionDesc f{};
+            f.name = name;
+            f.signature = signature ? signature : "";
+            m_props->functions.push_back(f);
+            m_current = nullptr;
+            m_current_function = &m_props->functions.back();
+            return *this;
+        }
+        PropertyRegistry::Builder& PropertyRegistry::Builder::script_callable()
+        {
+            if (m_current_function) m_current_function->flags |= FunctionFlag_ScriptCallable;
+            return *this;
+        }
+        PropertyRegistry::Builder& PropertyRegistry::Builder::const_function()
+        {
+            if (m_current_function) m_current_function->flags |= FunctionFlag_Const;
+            return *this;
+        }
 
         namespace
         {
+            const char* property_label(const Property& p)
+            {
+                return p.display_name && p.display_name[0] ? p.display_name : p.name;
+            }
+
+            bool property_readonly(const Property& p)
+            {
+                return p.readonly || ((p.flags & PropertyFlag_ReadOnly) != 0);
+            }
+
+            ResourceCategory asset_category(PropertyAssetKind kind)
+            {
+                switch (kind)
+                {
+                    case PropertyAssetKind::Model:   return ResourceCategory::Model;
+                    case PropertyAssetKind::Texture: return ResourceCategory::Texture;
+                    case PropertyAssetKind::Scene:   return ResourceCategory::Scene;
+                    case PropertyAssetKind::None:
+                    default:                         return ResourceCategory::Unknown;
+                }
+            }
+
+            std::string lowercase(std::string s)
+            {
+                std::transform(s.begin(), s.end(), s.begin(),
+                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                return s;
+            }
+
+            bool asset_path_matches_property(const Property& p, const char* utf8_path)
+            {
+                if (p.asset_kind == PropertyAssetKind::None)
+                    return true;
+                if (!utf8_path || !*utf8_path)
+                    return false;
+
+                const std::string ext = lowercase(std::filesystem::path(utf8_path).extension().string());
+                const ResourceTypeInfo* info = ResourceTypeRegistry::get().find(ext);
+                if (!info || info->category != asset_category(p.asset_kind))
+                    return false;
+
+                if (p.asset_kind == PropertyAssetKind::Model)
+                {
+                    if (ext != ".meshasset")
+                    {
+                        CB_WARN("Rejected model asset {}: MeshComponent model_resource only accepts .meshasset files",
+                                utf8_path);
+                        return false;
+                    }
+
+                    MeshEditorAssetInfo mesh_info;
+                    if (!MeshImporter::ReadInfo(utf8_path, mesh_info))
+                    {
+                        CB_WARN("Rejected invalid mesh asset: {}", utf8_path);
+                        return false;
+                    }
+                    if (!mesh_info.isCooked)
+                    {
+                        CB_WARN("Rejected legacy mesh asset {}: reimport is required", utf8_path);
+                        return false;
+                    }
+
+                    return true;
+                }
+
+                return true;
+            }
+
+            eastl::string to_project_relative_asset_path(const char* utf8_path)
+            {
+                if (!utf8_path || !*utf8_path)
+                    return {};
+
+                namespace fs = std::filesystem;
+                fs::path p(utf8_path);
+                std::error_code ec;
+                fs::path rel = fs::relative(p, fs::path(Core::FileHelper::get_project_root()), ec);
+                if (!ec && !rel.empty() && rel.native().front() != '.')
+                    return eastl::string(rel.generic_string().c_str());
+                return eastl::string(utf8_path);
+            }
+
             float clamp_property_value(float value, const Property& p)
             {
                 if (value < p.min_val) return p.min_val;
@@ -180,9 +337,10 @@ namespace Cyber
 
             bool draw_float3_drag(void* instance, const Property& p, PropertyDrawContext& ctx, float values[3])
             {
+                const char* label = property_label(p);
                 if (!p.uniform_scale)
                 {
-                    const bool changed = ImGui::DragFloat3(p.name, values, p.drag_speed,
+                    const bool changed = ImGui::DragFloat3(label, values, p.drag_speed,
                                                            p.min_val, p.max_val, "%.3f");
                     if (changed)
                         clamp_property_float3(values, p);
@@ -203,7 +361,7 @@ namespace Cyber
                     ImGui::SetTooltip("%s", lock_state->locked ? "Uniform scale locked" : "Uniform scale unlocked");
                 ImGui::SameLine();
 
-                const bool changed = ImGui::DragFloat3(p.name, values, p.drag_speed,
+                const bool changed = ImGui::DragFloat3(label, values, p.drag_speed,
                                                        p.min_val, p.max_val, "%.3f");
                 if (changed)
                 {
@@ -219,6 +377,8 @@ namespace Cyber
             {
                 void* field_ptr = static_cast<char*>(instance) + p.offset;
                 ImGui::PushID(p.name);
+                const char* label = property_label(p);
+                const bool readonly = property_readonly(p);
                 bool changed = false;
 
                 switch (p.type)
@@ -226,31 +386,31 @@ namespace Cyber
                     case PropertyType::Bool:
                     {
                         bool* v = static_cast<bool*>(field_ptr);
-                        if (p.readonly) ImGui::LabelText(p.name, "%s", *v ? "true" : "false");
-                        else            changed = ImGui::Checkbox(p.name, v);
+                        if (readonly) ImGui::LabelText(label, "%s", *v ? "true" : "false");
+                        else          changed = ImGui::Checkbox(label, v);
                         break;
                     }
                     case PropertyType::Int:
                     {
                         int* v = static_cast<int*>(field_ptr);
-                        if (p.readonly) ImGui::LabelText(p.name, "%d", *v);
-                        else            changed = ImGui::DragInt(p.name, v, p.drag_speed,
+                        if (readonly) ImGui::LabelText(label, "%d", *v);
+                        else          changed = ImGui::DragInt(label, v, p.drag_speed,
                                                                  (int)p.min_val, (int)p.max_val);
                         break;
                     }
                     case PropertyType::Float:
                     {
                         float* v = static_cast<float*>(field_ptr);
-                        if (p.readonly) ImGui::LabelText(p.name, "%.3f", *v);
-                        else            changed = ImGui::DragFloat(p.name, v, p.drag_speed,
+                        if (readonly) ImGui::LabelText(label, "%.3f", *v);
+                        else          changed = ImGui::DragFloat(label, v, p.drag_speed,
                                                                    p.min_val, p.max_val);
                         break;
                     }
                     case PropertyType::Float3:
                     {
                         float3* v = static_cast<float3*>(field_ptr);
-                        if (p.readonly)
-                            ImGui::LabelText(p.name, "%.3f, %.3f, %.3f", v->x, v->y, v->z);
+                        if (readonly)
+                            ImGui::LabelText(label, "%.3f, %.3f, %.3f", v->x, v->y, v->z);
                         else
                             changed = draw_float3_drag(instance, p, ctx, &v->x);
                         break;
@@ -258,10 +418,10 @@ namespace Cyber
                     case PropertyType::Color3:
                     {
                         float3* v = static_cast<float3*>(field_ptr);
-                        if (p.readonly)
-                            ImGui::LabelText(p.name, "%.3f, %.3f, %.3f", v->x, v->y, v->z);
+                        if (readonly)
+                            ImGui::LabelText(label, "%.3f, %.3f, %.3f", v->x, v->y, v->z);
                         else
-                            changed = ImGui::ColorEdit3(p.name, &v->x);
+                            changed = ImGui::ColorEdit3(label, &v->x);
                         break;
                     }
                     case PropertyType::QuaternionEuler:
@@ -285,12 +445,12 @@ namespace Cyber
                             cache->last_quat = *quat;
                             cache->first_use = false;
                         }
-                        if (p.readonly)
+                        if (readonly)
                         {
-                            ImGui::LabelText(p.name, "%.3f, %.3f, %.3f",
+                            ImGui::LabelText(label, "%.3f, %.3f, %.3f",
                                              cache->euler[0], cache->euler[1], cache->euler[2]);
                         }
-                        else if (ImGui::DragFloat3(p.name, cache->euler, p.drag_speed,
+                        else if (ImGui::DragFloat3(label, cache->euler, p.drag_speed,
                                                    p.min_val, p.max_val, "%.3f"))
                         {
                             const float deg2rad = 3.14159265358979323846f / 180.0f;
@@ -306,18 +466,45 @@ namespace Cyber
                     case PropertyType::String:
                     {
                         auto* v = static_cast<eastl::string*>(field_ptr);
-                        if (p.readonly)
+                        if (readonly)
                         {
-                            ImGui::LabelText(p.name, "%s", v->c_str());
+                            ImGui::LabelText(label, "%s", v->empty() ? "(empty)" : v->c_str());
                         }
                         else
                         {
-                            char buf[256];
+                            const bool is_asset_reference = p.asset_kind != PropertyAssetKind::None;
+                            char buf[1024];
                             std::snprintf(buf, sizeof(buf), "%s", v->c_str());
-                            if (ImGui::InputText(p.name, buf, sizeof(buf)))
+                            const ImGuiInputTextFlags input_flags =
+                                is_asset_reference ? ImGuiInputTextFlags_ReadOnly : ImGuiInputTextFlags_None;
+                            if (ImGui::InputText(label, buf, sizeof(buf), input_flags) && !is_asset_reference)
                             {
                                 *v = buf;
                                 changed = true;
+                            }
+                            if (is_asset_reference && ImGui::BeginDragDropTarget())
+                            {
+                                if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("CYBER_ASSET"))
+                                {
+                                    const char* path = static_cast<const char*>(payload->Data);
+                                    if (asset_path_matches_property(p, path))
+                                    {
+                                        *v = to_project_relative_asset_path(path);
+                                        changed = true;
+                                    }
+                                }
+                                ImGui::EndDragDropTarget();
+                            }
+                            if (is_asset_reference && ImGui::IsItemHovered())
+                                ImGui::SetTooltip("Drop a matching Content Browser asset here");
+                            if (is_asset_reference && !v->empty())
+                            {
+                                ImGui::SameLine();
+                                if (ImGui::SmallButton("Clear"))
+                                {
+                                    v->clear();
+                                    changed = true;
+                                }
                             }
                         }
                         break;

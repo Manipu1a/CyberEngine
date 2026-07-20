@@ -1,9 +1,4 @@
 #include "component/mesh_component.h"
-#include "editor/property_registry.h"
-
-CYBER_REGISTER_COMPONENT(Cyber::Component::MeshComponent, "MeshComponent")
-    .inherits("Primitive")
-    .field("model_resource", &Cyber::Component::MeshComponent::model_resource).readonly();
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)

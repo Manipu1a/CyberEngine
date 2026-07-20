@@ -2,6 +2,10 @@
 #include "log/Log.h"
 #include "graphics/interface/graphics_types.h"
 #include "texture_utils.h"
+#include "asset/cooked_mesh.h"
+
+#include <algorithm>
+#include <cctype>
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(ModelLoader)
@@ -13,7 +17,10 @@ static std::string get_file_extension(const std::string& file_path)
     {
         return "";
     }
-    return file_path.substr(last_dot + 1);
+    std::string extension = file_path.substr(last_dot + 1);
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return extension;
 }
 
 struct GltfBufferAccessInfo
@@ -69,16 +76,37 @@ void Model::load_data(const ModelCreateInfo& create_info)
         return;
     }
 
-    tinygltf::TinyGLTF gltf_context;
-
     std::string input_file_path = create_info.file_path;
     std::string file_extension = get_file_extension(input_file_path);
+    model = tinygltf::Model {};
+    meshes.clear();
+    materials.clear();
+    model_data.clear();
+    indices_data.clear();
+    textures.clear();
+    m_is_gltf_source = false;
+    m_is_cooked_source = false;
+    m_cooked_textures.clear();
     m_base_dir = "";
     if(input_file_path.find_last_of("/\\") != std::string::npos)
     {
         m_base_dir = input_file_path.substr(0, input_file_path.find_last_of("/\\"));
     }
     m_base_dir += "/";
+
+    if (file_extension == "meshasset")
+    {
+        load_cooked_meshasset(input_file_path);
+        return;
+    }
+
+    if (file_extension != "gltf" && file_extension != "glb")
+    {
+        CB_ERROR("Unsupported model source format: {0}", input_file_path.c_str());
+        return;
+    }
+
+    tinygltf::TinyGLTF gltf_context;
 
     std::string error;
     std::string warning;
@@ -111,6 +139,8 @@ void Model::load_data(const ModelCreateInfo& create_info)
         return;
     }
 
+    m_is_gltf_source = true;
+
     for(auto& scene : model.scenes)
     {
         for(size_t i = 0; i < scene.nodes.size(); ++i)
@@ -120,6 +150,85 @@ void Model::load_data(const ModelCreateInfo& create_info)
     }
 
     load_materials(model);
+}
+
+bool Model::load_cooked_meshasset(const std::string& file_path)
+{
+    CookedMeshData cooked;
+    std::string error;
+    if (!ReadCookedMeshAsset(file_path, cooked, &error))
+    {
+        CB_ERROR("Failed to load cooked mesh asset {0}: {1}", file_path.c_str(), error.c_str());
+        return false;
+    }
+
+    model_data.resize(cooked.vertices.size());
+    for (size_t i = 0; i < cooked.vertices.size(); ++i)
+    {
+        const CookedMeshVertex& source = cooked.vertices[i];
+        VertexBasicAttribs& destination = model_data[i];
+        destination.pos = { source.position[0], source.position[1], source.position[2] };
+        destination.normal = { source.normal[0], source.normal[1], source.normal[2] };
+        destination.uv0 = { source.uv0[0], source.uv0[1] };
+        destination.tangent = { source.tangent[0], source.tangent[1], source.tangent[2] };
+    }
+    indices_data = std::move(cooked.indices);
+
+    materials.reserve(cooked.materials.size());
+    for (const CookedMeshMaterial& source : cooked.materials)
+    {
+        Material material;
+        material.attribs.base_color_factor = {
+            source.baseColorFactor[0], source.baseColorFactor[1],
+            source.baseColorFactor[2], source.baseColorFactor[3]
+        };
+        material.attribs.emissive_factor = {
+            source.emissiveFactor[0], source.emissiveFactor[1],
+            source.emissiveFactor[2], source.emissiveFactor[3]
+        };
+        material.attribs.metallic_factor = source.metallicFactor;
+        material.attribs.roughness_factor = source.roughnessFactor;
+        for (size_t i = 0; i < Material::num_texture_attributes; ++i)
+            material.texture_ids[i] = source.textureIds[i];
+        materials.push_back(material);
+    }
+
+    meshes.reserve(cooked.meshes.size());
+    for (const CookedMeshRecord& sourceMesh : cooked.meshes)
+    {
+        Mesh mesh;
+        mesh.name = sourceMesh.name;
+        mesh.primitives.reserve(sourceMesh.primitiveCount);
+        for (uint32_t i = 0; i < sourceMesh.primitiveCount; ++i)
+        {
+            const CookedMeshPrimitive& source =
+                cooked.primitives[sourceMesh.firstPrimitive + i];
+            mesh.primitives.emplace_back(
+                source.firstIndex, source.indexCount, source.vertexCount, source.materialIndex,
+                float3 { source.boundsMin[0], source.boundsMin[1], source.boundsMin[2] },
+                float3 { source.boundsMax[0], source.boundsMax[1], source.boundsMax[2] });
+        }
+        mesh.update_bounding_box();
+        meshes.push_back(std::move(mesh));
+    }
+
+    m_cooked_textures.reserve(cooked.textures.size());
+    for (CookedMeshTexture& source : cooked.textures)
+    {
+        PendingCookedTexture texture;
+        texture.name = source.record.name;
+        texture.width = source.record.width;
+        texture.height = source.record.height;
+        texture.component_count = source.record.componentCount;
+        texture.component_size = source.record.componentSize;
+        texture.bytes = std::move(source.bytes);
+        m_cooked_textures.push_back(std::move(texture));
+    }
+
+    m_is_cooked_source = true;
+    CB_INFO("Loaded cooked mesh asset: {0} ({1} meshes, {2} vertices, {3} indices)",
+            file_path.c_str(), meshes.size(), model_data.size(), indices_data.size());
+    return true;
 }
 
 // Build the row-major local transform for a glTF node. Row-vector convention:
@@ -157,7 +266,31 @@ static float4x4 gltf_node_local_transform(const tinygltf::Node& node)
 
 void Model::create_gpu_textures(RenderObject::IRenderDevice* render_device)
 {
-    load_textures(render_device, model, m_base_dir);
+    if (m_is_gltf_source)
+        load_textures(render_device, model, m_base_dir);
+    else if (m_is_cooked_source)
+    {
+        for (const PendingCookedTexture& texture : m_cooked_textures)
+        {
+            ImageData image;
+            image.name = reinterpret_cast<const char8_t*>(texture.name.c_str());
+            image.width = static_cast<int>(texture.width);
+            image.height = static_cast<int>(texture.height);
+            image.num_components = static_cast<int>(texture.component_count);
+            image.component_size = static_cast<int>(texture.component_size);
+            image.pData = texture.bytes.data();
+            image.data_size = texture.bytes.size();
+            if (image.width > 0 && image.height > 0 && image.num_components > 0 &&
+                image.component_size > 0 && image.pData)
+            {
+                add_texture(render_device, image);
+            }
+            else
+            {
+                textures.emplace_back();
+            }
+        }
+    }
 }
 
 void Model::load_from_file(RenderObject::IRenderDevice* render_device, RenderObject::IDeviceContext* context, const ModelCreateInfo& create_info)

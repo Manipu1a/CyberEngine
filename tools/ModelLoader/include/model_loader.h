@@ -198,7 +198,7 @@ public:
 
     bool is_valid() const
     {
-        return !model.meshes.empty();
+        return !meshes.empty() && !model_data.empty() && !indices_data.empty();
     }
 
     const std::vector<Mesh>& get_meshes() const
@@ -271,6 +271,7 @@ public:
         return nullptr;
     }
 private:
+    bool load_cooked_meshasset(const std::string& file_path);
     void load_node(const tinygltf::Model& gltf_model, uint32_t node_index, const float4x4& parent_transform);
     void load_mesh(const tinygltf::Model& gltf_model, uint32_t mesh_index, const float4x4& world_transform);
     void load_materials(const tinygltf::Model& gltf_model);
@@ -289,6 +290,18 @@ private:
 
     float4x4 root_transform = float4x4::Identity();
     std::string m_base_dir; // Stored by load_data() for deferred create_gpu_textures()
+    bool m_is_gltf_source = false;
+    bool m_is_cooked_source = false;
+    struct PendingCookedTexture
+    {
+        std::string name;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        uint32_t component_count = 0;
+        uint32_t component_size = 0;
+        std::vector<uint8_t> bytes;
+    };
+    std::vector<PendingCookedTexture> m_cooked_textures;
     struct TextureInfo
     {
         RefCntAutoPtr<RenderObject::ITexture> texture = nullptr;

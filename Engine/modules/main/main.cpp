@@ -1,6 +1,7 @@
 #include <iostream>
 #include "log/Log.h"
 #include "platform/memory.h"
+#include "application/renderdoc_capture.h"
 #include "gameruntime/sampleapp.h"
 #include "gameruntime/sample_registry.h"
 #include "sample_selector.h"
@@ -15,6 +16,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
     //std::cout << "test log" << std::endl;
     Cyber::Log::initLog();
     CB_CORE_INFO("initLog");
+    Cyber::Core::RenderDocCapture::initialize();
 
     const auto* entries = Cyber::Samples::sample_registry();
     int count = Cyber::Samples::sample_registry_count();

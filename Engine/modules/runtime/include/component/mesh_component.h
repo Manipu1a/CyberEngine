@@ -26,6 +26,7 @@ CYBER_BEGIN_NAMESPACE(Component)
 
     class CYBER_RUNTIME_API MeshComponent : public Primitive
     {
+        CYBER_REFLECT_COMPONENT(MeshComponent, Primitive, Display="Mesh Component")
     public:
         using ModelDeleter = void (*)(ModelLoader::Model*);
 
@@ -35,9 +36,16 @@ CYBER_BEGIN_NAMESPACE(Component)
         const char*      type_name() const override { return "MeshComponent"; }
         Scope<Primitive> clone() const override;
         void set_runtime_model(ModelLoader::Model* in_model, ModelDeleter deleter);
+        CYBER_FUNCTION(Display="Release Runtime Model")
         void release_runtime_model();
 
-        // Project-relative path to a model asset (.gltf/.glb). Serialized.
+        bool is_render_ready() const
+        {
+            return gpu_ready && vertex_buffer && index_buffer && !draw_primitives.empty();
+        }
+
+        // Project-relative path to a cooked .meshasset. Serialized.
+        CYBER_PROPERTY(Display="Model Resource", Serializable, Asset=Model)
         eastl::string               model_resource;
 
         // Runtime state — populated by the sample once GPU resources exist.
@@ -51,6 +59,11 @@ CYBER_BEGIN_NAMESPACE(Component)
         RefCntAutoPtr<RenderObject::IBuffer> index_buffer = nullptr;
         uint32_t                    vertex_stride = 0;
         eastl::vector<MeshDrawPrimitive> draw_primitives;
+        uint32_t                    runtime_vertex_count = 0;
+        uint32_t                    runtime_index_count = 0;
+        float3                      runtime_bounds_min{0.0f, 0.0f, 0.0f};
+        float3                      runtime_bounds_max{0.0f, 0.0f, 0.0f};
+        bool                        runtime_bounds_valid = false;
         bool                        gpu_ready = false;
     };
 

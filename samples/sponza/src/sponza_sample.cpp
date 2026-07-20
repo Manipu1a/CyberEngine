@@ -3,8 +3,8 @@
 #include "model_loader.h"
 #include "texture_utils.h"
 #include "gameruntime/scene_serializer.h"
+#include "gameruntime/project_settings.h"
 #include "gameruntime/world.h"
-#include "asset/asset_database.h"
 #include "asset/mesh_importer.h"
 #include "graphics/interface/device_context.h"
 #include "core/file_helper.hpp"
@@ -43,69 +43,6 @@ namespace Cyber
                 return ext;
             }
 
-            bool is_displayable_model_extension(const fs::path& path)
-            {
-                const std::string ext = lowercase_extension(path);
-                return ext == ".gltf" || ext == ".glb";
-            }
-
-            fs::path resolve_stored_path(const fs::path& content_root, const std::string& stored_path)
-            {
-                fs::path path(AssetRegistry::NormalizePath(stored_path));
-                if (path.is_absolute())
-                    return path.lexically_normal();
-                return (content_root / path).lexically_normal();
-            }
-
-            fs::path find_content_root_for_asset(const fs::path& asset_path)
-            {
-                fs::path dir = asset_path.parent_path();
-                while (!dir.empty())
-                {
-                    std::error_code ec;
-                    const fs::path registry_path = dir / "Registry" / "AssetRegistry.json";
-                    if (fs::exists(registry_path, ec) && fs::is_regular_file(registry_path, ec))
-                        return dir.lexically_normal();
-
-                    const fs::path parent = dir.parent_path();
-                    if (parent == dir)
-                        break;
-                    dir = parent;
-                }
-
-                return {};
-            }
-
-            bool try_resolve_meshasset_source_from_registry(const fs::path& mesh_asset_path,
-                                                            fs::path& out_source_path)
-            {
-                out_source_path.clear();
-
-                const fs::path content_root = find_content_root_for_asset(mesh_asset_path);
-                if (content_root.empty())
-                    return false;
-
-                AssetDatabase database(content_root);
-                if (!database.Load())
-                    return false;
-
-                const std::string stored_asset_path = database.MakeStoredPath(mesh_asset_path);
-                const AssetRegistryRecord* record = database.Registry().FindByAssetPath(stored_asset_path);
-                if (!record || record->sourcePath.empty())
-                    return false;
-
-                fs::path source_path = resolve_stored_path(content_root, record->sourcePath);
-                std::error_code ec;
-                if (!fs::exists(source_path, ec) || fs::is_directory(source_path, ec))
-                    return false;
-
-                if (!is_displayable_model_extension(source_path))
-                    return false;
-
-                out_source_path = source_path.lexically_normal();
-                return true;
-            }
-
             eastl::string resolve_model_resource_for_display(const eastl::string& model_resource)
             {
                 if (model_resource.empty())
@@ -115,7 +52,11 @@ namespace Cyber
                 resolved_path = resolved_path.lexically_normal();
 
                 if (lowercase_extension(resolved_path) != ".meshasset")
-                    return eastl::string(resolved_path.string().c_str());
+                {
+                    CB_ERROR("MeshComponent model_resource only accepts .meshasset files: %s",
+                             resolved_path.string().c_str());
+                    return {};
+                }
 
                 MeshEditorAssetInfo mesh_info;
                 if (!MeshImporter::ReadInfo(resolved_path, mesh_info))
@@ -123,38 +64,13 @@ namespace Cyber
                     CB_ERROR("Mesh asset is invalid: %s", resolved_path.string().c_str());
                     return {};
                 }
-
-                std::string source_ext = mesh_info.sourceExtension;
-                std::transform(source_ext.begin(), source_ext.end(), source_ext.begin(),
-                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-                if (source_ext != ".gltf" && source_ext != ".glb")
+                if (!mesh_info.isCooked)
                 {
-                    CB_ERROR("Mesh asset source format is not displayable yet: %s (%s)",
-                             resolved_path.string().c_str(),
-                             source_ext.c_str());
-                    return {};
-                }
-
-                fs::path source_path;
-                if (try_resolve_meshasset_source_from_registry(resolved_path, source_path))
-                    return eastl::string(source_path.string().c_str());
-
-                const fs::path project_root = fs::path(Core::FileHelper::get_project_root()).lexically_normal();
-                const fs::path cache_root = project_root / "Saved" / "EditorAssetCache" / "MeshSources";
-                fs::path extracted_path;
-                if (!MeshImporter::WriteEmbeddedSourceToCache(resolved_path, cache_root, extracted_path))
-                {
-                    CB_ERROR("Failed to extract mesh asset source for display: %s",
+                    CB_ERROR("Mesh asset uses legacy payload v1 and must be reimported: %s",
                              resolved_path.string().c_str());
                     return {};
                 }
-
-                if (source_ext == ".gltf")
-                {
-                    CB_WARN("Using extracted glTF from mesh asset; external .bin/textures still require the original source directory.");
-                }
-
-                return eastl::string(extracted_path.lexically_normal().string().c_str());
+                return eastl::string(resolved_path.string().c_str());
             }
         }
 
@@ -207,9 +123,16 @@ namespace Cyber
 
         void SponzaApp::on_load_data()
         {
-            if (!SceneSerializer::load(*m_world, "samples/sponza/assets/sponza.scene"))
+            static constexpr const char* kFallbackScene = "samples/sponza/assets/sponza.scene";
+
+            ProjectSettings project_settings;
+            const char* startup_scene = kFallbackScene;
+            if (ProjectSettingsIO::load(project_settings) && !project_settings.startup_scene.empty())
+                startup_scene = project_settings.startup_scene.c_str();
+
+            if (!SceneSerializer::load(*m_world, startup_scene))
             {
-                cyber_error("Failed to load sponza.scene");
+                cyber_error("Failed to load startup scene");
                 return;
             }
 
@@ -235,6 +158,11 @@ namespace Cyber
 
         bool SponzaApp::build_render_mesh_for_component(SceneNode& node, MeshComponent& mc)
         {
+            mc.gpu_ready = false;
+            mc.runtime_vertex_count = 0;
+            mc.runtime_index_count = 0;
+            mc.runtime_bounds_valid = false;
+
             if (!mc.model || !mc.model->is_valid())
             {
                 CB_ERROR("Skipping mesh component on node '%s' (id=%u) — model not loaded",
@@ -251,11 +179,23 @@ namespace Cyber
             const auto model_idx    = mc.model->get_index_data();
 
             eastl::vector<SponzaVertex> vertices(vertex_count);
+            float3 bounds_min{0.0f, 0.0f, 0.0f};
+            float3 bounds_max{0.0f, 0.0f, 0.0f};
             for (size_t i = 0; i < vertex_count; ++i)
             {
                 vertices[i].position = model_verts[i].pos;
                 vertices[i].normal   = model_verts[i].normal;
                 vertices[i].uv       = model_verts[i].uv0;
+                if (i == 0)
+                {
+                    bounds_min = model_verts[i].pos;
+                    bounds_max = model_verts[i].pos;
+                }
+                else
+                {
+                    bounds_min = Math::min(bounds_min, model_verts[i].pos);
+                    bounds_max = Math::max(bounds_max, model_verts[i].pos);
+                }
             }
 
             eastl::vector<uint32_t> indices(index_count);
@@ -264,6 +204,15 @@ namespace Cyber
 
             create_vertex_buffer(vertices.data(), vertex_count * sizeof(SponzaVertex), mc.vertex_buffer);
             create_index_buffer(indices.data(), index_count * sizeof(uint32_t), mc.index_buffer);
+            if (!mc.vertex_buffer || !mc.index_buffer)
+            {
+                CB_ERROR("MeshComponent GPU buffer creation failed: node='{}', vertices={}, indices={}",
+                         node.name.c_str(), vertex_count, index_count);
+                mc.vertex_buffer = nullptr;
+                mc.index_buffer = nullptr;
+                return false;
+            }
+
             mc.vertex_stride = sizeof(SponzaVertex);
             mc.draw_primitives.clear();
 
@@ -296,7 +245,22 @@ namespace Cyber
                 }
             }
 
+            if (mc.draw_primitives.empty())
+            {
+                CB_ERROR("MeshComponent has no renderable primitives: node='{}'", node.name.c_str());
+                mc.vertex_buffer = nullptr;
+                mc.index_buffer = nullptr;
+                return false;
+            }
+
+            mc.runtime_vertex_count = vertex_count;
+            mc.runtime_index_count = index_count;
+            mc.runtime_bounds_min = bounds_min;
+            mc.runtime_bounds_max = bounds_max;
+            mc.runtime_bounds_valid = vertex_count > 0;
             mc.gpu_ready = true;
+            CB_INFO("MeshComponent GPU ready: node='{}', vertices={}, indices={}, primitives={}",
+                    node.name.c_str(), vertex_count, index_count, mc.draw_primitives.size());
             return true;
         }
 
@@ -340,7 +304,15 @@ namespace Cyber
                 {
                     eastl::string resolved = resolve_model_resource_for_display(p.model_resource);
                     if (resolved.empty())
+                    {
+                        CB_WARN("Pending mesh load skipped: stored='{}' could not be resolved",
+                                p.model_resource.c_str());
                         continue;
+                    }
+
+                    CB_INFO("Pending mesh load: stored='{}', loader_path='{}'",
+                            p.model_resource.c_str(),
+                            resolved.c_str());
 
                     ModelLoader::ModelCreateInfo ci;
                     ci.file_path = resolved.c_str();

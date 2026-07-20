@@ -1,11 +1,5 @@
 #include "component/directional_light_component.h"
-#include "editor/property_registry.h"
 #include <cmath>
-
-CYBER_REGISTER_COMPONENT(Cyber::Component::DirectionalLightComponent, "DirectionalLightComponent")
-    .inherits("Primitive")
-    .field("color",     &Cyber::Component::DirectionalLightComponent::color).as_color()
-    .field("intensity", &Cyber::Component::DirectionalLightComponent::intensity).min(0.0f).max(1000.0f).speed(0.05f);
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)

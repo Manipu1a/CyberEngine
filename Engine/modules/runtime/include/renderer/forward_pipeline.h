@@ -90,6 +90,7 @@ namespace Cyber
             RefCntAutoPtr<RenderObject::ISampler> m_sampler;
 
             RefCntAutoPtr<RenderObject::IBuffer> m_scene_constants;
+            RefCntAutoPtr<RenderObject::ITexture> m_white_texture;
             RefCntAutoPtr<RenderObject::ITexture> m_shadow_map;
             RefCntAutoPtr<RenderObject::IFrameBuffer> m_shadow_frame_buffer;
 

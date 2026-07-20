@@ -1,5 +1,6 @@
 #pragma once
 #include "cyber_runtime.config.h"
+#include "component/primitive.h"
 #include "math/basic_math.hpp"
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
@@ -23,12 +24,37 @@ namespace Cyber
             String,           // eastl::string
         };
 
+        enum PropertyFlags : uint32_t
+        {
+            PropertyFlag_None         = 0,
+            PropertyFlag_ReadOnly     = 1u << 0,
+            PropertyFlag_Serializable = 1u << 1,
+        };
+
+        enum class PropertyAssetKind : uint8_t
+        {
+            None,
+            Model,
+            Texture,
+            Scene,
+        };
+
+        enum FunctionFlags : uint32_t
+        {
+            FunctionFlag_None           = 0,
+            FunctionFlag_ScriptCallable = 1u << 0,
+            FunctionFlag_Const          = 1u << 1,
+        };
+
         struct Property
         {
             const char*  name        = "";
+            const char*  display_name = "";
             PropertyType type        = PropertyType::Float;
             size_t       offset      = 0;
             bool         readonly    = false;
+            uint32_t     flags       = PropertyFlag_None;
+            PropertyAssetKind asset_kind = PropertyAssetKind::None;
             float        min_val     = -3.4028235e+38f;
             float        max_val     =  3.4028235e+38f;
             float        drag_speed  = 0.1f;
@@ -38,11 +64,23 @@ namespace Cyber
             void       (*on_changed)(void* instance) = nullptr;
         };
 
+        struct FunctionDesc
+        {
+            eastl::string name;
+            eastl::string display_name;
+            eastl::string signature;
+            uint32_t      flags = FunctionFlag_None;
+        };
+
         struct ComponentProps
         {
             eastl::string                 type_name;
+            eastl::string                 display_name;
             eastl::string                 parent_type_name;
+            bool                          is_abstract = false;
+            Scope<Component::Primitive> (*factory)() = nullptr;
             eastl::vector<Property>       fields;
+            eastl::vector<FunctionDesc>   functions;
         };
 
         // Per-frame state threaded through property drawing. Owns caches
@@ -86,11 +124,27 @@ namespace Cyber
             {
                 ComponentProps* m_props   = nullptr;
                 Property*       m_current = nullptr;
+                FunctionDesc*   m_current_function = nullptr;
             public:
                 Builder() = default;
                 explicit Builder(ComponentProps* p) : m_props(p) {}
 
                 Builder& inherits(const char* parent_type_name);
+                Builder& display(const char* display_name);
+                Builder& abstract();
+
+                template <typename Class>
+                Builder& factory()
+                {
+                    if (!m_props)
+                        return *this;
+                    m_props->factory = []() -> Scope<Component::Primitive>
+                    {
+                        auto instance = Scope<Class>(new Class());
+                        return Scope<Component::Primitive>(instance.release());
+                    };
+                    return *this;
+                }
 
                 template <typename Class, typename FieldT>
                 Builder& field(const char* name, FieldT Class::*member)
@@ -110,10 +164,15 @@ namespace Cyber
                 Builder& max(float v);
                 Builder& speed(float s);
                 Builder& readonly();
+                Builder& serializable();
+                Builder& asset(PropertyAssetKind kind);
                 Builder& uniform_scale();
                 Builder& as_color();
                 Builder& as_euler();
                 Builder& on_changed(void (*cb)(void*));
+                Builder& function(const char* name, const char* signature);
+                Builder& script_callable();
+                Builder& const_function();
 
             private:
                 Builder& add_field(const char* name, PropertyType type, std::size_t offset);
@@ -134,9 +193,11 @@ namespace Cyber
 
             Builder register_component(const char* type_name);
             const ComponentProps* find(const char* type_name) const;
+            const eastl::vector<eastl::string>& component_order() const { return m_component_order; }
 
         private:
             eastl::hash_map<eastl::string, ComponentProps> m_components;
+            eastl::vector<eastl::string> m_component_order;
         };
 
         // Draw all registered fields of `type_name` (walking up the

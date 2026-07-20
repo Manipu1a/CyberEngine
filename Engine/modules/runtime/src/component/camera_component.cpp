@@ -1,15 +1,8 @@
 #include "component/camera_component.h"
 #include "application/application.h"
-#include "editor/property_registry.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_internal.h"
 #include <cstring>
-
-CYBER_REGISTER_COMPONENT(Cyber::Component::CameraComponent, "CameraComponent")
-    .inherits("Primitive")
-    .field("fov_deg", &Cyber::Component::CameraComponent::fov_deg).range(1.0f, 179.0f).speed(0.1f)
-    .field("near_z",  &Cyber::Component::CameraComponent::near_z ).min(0.0001f).speed(0.01f)
-    .field("far_z",   &Cyber::Component::CameraComponent::far_z  ).min(0.001f).speed(0.5f);
 
 CYBER_BEGIN_NAMESPACE(Cyber)
 CYBER_BEGIN_NAMESPACE(Component)

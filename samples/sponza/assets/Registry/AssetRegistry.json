@@ -1,0 +1,21 @@
+{
+    "version": 1,
+    "assets": [
+        {
+            "guid": "1c37c771-72bc-51a8-bfc9-1bce23925c29",
+            "type": "Mesh",
+            "assetPath": "main_sponza/NewSponza_Main_glTF_003.meshasset",
+            "displayName": "NewSponza_Main_glTF_003",
+            "sourcePath": "main_sponza/NewSponza_Main_glTF_003.gltf",
+            "sourceHash": 13745291818952402932,
+            "editorAssetHash": 9937333542430275239,
+            "cookedAssetHash": 0,
+            "importerVersion": 2,
+            "assetFormatVersion": 1,
+            "dependencies": [],
+            "thumbnailPath": "",
+            "packageName": "",
+            "chunkId": 0
+        }
+    ]
+}

@@ -30,6 +30,7 @@ enum CameraMovement
 // in update().
 class CYBER_RUNTIME_API CameraComponent : public Primitive
 {
+    CYBER_REFLECT_COMPONENT(CameraComponent, Primitive, Display="Camera Component")
 public:
     CameraComponent();
     explicit CameraComponent(float3 initial_position);
@@ -38,6 +39,7 @@ public:
     const char*      type_name() const override { return "CameraComponent"; }
     Scope<Primitive> clone() const override;
 
+    CYBER_FUNCTION(Display="Update")
     void update(float deltaTime = 0.0f);
 
     void mouse_wheel_move(float value);
@@ -62,8 +64,11 @@ public:
     void  set_pitch(float v) { pitch = v; }
 
     // Projection parameters (serialized).
+    CYBER_PROPERTY(Display="FOV", Serializable, Range=1.0:179.0, Speed=0.1)
     float fov_deg = 60.0f;
+    CYBER_PROPERTY(Display="Near Clip", Serializable, Min=0.0001, Speed=0.01)
     float near_z  = 0.1f;
+    CYBER_PROPERTY(Display="Far Clip", Serializable, Min=0.001, Speed=0.5)
     float far_z   = 1000.0f;
 
 private:

@@ -60,7 +60,7 @@ int main()
     const fs::path contentRoot = testRoot / "Content";
     const fs::path sourcePath = testRoot / "Source" / "checker.png";
     const fs::path assetPath = contentRoot / "Assets" / "Textures" / "checker.textureasset";
-    const fs::path meshSourcePath = testRoot / "Source" / "cube.fbx";
+    const fs::path meshSourcePath = testRoot / "Source" / "triangle.gltf";
     const fs::path meshAssetPath = contentRoot / "Assets" / "Meshes" / "cube.meshasset";
 
     fs::create_directories(sourcePath.parent_path());
@@ -78,10 +78,25 @@ int main()
         assert(sourceFile.good());
     }
 
-    const std::string fakeFbx = "Kaydara FBX Binary  \x00\x1a\x00";
+    const std::string triangleGltf = R"({
+        "asset":{"version":"2.0"},
+        "buffers":[{"byteLength":42,"uri":"data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAAAAABAAIA"}],
+        "bufferViews":[
+            {"buffer":0,"byteOffset":0,"byteLength":36,"target":34962},
+            {"buffer":0,"byteOffset":36,"byteLength":6,"target":34963}
+        ],
+        "accessors":[
+            {"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[0,0,0],"max":[1,1,0]},
+            {"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"}
+        ],
+        "meshes":[{"primitives":[{"attributes":{"POSITION":0},"indices":1}]}],
+        "nodes":[{"mesh":0}],
+        "scenes":[{"nodes":[0]}],
+        "scene":0
+    })";
     {
         std::ofstream sourceFile(meshSourcePath, std::ios::binary | std::ios::trunc);
-        sourceFile.write(fakeFbx.data(), static_cast<std::streamsize>(fakeFbx.size()));
+        sourceFile.write(triangleGltf.data(), static_cast<std::streamsize>(triangleGltf.size()));
         assert(sourceFile.good());
     }
 
@@ -124,21 +139,17 @@ int main()
     MeshEditorAssetInfo meshInfo;
     assert(MeshImporter::ReadInfo(meshAssetPath, meshInfo));
     assert(meshInfo.fileHeader.assetGuid == meshImportResult.registryRecord.guid);
-    assert(meshInfo.payloadHeader.sourceDataSize == fakeFbx.size());
-    assert(meshInfo.sourceExtension == ".fbx");
+    assert(meshInfo.isCooked);
+    assert(meshInfo.payloadHeader.version == kMeshAssetPayloadVersion);
+    assert(meshInfo.sourceExtension == ".gltf");
 
-    MeshEditorAssetInfo embeddedMeshInfo;
-    std::vector<uint8_t> embeddedMeshBytes;
-    assert(MeshImporter::ReadEmbeddedSource(meshAssetPath, embeddedMeshInfo, embeddedMeshBytes));
-    assert(embeddedMeshInfo.fileHeader.assetGuid == meshImportResult.registryRecord.guid);
-    assert(embeddedMeshBytes.size() == fakeFbx.size());
-    assert(std::string(reinterpret_cast<const char*>(embeddedMeshBytes.data()), embeddedMeshBytes.size()) == fakeFbx);
-
-    fs::path extractedMeshSourcePath;
-    assert(MeshImporter::WriteEmbeddedSourceToCache(
-        meshAssetPath, testRoot / "Saved" / "EditorAssetCache" / "MeshSources", extractedMeshSourcePath));
-    assert(fs::exists(extractedMeshSourcePath));
-    assert(extractedMeshSourcePath.extension() == ".fbx");
+    CookedMeshData cookedMesh;
+    std::string cookedMeshError;
+    assert(MeshImporter::ReadCookedData(meshAssetPath, cookedMesh, &cookedMeshError));
+    assert(cookedMesh.vertices.size() == 3);
+    assert(cookedMesh.indices.size() == 3);
+    assert(cookedMesh.meshes.size() == 1);
+    assert(cookedMesh.primitives.size() == 1);
 
     database.Registry().Upsert(meshImportResult.registryRecord);
     assert(database.Save());

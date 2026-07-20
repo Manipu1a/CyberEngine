@@ -10,18 +10,23 @@
 #include "editor/imgui_log_sink.h"
 #include "editor/resource_type_registry.h"
 #include "asset/asset.h"
+#include "asset/mesh_importer.h"
 #include "renderer/renderer.h"
 #include "gameruntime/sampleapp.h"
 #include "gameruntime/world.h"
 #include "gameruntime/mesh.h"
 #include "gameruntime/scene_node.h"
 #include "gameruntime/scene_serializer.h"
+#include "gameruntime/project_settings.h"
+#include "component_reflection.gen.h"
 #include "component/primitive.h"
 #include "component/mesh_component.h"
 #include "component/camera_component.h"
 #include "component/directional_light_component.h"
 #include "core/file_helper.hpp"
+#include "math/advanced_math.hpp"
 #include <array>
+#include <cmath>
 #include <filesystem>
 #include <limits>
 #include <string>
@@ -294,6 +299,16 @@ namespace Cyber
                 return true;
             }
 #endif
+
+            void ensure_component_reflection_registered()
+            {
+                static bool registered = false;
+                if (registered)
+                    return;
+
+                Cyber::Generated::register_component_reflection();
+                registered = true;
+            }
         }
 
         Editor::Editor(const EditorCreateInfo& createInfo)
@@ -331,8 +346,10 @@ namespace Cyber
 
             // Populate the content-browser resource-type whitelist and root
             // the directory tree at the active sample/project content folder.
+            ensure_component_reflection_registered();
             ResourceTypeRegistry::seed_defaults();
             refresh_content_browser_root(true);
+            load_project_settings();
 
             // Setup Platform/Renderer backends
             m_imguiRenderer->initialize();
@@ -501,6 +518,13 @@ namespace Cyber
                     ImGui::EndMenu();
                 }
 
+                if (ImGui::BeginMenu("Project"))
+                {
+                    if (ImGui::MenuItem("Project Settings"))
+                        m_show_project_settings = true;
+                    ImGui::EndMenu();
+                }
+
                 if (ImGui::BeginMenu("View"))
                 {
                     ImGui::MenuItem("Scene Hierarchy", NULL, &m_show_scene_hierarchy);
@@ -512,10 +536,15 @@ namespace Cyber
                 ImGui::EndMenuBar();
             }
             ImGui::End();
-            
+
+            handle_editor_shortcuts();
+
             // show scene
             if(ImGui::Begin("Viewport"))
             {
+                draw_viewport_toolbar();
+                ImGui::Separator();
+
                 if(ImGui::BeginChild("ViewportChild"))
                 {
                     auto* renderer = Core::Application::getApp()->get_renderer();
@@ -738,8 +767,113 @@ namespace Cyber
 
             draw_save_as_popup();
             draw_content_browser_rename_popup();
+            draw_project_settings();
 
             //ImGui::ShowDemoWindow(&show_demo_window);
+        }
+
+        void Editor::handle_editor_shortcuts()
+        {
+            ImGuiIO& io = ImGui::GetIO();
+            if (io.WantTextInput || io.KeyCtrl || io.KeyShift || io.KeyAlt || io.KeySuper)
+                return;
+
+            if (ImGui::IsKeyPressed(ImGuiKey_F, false))
+                focus_selected_component();
+        }
+
+        bool Editor::focus_selected_component()
+        {
+            if (m_selected_node_id == 0 || m_selected_component_index < 0)
+                return false;
+
+            Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+            Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+            RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+            SceneNode* node = world ? world->find_node(m_selected_node_id) : nullptr;
+            if (!node || static_cast<size_t>(m_selected_component_index) >= node->components.size())
+                return false;
+
+            Component::Primitive* selected = node->components[m_selected_component_index].get();
+            if (!selected)
+                return false;
+
+            Component::CameraComponent* camera = nullptr;
+            world->for_each_component_of<Component::CameraComponent>(
+                [&](SceneNode&, Component::CameraComponent& candidate, uint32_t)
+                {
+                    if (!camera && candidate.enabled)
+                        camera = &candidate;
+                });
+            if (!camera)
+                return false;
+
+            float3 focus_center = selected->position;
+            float focus_radius = 0.5f;
+
+            if (auto* mesh = dynamic_cast<Component::MeshComponent*>(selected);
+                mesh && mesh->runtime_bounds_valid)
+            {
+                BoundBox local_bounds;
+                local_bounds.Min = mesh->runtime_bounds_min;
+                local_bounds.Max = mesh->runtime_bounds_max;
+                const BoundBox world_bounds = local_bounds.Transform(mesh->local_matrix());
+                focus_center = (world_bounds.Min + world_bounds.Max) * 0.5f;
+                const float3 extents = (world_bounds.Max - world_bounds.Min) * 0.5f;
+                focus_radius = std::sqrt(extents.x * extents.x +
+                                         extents.y * extents.y +
+                                         extents.z * extents.z);
+            }
+            else
+            {
+                focus_radius = std::max({std::abs(selected->scale.x),
+                                         std::abs(selected->scale.y),
+                                         std::abs(selected->scale.z),
+                                         0.5f});
+            }
+
+            focus_radius = std::max(focus_radius, 0.05f);
+
+            float aspect_ratio = 16.0f / 9.0f;
+            if (auto* renderer = app->get_renderer())
+            {
+                auto& scene_target = renderer->get_scene_target(renderer->get_back_buffer_index());
+                if (scene_target.color_buffer)
+                {
+                    const auto& desc = scene_target.color_buffer->get_create_desc();
+                    if (desc.m_height > 0)
+                        aspect_ratio = static_cast<float>(desc.m_width) / static_cast<float>(desc.m_height);
+                }
+            }
+
+            constexpr float kPi = 3.14159265358979323846f;
+            const float vertical_fov = std::clamp(camera->fov_deg, 1.0f, 179.0f) * (kPi / 180.0f);
+            const float half_vertical_fov = vertical_fov * 0.5f;
+            const float half_horizontal_fov = std::atan(std::tan(half_vertical_fov) *
+                                                        std::max(aspect_ratio, 0.1f));
+            const float fit_half_fov = std::max(std::min(half_vertical_fov, half_horizontal_fov), 0.01f);
+            float focus_distance = (focus_radius / std::sin(fit_half_fov)) * 1.2f;
+            focus_distance = std::max(focus_distance, focus_radius + std::max(camera->near_z * 2.0f, 0.1f));
+
+            float3 forward = camera->get_forward();
+            const float forward_length = std::sqrt(forward.x * forward.x +
+                                                   forward.y * forward.y +
+                                                   forward.z * forward.z);
+            if (forward_length > 0.0001f)
+                forward = forward * (1.0f / forward_length);
+            else
+                forward = float3(0.0f, 0.0f, 1.0f);
+
+            camera->position = focus_center - forward * focus_distance;
+            const float4x4 view_matrix = float4x4::look_at(
+                camera->position, focus_center, float3(0.0f, 1.0f, 0.0f));
+            camera->set_view_matrix(view_matrix);
+            set_view_matrix(view_matrix.Data());
+            world->set_dirty(true);
+
+            CB_INFO("Focused component: node='{}', component='{}', radius={:.3f}, distance={:.3f}",
+                    node->name.c_str(), selected->type_name(), focus_radius, focus_distance);
+            return true;
         }
 
         namespace
@@ -779,6 +913,42 @@ namespace Cyber
                 {
                     if (part == "..")
                         return false;
+                }
+                return true;
+            }
+
+            bool inspect_displayable_model_resource(const eastl::string& resource,
+                                                    std::filesystem::path& resolved_path,
+                                                    std::string& status)
+            {
+                resolved_path.clear();
+                status.clear();
+
+                if (resource.empty())
+                {
+                    status = "No model resource";
+                    return false;
+                }
+
+                resolved_path = std::filesystem::path(
+                    Core::FileHelper::resolve_path_public(resource.c_str()).c_str()).lexically_normal();
+                const std::string ext = lowercase(resolved_path.extension().string());
+                if (ext != ".meshasset")
+                {
+                    status = "Mesh Resource only accepts .meshasset files";
+                    return false;
+                }
+
+                MeshEditorAssetInfo mesh_info;
+                if (!MeshImporter::ReadInfo(resolved_path, mesh_info))
+                {
+                    status = "Invalid mesh asset";
+                    return false;
+                }
+                if (!mesh_info.isCooked)
+                {
+                    status = "Legacy mesh asset payload v1; reimport required";
+                    return false;
                 }
                 return true;
             }
@@ -867,6 +1037,9 @@ namespace Cyber
                 if (!scene_dir.empty())
                     return (scene_dir / "content").lexically_normal();
             }
+
+            if (!m_tree_root.empty())
+                return fs::path(m_tree_root).lexically_normal();
 
             const fs::path samples_root = (project_root / "samples").lexically_normal();
             std::error_code ec;
@@ -961,10 +1134,15 @@ namespace Cyber
             m_engine_content_root = engine_root_string;
             m_content_browser_scene_source = scene_source;
 
+            if (force || root_changed || engine_root_changed)
+            {
+                m_content_browser_back_stack.clear();
+                m_content_browser_forward_stack.clear();
+            }
+
             if (!keep_current_folder)
             {
-                m_current_folder = desired_root_string;
-                m_tree_pending_expand = desired_root_string;
+                set_content_browser_current_folder(desired_root, false);
             }
 
             if (!m_selected_asset.empty())
@@ -975,6 +1153,97 @@ namespace Cyber
                 selected = selected.lexically_normal();
                 if (!is_content_browser_path_visible(selected))
                     m_selected_asset.clear();
+            }
+        }
+
+        void Editor::set_content_browser_current_folder(const std::filesystem::path& folder,
+                                                        bool record_history)
+        {
+            namespace fs = std::filesystem;
+
+            if (folder.empty())
+                return;
+
+            std::error_code ec;
+            fs::path target = folder;
+            if (!target.is_absolute())
+            {
+                fs::path absolute_target = fs::absolute(target, ec);
+                if (!ec)
+                    target = absolute_target;
+                ec.clear();
+            }
+            target = target.lexically_normal();
+
+            if (!fs::exists(target, ec) || !fs::is_directory(target, ec) ||
+                !is_content_browser_path_visible(target))
+            {
+                return;
+            }
+
+            const std::string target_string = target.string();
+            fs::path current = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder).lexically_normal();
+            const std::string current_string = current.empty() ? std::string() : current.string();
+            if (target_string == current_string)
+            {
+                m_current_folder = target_string;
+                m_tree_pending_expand = target_string;
+                return;
+            }
+
+            if (record_history && !current.empty())
+            {
+                ec.clear();
+                if (fs::exists(current, ec) && fs::is_directory(current, ec) &&
+                    is_content_browser_path_visible(current))
+                {
+                    if (m_content_browser_back_stack.empty() ||
+                        m_content_browser_back_stack.back() != current_string)
+                    {
+                        m_content_browser_back_stack.push_back(current_string);
+                    }
+                    m_content_browser_forward_stack.clear();
+                }
+            }
+
+            m_current_folder = target_string;
+            m_tree_pending_expand = target_string;
+        }
+
+        void Editor::navigate_content_browser_history(bool forward)
+        {
+            namespace fs = std::filesystem;
+
+            auto& source = forward ? m_content_browser_forward_stack : m_content_browser_back_stack;
+            auto& destination = forward ? m_content_browser_back_stack : m_content_browser_forward_stack;
+
+            fs::path current = m_current_folder.empty() ? fs::path{} : fs::path(m_current_folder).lexically_normal();
+            const std::string current_string = current.empty() ? std::string() : current.string();
+
+            while (!source.empty())
+            {
+                fs::path target = fs::path(source.back()).lexically_normal();
+                source.pop_back();
+
+                std::error_code ec;
+                if (!fs::exists(target, ec) || !fs::is_directory(target, ec) ||
+                    !is_content_browser_path_visible(target))
+                {
+                    continue;
+                }
+
+                const std::string target_string = target.string();
+                if (target_string == current_string)
+                    continue;
+
+                if (!current.empty() &&
+                    (destination.empty() || destination.back() != current_string))
+                {
+                    destination.push_back(current_string);
+                }
+
+                set_content_browser_current_folder(target, false);
+                return;
             }
         }
 
@@ -1023,7 +1292,7 @@ namespace Cyber
             m_selected_node_id = 0;
             m_selected_component_index = -1;
             if (focus_folder)
-                m_current_folder = full;
+                set_content_browser_current_folder(path, true);
 
             ImGui::TextUnformatted((label && label[0] != '\0') ? label : fallback_label.c_str());
             ImGui::Separator();
@@ -1049,11 +1318,8 @@ namespace Cyber
 
             std::error_code ec;
             fs::path project_root = m_tree_root.empty() ? resolve_content_browser_root() : fs::path(m_tree_root);
-            fs::path engine_root = m_engine_content_root.empty() ? resolve_engine_content_root() : fs::path(m_engine_content_root);
             fs::path destination_dir = m_current_folder.empty() ? project_root : fs::path(m_current_folder);
             fs::path root = project_root;
-            if (!engine_root.empty() && path_is_inside_or_equal(destination_dir.lexically_normal(), engine_root.lexically_normal()))
-                root = engine_root;
             if (root.empty())
             {
                 CB_WARN("Content Browser has no root folder for asset creation");
@@ -1105,8 +1371,7 @@ namespace Cyber
                 return;
             }
 
-            m_current_folder = destination_dir.string();
-            m_tree_pending_expand = m_current_folder;
+            set_content_browser_current_folder(destination_dir, false);
             m_selected_asset = folder_path.string();
             m_selected_node_id = 0;
             m_selected_component_index = -1;
@@ -1129,8 +1394,7 @@ namespace Cyber
             if (!SceneSerializer::save(scene, scene_path.string().c_str()))
                 return;
 
-            m_current_folder = destination_dir.string();
-            m_tree_pending_expand = m_current_folder;
+            set_content_browser_current_folder(destination_dir, false);
             m_selected_asset = scene_path.string();
             m_selected_node_id = 0;
             m_selected_component_index = -1;
@@ -1234,6 +1498,10 @@ namespace Cyber
 
                                 rewrite_if_inside(m_current_folder);
                                 rewrite_if_inside(m_selected_asset);
+                                for (std::string& history_path : m_content_browser_back_stack)
+                                    rewrite_if_inside(history_path);
+                                for (std::string& history_path : m_content_browser_forward_stack)
+                                    rewrite_if_inside(history_path);
                                 m_selected_asset = new_path.string();
                                 m_tree_pending_expand = new_path.parent_path().string();
                                 m_texture_info_asset.clear();
@@ -1340,6 +1608,70 @@ namespace Cyber
             return m_content_browser_icons[static_cast<size_t>(icon)].view;
         }
 
+        void Editor::draw_viewport_toolbar()
+        {
+            auto draw_button = [](const char* label, bool selected, bool enabled = true)
+            {
+                if (selected)
+                {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_Header));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_HeaderHovered));
+                    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_HeaderActive));
+                }
+
+                ImGui::BeginDisabled(!enabled);
+                const bool clicked = ImGui::Button(label, ImVec2(64.0f, 0.0f));
+                ImGui::EndDisabled();
+
+                if (selected)
+                    ImGui::PopStyleColor(3);
+
+                return clicked && enabled;
+            };
+
+            auto separator = []()
+            {
+                ImGui::SameLine();
+                ImGui::TextDisabled("|");
+                ImGui::SameLine();
+            };
+
+            ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8.0f, 4.0f));
+            ImGui::AlignTextToFramePadding();
+            ImGui::TextUnformatted("Transform");
+            ImGui::SameLine();
+
+            if (draw_button("Move", m_gizmo_op == ImGuizmo::TRANSLATE))
+                m_gizmo_op = ImGuizmo::TRANSLATE;
+            ImGui::SameLine();
+            if (draw_button("Rotate", m_gizmo_op == ImGuizmo::ROTATE))
+                m_gizmo_op = ImGuizmo::ROTATE;
+            ImGui::SameLine();
+            if (draw_button("Scale", m_gizmo_op == ImGuizmo::SCALE))
+                m_gizmo_op = ImGuizmo::SCALE;
+
+            separator();
+
+            ImGui::TextUnformatted("Space");
+            ImGui::SameLine();
+            if (draw_button("World", m_gizmo_mode == ImGuizmo::WORLD))
+                m_gizmo_mode = ImGuizmo::WORLD;
+            ImGui::SameLine();
+            if (draw_button("Local", m_gizmo_mode == ImGuizmo::LOCAL))
+                m_gizmo_mode = ImGuizmo::LOCAL;
+
+            separator();
+
+            ImGui::TextUnformatted("Playback");
+            ImGui::SameLine();
+            draw_button("Play", false, false);
+            ImGui::SameLine();
+            draw_button("Pause", false, false);
+            ImGui::SameLine();
+            draw_button("Stop", false, false);
+            ImGui::PopStyleVar();
+        }
+
         void Editor::draw_directory_tree(const std::filesystem::path& dir, int depth)
         {
             namespace fs = std::filesystem;
@@ -1389,7 +1721,7 @@ namespace Cyber
 
             if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
             {
-                m_current_folder = dir_str;
+                set_content_browser_current_folder(dir, true);
             }
             draw_content_browser_item_context_menu(dir, label.c_str(), depth > 0, true);
 
@@ -1434,7 +1766,9 @@ namespace Cyber
                 !fs::is_directory(m_current_folder, ec) ||
                 !is_content_browser_path_visible(current_folder_path))
             {
-                m_current_folder = m_tree_root;
+                m_content_browser_back_stack.clear();
+                m_content_browser_forward_stack.clear();
+                set_content_browser_current_folder(fs::path(m_tree_root), false);
             }
 
             if (ImGui::BeginTable("##cb_split", 2,
@@ -1460,7 +1794,46 @@ namespace Cyber
 
                 // ---- Right pane: filtered tile grid ----
                 ImGui::TableSetColumnIndex(1);
-                ImGui::TextUnformatted(m_current_folder.c_str());
+                const bool can_go_back = !m_content_browser_back_stack.empty();
+                const bool can_go_forward = !m_content_browser_forward_stack.empty();
+
+                ImGui::BeginDisabled(!can_go_back);
+                if (ImGui::Button("<-", ImVec2(32.0f, 0.0f)))
+                    navigate_content_browser_history(false);
+                ImGui::SetItemTooltip("Back");
+                ImGui::EndDisabled();
+
+                ImGui::SameLine();
+                ImGui::BeginDisabled(!can_go_forward);
+                if (ImGui::Button("->", ImVec2(32.0f, 0.0f)))
+                    navigate_content_browser_history(true);
+                ImGui::SetItemTooltip("Forward");
+                ImGui::EndDisabled();
+
+                ImGui::SameLine();
+                std::string display_path = "Project Content";
+                if (!m_tree_root.empty() && !m_current_folder.empty())
+                {
+                    const fs::path root_path = fs::path(m_tree_root).lexically_normal();
+                    const fs::path current_path = fs::path(m_current_folder).lexically_normal();
+                    const fs::path engine_root_path = m_engine_content_root.empty()
+                        ? fs::path{}
+                        : fs::path(m_engine_content_root).lexically_normal();
+                    fs::path display_root = root_path;
+                    if (!engine_root_path.empty() && path_is_inside_or_equal(current_path, engine_root_path))
+                    {
+                        display_path = "Engine Content";
+                        display_root = engine_root_path;
+                    }
+
+                    if (current_path != display_root && path_is_inside_or_equal(current_path, display_root))
+                    {
+                        const fs::path relative_path = current_path.lexically_relative(display_root);
+                        if (!relative_path.empty())
+                            display_path += "/" + relative_path.generic_string();
+                    }
+                }
+                ImGui::TextUnformatted(display_path.c_str());
                 ImGui::Separator();
 
                 const float thumb_size = 72.0f;
@@ -1492,8 +1865,7 @@ namespace Cyber
                         m_selected_component_index = -1;
                         if (is_dir && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
                         {
-                            m_current_folder = full;
-                            m_tree_pending_expand = full;
+                            set_content_browser_current_folder(entry.path(), true);
                         }
                     }
 
@@ -1610,6 +1982,8 @@ namespace Cyber
 
         void Editor::draw_details_panel()
         {
+            ensure_component_reflection_registered();
+
             if (!ImGui::Begin("Details", &m_show_details_panel))
             {
                 ImGui::End();
@@ -1661,8 +2035,52 @@ namespace Cyber
                 }
 
                 ImGui::Text("Type: %s", comp->type_name());
+                auto* edited_mesh = dynamic_cast<Component::MeshComponent*>(comp);
+                eastl::string old_mesh_resource;
+                if (edited_mesh)
+                    old_mesh_resource = edited_mesh->model_resource;
+
                 if (draw_component_properties(comp, comp->type_name(), m_property_draw_ctx))
+                {
                     world->set_dirty(true);
+                    if (edited_mesh && edited_mesh->model_resource != old_mesh_resource)
+                    {
+                        edited_mesh->release_runtime_model();
+                        edited_mesh->mesh = nullptr;
+                        edited_mesh->vertex_buffer = nullptr;
+                        edited_mesh->index_buffer = nullptr;
+                        edited_mesh->vertex_stride = 0;
+                        edited_mesh->draw_primitives.clear();
+                        edited_mesh->runtime_vertex_count = 0;
+                        edited_mesh->runtime_index_count = 0;
+                        edited_mesh->runtime_bounds_valid = false;
+                        edited_mesh->gpu_ready = false;
+
+                        if (!edited_mesh->model_resource.empty())
+                        {
+                            std::filesystem::path resolved_path;
+                            std::string status;
+                            if (inspect_displayable_model_resource(edited_mesh->model_resource,
+                                                                   resolved_path,
+                                                                   status))
+                            {
+                                CB_INFO("MeshComponent resource changed: stored='{}', resolved='{}'",
+                                        edited_mesh->model_resource.c_str(),
+                                        resolved_path.string().c_str());
+                                world->enqueue_pending_load(node->id,
+                                    (uint32_t)m_selected_component_index,
+                                    edited_mesh->model_resource);
+                            }
+                            else
+                            {
+                                CB_WARN("MeshComponent runtime load skipped: stored='{}', resolved='{}', reason='{}'",
+                                        edited_mesh->model_resource.c_str(),
+                                        resolved_path.string().c_str(),
+                                        status.c_str());
+                            }
+                        }
+                    }
+                }
 
                 // Runtime / derived-value panels — these aren't simple
                 // editable fields so they stay hand-written.
@@ -1670,12 +2088,23 @@ namespace Cyber
                 {
                     ImGui::Separator();
                     ImGui::TextDisabled("Mesh Runtime");
-                    if (mc->mesh)
+                    if (mc->is_render_ready())
+                    {
                         ImGui::Text("Vertices / Indices: %u / %u",
-                                    mc->mesh->vertex_count, mc->mesh->index_count);
+                                    mc->runtime_vertex_count, mc->runtime_index_count);
+                        ImGui::Text("Draw primitives: %zu", (size_t)mc->draw_primitives.size());
+                    }
                     else if (!mc->model_resource.empty())
-                        ImGui::TextDisabled("(mesh loading...)");
-                    ImGui::Text("GPU ready: %s", mc->gpu_ready ? "true" : "false");
+                    {
+                        std::filesystem::path resolved_path;
+                        std::string status;
+                        if (inspect_displayable_model_resource(mc->model_resource, resolved_path, status))
+                            ImGui::TextDisabled(mc->model ? "(building GPU mesh...)" : "(mesh loading...)");
+                        else
+                            ImGui::TextDisabled("Unsupported: %s", status.c_str());
+                        ImGui::TextDisabled("Resolved: %s", resolved_path.string().c_str());
+                    }
+                    ImGui::Text("GPU ready: %s", mc->is_render_ready() ? "true" : "false");
                 }
                 else if (auto* cc = dynamic_cast<Component::CameraComponent*>(comp))
                 {
@@ -1822,6 +2251,8 @@ namespace Cyber
 
         void Editor::draw_scene_hierarchy()
         {
+            ensure_component_reflection_registered();
+
             if (!ImGui::Begin("Scene Hierarchy", &m_show_scene_hierarchy))
             {
                 ImGui::End();
@@ -1864,23 +2295,133 @@ namespace Cyber
             uint32_t node_to_duplicate = 0;
             uint32_t comp_delete_node = 0;
             int      comp_delete_index = -1;
+            bool     create_actor_requested = false;
+            uint32_t create_actor_parent_id = 0;
 
-            for (size_t i = 0; i < nodes.size(); ++i)
+            uint32_t pending_component_node = 0;
+            eastl::string pending_component_type_name;
+
+            auto make_unique_actor_name = [&nodes]() -> eastl::string
             {
-                const SceneNode& node = nodes[i];
-                ImGui::PushID((int)node.id);
+                auto name_exists = [&nodes](const std::string& candidate)
+                {
+                    for (const auto& node : nodes)
+                    {
+                        if (std::strcmp(node.name.c_str(), candidate.c_str()) == 0)
+                            return true;
+                    }
+                    return false;
+                };
+
+                if (!name_exists("Actor"))
+                    return eastl::string("Actor");
+
+                for (uint32_t index = 1; ; ++index)
+                {
+                    const std::string candidate = "Actor_" + std::to_string(index);
+                    if (!name_exists(candidate))
+                        return eastl::string(candidate.c_str());
+                }
+            };
+
+            auto request_create_actor = [&](uint32_t parent_id)
+            {
+                create_actor_requested = true;
+                create_actor_parent_id = parent_id;
+            };
+
+            auto request_add_component = [&](uint32_t node_id, const char* type_name)
+            {
+                pending_component_node = node_id;
+                pending_component_type_name = type_name ? type_name : "";
+            };
+
+            auto draw_add_component_menu = [&](uint32_t node_id)
+            {
+                if (ImGui::BeginMenu("Add Component"))
+                {
+                    bool any_component_type = false;
+                    const auto& registry = PropertyRegistry::get();
+                    for (const auto& type_name : registry.component_order())
+                    {
+                        const ComponentProps* props = registry.find(type_name.c_str());
+                        if (!props || props->is_abstract || !props->factory)
+                            continue;
+
+                        any_component_type = true;
+                        const char* label = props->display_name.empty()
+                            ? props->type_name.c_str()
+                            : props->display_name.c_str();
+                        if (ImGui::MenuItem(label))
+                            request_add_component(node_id, props->type_name.c_str());
+                    }
+                    if (!any_component_type)
+                        ImGui::MenuItem("(no reflected components)", nullptr, false, false);
+                    ImGui::EndMenu();
+                }
+            };
+
+            auto contains_id = [](const std::vector<uint32_t>& ids, uint32_t id)
+            {
+                return std::find(ids.begin(), ids.end(), id) != ids.end();
+            };
+
+            auto node_exists = [&](uint32_t id)
+            {
+                if (id == 0)
+                    return false;
+                for (const auto& node : nodes)
+                {
+                    if (node.id == id)
+                        return true;
+                }
+                return false;
+            };
+
+            std::vector<uint32_t> drawn_ids;
+            std::vector<uint32_t> node_stack;
+
+            auto draw_node = [&](auto&& self, const SceneNode& node) -> void
+            {
+                if (contains_id(drawn_ids, node.id))
+                    return;
 
                 const char* display_name = node.name.empty() ? "(unnamed)" : node.name.c_str();
+                if (contains_id(node_stack, node.id))
+                {
+                    ImGui::TextDisabled("%s (cycle)", display_name);
+                    return;
+                }
 
+                drawn_ids.push_back(node.id);
+                node_stack.push_back(node.id);
+
+                bool has_child_nodes = false;
+                for (const auto& candidate : nodes)
+                {
+                    if (candidate.parent_id == node.id)
+                    {
+                        has_child_nodes = true;
+                        break;
+                    }
+                }
+
+                ImGui::PushID((int)node.id);
+
+                const bool has_children = has_child_nodes || !node.components.empty();
                 ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_OpenOnArrow
                                               | ImGuiTreeNodeFlags_OpenOnDoubleClick
-                                              | ImGuiTreeNodeFlags_SpanFullWidth
-                                              | ImGuiTreeNodeFlags_DefaultOpen;
+                                              | ImGuiTreeNodeFlags_SpanFullWidth;
+                if (has_children)
+                    node_flags |= ImGuiTreeNodeFlags_DefaultOpen;
+                else
+                    node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
                 const bool node_selected = (node.id == m_selected_node_id && m_selected_component_index < 0);
                 if (node_selected)
                     node_flags |= ImGuiTreeNodeFlags_Selected;
 
-                bool node_open = ImGui::TreeNodeEx(display_name, node_flags);
+                const bool node_open = ImGui::TreeNodeEx(display_name, node_flags);
 
                 if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
                 {
@@ -1892,6 +2433,10 @@ namespace Cyber
                 {
                     m_selected_node_id = node.id;
                     m_selected_component_index = -1;
+                    if (ImGui::MenuItem("Create Child Actor"))
+                        request_create_actor(node.id);
+                    draw_add_component_menu(node.id);
+                    ImGui::Separator();
                     if (ImGui::MenuItem("Duplicate"))
                         node_to_duplicate = node.id;
                     if (ImGui::MenuItem("Delete"))
@@ -1899,7 +2444,7 @@ namespace Cyber
                     ImGui::EndPopup();
                 }
 
-                if (node_open)
+                if (node_open && has_children)
                 {
                     for (size_t c = 0; c < node.components.size(); ++c)
                     {
@@ -1932,14 +2477,101 @@ namespace Cyber
 
                         ImGui::PopID();
                     }
+
+                    for (const auto& child : nodes)
+                    {
+                        if (child.parent_id == node.id)
+                            self(self, child);
+                    }
+
                     ImGui::TreePop();
                 }
+
                 ImGui::PopID();
+                node_stack.pop_back();
+            };
+
+            ImGui::PushID("SceneRoot");
+            ImGuiTreeNodeFlags scene_flags = ImGuiTreeNodeFlags_OpenOnArrow
+                                           | ImGuiTreeNodeFlags_OpenOnDoubleClick
+                                           | ImGuiTreeNodeFlags_SpanFullWidth
+                                           | ImGuiTreeNodeFlags_DefaultOpen;
+            const bool scene_open = ImGui::TreeNodeEx("Scene", scene_flags);
+            if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+            {
+                m_selected_node_id = 0;
+                m_selected_component_index = -1;
+            }
+
+            if (ImGui::BeginPopupContextItem())
+            {
+                m_selected_node_id = 0;
+                m_selected_component_index = -1;
+                if (ImGui::MenuItem("Create Actor"))
+                    request_create_actor(0);
+                ImGui::EndPopup();
+            }
+
+            if (scene_open)
+            {
+                for (const auto& node : nodes)
+                {
+                    if (node.parent_id == 0 || !node_exists(node.parent_id))
+                        draw_node(draw_node, node);
+                }
+
+                for (const auto& node : nodes)
+                {
+                    if (!contains_id(drawn_ids, node.id))
+                        draw_node(draw_node, node);
+                }
+
+                ImGui::TreePop();
+            }
+            ImGui::PopID();
+
+            if (ImGui::BeginPopupContextWindow(
+                "##scene_hierarchy_context",
+                ImGuiPopupFlags_MouseButtonRight | ImGuiPopupFlags_NoOpenOverItems))
+            {
+                if (ImGui::MenuItem("Create Actor"))
+                    request_create_actor(0);
+                ImGui::EndPopup();
             }
 
             ImGui::EndChild();
 
             // Deferred mutations.
+            if (create_actor_requested)
+            {
+                uint32_t parent_id = create_actor_parent_id;
+                if (parent_id != 0 && !world->find_node(parent_id))
+                    parent_id = 0;
+
+                SceneNode actor;
+                actor.name = make_unique_actor_name();
+                actor.parent_id = parent_id;
+                const uint32_t new_id = world->add_node(std::move(actor));
+                m_selected_node_id = new_id;
+                m_selected_component_index = -1;
+            }
+            if (pending_component_node != 0 && !pending_component_type_name.empty())
+            {
+                if (SceneNode* n = world->find_node(pending_component_node))
+                {
+                    Scope<Component::Primitive> component;
+                    const ComponentProps* props = PropertyRegistry::get().find(pending_component_type_name.c_str());
+                    if (props && props->factory)
+                        component = props->factory();
+                    if (component)
+                    {
+                        n->components.push_back(std::move(component));
+                        world->set_dirty(true);
+                        m_selected_node_id = pending_component_node;
+                        m_selected_component_index = (int)n->components.size() - 1;
+                    }
+                }
+            }
             if (node_to_delete != 0)
             {
                 world->remove_node(node_to_delete);
@@ -1968,7 +2600,20 @@ namespace Cyber
                         {
                             auto* mc = dynamic_cast<Component::MeshComponent*>(added->components[idx].get());
                             if (mc && !mc->model_resource.empty())
-                                world->enqueue_pending_load(new_id, idx, mc->model_resource);
+                            {
+                                std::filesystem::path resolved_path;
+                                std::string status;
+                                if (inspect_displayable_model_resource(mc->model_resource, resolved_path, status))
+                                {
+                                    world->enqueue_pending_load(new_id, idx, mc->model_resource);
+                                }
+                                else
+                                {
+                                    CB_WARN("Duplicated MeshComponent runtime load skipped: stored='{}', reason='{}'",
+                                            mc->model_resource.c_str(),
+                                            status.c_str());
+                                }
+                            }
                         }
                     }
                     m_selected_node_id = new_id;
@@ -2007,7 +2652,9 @@ namespace Cyber
             m_selected_node_id = 0;
             m_selected_component_index = -1;
             m_selected_asset.clear();
-            refresh_content_browser_root(true);
+            refresh_content_browser_root(false);
+            if (!m_tree_root.empty())
+                set_content_browser_current_folder(std::filesystem::path(m_tree_root), false);
             CB_INFO("Created new scene");
         }
 
@@ -2114,8 +2761,7 @@ namespace Cyber
                 return;
             }
 
-            m_current_folder = destination_dir.string();
-            m_tree_pending_expand = m_current_folder;
+            set_content_browser_current_folder(destination_dir, false);
             m_selected_asset = destination_path.string();
             m_selected_node_id = 0;
             m_selected_component_index = -1;
@@ -2237,8 +2883,7 @@ namespace Cyber
                 return;
             }
 
-            m_current_folder = destination_dir.string();
-            m_tree_pending_expand = m_current_folder;
+            set_content_browser_current_folder(destination_dir, false);
             m_selected_asset = destination_path.string();
             m_selected_node_id = 0;
             m_selected_component_index = -1;
@@ -2275,7 +2920,20 @@ namespace Cyber
                 [&world](SceneNode& n, Component::MeshComponent& mc, uint32_t idx)
                 {
                     if (!mc.model_resource.empty() && !mc.gpu_ready)
-                        world->enqueue_pending_load(n.id, idx, mc.model_resource);
+                    {
+                        std::filesystem::path resolved_path;
+                        std::string status;
+                        if (inspect_displayable_model_resource(mc.model_resource, resolved_path, status))
+                        {
+                            world->enqueue_pending_load(n.id, idx, mc.model_resource);
+                        }
+                        else
+                        {
+                            CB_WARN("Open scene MeshComponent runtime load skipped: stored='{}', reason='{}'",
+                                    mc.model_resource.c_str(),
+                                    status.c_str());
+                        }
+                    }
                 });
             m_selected_node_id = 0;
             m_selected_component_index = -1;
@@ -2326,6 +2984,97 @@ namespace Cyber
             }
         }
 
+        void Editor::load_project_settings()
+        {
+            ProjectSettings settings;
+            if (!ProjectSettingsIO::load(settings))
+                return;
+
+            std::snprintf(m_project_startup_scene_buffer,
+                          sizeof(m_project_startup_scene_buffer),
+                          "%s",
+                          settings.startup_scene.c_str());
+        }
+
+        void Editor::save_project_settings()
+        {
+            ProjectSettings settings;
+            settings.startup_scene = m_project_startup_scene_buffer;
+            if (ProjectSettingsIO::save(settings))
+                CB_INFO("Saved project settings: {}", ProjectSettingsIO::settings_path().string().c_str());
+        }
+
+        void Editor::draw_project_settings()
+        {
+            if (!m_show_project_settings)
+                return;
+
+            if (ImGui::Begin("Project Settings", &m_show_project_settings))
+            {
+                ImGui::TextUnformatted("Startup");
+                ImGui::InputText("Startup Scene Level", m_project_startup_scene_buffer,
+                                 sizeof(m_project_startup_scene_buffer));
+
+                Core::Application* app = m_pApp ? m_pApp : Core::Application::getApp();
+                Samples::SampleApp* sample_app = app ? app->get_sample_app() : nullptr;
+                RefCntAutoPtr<World> world = sample_app ? sample_app->get_world() : RefCntAutoPtr<World>{};
+
+                if (ImGui::Button("Use Current Scene") && world && !world->source_path().empty())
+                {
+                    eastl::string rel = ProjectSettingsIO::make_project_relative_path(
+                        std::filesystem::path(world->source_path().c_str()));
+                    std::snprintf(m_project_startup_scene_buffer,
+                                  sizeof(m_project_startup_scene_buffer),
+                                  "%s",
+                                  rel.c_str());
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Use Selected Scene") && !m_selected_asset.empty())
+                {
+                    std::filesystem::path selected_path(m_selected_asset);
+                    if (lowercase(selected_path.extension().string()) == ".scene")
+                    {
+                        eastl::string rel = ProjectSettingsIO::make_project_relative_path(selected_path);
+                        std::snprintf(m_project_startup_scene_buffer,
+                                      sizeof(m_project_startup_scene_buffer),
+                                      "%s",
+                                      rel.c_str());
+                    }
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Browse..."))
+                {
+#ifdef CYBER_RUNTIME_PLATFORM_WINDOWS
+                    std::filesystem::path scene_path;
+                    if (open_scene_dialog(m_hwnd, scene_path))
+                    {
+                        eastl::string rel = ProjectSettingsIO::make_project_relative_path(scene_path);
+                        std::snprintf(m_project_startup_scene_buffer,
+                                      sizeof(m_project_startup_scene_buffer),
+                                      "%s",
+                                      rel.c_str());
+                    }
+#else
+                    CB_WARN("Scene browsing is only implemented on Windows for now");
+#endif
+                }
+
+                ImGui::Separator();
+                if (ImGui::Button("Save", ImVec2(120, 0)))
+                    save_project_settings();
+                ImGui::SameLine();
+                if (ImGui::Button("Reload", ImVec2(120, 0)))
+                    load_project_settings();
+
+                const std::filesystem::path settings_path = ProjectSettingsIO::settings_path();
+                if (!settings_path.empty())
+                    ImGui::TextDisabled("%s", settings_path.string().c_str());
+            }
+            ImGui::End();
+        }
+
         bool Editor::try_accept_asset_drop(const char* utf8_path, const float3& drop_position)
         {
             if (!utf8_path || !*utf8_path)
@@ -2354,7 +3103,13 @@ namespace Cyber
                     info->display_name.c_str());
                 return false;
             }
-            if (ext == ".meshasset")
+            if (ext != ".meshasset")
+            {
+                CB_WARN("Drag-drop rejected model asset %s: MeshComponent only accepts .meshasset files",
+                        utf8_path);
+                return false;
+            }
+
             {
                 MeshEditorAssetInfo mesh_info;
                 if (!MeshImporter::ReadInfo(utf8_path, mesh_info))
@@ -2362,13 +3117,9 @@ namespace Cyber
                     CB_WARN("Drag-drop rejected invalid mesh asset: %s", utf8_path);
                     return false;
                 }
-
-                const std::string source_ext = lowercase(mesh_info.sourceExtension);
-                if (source_ext != ".gltf" && source_ext != ".glb")
+                if (!mesh_info.isCooked)
                 {
-                    CB_WARN("Drag-drop rejected mesh asset %s: source format %s is not displayable yet",
-                            utf8_path,
-                            source_ext.c_str());
+                    CB_WARN("Drag-drop rejected legacy mesh asset: %s (reimport required)", utf8_path);
                     return false;
                 }
             }
@@ -2384,6 +3135,10 @@ namespace Cyber
             else
                 rel_str = utf8_path;
 
+            std::filesystem::path resolved_path;
+            std::string status;
+            const bool runtime_loadable = inspect_displayable_model_resource(rel_str, resolved_path, status);
+
             SceneNode node;
             node.name = p.stem().string().c_str();
             auto mc = Scope<Component::MeshComponent>(new Component::MeshComponent());
@@ -2391,7 +3146,16 @@ namespace Cyber
             mc->position = drop_position;
             node.components.push_back(Scope<Component::Primitive>(mc.release()));
             uint32_t new_id = world->add_node(std::move(node));
-            world->enqueue_pending_load(new_id, 0, rel_str);
+            if (runtime_loadable)
+            {
+                world->enqueue_pending_load(new_id, 0, rel_str);
+            }
+            else
+            {
+                CB_WARN("Added MeshComponent from {} but runtime load was skipped: {}",
+                        rel_str.c_str(),
+                        status.c_str());
+            }
             m_selected_node_id = new_id;
             m_selected_component_index = 0;
             CB_INFO("Added node %u from %s", new_id, rel_str.c_str());

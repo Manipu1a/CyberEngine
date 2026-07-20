@@ -19,6 +19,7 @@
 #include <cstddef>
 #include <string>
 #include <filesystem>
+#include <vector>
 
 namespace Cyber
 {
@@ -43,11 +44,10 @@ namespace Cyber
             ImGuiTextBuffer     Buf;
             ImGuiTextFilter     Filter;
             ImVector<int>       LineOffsets; // Index to lines offset. We maintain this with AddLog() calls.
-            bool                AutoScroll;  // Keep scrolling if already at the bottom.
+            std::string         VisibleText;
 
             ExampleAppLog()
             {
-                AutoScroll = true;
                 Clear();
             }
 
@@ -78,85 +78,59 @@ namespace Cyber
                     return;
                 }
 
-                // Options menu
-                if (ImGui::BeginPopup("Options"))
-                {
-                    ImGui::Checkbox("Auto-scroll", &AutoScroll);
-                    ImGui::EndPopup();
-                }
-
                 // Main window
-                if (ImGui::Button("Options"))
-                    ImGui::OpenPopup("Options");
-                ImGui::SameLine();
                 bool clear = ImGui::Button("Clear");
-                ImGui::SameLine();
-                bool copy = ImGui::Button("Copy");
                 ImGui::SameLine();
                 Filter.Draw("Filter", -100.0f);
 
                 ImGui::Separator();
 
-                if (ImGui::BeginChild("scrolling", ImVec2(0, 0), ImGuiChildFlags_None, ImGuiWindowFlags_HorizontalScrollbar))
-                {
-                    if (clear)
-                        Clear();
-                    if (copy)
-                        ImGui::LogToClipboard();
+                if (clear)
+                    Clear();
 
-                    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+                char empty_text[1] = {};
+                char* text_data = empty_text;
+                size_t text_size = sizeof(empty_text);
+                if (Filter.IsActive())
+                {
                     const char* buf = Buf.begin();
                     const char* buf_end = Buf.end();
-                    if (Filter.IsActive())
+                    VisibleText.clear();
+                    for (int line_no = 0; line_no < LineOffsets.Size; line_no++)
                     {
-                        // In this example we don't use the clipper when Filter is enabled.
-                        // This is because we don't have random access to the result of our filter.
-                        // A real application processing logs with ten of thousands of entries may want to store the result of
-                        // search/filter.. especially if the filtering function is not trivial (e.g. reg-exp).
-                        for (int line_no = 0; line_no < LineOffsets.Size; line_no++)
-                        {
-                            const char* line_start = buf + LineOffsets[line_no];
-                            const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-                            if (Filter.PassFilter(line_start, line_end))
-                                ImGui::TextUnformatted(line_start, line_end);
-                        }
-                    }
-                    else
-                    {
-                        // The simplest and easy way to display the entire buffer:
-                        //   ImGui::TextUnformatted(buf_begin, buf_end);
-                        // And it'll just work. TextUnformatted() has specialization for large blob of text and will fast-forward
-                        // to skip non-visible lines. Here we instead demonstrate using the clipper to only process lines that are
-                        // within the visible area.
-                        // If you have tens of thousands of items and their processing cost is non-negligible, coarse clipping them
-                        // on your side is recommended. Using ImGuiListClipper requires
-                        // - A) random access into your data
-                        // - B) items all being the  same height,
-                        // both of which we can handle since we have an array pointing to the beginning of each line of text.
-                        // When using the filter (in the block of code above) we don't have random access into the data to display
-                        // anymore, which is why we don't use the clipper. Storing or skimming through the search result would make
-                        // it possible (and would be recommended if you want to search through tens of thousands of entries).
-                        ImGuiListClipper clipper;
-                        clipper.Begin(LineOffsets.Size);
-                        while (clipper.Step())
-                        {
-                            for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++)
-                            {
-                                const char* line_start = buf + LineOffsets[line_no];
-                                const char* line_end = (line_no + 1 < LineOffsets.Size) ? (buf + LineOffsets[line_no + 1] - 1) : buf_end;
-                                ImGui::TextUnformatted(line_start, line_end);
-                            }
-                        }
-                        clipper.End();
-                    }
-                    ImGui::PopStyleVar();
+                        const char* line_start = buf + LineOffsets[line_no];
+                        if (line_start >= buf_end)
+                            continue;
 
-                    // Keep up at the bottom of the scroll region if we were already at the bottom at the beginning of the frame.
-                    // Using a scrollbar or mouse-wheel will take away from the bottom edge.
-                    if (AutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-                        ImGui::SetScrollHereY(1.0f);
+                        const char* line_end = (line_no + 1 < LineOffsets.Size)
+                            ? (buf + LineOffsets[line_no + 1] - 1)
+                            : buf_end;
+                        if (Filter.PassFilter(line_start, line_end))
+                        {
+                            VisibleText.append(line_start, line_end);
+                            VisibleText.push_back('\n');
+                        }
+                    }
+                    text_data = VisibleText.empty() ? empty_text : VisibleText.data();
+                    text_size = VisibleText.empty() ? sizeof(empty_text) : VisibleText.size() + 1;
                 }
-                ImGui::EndChild();
+                else if (!Buf.empty())
+                {
+                    text_data = Buf.Buf.Data;
+                    text_size = static_cast<size_t>(Buf.Buf.Size);
+                }
+
+                ImVec2 log_text_size = ImGui::GetContentRegionAvail();
+                if (log_text_size.x < 1.0f)
+                    log_text_size.x = 1.0f;
+                if (log_text_size.y < ImGui::GetTextLineHeightWithSpacing())
+                    log_text_size.y = ImGui::GetTextLineHeightWithSpacing();
+
+                ImGui::InputTextMultiline("##log_text",
+                                          text_data,
+                                          text_size,
+                                          log_text_size,
+                                          ImGuiInputTextFlags_ReadOnly | ImGuiInputTextFlags_NoUndoRedo);
                 ImGui::End();
             }
         };
@@ -332,6 +306,8 @@ namespace Cyber
             // Save Scene As dialog state
             bool m_show_save_as_popup = false;
             char m_save_as_buffer[512] = {};
+            bool m_show_project_settings = false;
+            char m_project_startup_scene_buffer[512] = {};
             // Context menu target while editing the Scene Hierarchy
             uint32_t m_context_menu_node_id = 0;
 
@@ -348,6 +324,8 @@ namespace Cyber
             std::string m_tree_pending_expand;  // if non-empty, tree nodes along this path are force-expanded next frame
             std::string m_content_browser_scene_source;
             std::string m_engine_content_root;
+            std::vector<std::string> m_content_browser_back_stack;
+            std::vector<std::string> m_content_browser_forward_stack;
             bool        m_show_rename_popup = false;
             std::string m_rename_target_path;
             char        m_rename_buffer[256] = {};
@@ -369,6 +347,9 @@ namespace Cyber
             std::filesystem::path resolve_engine_content_root() const;
             void refresh_content_browser_root(bool force = false);
             bool is_content_browser_path_visible(const std::filesystem::path& path) const;
+            void set_content_browser_current_folder(const std::filesystem::path& folder,
+                                                    bool record_history);
+            void navigate_content_browser_history(bool forward);
             void open_content_browser_item_location(const std::filesystem::path& path) const;
             void draw_content_browser_item_context_menu(const std::filesystem::path& path,
                                                         const char* label,
@@ -381,6 +362,9 @@ namespace Cyber
             void draw_content_browser_rename_popup();
             void load_content_browser_icons(RenderObject::IRenderDevice* device);
             RenderObject::ITexture_View* content_browser_icon_view(bool is_dir, const ResourceTypeInfo* type_info) const;
+            void handle_editor_shortcuts();
+            bool focus_selected_component();
+            void draw_viewport_toolbar();
             void draw_content_browser();
             void draw_directory_tree(const std::filesystem::path& dir, int depth);
             void draw_details_panel();
@@ -393,6 +377,9 @@ namespace Cyber
             void handle_open_scene();
             void handle_save_scene();
             void draw_save_as_popup();
+            void load_project_settings();
+            void save_project_settings();
+            void draw_project_settings();
             // Accept a dropped asset path. Returns true if it was consumed.
             bool try_accept_asset_drop(const char* utf8_path, const float3& drop_position);
         };

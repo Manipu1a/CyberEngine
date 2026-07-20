@@ -1,0 +1,6 @@
+target("OpenFBX")
+    set_kind("static")
+    add_files("$(projectdir)/thirdparty/OpenFBX/src/ofbx.cpp")
+    add_files("$(projectdir)/thirdparty/OpenFBX/src/libdeflate.c")
+    add_includedirs("$(projectdir)/thirdparty/OpenFBX/src", {public = true})
+    add_defines("_LARGEFILE64_SOURCE")

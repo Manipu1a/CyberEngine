@@ -6,3 +6,4 @@ samples/sponza/assets/**/*.dds filter=lfs diff=lfs merge=lfs -text
 samples/sponza/assets/**/*.ktx filter=lfs diff=lfs merge=lfs -text
 samples/sponza/assets/**/*.glb filter=lfs diff=lfs merge=lfs -text
 samples/sponza/assets/**/*.gltf filter=lfs diff=lfs merge=lfs -text
+samples/sponza/content/*.meshasset filter=lfs diff=lfs merge=lfs -text

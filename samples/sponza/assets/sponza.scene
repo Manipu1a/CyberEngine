@@ -5,7 +5,7 @@
       "components": [
         {
           "enabled": true,
-          "model_resource": "samples/sponza/assets/main_sponza/NewSponza_Main_glTF_003.gltf",
+          "model_resource": "samples/sponza/assets/main_sponza/NewSponza_Main_glTF_003.meshasset",
           "transform": {
             "position": [
               0.0,

@@ -11,6 +11,7 @@ CYBER_BEGIN_NAMESPACE(Component)
 // moving the rotation in the editor visually reorients the light.
 class CYBER_RUNTIME_API DirectionalLightComponent : public Primitive
 {
+    CYBER_REFLECT_COMPONENT(DirectionalLightComponent, Primitive, Display="Directional Light Component")
 public:
     DirectionalLightComponent() : Primitive(ComponentType::DirectionalLight) {}
     ~DirectionalLightComponent() override = default;
@@ -25,10 +26,13 @@ public:
     // Set rotation such that the direction vector matches `dir` (up to
     // the choice of roll). Handy when migrating old scene data that stored
     // a direction rather than a quaternion.
+    CYBER_FUNCTION(Display="Set Direction")
     void set_direction(const float3& dir);
 
     // Serialized.
+    CYBER_PROPERTY(Display="Color", Serializable, Color)
     float3 color{1.0f, 1.0f, 1.0f};
+    CYBER_PROPERTY(Display="Intensity", Serializable, Min=0.0, Max=1000.0, Speed=0.05)
     float  intensity = 3.0f;
 };
 

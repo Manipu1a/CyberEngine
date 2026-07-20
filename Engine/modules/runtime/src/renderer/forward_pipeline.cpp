@@ -81,6 +81,32 @@ namespace Cyber::Renderer
     {
         create_constant_buffer(m_device, sizeof(SceneConstants), m_scene_constants);
 
+        const uint8_t white_pixel[] = { 255, 255, 255, 255 };
+        RenderObject::TextureSubResData white_subresource = {};
+        white_subresource.pData = white_pixel;
+        white_subresource.stride = sizeof(white_pixel);
+        white_subresource.depthStride = sizeof(white_pixel);
+
+        RenderObject::TextureData white_data = {};
+        white_data.pSubResources = &white_subresource;
+        white_data.numSubResources = 1;
+
+        RenderObject::TextureCreateDesc white_desc = {};
+        white_desc.m_name = u8"Forward_WhiteTexture";
+        white_desc.m_width = 1;
+        white_desc.m_height = 1;
+        white_desc.m_depth = 1;
+        white_desc.m_arraySize = 1;
+        white_desc.m_mipLevels = 1;
+        white_desc.m_dimension = TEX_DIMENSION_2D;
+        white_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+        white_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
+        white_desc.m_flags = TCF_FORCE_2D;
+        white_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+        RenderObject::ITexture* raw_white_texture = nullptr;
+        m_device->create_texture(white_desc, &white_data, &raw_white_texture);
+        m_white_texture.attach(raw_white_texture);
+
         RenderObject::SamplerCreateDesc sampler_desc = {};
         sampler_desc.min_filter = FILTER_TYPE_LINEAR;
         sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
@@ -351,7 +377,7 @@ namespace Cyber::Renderer
         world->for_each_component_of<Component::MeshComponent>(
             [&](SceneNode&, Component::MeshComponent& mesh, uint32_t)
             {
-                if (!mesh.enabled || !mesh.gpu_ready || !mesh.vertex_buffer || !mesh.index_buffer)
+                if (!mesh.enabled || !mesh.is_render_ready())
                     return;
 
                 SceneConstants constants = {};
@@ -385,7 +411,7 @@ namespace Cyber::Renderer
         world->for_each_component_of<Component::MeshComponent>(
             [&](SceneNode&, Component::MeshComponent& mesh, uint32_t)
             {
-                if (!mesh.enabled || !mesh.gpu_ready || !mesh.vertex_buffer || !mesh.index_buffer)
+                if (!mesh.enabled || !mesh.is_render_ready())
                     return;
 
                 SceneConstants constants = {};
@@ -403,12 +429,19 @@ namespace Cyber::Renderer
                 m_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, m_scene_constants);
                 m_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, m_scene_constants);
 
+                RenderObject::ITexture_View* fallback_base_color = m_white_texture
+                    ? m_white_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE)
+                    : nullptr;
+
                 for (const auto& primitive : mesh.draw_primitives)
                 {
-                    if (!primitive.base_color_view)
+                    RenderObject::ITexture_View* base_color_view = primitive.base_color_view;
+                    if (!base_color_view)
+                        base_color_view = fallback_base_color;
+                    if (!base_color_view)
                         continue;
 
-                    m_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, primitive.base_color_view);
+                    m_context->set_shader_resource_view(SHADER_STAGE_FRAG, 0, base_color_view);
                     m_context->prepare_for_rendering();
                     m_context->render_encoder_draw_indexed(primitive.index_count, primitive.first_index, 0);
                 }

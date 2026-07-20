@@ -1,4 +1,5 @@
 #include "application/application.h"
+#include "application/renderdoc_capture.h"
 #include "application/platform/windows/windows_application.h"
 #include "platform/memory.h"
 #include "core/Timestep.h"
@@ -93,6 +94,10 @@ namespace Cyber
             // Update new input system
             if (m_pNewInputManager) {
                 m_pNewInputManager->update(deltaTime);
+                if (m_pNewInputManager->is_key_just_pressed(Input::Key::F3))
+                {
+                    RenderDocCapture::connect_replay_ui();
+                }
             }
             m_pWindow->update(deltaTime);
             m_pEditor->new_frame( m_pWindow->get_width(), m_pWindow->get_height());
@@ -201,6 +206,7 @@ namespace Cyber
             }
 
             m_pRenderer->end_frame();
+            RenderDocCapture::end_frame_capture();
         }
         
         Application* Application::create_application(const WindowDesc& desc)

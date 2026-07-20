@@ -1,0 +1,21 @@
+{
+    "assets": [
+        {
+            "assetFormatVersion": 1,
+            "assetPath": "NewSponza_Main_Zup_003.meshasset",
+            "chunkId": 0,
+            "cookedAssetHash": 0,
+            "dependencies": [],
+            "displayName": "NewSponza_Main_Zup_003",
+            "editorAssetHash": 1032581593715935379,
+            "guid": "b1eb8f29-7ce0-4538-82b8-9247088b73f2",
+            "importerVersion": 2,
+            "packageName": "",
+            "sourceHash": 18071207669428350975,
+            "sourcePath": "E:/Code/CyberEngine/samples/sponza/assets/main_sponza/NewSponza_Main_Zup_003.fbx",
+            "thumbnailPath": "",
+            "type": "Mesh"
+        }
+    ],
+    "version": 1
+}
