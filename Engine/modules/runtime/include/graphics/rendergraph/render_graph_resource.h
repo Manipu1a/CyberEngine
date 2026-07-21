@@ -1,16 +1,19 @@
 #pragma once
 #include "EASTL/map.h"
 #include "base_type.h"
-#include "render_graph.h"
 #include "interface/texture.hpp"
 #include "interface/texture_view.h"
 #include "interface/buffer.h"
+#include "cyber_runtime.config.h"
 #include "cyber_render_graph_config.h"
 
 namespace Cyber
 {
     namespace render_graph
     {
+        class RenderGraph;
+        class RenderGraphBuilder;
+
         class RGBuffer;
         using RGBufferRef = RGBuffer*;
 
@@ -56,15 +59,18 @@ namespace Cyber
             BufferUAV,
             TextureSRV,
             TextureUAV,
-            UniformBuffer
+            UniformBuffer,
+            DepthStencil
         };
 
         class RGRenderResource
         {
         public:
-            const char8_t* resource_name;
-            ERGResourceType resource_type;
-            RenderObject::IRenderDevice* device;
+            virtual ~RGRenderResource() = default;
+
+            const char8_t* resource_name = nullptr;
+            ERGResourceType resource_type = ERGResourceType::Buffer;
+            RenderObject::IRenderDevice* device = nullptr;
         };
 
         class RGBuffer : public RGRenderResource
@@ -77,7 +83,8 @@ namespace Cyber
             RenderObject::IBuffer* GetBuffer();
 
             RGBufferCreateDesc create_desc;
-            RenderObject::IBuffer* buffer;
+            RenderObject::IBuffer* buffer = nullptr;
+            struct BufferNode* buffer_node = nullptr;
         };
 
         class RGTexture : public RGRenderResource
@@ -90,23 +97,41 @@ namespace Cyber
             RenderObject::ITexture* GetTexture();
 
             RGTextureCreateDesc create_desc;
-            RenderObject::ITexture* texture;
-            struct TextureNode* texture_node;
+            RenderObject::ITexture* texture = nullptr;
+            struct TextureNode* texture_node = nullptr;
         };
         
         class RGDepthStencil : public RGRenderResource
         {
         public:
-
+            RGDepthStencil()
+            {
+                resource_type = ERGResourceType::DepthStencil;
+            }
         };
         ///////////////////////////////////////////////////////////////
         class CYBER_RUNTIME_API RGPass
         {
         public:
-            RGPass() = default;
+            explicit RGPass(ERGPassType type);
             virtual ~RGPass() = default;
 
+            virtual void setup(RenderGraphBuilder& builder);
+            virtual void execute(RenderGraph& graph, RenderPassContext& context);
+
+            RGPass& read(RGTextureRef texture) CYBER_NOEXCEPT;
+            RGPass& read(RGBufferRef buffer) CYBER_NOEXCEPT;
+            RGPass& write(RGTextureRef texture) CYBER_NOEXCEPT;
+            RGPass& write(RGBufferRef buffer) CYBER_NOEXCEPT;
+            RGPass& read_write(RGTextureRef texture) CYBER_NOEXCEPT;
+            RGPass& read_write(RGBufferRef buffer) CYBER_NOEXCEPT;
+
             ERGPassType pass_type;
+            const char8_t* pass_name = nullptr;
+            struct PassNode* pass_node = nullptr;
+
+        protected:
+            void register_resource_access(RGRenderResource* resource, ERGResourceAccess access) CYBER_NOEXCEPT;
         };
 
 
@@ -118,6 +143,7 @@ namespace Cyber
         public:
             RGRenderPass();
             virtual ~RGRenderPass();
+            void execute(RenderGraph& graph, RenderPassContext& context) override;
 
         public:
             RGRenderPass& add_render_target(uint32_t mrt_index, RGTextureRef texture,
@@ -131,14 +157,27 @@ namespace Cyber
             LOAD_ACTION stencil_load_action = LOAD_ACTION_CLEAR, 
             STORE_ACTION stencil_store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
 
+            RGRenderPass& set_depthstencil(RGTextureRef depthstencil,
+            LOAD_ACTION depth_load_action = LOAD_ACTION_CLEAR,
+            STORE_ACTION depth_store_action = STORE_ACTION_STORE,
+            LOAD_ACTION stencil_load_action = LOAD_ACTION_CLEAR,
+            STORE_ACTION stencil_store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
+
+            RGRenderPass& set_depthstencil_read_only(RGTextureRef depthstencil,
+            LOAD_ACTION depth_load_action = LOAD_ACTION_LOAD,
+            STORE_ACTION depth_store_action = STORE_ACTION_STORE,
+            LOAD_ACTION stencil_load_action = LOAD_ACTION_LOAD,
+            STORE_ACTION stencil_store_action = STORE_ACTION_STORE) CYBER_NOEXCEPT;
+
             RGRenderPass& set_pipeline(RenderObject::IRenderPipeline* pipeline) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGTextureRef texture) CYBER_NOEXCEPT;
             RGRenderPass& add_input(const char8_t* name, RGBufferRef buffer) CYBER_NOEXCEPT;
 
             RenderObject::IRenderPipeline* pipeline;
             eastl::map<uint32_t, RGTextureRef> render_targets;
-            eastl::map<const char8_t*, RGTextureRef> input_textures;
-            eastl::map<const char8_t*, RGBufferRef> input_buffers;
+            eastl::map<const char8_t*, RGTextureRef, Utf8StringLess> input_textures;
+            eastl::map<const char8_t*, RGBufferRef, Utf8StringLess> input_buffers;
+            RGRenderResource* depth_stencil = nullptr;
 
             LOAD_ACTION dload_action;
             STORE_ACTION dstore_action;
@@ -147,11 +186,17 @@ namespace Cyber
 
             eastl::vector<LOAD_ACTION> mrt_load_actions;
             eastl::vector<STORE_ACTION> mrt_store_actions;
+            eastl::vector<GRAPHICS_CLEAR_VALUE> mrt_clear_values;
 
             uint32_t num_render_target = 0;
-            const char8_t* pass_name;
             render_pass_execute_function pass_function;
-            struct RenderPassNode* pass_node;
+        };
+
+        class CYBER_RUNTIME_API RGComputePass : public RGPass
+        {
+        public:
+            RGComputePass();
+            virtual ~RGComputePass() = default;
         };
 
         class CYBER_RUNTIME_API RGPresentPass : public RGPass
@@ -165,15 +210,17 @@ namespace Cyber
 
         struct RenderPassNode : public PassNode
         {
-            RenderPassNode() : PassNode(RG_RENDER_PASS_NODE) {}
+            RenderPassNode() : PassNode(RG_RENDER_PASS_NODE, RG_RENDER_PASS) {}
         };
 
         struct ComputePassNode : public PassNode
         {
+            ComputePassNode() : PassNode(RG_COMPUTE_PASS_NODE, RG_COMPUTE_PASS) {}
         };
 
         struct PresentPassNode : public PassNode
         {
+            PresentPassNode() : PassNode(RG_PRESENT_PASS_NODE, RG_PRESENT_PASS) {}
         };
 
         struct ResourceNode : public RenderGraphNode
@@ -184,7 +231,8 @@ namespace Cyber
 
         struct BufferNode : public ResourceNode
         {
-            RenderObject::IBuffer* buffer;
+            BufferNode() : ResourceNode(RG_BUFFER_NODE) {}
+            RenderObject::IBuffer* buffer = nullptr;
         };
  
         struct TextureNode : public ResourceNode
@@ -193,43 +241,8 @@ namespace Cyber
             {
             }
 
-            RenderObject::ITexture* texture;
+            RenderObject::ITexture* texture = nullptr;
         };
 
-        struct TextureEdge : public RenderGraphEdge
-        {
-            TextureEdge(RGTextureRef tex, PassNode* from)
-            {
-                from_node = (RenderGraphNode*)from;
-                to_node = tex->texture_node;
-            }
-        };
-
-        // SRV
-        struct TextureReadEdge : public TextureEdge
-        {
-            TextureReadEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
-            {
-                tex->texture_node->write_edges.push_back(this);
-            }
-        };
-
-        // RTV
-        struct TextureWriteEdge : public TextureEdge
-        {
-            TextureWriteEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
-            {
-                tex->texture_node->read_edges.push_back(this);
-            }
-        };
-        // UAV
-        struct TextureReadWriteEdge : public TextureEdge
-        {
-            TextureReadWriteEdge(RGTextureRef tex, PassNode* from) : TextureEdge(tex, from)
-            {
-                tex->texture_node->read_edges.push_back(this);
-                tex->texture_node->write_edges.push_back(this);
-            }
-        };
     }
 }

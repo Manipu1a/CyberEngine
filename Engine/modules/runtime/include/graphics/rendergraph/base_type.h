@@ -1,10 +1,15 @@
 #pragma once
+#include "EASTL/vector.h"
 #include "graphics/interface/graphics_types.h"
 
 namespace Cyber
 {
     namespace render_graph
     {
+        class RenderGraph;
+        class RGPass;
+        class RGRenderResource;
+
         typedef enum ERGPassType
         {
             RG_RENDER_PASS,
@@ -23,47 +28,76 @@ namespace Cyber
 
         } ERGObjectType;
 
-        struct DependencyGraph
+        enum class ERGResourceAccess : uint8_t
         {
-            
+            Read = 1,
+            Write = 2,
+            ReadWrite = 3
         };
 
-        class RenderGraphEdge;
+        struct PassResourceAccess
+        {
+            RGRenderResource* resource = nullptr;
+            ERGResourceAccess access = ERGResourceAccess::Read;
+        };
+
+        struct Utf8StringLess
+        {
+            bool operator()(const char8_t* lhs, const char8_t* rhs) const CYBER_NOEXCEPT
+            {
+                if (lhs == rhs)
+                    return false;
+                if (!lhs)
+                    return rhs != nullptr;
+                if (!rhs)
+                    return false;
+
+                while (*lhs != 0 && *rhs != 0 && *lhs == *rhs)
+                {
+                    ++lhs;
+                    ++rhs;
+                }
+                return *lhs < *rhs;
+            }
+        };
 
         struct RenderGraphNode
         {
-            RenderGraphNode(ERGObjectType type) : object_type(type) {}
+            explicit RenderGraphNode(ERGObjectType type)
+                : object_type(type)
+                , order(UINT32_MAX)
+            {
+            }
 
-            eastl::vector<RenderGraphEdge*> read_edges;
-            eastl::vector<RenderGraphEdge*> write_edges;
             ERGObjectType object_type;
-            DependencyGraph* graph;
             uint32_t order;
         };
 
         struct PassNode : public RenderGraphNode
         {
-            PassNode(ERGObjectType type) : RenderGraphNode(type) {}
+            using PassDestroyFunction = void(*)(RGPass*);
+
+            PassNode(ERGObjectType type, ERGPassType type_of_pass)
+                : RenderGraphNode(type)
+                , pass_type(type_of_pass)
+                , pass_handle(nullptr)
+                , destroy_pass(nullptr)
+            {
+            }
 
             ERGPassType pass_type;
-            class RGPass* pass_handle;
-        };
-
-        struct RenderGraphEdge
-        {
-            RenderGraphNode* to() const { return to_node; }
-            RenderGraphNode* from() const { return from_node; }
-
-            RenderGraphNode* from_node;
-            RenderGraphNode* to_node;
-
-            DependencyGraph* graph;
+            RGPass* pass_handle;
+            PassDestroyFunction destroy_pass;
+            eastl::vector<PassResourceAccess> resource_accesses;
+            eastl::vector<PassNode*> dependencies;
         };
 
         struct RenderPassContext
         {
-        public:
-            RenderPassEncoder* encoder;
+            RenderGraph* graph = nullptr;
+            RGPass* pass = nullptr;
+            RenderPassEncoder* encoder = nullptr;
+            uint32_t frame_index = 0;
         };
     }
 }

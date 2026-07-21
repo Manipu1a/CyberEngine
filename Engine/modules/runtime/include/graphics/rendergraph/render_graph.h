@@ -1,7 +1,7 @@
 #pragma once
 
 #include "render_graph_flag.h"
-//#include "render_graph_builder.h"
+#include "base_type.h"
 #include "render_graph_phase.h"
 #include "platform/configure.h"
 #include "cyber_runtime.config.h"
@@ -18,6 +18,8 @@ namespace Cyber
 {  
     namespace RenderObject
     {
+        struct ICommandBuffer;
+        struct ICommandPool;
         class IQueue;
         struct IRenderDevice;
     }
@@ -30,8 +32,8 @@ namespace Cyber
             void initialize(class RenderObject::IQueue* queue, class RenderObject::IRenderDevice* device);
             void finalize();
 
-            class ICommandPool* gfx_cmd_pool;
-            class ICommandBuffer* gfx_cmd_buffer;
+            RenderObject::ICommandPool* gfx_cmd_pool = nullptr;
+            RenderObject::ICommandBuffer* gfx_cmd_buffer = nullptr;
         };
 
         class CYBER_RUNTIME_API RenderGraph
@@ -46,20 +48,24 @@ namespace Cyber
         public:
             CYBER_FORCE_INLINE RenderGraphBuilder* get_builder() const CYBER_NOEXCEPT { return graphBuilder; }
             void initialize();
+            void compile();
             void execute();
-            void execute_pass(class RGRenderPass* pass);
+            void execute_pass(class RGPass* pass, uint32_t frame_index = 0);
             template<typename Phase>
             void add_custom_phase();
+            void invalidate() CYBER_NOEXCEPT { compiled = false; }
         private:
             eastl::vector<class RenderGraphPhase*> phases;
-            class RenderGraphBuilder* graphBuilder;
+            eastl::vector<class PassNode*> execution_order;
+            class RenderGraphBuilder* graphBuilder = nullptr;
+            bool compiled = false;
         public:
-            eastl::map<const char8_t*, class RGRenderResource*> resource_map;
+            eastl::map<const char8_t*, class RGRenderResource*, Utf8StringLess> resource_map;
             eastl::vector<class ResourceNode*> resources;
             eastl::vector<class PassNode*> passes;
             eastl::vector<class ResourceNode*> culled_resources;
             eastl::vector<class PassNode*> culled_passes;
-            RenderObject::IQueue* gfx_queue;
+            RenderObject::IQueue* gfx_queue = nullptr;
             RenderGraphFrameExecutor frame_executors[RG_MAX_FRAME_IN_FLIGHT];
         };
     }
