@@ -172,22 +172,35 @@ namespace Cyber
         void RenderGraphBuilder::add_render_pass(const char8_t* name, const render_pass_function& pre_func, const render_pass_execute_function& execute_func)
         {
             RGRenderPass* pass = cyber_new<RGRenderPass>();
-            register_pass(name, pass, &destroy_typed_pass<RGRenderPass>);
+            if (!register_pass(name, pass, &destroy_typed_pass<RGRenderPass>))
+            {
+                cyber_delete(pass);
+                return;
+            }
+
             pre_func(*pass);
             pass->pass_function = execute_func;
         }
 
         void RenderGraphBuilder::add_compute_pass()
         {
-            add_pass<RGComputePass>(u8"ComputePass");
+            auto* compute_pass = cyber_new<RGComputePass>();
+            if (!register_pass(u8"ComputePass", compute_pass, &destroy_typed_pass<RGComputePass>))
+            {
+                cyber_delete(compute_pass);
+                return;
+            }
+
+            compute_pass->setup(*this);
         }
 
-        void RenderGraphBuilder::register_pass(const char8_t* name, RGPass* pass, PassNode::PassDestroyFunction destroy_pass)
+        bool RenderGraphBuilder::register_pass(const char8_t* name, RGPass* pass,
+            PassNode::PassDestroyFunction destroy_pass)
         {
-            if (!graph || !pass || !destroy_pass)
+            if (!graph || !name || !pass || pass->pass_node)
             {
                 cyber_assert(false, "Cannot register an invalid RenderGraph pass");
-                return;
+                return false;
             }
 
             PassNode* node = nullptr;
@@ -204,7 +217,7 @@ namespace Cyber
                 break;
             default:
                 cyber_assert(false, "Unknown RenderGraph pass type");
-                return;
+                return false;
             }
 
             pass->pass_name = name;
@@ -213,6 +226,7 @@ namespace Cyber
             node->destroy_pass = destroy_pass;
             graph->passes.push_back(node);
             graph->invalidate();
+            return true;
         }
     }
 }

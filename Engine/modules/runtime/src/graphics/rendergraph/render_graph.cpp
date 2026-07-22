@@ -29,15 +29,7 @@ namespace Cyber
                 cyber_delete(phase);
             phases.clear();
 
-            for (auto* pass_node : passes)
-            {
-                if (pass_node->pass_handle && pass_node->destroy_pass)
-                    pass_node->destroy_pass(pass_node->pass_handle);
-                cyber_delete(pass_node);
-            }
-            passes.clear();
-            execution_order.clear();
-            culled_passes.clear();
+            reset_passes();
 
             for (auto* resource_node : resources)
             {
@@ -97,6 +89,24 @@ namespace Cyber
         {
             for (uint32_t i = 0; i < RG_MAX_FRAME_IN_FLIGHT; ++i)
                 frame_executors[i].initialize(gfx_queue, graphBuilder->device);
+        }
+
+        void RenderGraph::reset_passes()
+        {
+            for (auto* pass_node : passes)
+            {
+                RGPass* pass = pass_node->pass_handle;
+                if (pass && pass->pass_node == pass_node)
+                    pass->pass_node = nullptr;
+                if (pass && pass_node->destroy_pass)
+                    pass_node->destroy_pass(pass);
+                cyber_delete(pass_node);
+            }
+
+            passes.clear();
+            execution_order.clear();
+            culled_passes.clear();
+            compiled = false;
         }
 
         void RenderGraph::destroy(RenderGraph* graph) CYBER_NOEXCEPT

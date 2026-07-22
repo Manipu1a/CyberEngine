@@ -48,6 +48,7 @@ namespace Cyber
         public:
             CYBER_FORCE_INLINE RenderGraphBuilder* get_builder() const CYBER_NOEXCEPT { return graphBuilder; }
             void initialize();
+            void reset_passes();
             void compile();
             void execute();
             void execute_pass(class RGPass* pass, uint32_t frame_index = 0);

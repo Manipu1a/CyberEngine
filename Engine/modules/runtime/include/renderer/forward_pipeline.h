@@ -26,7 +26,10 @@ namespace Cyber
 
     namespace Renderer
     {
+        class PreDepthPass;
         class Renderer;
+        class SceneColorPass;
+        class ShadowPass;
 
         class CYBER_RUNTIME_API ForwardPipeline
         {
@@ -41,6 +44,7 @@ namespace Cyber
         private:
             void create_resources();
             void create_render_graph();
+            void destroy_render_graph();
             void update_render_graph_resources(const ForwardFrameContext& frame_context);
             void update_pass_context(const ForwardFrameContext& frame_context);
 
@@ -57,6 +61,9 @@ namespace Cyber
             render_graph::RGTextureRef m_rg_scene_color = nullptr;
             render_graph::RGTextureRef m_rg_scene_depth = nullptr;
             render_graph::RGTextureRef m_rg_shadow_map = nullptr;
+            PreDepthPass* m_pre_depth_pass = nullptr;
+            ShadowPass* m_shadow_pass = nullptr;
+            SceneColorPass* m_scene_color_pass = nullptr;
             ForwardPassPipelineCache m_pipeline_cache;
             ForwardPassContext m_pass_context;
 

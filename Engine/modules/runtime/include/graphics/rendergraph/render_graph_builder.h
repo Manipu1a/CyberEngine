@@ -40,19 +40,26 @@ namespace Cyber
 
             void add_render_pass(const char8_t* name, const render_pass_function& func, const render_pass_execute_function& execute_func);
 
-            template<typename PassType, typename... Args>
-            PassType& add_pass(const char8_t* name, Args&&... args)
+            template<typename PassType>
+            PassType* add_pass(const char8_t* name, PassType* pass)
             {
-                PassType* pass = cyber_new<PassType>(eastl::forward<Args>(args)...);
-                register_pass(name, pass, &destroy_typed_pass<PassType>);
+                if (!pass)
+                {
+                    cyber_assert(false, "Cannot register a null RenderGraph pass");
+                    return nullptr;
+                }
+
+                if (!register_pass(name, pass, nullptr))
+                    return nullptr;
+
                 pass->setup(*this);
-                return *pass;
+                return pass;
             }
 
             void add_compute_pass();
 
         private:
-            void register_pass(const char8_t* name, RGPass* pass, PassNode::PassDestroyFunction destroy_pass);
+            bool register_pass(const char8_t* name, RGPass* pass, PassNode::PassDestroyFunction destroy_pass);
 
             template<typename PassType>
             static void destroy_typed_pass(RGPass* pass)

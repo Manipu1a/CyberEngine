@@ -36,11 +36,7 @@ namespace Cyber::Renderer
 
     ForwardPipeline::~ForwardPipeline()
     {
-        if (m_render_graph)
-        {
-            render_graph::RenderGraph::destroy(m_render_graph);
-            m_render_graph = nullptr;
-        }
+        destroy_render_graph();
     }
 
     void ForwardPipeline::initialize()
@@ -71,6 +67,13 @@ namespace Cyber::Renderer
         frame_context.world = world;
         update_pass_context(frame_context);
         update_render_graph_resources(frame_context);
+
+        m_render_graph->reset_passes();
+        auto* builder = m_render_graph->get_builder();
+        builder->add_pass(u8"PreDepth", m_pre_depth_pass);
+        builder->add_pass(u8"Shadow", m_shadow_pass);
+        builder->add_pass(u8"SceneColor", m_scene_color_pass);
+
         m_render_graph->execute();
     }
 
@@ -100,11 +103,7 @@ namespace Cyber::Renderer
         if (!m_device || !m_context || !m_shadow_map)
             return;
 
-        if (m_render_graph)
-        {
-            render_graph::RenderGraph::destroy(m_render_graph);
-            m_render_graph = nullptr;
-        }
+        destroy_render_graph();
 
         auto& scene_target = m_renderer->get_scene_target(0);
         m_render_graph = render_graph::RenderGraph::create(
@@ -116,14 +115,46 @@ namespace Cyber::Renderer
                 m_rg_scene_depth = builder.import_texture(scene_target.depth_buffer, u8"Forward.SceneDepth");
                 m_rg_shadow_map = builder.import_texture(m_shadow_map, u8"Forward.ShadowMap");
 
-                builder.add_pass<PreDepthPass>(u8"PreDepth",
+                m_pre_depth_pass = cyber_new<PreDepthPass>(
                     PreDepthPass::Resources{ m_rg_scene_depth }, &m_pass_context);
-                builder.add_pass<ShadowPass>(u8"Shadow",
+                m_shadow_pass = cyber_new<ShadowPass>(
                     ShadowPass::Resources{ m_rg_shadow_map }, &m_pass_context);
-                builder.add_pass<SceneColorPass>(u8"SceneColor",
+                m_scene_color_pass = cyber_new<SceneColorPass>(
                     SceneColorPass::Resources{ m_rg_scene_color, m_rg_scene_depth, m_rg_shadow_map },
                     &m_pass_context);
             });
+    }
+
+    void ForwardPipeline::destroy_render_graph()
+    {
+        if (m_render_graph)
+            m_render_graph->reset_passes();
+
+        if (m_pre_depth_pass)
+        {
+            cyber_delete(m_pre_depth_pass);
+            m_pre_depth_pass = nullptr;
+        }
+        if (m_shadow_pass)
+        {
+            cyber_delete(m_shadow_pass);
+            m_shadow_pass = nullptr;
+        }
+        if (m_scene_color_pass)
+        {
+            cyber_delete(m_scene_color_pass);
+            m_scene_color_pass = nullptr;
+        }
+
+        if (m_render_graph)
+        {
+            render_graph::RenderGraph::destroy(m_render_graph);
+            m_render_graph = nullptr;
+        }
+
+        m_rg_scene_color = nullptr;
+        m_rg_scene_depth = nullptr;
+        m_rg_shadow_map = nullptr;
     }
 
     void ForwardPipeline::update_render_graph_resources(const ForwardFrameContext& frame_context)
