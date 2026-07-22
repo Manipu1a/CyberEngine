@@ -14,12 +14,22 @@ namespace Cyber::Renderer
         : ForwardRenderPass(context)
         , resources(pass_resources)
     {
+        create_pipeline();
         create_render_pass();
     }
 
     void PreDepthPass::setup(render_graph::RenderGraphBuilder&)
     {
         set_depthstencil(resources.depth, LOAD_ACTION_CLEAR, STORE_ACTION_STORE);
+    }
+
+    void PreDepthPass::create_pipeline()
+    {
+        if (!pass_context || !pass_context->pipeline_cache || !resources.depth || !resources.depth->texture)
+            return;
+
+        pipeline = pass_context->pipeline_cache->get_depth_only(
+            resources.depth->texture->get_create_desc().m_format);
     }
 
     void PreDepthPass::create_render_pass()
@@ -73,7 +83,7 @@ namespace Cyber::Renderer
         float4x4 view_proj = float4x4::Identity();
         float3 eye = float3(0.0f, 0.0f, 0.0f);
         if (find_scene_view(view_proj, eye))
-            draw_depth_only(view_proj, pass_context->depth_pipeline);
+            draw_depth_only(view_proj, pipeline);
 
         pass_context->command_context->cmd_end_render_pass();
     }

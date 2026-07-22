@@ -39,7 +39,6 @@ namespace Cyber
             void render(World* world, float delta_time);
 
         private:
-            void create_pipelines();
             void create_resources();
             void create_render_graph();
             void update_render_graph_resources(const ForwardFrameContext& frame_context);
@@ -51,18 +50,14 @@ namespace Cyber
             RenderObject::IRenderDevice* m_device = nullptr;
             RenderObject::IDeviceContext* m_context = nullptr;
 
-            RefCntAutoPtr<RenderObject::IRenderPipeline> m_depth_pipeline;
-            RefCntAutoPtr<RenderObject::IRenderPipeline> m_color_pipeline;
-            RefCntAutoPtr<RenderObject::ISampler> m_sampler;
-
             RefCntAutoPtr<RenderObject::IBuffer> m_scene_constants;
-            RefCntAutoPtr<RenderObject::ITexture> m_white_texture;
             RefCntAutoPtr<RenderObject::ITexture> m_shadow_map;
 
             render_graph::RenderGraph* m_render_graph = nullptr;
             render_graph::RGTextureRef m_rg_scene_color = nullptr;
             render_graph::RGTextureRef m_rg_scene_depth = nullptr;
             render_graph::RGTextureRef m_rg_shadow_map = nullptr;
+            ForwardPassPipelineCache m_pipeline_cache;
             ForwardPassContext m_pass_context;
 
             uint32_t m_shadow_resolution = 2048;

@@ -15,6 +15,7 @@ namespace Cyber::Renderer
         : ForwardRenderPass(context)
         , resources(pass_resources)
     {
+        create_pipeline();
         create_render_pass();
         create_frame_buffer();
     }
@@ -22,6 +23,16 @@ namespace Cyber::Renderer
     void ShadowPass::setup(render_graph::RenderGraphBuilder&)
     {
         set_depthstencil(resources.shadow_map, LOAD_ACTION_CLEAR, STORE_ACTION_STORE);
+    }
+
+    void ShadowPass::create_pipeline()
+    {
+        if (!pass_context || !pass_context->pipeline_cache ||
+            !resources.shadow_map || !resources.shadow_map->texture)
+            return;
+
+        pipeline = pass_context->pipeline_cache->get_depth_only(
+            resources.shadow_map->texture->get_create_desc().m_format);
     }
 
     void ShadowPass::create_render_pass()
@@ -91,7 +102,7 @@ namespace Cyber::Renderer
         float3 light_color;
         float light_intensity;
         if (find_main_light(light_dir, light_color, light_intensity))
-            draw_depth_only(build_shadow_view_projection(light_dir), pass_context->depth_pipeline);
+            draw_depth_only(build_shadow_view_projection(light_dir), pipeline);
 
         pass_context->command_context->cmd_end_render_pass();
     }

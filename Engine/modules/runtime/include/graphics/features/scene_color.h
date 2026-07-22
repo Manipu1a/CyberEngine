@@ -21,9 +21,14 @@ namespace Cyber::Renderer
         void execute(render_graph::RenderGraph& graph, render_graph::RenderPassContext& context) override;
 
     private:
+        void create_resources();
+        void create_pipeline();
         void create_render_pass();
 
         Resources resources;
+        RefCntAutoPtr<RenderObject::IRenderPipeline> pipeline;
         RefCntAutoPtr<RenderObject::IRenderPass> render_pass;
+        RefCntAutoPtr<RenderObject::ISampler> sampler;
+        RefCntAutoPtr<RenderObject::ITexture> white_texture;
     };
 }

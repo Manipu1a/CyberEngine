@@ -1,13 +1,11 @@
 #include "renderer/forward_pipeline.h"
 
-#include "gameruntime/pipeline_builder.h"
 #include "graphics/features/pre_depth.h"
 #include "graphics/features/scene_color.h"
 #include "graphics/features/shadow.h"
 #include "graphics/interface/buffer.h"
 #include "graphics/interface/device_context.h"
 #include "graphics/interface/render_device.hpp"
-#include "graphics/interface/sampler.h"
 #include "graphics/interface/swap_chain.hpp"
 #include "graphics/interface/texture.hpp"
 #include "graphics/interface/texture_view.h"
@@ -15,19 +13,10 @@
 #include "graphics/rendergraph/render_graph_builder.h"
 #include "renderer/renderer.h"
 
-#include <cstddef>
-
 namespace Cyber::Renderer
 {
     namespace
     {
-        struct ForwardVertex
-        {
-            float3 position;
-            float3 normal;
-            float2 uv;
-        };
-
         void create_constant_buffer(RenderObject::IRenderDevice* device, uint32_t size,
             RefCntAutoPtr<RenderObject::IBuffer>& out_buffer)
         {
@@ -60,7 +49,7 @@ namespace Cyber::Renderer
         m_context = m_renderer->get_device_context();
 
         create_resources();
-        create_pipelines();
+        m_pipeline_cache.initialize(m_device);
         update_pass_context({});
         create_render_graph();
     }
@@ -89,42 +78,6 @@ namespace Cyber::Renderer
     {
         create_constant_buffer(m_device, sizeof(ForwardSceneConstants), m_scene_constants);
 
-        const uint8_t white_pixel[] = { 255, 255, 255, 255 };
-        RenderObject::TextureSubResData white_subresource = {};
-        white_subresource.pData = white_pixel;
-        white_subresource.stride = sizeof(white_pixel);
-        white_subresource.depthStride = sizeof(white_pixel);
-
-        RenderObject::TextureData white_data = {};
-        white_data.pSubResources = &white_subresource;
-        white_data.numSubResources = 1;
-
-        RenderObject::TextureCreateDesc white_desc = {};
-        white_desc.m_name = u8"Forward_WhiteTexture";
-        white_desc.m_width = 1;
-        white_desc.m_height = 1;
-        white_desc.m_depth = 1;
-        white_desc.m_arraySize = 1;
-        white_desc.m_mipLevels = 1;
-        white_desc.m_dimension = TEX_DIMENSION_2D;
-        white_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
-        white_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
-        white_desc.m_flags = TCF_FORCE_2D;
-        white_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
-        RenderObject::ITexture* raw_white_texture = nullptr;
-        m_device->create_texture(white_desc, &white_data, &raw_white_texture);
-        m_white_texture.attach(raw_white_texture);
-
-        RenderObject::SamplerCreateDesc sampler_desc = {};
-        sampler_desc.min_filter = FILTER_TYPE_LINEAR;
-        sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
-        sampler_desc.mip_filter = FILTER_TYPE_LINEAR;
-        sampler_desc.address_u = ADDRESS_MODE_WRAP;
-        sampler_desc.address_v = ADDRESS_MODE_WRAP;
-        sampler_desc.address_w = ADDRESS_MODE_WRAP;
-        sampler_desc.compare_mode = CMP_NEVER;
-        m_sampler = RefCntAutoPtr<RenderObject::ISampler>(m_device->create_sampler(sampler_desc));
-
         RenderObject::TextureCreateDesc shadow_desc = {};
         shadow_desc.m_name = u8"Forward_ShadowMap";
         shadow_desc.m_format = TEX_FORMAT_D32_FLOAT;
@@ -140,37 +93,6 @@ namespace Cyber::Renderer
         RenderObject::ITexture* raw_shadow = nullptr;
         m_device->create_texture(shadow_desc, nullptr, &raw_shadow);
         m_shadow_map.attach(raw_shadow);
-    }
-
-    void ForwardPipeline::create_pipelines()
-    {
-        auto& scene_target = m_renderer->get_scene_target(0);
-
-        RenderObject::VertexAttribute vertex_attributes[] = {
-            {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, position)},
-            {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, normal)},
-            {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, uv)},
-        };
-
-        m_depth_pipeline = PipelineBuilder(m_device)
-            .vertex_shader(CYBER_UTF8("shaders/DX12/forward_depth_vs.hlsl"))
-            .vertex_layout(vertex_attributes, 3)
-            .blend_opaque()
-            .depth_test(true, true, CMP_LESS_EQUAL)
-            .render_target_count(0)
-            .depth_format(scene_target.depth_buffer->get_create_desc().m_format)
-            .build();
-
-        m_color_pipeline = PipelineBuilder(m_device)
-            .vertex_shader(CYBER_UTF8("shaders/DX12/forward_color_vs.hlsl"))
-            .pixel_shader(CYBER_UTF8("shaders/DX12/forward_color_ps.hlsl"))
-            .vertex_layout(vertex_attributes, 3)
-            .static_sampler(CYBER_UTF8("Texture_sampler"), m_sampler)
-            .blend_opaque()
-            .depth_test(true, false, CMP_LESS_EQUAL)
-            .render_target_format(scene_target.color_buffer->get_create_desc().m_format)
-            .depth_format(scene_target.depth_buffer->get_create_desc().m_format)
-            .build();
     }
 
     void ForwardPipeline::create_render_graph()
@@ -221,9 +143,7 @@ namespace Cyber::Renderer
         m_pass_context.device = m_device;
         m_pass_context.command_context = m_context;
         m_pass_context.scene_constants = m_scene_constants;
-        m_pass_context.white_texture = m_white_texture;
-        m_pass_context.depth_pipeline = m_depth_pipeline;
-        m_pass_context.color_pipeline = m_color_pipeline;
+        m_pass_context.pipeline_cache = &m_pipeline_cache;
         m_pass_context.shadow_resolution = m_shadow_resolution;
         m_pass_context.frame = frame_context;
     }

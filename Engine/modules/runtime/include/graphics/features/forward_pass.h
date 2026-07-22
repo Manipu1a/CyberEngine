@@ -1,5 +1,7 @@
 #pragma once
 
+#include "EASTL/map.h"
+#include "common/smart_ptr.h"
 #include "cyber_runtime.config.h"
 #include "graphics/rendergraph/render_graph_resource.h"
 #include "math/basic_math.hpp"
@@ -16,12 +18,24 @@ namespace Cyber
         struct IRenderDevice;
         struct IRenderPass;
         struct IRenderPipeline;
+        struct ISampler;
         struct ITexture;
     }
 
     namespace Renderer
     {
         class Renderer;
+
+        class CYBER_RUNTIME_API ForwardPassPipelineCache
+        {
+        public:
+            void initialize(RenderObject::IRenderDevice* device);
+            RenderObject::IRenderPipeline* get_depth_only(TEXTURE_FORMAT depth_format);
+
+        private:
+            RenderObject::IRenderDevice* device = nullptr;
+            eastl::map<TEXTURE_FORMAT, RefCntAutoPtr<RenderObject::IRenderPipeline>> depth_pipelines;
+        };
 
         struct CYBER_RUNTIME_API ForwardFrameContext
         {
@@ -38,9 +52,7 @@ namespace Cyber
             RenderObject::IRenderDevice* device = nullptr;
             RenderObject::IDeviceContext* command_context = nullptr;
             RenderObject::IBuffer* scene_constants = nullptr;
-            RenderObject::ITexture* white_texture = nullptr;
-            RenderObject::IRenderPipeline* depth_pipeline = nullptr;
-            RenderObject::IRenderPipeline* color_pipeline = nullptr;
+            ForwardPassPipelineCache* pipeline_cache = nullptr;
             uint32_t shadow_resolution = 2048;
             ForwardFrameContext frame;
         };
@@ -64,7 +76,8 @@ namespace Cyber
             void update_scene_constants(const ForwardSceneConstants& constants) const;
             void draw_depth_only(const float4x4& view_proj, RenderObject::IRenderPipeline* pipeline) const;
             void draw_color(const float4x4& view_proj, const float3& eye,
-                const float3& light_dir, const float3& light_color, float light_intensity) const;
+                const float3& light_dir, const float3& light_color, float light_intensity,
+                RenderObject::IRenderPipeline* pipeline, RenderObject::ITexture* fallback_texture) const;
 
             bool find_scene_view(float4x4& view_proj, float3& eye) const;
             bool find_main_light(float3& light_dir, float3& light_color, float& intensity) const;

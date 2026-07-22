@@ -1,19 +1,36 @@
 #include "graphics/features/scene_color.h"
 
+#include "gameruntime/pipeline_builder.h"
 #include "graphics/interface/device_context.h"
 #include "graphics/interface/frame_buffer.h"
+#include "graphics/interface/render_device.hpp"
 #include "graphics/interface/render_pass.h"
+#include "graphics/interface/sampler.h"
 #include "graphics/interface/texture.hpp"
 #include "graphics/interface/texture_view.h"
 #include "graphics/rendergraph/render_graph.h"
 #include "graphics/rendergraph/render_graph_builder.h"
 
+#include <cstddef>
+
 namespace Cyber::Renderer
 {
+    namespace
+    {
+        struct ForwardVertex
+        {
+            float3 position;
+            float3 normal;
+            float2 uv;
+        };
+    }
+
     SceneColorPass::SceneColorPass(const Resources& pass_resources, ForwardPassContext* context)
         : ForwardRenderPass(context)
         , resources(pass_resources)
     {
+        create_resources();
+        create_pipeline();
         create_render_pass();
     }
 
@@ -23,6 +40,72 @@ namespace Cyber::Renderer
         set_depthstencil_read_only(resources.depth);
         add_render_target(0, resources.color, LOAD_ACTION_CLEAR,
             { 0.690196097f, 0.768627524f, 0.870588303f, 1.0f }, STORE_ACTION_STORE);
+    }
+
+    void SceneColorPass::create_resources()
+    {
+        if (!pass_context || !pass_context->device)
+            return;
+
+        const uint8_t white_pixel[] = { 255, 255, 255, 255 };
+        RenderObject::TextureSubResData white_subresource = {};
+        white_subresource.pData = white_pixel;
+        white_subresource.stride = sizeof(white_pixel);
+        white_subresource.depthStride = sizeof(white_pixel);
+
+        RenderObject::TextureData white_data = {};
+        white_data.pSubResources = &white_subresource;
+        white_data.numSubResources = 1;
+
+        RenderObject::TextureCreateDesc white_desc = {};
+        white_desc.m_name = u8"Forward_WhiteTexture";
+        white_desc.m_width = 1;
+        white_desc.m_height = 1;
+        white_desc.m_depth = 1;
+        white_desc.m_arraySize = 1;
+        white_desc.m_mipLevels = 1;
+        white_desc.m_dimension = TEX_DIMENSION_2D;
+        white_desc.m_usage = GRAPHICS_RESOURCE_USAGE_DEFAULT;
+        white_desc.m_bindFlags = GRAPHICS_RESOURCE_BIND_SHADER_RESOURCE;
+        white_desc.m_flags = TCF_FORCE_2D;
+        white_desc.m_format = TEX_FORMAT_RGBA8_UNORM;
+        RenderObject::ITexture* raw_white_texture = nullptr;
+        pass_context->device->create_texture(white_desc, &white_data, &raw_white_texture);
+        white_texture.attach(raw_white_texture);
+
+        RenderObject::SamplerCreateDesc sampler_desc = {};
+        sampler_desc.min_filter = FILTER_TYPE_LINEAR;
+        sampler_desc.mag_filter = FILTER_TYPE_LINEAR;
+        sampler_desc.mip_filter = FILTER_TYPE_LINEAR;
+        sampler_desc.address_u = ADDRESS_MODE_WRAP;
+        sampler_desc.address_v = ADDRESS_MODE_WRAP;
+        sampler_desc.address_w = ADDRESS_MODE_WRAP;
+        sampler_desc.compare_mode = CMP_NEVER;
+        sampler = RefCntAutoPtr<RenderObject::ISampler>(pass_context->device->create_sampler(sampler_desc));
+    }
+
+    void SceneColorPass::create_pipeline()
+    {
+        if (!pass_context || !pass_context->device || !resources.color || !resources.color->texture ||
+            !resources.depth || !resources.depth->texture || !sampler)
+            return;
+
+        RenderObject::VertexAttribute vertex_attributes[] = {
+            {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, position)},
+            {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, normal)},
+            {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, uv)},
+        };
+
+        pipeline = PipelineBuilder(pass_context->device)
+            .vertex_shader(CYBER_UTF8("shaders/DX12/forward_color_vs.hlsl"))
+            .pixel_shader(CYBER_UTF8("shaders/DX12/forward_color_ps.hlsl"))
+            .vertex_layout(vertex_attributes, 3)
+            .static_sampler(CYBER_UTF8("Texture_sampler"), sampler)
+            .blend_opaque()
+            .depth_test(true, false, CMP_LESS_EQUAL)
+            .render_target_format(resources.color->texture->get_create_desc().m_format)
+            .depth_format(resources.depth->texture->get_create_desc().m_format)
+            .build();
     }
 
     void SceneColorPass::create_render_pass()
@@ -99,7 +182,7 @@ namespace Cyber::Renderer
         if (find_scene_view(view_proj, eye))
         {
             find_main_light(light_dir, light_color, light_intensity);
-            draw_color(view_proj, eye, light_dir, light_color, light_intensity);
+            draw_color(view_proj, eye, light_dir, light_color, light_intensity, pipeline, white_texture);
         }
 
         pass_context->command_context->cmd_end_render_pass();

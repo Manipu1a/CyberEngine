@@ -19,10 +19,12 @@ namespace Cyber::Renderer
         void execute(render_graph::RenderGraph& graph, render_graph::RenderPassContext& context) override;
 
     private:
+        void create_pipeline();
         void create_render_pass();
         void create_frame_buffer();
 
         Resources resources;
+        RefCntAutoPtr<RenderObject::IRenderPipeline> pipeline;
         RefCntAutoPtr<RenderObject::IRenderPass> render_pass;
         RefCntAutoPtr<RenderObject::IFrameBuffer> frame_buffer;
     };

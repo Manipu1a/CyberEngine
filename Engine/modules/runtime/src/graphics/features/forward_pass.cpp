@@ -3,6 +3,7 @@
 #include "component/camera_component.h"
 #include "component/directional_light_component.h"
 #include "component/mesh_component.h"
+#include "gameruntime/pipeline_builder.h"
 #include "gameruntime/world.h"
 #include "graphics/interface/buffer.h"
 #include "graphics/interface/device_context.h"
@@ -11,10 +12,58 @@
 #include "graphics/interface/texture_view.h"
 #include "renderer/renderer.h"
 
+#include <cstddef>
 #include <cstring>
 
 namespace Cyber::Renderer
 {
+    namespace
+    {
+        struct ForwardVertex
+        {
+            float3 position;
+            float3 normal;
+            float2 uv;
+        };
+    }
+
+    void ForwardPassPipelineCache::initialize(RenderObject::IRenderDevice* render_device)
+    {
+        if (device == render_device)
+            return;
+
+        depth_pipelines.clear();
+        device = render_device;
+    }
+
+    RenderObject::IRenderPipeline* ForwardPassPipelineCache::get_depth_only(TEXTURE_FORMAT depth_format)
+    {
+        if (!device)
+            return nullptr;
+
+        const auto existing = depth_pipelines.find(depth_format);
+        if (existing != depth_pipelines.end())
+            return existing->second;
+
+        RenderObject::VertexAttribute vertex_attributes[] = {
+            {"ATTRIB", 0, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, position)},
+            {"ATTRIB", 1, 0, 3, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, normal)},
+            {"ATTRIB", 2, 0, 2, VALUE_TYPE_FLOAT32, false, offsetof(ForwardVertex, uv)},
+        };
+
+        RefCntAutoPtr<RenderObject::IRenderPipeline> pipeline = PipelineBuilder(device)
+            .vertex_shader(CYBER_UTF8("shaders/DX12/forward_depth_vs.hlsl"))
+            .vertex_layout(vertex_attributes, 3)
+            .blend_opaque()
+            .depth_test(true, true, CMP_LESS_EQUAL)
+            .render_target_count(0)
+            .depth_format(depth_format)
+            .build();
+
+        depth_pipelines[depth_format] = pipeline;
+        return pipeline;
+    }
+
     ForwardRenderPass::ForwardRenderPass(ForwardPassContext* context)
         : pass_context(context)
     {
@@ -88,14 +137,15 @@ namespace Cyber::Renderer
     }
 
     void ForwardRenderPass::draw_color(const float4x4& view_proj, const float3& eye,
-        const float3& light_dir, const float3& light_color, float light_intensity) const
+        const float3& light_dir, const float3& light_color, float light_intensity,
+        RenderObject::IRenderPipeline* pipeline, RenderObject::ITexture* fallback_texture) const
     {
         if (!pass_context || !pass_context->frame.world || !pass_context->command_context ||
-            !pass_context->color_pipeline)
+            !pipeline)
             return;
 
         auto* command_context = pass_context->command_context;
-        command_context->render_encoder_bind_pipeline(pass_context->color_pipeline);
+        command_context->render_encoder_bind_pipeline(pipeline);
         pass_context->frame.world->for_each_component_of<Component::MeshComponent>(
             [&](SceneNode&, Component::MeshComponent& mesh, uint32_t)
             {
@@ -117,8 +167,8 @@ namespace Cyber::Renderer
                 command_context->set_root_constant_buffer_view(SHADER_STAGE_VERT, 0, pass_context->scene_constants);
                 command_context->set_root_constant_buffer_view(SHADER_STAGE_FRAG, 0, pass_context->scene_constants);
 
-                RenderObject::ITexture_View* fallback_base_color = pass_context->white_texture
-                    ? pass_context->white_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE)
+                RenderObject::ITexture_View* fallback_base_color = fallback_texture
+                    ? fallback_texture->get_default_texture_view(TEXTURE_VIEW_SHADER_RESOURCE)
                     : nullptr;
 
                 for (const auto& primitive : mesh.draw_primitives)
